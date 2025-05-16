@@ -143,6 +143,32 @@ say.category = "Général"
 
 ########## fun ##########
 
+# dog
+@bot.command()
+async def dog(ctx):
+    async with aiohttp.ClientSession() as session:
+        async with session.get("https://dog.ceo/api/breeds/image/random") as response:
+            if response.status == 200:
+                data = await response.json()
+                image_url = data["message"]
+                await ctx.send(f"Voici un toutou aléatoire ! 🐶\n{image_url}")
+            else:
+                await ctx.send("Impossible de récupérer une image de chien 😢")
+dog.category = "Fun"
+
+# cat
+@bot.command()
+async def cat(ctx):
+    async with aiohttp.ClientSession() as session:
+        async with session.get("https://aws.random.cat/meow") as response:
+            if response.status == 200:
+                data = await response.json()
+                image_url = data["file"]
+                await ctx.send(f"Voici un minou aléatoire ! 🐱\n{image_url}")
+            else:
+                await ctx.send("Impossible de récupérer une image de chat 😿")
+cat.category = "Fun"
+
 
 # commande combat
 @bot.command(name="combat", help="Simule un combat entre 2 personnages de Bleach avec système de stats et énergie.")
