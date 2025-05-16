@@ -307,12 +307,13 @@ async def parti(ctx):
 
 
 # commande perso
-@bot.slash_command(name="perso", description="Découvre quel personnage de Bleach tu es (toujours le même pour toi)")
-async def perso(ctx: discord.ApplicationContext):
+@bot.command(help="Découvre quel personnage de Bleach tu es (toujours le même pour toi).")
+async def perso(ctx):
     user_id = ctx.author.id
     index = (user_id * 31 + 17) % len(bleach_characters)
     personnage = bleach_characters[index]
-    await ctx.respond(f"{ctx.author.mention}, tu es **{personnage}** ! (C'est ta destinée dans le monde de Bleach 🔥)")
+    await ctx.send(f"{ctx.author.mention}, tu es **{personnage}** ! (C'est ta destinée dans le monde de Bleach 🔥)")
+perso.category = "Fun"
 
 
 #phrase
