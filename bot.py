@@ -1,6 +1,7 @@
 from keep_alive import keep_alive  # Démarre le serveur web pour maintenir le bot en ligne
 
 import os
+import io
 import ast
 import aiohttp
 import discord
@@ -160,16 +161,18 @@ async def dog(ctx):
                 await ctx.send("Impossible de récupérer une image de chien 😢")
 dog.category = "Fun"
 
-# cat
+########## cat ##########
 @bot.command()
 async def cat(ctx):
     async with aiohttp.ClientSession() as session:
-        async with session.get("https://cataas.com/cat", allow_redirects=True) as response:
+        async with session.get("https://cataas.com/cat") as response:
             if response.status == 200:
-                # Discord accepte l'URL directe d'une image
-                await ctx.send("Voici un minou aléatoire ! 🐱", file=discord.File(fp=await response.read(), filename="cat.jpg"))
+                image_data = await response.read()
+                image_file = discord.File(io.BytesIO(image_data), filename="cat.jpg")
+                await ctx.send("Voici un minou aléatoire ! 🐱", file=image_file)
             else:
                 await ctx.send("Impossible de récupérer une image de chat 😿")
+
 cat.category = "Fun"
 
 
