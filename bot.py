@@ -61,7 +61,7 @@ async def on_message(message):
 ########## général ##########
 #############################
 
-# 👋 Hello
+########## 👋 Hello ##########
 @bot.command(help="Affiche un message de bienvenue.")
 async def hello(ctx):
     await ctx.send("👋 Hello, je suis en ligne !")
@@ -79,7 +79,7 @@ async def ping(ctx):
     await ctx.send(embed=embed)
 ping.category = "Général"
 
-# 📘 Commande : help
+########## 📘 Commande : help ##########
 @bot.command(name="help", help="Affiche la liste des commandes ou les infos sur une commande spécifique.")
 async def help_command(ctx, commande: str = None):
     prefix = get_prefix(bot, ctx.message)
@@ -129,7 +129,7 @@ async def help_command(ctx, commande: str = None):
             await ctx.send(embed=embed)
 help_command.category = "Général"
 
-# 🗣️ Say
+########## 🗣️ Say ##########
 @bot.command(help="Fait répéter un message par le bot et supprime le message d'origine.")
 async def say(ctx, *, message: str):
     try:
@@ -147,7 +147,7 @@ say.category = "Général"
 ########## fun ##########
 #############################
 
-# dog
+########## dog ##########
 @bot.command()
 async def dog(ctx):
     async with aiohttp.ClientSession() as session:
@@ -164,17 +164,17 @@ dog.category = "Fun"
 @bot.command()
 async def cat(ctx):
     async with aiohttp.ClientSession() as session:
-        async with session.get("https://cataas.com/cat") as response:
+        async with session.get("https://cataas.com/cat", allow_redirects=True) as response:
             if response.status == 200:
-                data = await response.json()
-                image_url = data["file"]
-                await ctx.send(f"Voici un minou aléatoire ! 🐱\n{image_url}")
+                # Discord accepte l'URL directe d'une image
+                await ctx.send("Voici un minou aléatoire ! 🐱", file=discord.File(fp=await response.read(), filename="cat.jpg"))
             else:
                 await ctx.send("Impossible de récupérer une image de chat 😿")
 cat.category = "Fun"
 
 
-# commande combat
+
+########## combat ##########
 @bot.command(name="combat", help="Simule un combat entre 2 personnages de Bleach avec système de stats et énergie.")
 async def combat_bleach(ctx):
     try:
@@ -269,7 +269,7 @@ async def combat_bleach(ctx):
 combat_bleach.category = "Fun"
 
 
-# parti
+########## parti ##########
 @bot.command(help="Génère un nom de parti politique aléatoire.")
 async def parti(ctx):
     premiers_mots = [
@@ -322,7 +322,7 @@ async def parti(ctx):
     parti.category = "Fun"
 
 
-# commande perso
+########## perso ##########
 @bot.command(help="Découvre quel personnage de Bleach tu es (toujours le même pour toi).")
 async def perso(ctx):
     user_id = ctx.author.id
@@ -332,7 +332,7 @@ async def perso(ctx):
 perso.category = "Fun"
 
 
-#phrase
+########## phrase ##########
 @bot.command(name="phrase", help="Génère une phrase aléatoire à partir de listes de mots.")
 async def phrase(ctx):
     try:
@@ -355,7 +355,7 @@ async def phrase(ctx):
 phrase.category = "Fun"
 
 
-# 🪙 Pile ou face
+########## 🪙 Pile ou face ##########
 @bot.command(help="Lance une pièce : pile ou face.")
 async def pof(ctx):
     resultat = random.choice(["🪙 Pile !", "🪙 Face !"])
@@ -366,7 +366,7 @@ pof.category = "Fun"
 ########## admin ##########
 #############################
 
-# 🔧 Préfixe (admin uniquement)
+########## 🔧 Préfixe (admin uniquement) ##########
 @bot.command(help="Affiche ou change le préfixe du bot (admin uniquement).")
 @commands.has_permissions(administrator=True)
 async def prefixe(ctx, nouveau: str = None):
