@@ -143,20 +143,6 @@ say.category = "Général"
 
 ########## fun ##########
 
-# 😂 Blague
-@bot.command(help="Affiche une blague aléatoire depuis `blagues.txt`.")
-async def blague(ctx):
-    try:
-        with open("blagues.txt", "r", encoding="utf-8") as f:
-            blagues = [line.strip() for line in f if line.strip()]
-        if not blagues:
-            await ctx.send("😢 Aucune blague trouvée.")
-        else:
-            await ctx.send(f"😂 {random.choice(blagues)}")
-    except FileNotFoundError:
-        await ctx.send("❌ Le fichier `blagues.txt` est introuvable.")
-blague.category = "Fun"
-
 
 # commande combat
 @bot.command(name="combat", help="Simule un combat entre 2 personnages de Bleach avec système de stats et énergie.")
