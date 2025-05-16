@@ -1,0 +1,60 @@
+[
+"Le chat", "La fille", "Un homme", "Mon ami", "Le professeur", "Cette voiture", "Ton frère", "Une idée", "Le vent", "La musique",
+"La lune", "Le soleil", "Le chien", "Une étoile", "Ma mère", "Ton père", "L enfant", "Le boulanger", "La fleur", "Le poisson",
+"Le roi", "La reine", "Le vent", "Le train", "Un oiseau", "Le livre", "Le peintre", "La plage", "Le restaurant", "Le jardin",
+"Un arbre", "Le téléphone", "Le nuage", "La rivière", "La montagne", "La fenêtre", "Le miroir", "Le bateau", "La maison", "La ville",
+"Le cheval", "La voiture", "Le papillon", "Le joueur", "L artiste", "La rivière", "Le bureau", "Le stylo", "La chaise", "Le ballon",
+"Le vent", "La neige", "Le froid", "Le printemps", "L été", "L automne", "L hiver", "Le garçon", "La fille", "La route",
+"Le vélo", "Le jardinier", "Le marchand", "Le docteur", "Le policier", "La danseuse", "Le chanteur", "L écrivain", "Le musicien", "Le peintre",
+"Le lion", "Le tigre", "Le singe", "La poule", "Le cheval", "Le coq", "Le mouton", "La vache", "Le lapin", "Le canard",
+"Le poisson", "Le crabe", "La tortue", "Le dauphin", "Le requin", "Le serpent", "Le lézard", "La grenouille", "Le hibou", "Le corbeau"
+]
+
+[
+"mange", "regarde", "court", "pense a", "comprend", "aime", "deteste", "cherche", "trouve", "ecoute",
+"parle", "saute", "danse", "chante", "travaille", "joue", "construit", "ouvre", "ferme", "traverse",
+"ecoute", "reve", "admire", "conduit", "ecrit", "lit", "peint", "apprend", "enseigne", "combat",
+"gagne", "perd", "dort", "sourit", "pleure", "ecoute", "respire", "frappe", "attrape", "casse",
+"sait", "veut", "peut", "doit", "espere", "essaie", "aide", "cree", "imagine", "raconte",
+"regarde", "ecoute", "attend", "visite", "reve", "choisit", "decide", "commence", "finit", "change",
+"travaille", "gagne", "apprend", "enseigne", "construit", "detruit", "voyage", "parle", "ecoute", "observe",
+"prend", "donne", "recoit", "offre", "oublie", "souvient", "pose", "repond", "touche", "sent",
+"voit", "entend", "sent", "goute", "touche", "sent", "marche", "court", "saute", "vole",
+"crie", "chante", "danse", "joue", "rit", "pleure", "sourit", "saute", "tombe", "se leve"
+]
+
+[
+"une pomme", "le film", "dans le parc", "avec joie", "une chanson", "le livre", "rapidement", "sans arret", "au travail", "sur la table",
+"le jardin", "la riviere", "la maison", "le restaurant", "la ville", "la montagne", "la plage", "le train", "le velo", "la route",
+"un ballon", "une fleur", "une idee", "un secret", "un oiseau", "le vent", "la neige", "la pluie", "le soleil", "la lune",
+"un stylo", "un livre", "une lettre", "un message", "une photo", "une peinture", "un dessin", "un film", "une histoire", "un reve",
+"le matin", "la nuit", "le soir", "l apres-midi", "hier", "demain", "toujours", "parfois", "rarement", "souvent",
+"avec ses amis", "avec sa famille", "sans peur", "avec confiance", "en silence", "a voix haute", "avec patience", "avec amour", "avec force", "avec douceur",
+"sur la table", "sous le lit", "devant la porte", "derriere la fenetre", "pres de la riviere", "loin de la ville", "au sommet de la montagne", "dans le jardin", "sur la plage", "dans la foret",
+"en France", "en Espagne", "au Japon", "en Italie", "aux Etats-Unis", "au Canada", "en Allemagne", "en Chine", "en Russie", "en Australie",
+"avec un sourire", "avec un regard", "avec une voix", "avec une main", "avec un coeur", "avec un espoir", "avec un reve", "avec une peur", "avec une envie", "avec une passion",
+"dans la maison", "dans la voiture", "dans le train", "dans le bus", "dans l avion", "dans le bateau", "dans la rue", "dans le parc", "dans la salle", "dans le jardin"
+]
+
+
+[
+    "rapidement", "doucement", "avec joie", "sans arrêt", "au travail", "sur la table", "dans le parc",
+    "en silence", "à voix haute", "avec patience", "avec amour", "avec force", "avec douceur",
+    "devant la porte", "derrière la fenêtre", "près de la rivière", "loin de la ville",
+    "au sommet de la montagne", "dans le jardin", "sur la plage", "dans la forêt",
+    "tous les jours", "parfois", "rarement", "souvent", "hier", "demain", "toujours",
+    "avec un sourire", "avec un regard", "avec une voix", "avec une main", "avec un cœur",
+    "avec un espoir", "avec un rêve", "avec une peur", "avec une envie", "avec une passion",
+    "dans la maison", "dans la voiture", "dans le train", "dans le bus", "dans l’avion",
+    "dans le bateau", "dans la rue", "dans le parc", "dans la salle", "dans le jardin",
+    "en France", "en Espagne", "au Japon", "en Italie", "aux États-Unis", "au Canada",
+    "en Allemagne", "en Chine", "en Russie", "en Australie",
+    "avec énergie", "avec attention", "avec rapidité", "avec lenteur", "sans hésitation",
+    "comme un héros", "comme un enfant", "comme un expert", "sans peur", "sans doute",
+    "à toute vitesse", "en douceur", "avec prudence", "avec soin", "avec confiance",
+    "depuis longtemps", "pour toujours", "en secret", "en public", "en famille",
+    "avec enthousiasme", "avec sérieux", "avec sagesse", "avec humour", "avec passion",
+    "à haute voix", "en chuchotant", "en courant", "en marchant", "en sautant",
+    "sans bruit", "sans prévenir", "au hasard", "avec surprise", "avec espoir",
+    "dans le silence", "au clair de lune", "à la lumière du jour", "à l’aube", "au crépuscule"
+]

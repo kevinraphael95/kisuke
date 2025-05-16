@@ -1,0 +1,10 @@
+Ichigo Kurosaki|15,12,14,16,10,13|Getsuga Tensho:30:20:Explosion:normale|Zangetsu Slash:25:15:Saignement:normale|Mugetsu Flash:35:25:Critique:normale|Mugetsu:60:40:Oblitération:ultime
+Rukia Kuchiki|11,13,13,18,14,11|Sode no Shirayuki:22:15:Givre:normale|White Dance:27:18:Gel:normale|Glacial Thorn:24:15:Ralentissement:normale|Hakka no Togame:55:40:Congélation:ultime
+Renji Abarai|14,13,13,14,10,16|Zabimaru Strike:28:20:Allonge:normale|Feral Roar:25:15:Repousse:normale|Rage Whip:30:20:Déséquilibre:normale|Hihiō Zabimaru:58:40:Furie animale:ultime
+Byakuya Kuchiki|13,14,16,17,11,9|Senbonzakura:25:15:Tranchant:normale|Petal Storm:20:10:Érosion:normale|Flash Dance:22:12:Illusion:normale|Bankai Kageyoshi:60:40:Crush spirituel:ultime
+Tōshirō Hitsugaya|13,14,12,18,12,11|Hyōrinmaru:26:18:Gel:normale|Ice Dragon Claw:24:15:Givre:normale|Frozen Wave:28:20:Ralentissement:normale|Daiguren Hyōrinmaru:55:40:Gel total:ultime
+Kenpachi Zaraki|18,12,10,10,9,21|Brute Slash:35:25:Hémorragie:normale|Reckless Charge:30:20:Étourdissant:normale|Power Swing:33:25:Choc:normale|Unleashed Madness:60:40:Frénésie:ultime
+Mayuri Kurotsuchi|12,12,10,20,18,8|Poison Needle:20:10:Poison:normale|Neurotoxin Blast:24:15:Affaiblissement:normale|Venom Cloud:26:18:Corrosion:normale|Bankai Jokochoshin:50:40:Mutation:ultime
+Sōsuke Aizen|15,13,14,18,17,3|Kyōka Suigetsu:28:15:Hypnose:normale|Illusion Strike:26:18:Confusion:normale|Mind Slash:30:20:Illusion:normale|Fusion Ascendante:60:40:Domination mentale:ultime
+Uryū Ishida|14,12,15,14,17,8|Reishi Arrow:22:10:Perforant:normale|Quincy Barrage:28:18:Enchaînement:normale|Flash Step Shot:25:15:Rapidité:normale|Letzt Stil:55:40:Déferlement spirituel:ultime
+Yoruichi Shihouin|13,12,19,14,12,10|Flash Kick:24:15:Éclair:normale|Shunko Burst:26:18:Énergie:normale|Lightning Palm:28:20:Paralysie:normale|Raijin Forme:58:40:Vitesse divine:ultime
