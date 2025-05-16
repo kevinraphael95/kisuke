@@ -10,6 +10,14 @@ from dotenv import load_dotenv
 # Répertoire de travail
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
+# définition et chargement ici
+def load_characters(filename="bleach_characters.txt"):
+    with open(filename, encoding="utf-8") as f:
+        characters = [line.strip() for line in f if line.strip()]
+    return characters
+
+bleach_characters = load_characters()
+
 # Charger les variables d’environnement
 load_dotenv()
 TOKEN = os.getenv("DISCORD_TOKEN")
@@ -296,6 +304,15 @@ async def parti(ctx):
     nom_parti = f"{random.choice(premiers_mots)} {random.choice(adjectifs)} {random.choice(noms)}"
     await ctx.send(f"🏛️ Voici un nom de parti politique : **{nom_parti}**")
     parti.category = "Fun"
+
+
+# commande perso
+@bot.slash_command(name="perso", description="Découvre quel personnage de Bleach tu es (toujours le même pour toi)")
+async def perso(ctx: discord.ApplicationContext):
+    user_id = ctx.author.id
+    index = (user_id * 31 + 17) % len(bleach_characters)
+    personnage = bleach_characters[index]
+    await ctx.respond(f"{ctx.author.mention}, tu es **{personnage}** ! (C'est ta destinée dans le monde de Bleach 🔥)")
 
 
 #phrase
