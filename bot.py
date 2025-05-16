@@ -56,8 +56,10 @@ async def on_message(message):
         )
     else:
         await bot.process_commands(message)
-
+        
+#############################
 ########## général ##########
+#############################
 
 # 👋 Hello
 @bot.command(help="Affiche un message de bienvenue.")
@@ -141,8 +143,9 @@ async def say(ctx, *, message: str):
     await ctx.send(message)
 say.category = "Général"
 
-
+#############################
 ########## fun ##########
+#############################
 
 # dog
 @bot.command()
@@ -161,7 +164,7 @@ dog.category = "Fun"
 @bot.command()
 async def cat(ctx):
     async with aiohttp.ClientSession() as session:
-        async with session.get("https://aws.random.cat/meow") as response:
+        async with session.get("https://cataas.com/cat") as response:
             if response.status == 200:
                 data = await response.json()
                 image_url = data["file"]
@@ -359,8 +362,9 @@ async def pof(ctx):
     await ctx.send(resultat)
 pof.category = "Fun"
 
-
+#############################
 ########## admin ##########
+#############################
 
 # 🔧 Préfixe (admin uniquement)
 @bot.command(help="Affiche ou change le préfixe du bot (admin uniquement).")
