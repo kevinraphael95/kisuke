@@ -322,7 +322,7 @@ async def parti(ctx):
 
     nom_parti = f"{random.choice(premiers_mots)} {random.choice(adjectifs)} {random.choice(noms)}"
     await ctx.send(f"🏛️ Voici un nom de parti politique : **{nom_parti}**")
-    parti.category = "Fun"
+parti.category = "Fun"
 
 
 ########## perso ##########
