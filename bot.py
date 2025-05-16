@@ -1,3 +1,5 @@
+from keep_alive import keep_alive  # Démarre le serveur web pour maintenir le bot en ligne
+
 import os
 import ast
 import discord
@@ -361,6 +363,9 @@ prefixe.category = "Admin"
 # Debug infos
 print("Dossier de travail actuel :", os.getcwd())
 print("Fichiers dans le dossier :", os.listdir())
+
+# Démarre le serveur web pour le keep-alive
+keep_alive()
 
 # Lancer le bot
 bot.run(TOKEN)
