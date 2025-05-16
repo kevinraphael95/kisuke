@@ -2,6 +2,7 @@ from keep_alive import keep_alive  # Démarre le serveur web pour maintenir le b
 
 import os
 import ast
+import aiohttp
 import discord
 from discord.ext import commands
 import random
