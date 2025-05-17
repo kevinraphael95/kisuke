@@ -161,8 +161,8 @@ async def check_reiatsu(ctx):
     await ctx.send(f"{ctx.author.mention}, tu as {total} Reiatsu.")
 
 
-@bot.command(name="testreiatsu", help="Force l'apparition d'un nuage de Reiatsu pour test.")
-@commands.has_permissions(administrator=True)  # facultatif : limiter aux admins
+@bot.command(name="testreiatsu", help="Force l'apparition d'un nuage de Reiatsu pour test (admin uniquement).")
+@commands.has_permissions(administrator=True)
 async def test_reiatsu(ctx):
     channel = ctx.channel
     msg = await channel.send("⚡ **Un nuage de Reiatsu apparaît !** Réagis avec ⚡ pour le collecter !")
@@ -186,6 +186,14 @@ async def test_reiatsu(ctx):
         save_reiatsu_scores(reiatsu_scores)
         await channel.send(f"🎉 {user.mention} a collecté 1 Reiatsu ! Total: {reiatsu_scores[user_id]}")
         await msg.clear_reactions()
+
+# Gestion des erreurs pour testreiatsu
+@test_reiatsu.error
+async def test_reiatsu_error(ctx, error):
+    if isinstance(error, commands.MissingPermissions):
+        await ctx.send("❌ Tu dois être **administrateur** pour utiliser cette commande.")
+    else:
+        raise error  # Ré-élève l’erreur si ce n’est pas un problème de permission
 
 
 
