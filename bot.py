@@ -368,6 +368,9 @@ pof.category = "Fun"
 
 
 ########## recommande ##########
+import random
+from discord.ext import commands
+
 @bot.command(help="Recommande un jeu solo ou multijoueur. Utilisation : !recommande solo ou !recommande multi")
 async def recommande(ctx, mode: str = None):
     if mode not in ["solo", "multi"]:
@@ -409,9 +412,11 @@ async def recommande(ctx, mode: str = None):
             await ctx.send(random.choice(reponses))
         else:
             await ctx.send(f"Aucun jeu trouvé dans la section [{mode}].")
-    
+
     except FileNotFoundError:
         await ctx.send("Le fichier `jeux.txt` est introuvable.")
+    except Exception as e:
+        await ctx.send(f"Une erreur est survenue : {e}")
 
 recommande.category = "Fun"
 
