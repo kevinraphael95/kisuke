@@ -1,5 +1,6 @@
 from keep_alive import keep_alive  # Démarre le serveur web pour maintenir le bot en ligne
 
+import io
 import os
 import random
 import asyncio
