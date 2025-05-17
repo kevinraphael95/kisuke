@@ -63,9 +63,17 @@ async def on_message(message):
 #############################
 
 ########## 👋 Hello ##########
-@bot.command(help="Affiche un message de bienvenue.")
+@bot.command(help="Affiche un message de bienvenue aléatoire.")
 async def hello(ctx):
-    await ctx.send("👋 Hello, je suis en ligne !")
+    try:
+        with open("hello_messages.txt", "r", encoding="utf-8") as f:
+            messages = [line.strip() for line in f if line.strip()]
+        if messages:
+            await ctx.send(random.choice(messages))
+        else:
+            await ctx.send("👋 Hello, je suis en ligne (mais sans message personnalisé) !")
+    except FileNotFoundError:
+        await ctx.send("❌ Fichier `hello_messages.txt` introuvable.")
 hello.category = "Général"
 
 # 🏓 Ping avec Embed + alias "test"
