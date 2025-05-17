@@ -8,6 +8,8 @@ from discord.ext import tasks, commands
 import discord
 from database import init_db, get_reiatsu, add_reiatsu
 from dotenv import load_dotenv
+from database import set_reiatsu_channel, get_reiatsu_channel
+
 
 # Répertoire de travail
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
@@ -67,6 +69,13 @@ async def on_message(message):
 MAX_EVENTS_PER_DAY = 4
 REACTION_EMOJI = "⚡"
 
+@bot.command(name="setreiatsu", help="Définit ce salon pour les apparitions de Reiatsu (admin uniquement).")
+@commands.has_permissions(administrator=True)
+async def set_reiatsu(ctx):
+    set_reiatsu_channel(ctx.guild.id, ctx.channel.id)
+    await ctx.send(f"✅ Les Reiatsu apparaîtront désormais dans {ctx.channel.mention}.")
+
+
 events_today = 0
 today_date = datetime.now().date()
 
@@ -91,13 +100,13 @@ async def spawn_reiatsu_event():
         events_today += 1
 
         for guild in bot.guilds:
-            channel = discord.utils.get(
-                guild.text_channels,
-                permissions__send_messages=True
-            )
+            channel_id = get_reiatsu_channel(guild.id)
+            if not channel_id:
+                continue  # Aucun salon défini pour ce serveur
 
-            if not channel:
-                continue
+            channel = guild.get_channel(channel_id)
+            if not channel or not channel.permissions_for(guild.me).send_messages:
+                continue  # Pas de permissions ou salon introuvable
 
             print(f"⚡ Apparition de Reiatsu dans {guild.name}#{channel.name}")
             msg = await channel.send("⚡ **Un nuage de Reiatsu apparaît !** Réagis avec ⚡ pour le collecter !")
@@ -120,7 +129,7 @@ async def spawn_reiatsu_event():
                 total = get_reiatsu(user.id)
                 await channel.send(f"🎉 {user.mention} a collecté 1 Reiatsu ! Total: {total}")
                 await msg.clear_reactions()
-            break
+            break  # Un seul événement à la fois
 
 # Commande pour afficher son total de Reiatsu
 @bot.command(name="reiatsu")
