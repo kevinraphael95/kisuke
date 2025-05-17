@@ -368,9 +368,6 @@ pof.category = "Fun"
 
 
 ########## recommande ##########
-import random
-from discord.ext import commands
-
 @bot.command(help="Recommande un jeu solo ou multijoueur. Utilisation : !recommande solo ou !recommande multi")
 async def recommande(ctx, mode: str = None):
     if mode not in ["solo", "multi"]:
