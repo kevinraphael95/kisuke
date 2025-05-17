@@ -368,10 +368,10 @@ pof.category = "Fun"
 
 
 ########## recommande ##########
-@bot.command(help="Recommande un jeu solo ou multijoueur. Utilisation : !recommande solo ou !recommande multi")
+@bot.command(help="Recommande un jeu solo ou multijoueur.")
 async def recommande(ctx, mode: str = None):
     if mode not in ["solo", "multi"]:
-        await ctx.send("Utilise `!recommande solo` ou `!recommande multi`.")
+        await ctx.send(resultat)
         return
 
     try:
