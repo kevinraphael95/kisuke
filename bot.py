@@ -72,7 +72,8 @@ REACTION_EMOJI = "⚡"
 @bot.command(name="setreiatsu", help="Définit ce salon pour les apparitions de Reiatsu (admin uniquement).")
 @commands.has_permissions(administrator=True)
 async def set_reiatsu(ctx):
-    set_reiatsu_channel(ctx.guild.id, ctx.channel.id)
+    # Appel bloquant donc on utilise to_thread
+    await asyncio.to_thread(set_reiatsu_channel, ctx.guild.id, ctx.channel.id)
     await ctx.send(f"✅ Les Reiatsu apparaîtront désormais dans {ctx.channel.mention}.")
 
 
@@ -100,7 +101,7 @@ async def spawn_reiatsu_event():
         events_today += 1
 
         for guild in bot.guilds:
-            channel_id = get_reiatsu_channel(guild.id)
+            channel_id = await asyncio.to_thread(get_reiatsu_channel, guild.id)
             if not channel_id:
                 continue  # Aucun salon défini pour ce serveur
 
@@ -125,8 +126,8 @@ async def spawn_reiatsu_event():
                 await channel.send("⏰ Personne n'a collecté le Reiatsu cette fois...")
                 await msg.clear_reactions()
             else:
-                add_reiatsu(user.id, 1)
-                total = get_reiatsu(user.id)
+                await asyncio.to_thread(add_reiatsu, user.id, 1)
+                total = await asyncio.to_thread(get_reiatsu, user.id)
                 await channel.send(f"🎉 {user.mention} a collecté 1 Reiatsu ! Total: {total}")
                 await msg.clear_reactions()
             break  # Un seul événement à la fois
@@ -134,7 +135,7 @@ async def spawn_reiatsu_event():
 # Commande pour afficher son total de Reiatsu
 @bot.command(name="reiatsu")
 async def check_reiatsu(ctx):
-    total = get_reiatsu(ctx.author.id)
+    total = await asyncio.to_thread(get_reiatsu, ctx.author.id)
     await ctx.send(f"{ctx.author.mention}, tu as {total} Reiatsu.")
 
 # Commande admin pour forcer l’apparition de Reiatsu
@@ -158,8 +159,8 @@ async def test_reiatsu(ctx):
         await channel.send("⏰ Personne n'a collecté le Reiatsu cette fois...")
         await msg.clear_reactions()
     else:
-        add_reiatsu(user.id, 1)
-        total = get_reiatsu(user.id)
+        await asyncio.to_thread(add_reiatsu, user.id, 1)
+        total = await asyncio.to_thread(get_reiatsu, user.id)
         await channel.send(f"🎉 {user.mention} a collecté 1 Reiatsu ! Total: {total}")
         await msg.clear_reactions()
 
