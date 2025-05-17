@@ -140,6 +140,7 @@ async def spawn_reiatsu_event():
 async def check_reiatsu(ctx):
     total = await asyncio.to_thread(get_reiatsu, ctx.author.id)
     await ctx.send(f"{ctx.author.mention}, tu as {total} Reiatsu.")
+reiatsu.category = "Général"
 
 # Commande admin pour forcer l’apparition de Reiatsu
 @bot.command(name="testreiatsu", help="Force l'apparition d'un nuage de Reiatsu pour test (admin uniquement).")
@@ -235,7 +236,7 @@ async def help_command(ctx, commande: str = None):
         embed = discord.Embed(title="📜 Commandes par catégorie", color=discord.Color.blue())
 
         # Parcourir les catégories dans un ordre fixe
-        for cat in ["Général", "Fun", "Admin", "Autres"]:
+        for cat in ["Général", "Fun", "Admin", "Reiatsu", "Autres"]:
             cmds = categories.get(cat, [])
             if cmds:
                 # Trier les commandes par ordre alphabétique du nom
