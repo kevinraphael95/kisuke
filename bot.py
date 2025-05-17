@@ -332,6 +332,56 @@ async def parti(ctx):
     await ctx.send(f"🏛️ Voici un nom de parti politique : **{nom_parti}**")
 parti.category = "Fun"
 
+########## pendu ##########
+@bot.command(help="Joue au pendu avec des mots en lien avec Bleach.")
+async def pendu(ctx):
+    # Charger la liste des mots depuis le fichier
+    try:
+        with open("bleach_words.txt", "r", encoding="utf-8") as f:
+            mots = [ligne.strip().lower() for ligne in f if ligne.strip()]
+    except FileNotFoundError:
+        await ctx.send("Le fichier de mots n'a pas été trouvé.")
+        return
+
+    mot = random.choice(mots)
+    lettres_trouvees = set()
+    lettres_ratees = set()
+    vies = 7
+
+    def afficher_mot():
+        return " ".join(c if c in lettres_trouvees else "_" for c in mot)
+
+    await ctx.send(f"🎮 **Pendu Bleach !**\nMot à deviner : {afficher_mot()}\nVies restantes : {vies}")
+
+    def check(m):
+        return m.author == ctx.author and m.channel == ctx.channel and len(m.content) == 1 and m.content.isalpha()
+
+    while vies > 0 and set(mot) != lettres_trouvees:
+        try:
+            msg = await bot.wait_for('message', check=check, timeout=60)
+            lettre = msg.content.lower()
+
+            if lettre in lettres_trouvees or lettre in lettres_ratees:
+                await ctx.send("Tu as déjà proposé cette lettre.")
+                continue
+
+            if lettre in mot:
+                lettres_trouvees.add(lettre)
+                await ctx.send(f"Bonne lettre !\n{afficher_mot()}")
+            else:
+                vies -= 1
+                lettres_ratees.add(lettre)
+                await ctx.send(f"Mauvaise lettre ! Vies restantes : {vies}\nLettres déjà tentées : {', '.join(sorted(lettres_ratees))}\n{afficher_mot()}")
+
+        except asyncio.TimeoutError:
+            await ctx.send("⏰ Temps écoulé ! Partie terminée.")
+            return
+
+    if set(mot) == lettres_trouvees:
+        await ctx.send(f"🎉 Bravo, tu as deviné le mot : **{mot}** !")
+    else:
+        await ctx.send(f"💥 Tu as perdu ! Le mot était : **{mot}**.")
+pendu.category = "Fun"
 
 ########## perso ##########
 @bot.command(help="Découvre quel personnage de Bleach tu es (toujours le même pour toi).")
