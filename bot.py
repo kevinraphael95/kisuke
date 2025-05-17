@@ -3,6 +3,7 @@ from keep_alive import keep_alive  # Démarre le serveur web pour maintenir le b
 import os
 import random
 import asyncio
+import aiohttp
 from datetime import datetime
 from discord.ext import tasks, commands
 import discord
