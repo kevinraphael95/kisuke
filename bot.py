@@ -202,6 +202,13 @@ async def test_reiatsu_error(ctx, error):
 ########## général ##########
 #############################
 
+########## code ##########
+@bot.command(name="code", help="Envoie le lien du code source du bot.")
+async def code(ctx):
+    await ctx.send("📂 Voici le code source du bot sur GitHub :\n🔗 https://github.com/kevinraphael95/bleach-discord-bot-test")
+code.category = "Général"
+
+
 ########## 👋 Hello ##########
 @bot.command(help="Affiche un message de bienvenue aléatoire.")
 async def hello(ctx):
