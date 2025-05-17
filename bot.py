@@ -365,6 +365,57 @@ async def pof(ctx):
     await ctx.send(resultat)
 pof.category = "Fun"
 
+
+
+########## recommande ##########
+@bot.command(help="Recommande un jeu solo ou multijoueur. Utilisation : !recommande solo ou !recommande multi")
+async def recommande(ctx, mode: str = None):
+    if mode not in ["solo", "multi"]:
+        await ctx.send("Utilise `!recommande solo` ou `!recommande multi`.")
+        return
+
+    try:
+        with open("jeux.txt", "r", encoding="utf-8") as f:
+            contenu = f.read()
+
+        sections = {"solo": [], "multi": []}
+        current = None
+
+        for ligne in contenu.splitlines():
+            ligne = ligne.strip()
+            if ligne.lower() == "[solo]":
+                current = "solo"
+            elif ligne.lower() == "[multi]":
+                current = "multi"
+            elif ligne and current:
+                sections[current].append(ligne)
+
+        if sections[mode]:
+            jeu = random.choice(sections[mode])
+            type_jeu = "en solo" if mode == "solo" else "en multijoueur"
+
+            reponses = [
+                f"🎮 Tu devrais jouer à **{jeu}** ({type_jeu}) !",
+                f"🕹️ Pourquoi pas **{jeu}** ({type_jeu}) ?",
+                f"✨ Je te recommande **{jeu}** ({type_jeu}) !",
+                f"🔥 Allez hop, lance **{jeu}** ({type_jeu}) !",
+                f"🎲 Essaie **{jeu}** ({type_jeu}), tu vas kiffer.",
+                f"🤓 Je te propose **{jeu}** ({type_jeu}) aujourd’hui.",
+                f"💡 Et si tu testais **{jeu}** ({type_jeu}) ?",
+                f"📌 Mon choix du jour : **{jeu}** ({type_jeu}).",
+                f"🎉 Une bonne pioche : **{jeu}** ({type_jeu}) !",
+                f"⚔️ C’est le moment parfait pour jouer à **{jeu}** ({type_jeu})."
+            ]
+            await ctx.send(random.choice(reponses))
+        else:
+            await ctx.send(f"Aucun jeu trouvé dans la section [{mode}].")
+    
+    except FileNotFoundError:
+        await ctx.send("Le fichier `jeux.txt` est introuvable.")
+
+recommande.category = "Fun"
+
+
 #############################
 ########## admin ##########
 #############################
