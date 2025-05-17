@@ -368,12 +368,12 @@ pof.category = "Fun"
 
 
 ########## recommande ##########
-@bot.command()
+@bot.command(help="commande + solo ou multi. Le bot te recommande un jeu.")
 async def recommande(ctx, type_jeu: str = None):
     import random
 
     if type_jeu is None:
-        await ctx.send("❗ Utilisation : `!recommande solo` ou `!recommande multi`")
+        await ctx.send("Il faut ajouter l'argument 'solo' ou l'argument 'multi' à la commande pour que le bot recommande un jeu solo ou multijoueur.")
         return
 
     type_jeu = type_jeu.lower()
@@ -418,7 +418,7 @@ async def recommande(ctx, type_jeu: str = None):
         else:
             await ctx.send("⚠️ Aucun jeu multijoueur trouvé dans le fichier.")
     else:
-        await ctx.send("❗ Type inconnu. Utilise `!recommande solo` ou `!recommande multi`.")
+        await ctx.send("Il faut ajouter l'argument 'solo' ou l'argument 'multi' à la commande pour que le bot recommande un jeu solo ou multijoueur.")
 
 
 recommande.category = "Fun"
