@@ -161,6 +161,34 @@ async def check_reiatsu(ctx):
     await ctx.send(f"{ctx.author.mention}, tu as {total} Reiatsu.")
 
 
+@bot.command(name="testreiatsu", help="Force l'apparition d'un nuage de Reiatsu pour test.")
+@commands.has_permissions(administrator=True)  # facultatif : limiter aux admins
+async def test_reiatsu(ctx):
+    channel = ctx.channel
+    msg = await channel.send("⚡ **Un nuage de Reiatsu apparaît !** Réagis avec ⚡ pour le collecter !")
+    await msg.add_reaction(REACTION_EMOJI)
+
+    def check(reaction, user):
+        return (
+            str(reaction.emoji) == REACTION_EMOJI
+            and reaction.message.id == msg.id
+            and not user.bot
+        )
+
+    try:
+        reaction, user = await bot.wait_for("reaction_add", timeout=30.0, check=check)
+    except asyncio.TimeoutError:
+        await channel.send("⏰ Personne n'a collecté le Reiatsu cette fois...")
+        await msg.clear_reactions()
+    else:
+        user_id = str(user.id)
+        reiatsu_scores[user_id] = reiatsu_scores.get(user_id, 0) + 1
+        save_reiatsu_scores(reiatsu_scores)
+        await channel.send(f"🎉 {user.mention} a collecté 1 Reiatsu ! Total: {reiatsu_scores[user_id]}")
+        await msg.clear_reactions()
+
+
+
         
 #############################
 ########## général ##########
