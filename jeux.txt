@@ -1,4 +1,4 @@
-# SOLO
+[SOLO]
 The Witcher 3: Wild Hunt
 Red Dead Redemption 2
 The Legend of Zelda: Breath of the Wild
@@ -101,7 +101,7 @@ Toem
 Rogue Legacy 2
 Risk of Rain Returns (solo possible)
 
-# MULTI
+[MULTI]
 League of Legends
 Valorant
 Counter-Strike 2
