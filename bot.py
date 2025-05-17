@@ -368,52 +368,58 @@ pof.category = "Fun"
 
 
 ########## recommande ##########
-@bot.command(help="Recommande un jeu solo ou multijoueur. Utilisation : !recommande solo ou !recommande multi")
-async def recommande(ctx, mode: str = None):
-    if mode not in ["solo", "multi"]:
-        await ctx.send("Utilise `!recommande solo` ou `!recommande multi`.")
+@bot.command()
+async def recommande(ctx, type_jeu: str = None):
+    import random
+
+    if type_jeu is None:
+        await ctx.send("❗ Utilisation : `!recommande solo` ou `!recommande multi`")
         return
+
+    type_jeu = type_jeu.lower()
 
     try:
         with open("jeux.txt", "r", encoding="utf-8") as f:
-            contenu = f.read()
-
-        sections = {"solo": [], "multi": []}
-        current = None
-
-        for ligne in contenu.splitlines():
-            ligne = ligne.strip()
-            if ligne.lower() == "[solo]":
-                current = "solo"
-            elif ligne.lower() == "[multi]":
-                current = "multi"
-            elif ligne and current:
-                sections[current].append(ligne)
-
-        if sections[mode]:
-            jeu = random.choice(sections[mode])
-            type_jeu = "en solo" if mode == "solo" else "en multijoueur"
-
-            reponses = [
-                f"🎮 Tu devrais jouer à **{jeu}** ({type_jeu}) !",
-                f"🕹️ Pourquoi pas **{jeu}** ({type_jeu}) ?",
-                f"✨ Je te recommande **{jeu}** ({type_jeu}) !",
-                f"🔥 Allez hop, lance **{jeu}** ({type_jeu}) !",
-                f"🎲 Essaie **{jeu}** ({type_jeu}), tu vas kiffer.",
-                f"🤓 Je te propose **{jeu}** ({type_jeu}) aujourd’hui.",
-                f"💡 Et si tu testais **{jeu}** ({type_jeu}) ?",
-                f"📌 Mon choix du jour : **{jeu}** ({type_jeu}).",
-                f"🎉 Une bonne pioche : **{jeu}** ({type_jeu}) !",
-                f"⚔️ C’est le moment parfait pour jouer à **{jeu}** ({type_jeu})."
-            ]
-            await ctx.send(random.choice(reponses))
-        else:
-            await ctx.send(f"Aucun jeu trouvé dans la section [{mode}].")
-
+            lignes = f.readlines()
     except FileNotFoundError:
-        await ctx.send("Le fichier `jeux.txt` est introuvable.")
-    except Exception as e:
-        await ctx.send(f"Une erreur est survenue : {e}")
+        await ctx.send("❌ Fichier `jeux.txt` introuvable.")
+        return
+
+    jeux_solo = []
+    jeux_multi = []
+    section = None
+
+    for ligne in lignes:
+        ligne = ligne.strip()
+        if ligne == "[SOLO]":
+            section = "solo"
+            continue
+        elif ligne == "[MULTI]":
+            section = "multi"
+            continue
+        elif not ligne or ligne.startswith("#"):
+            continue  # ignorer les lignes vides ou commentaires
+
+        if section == "solo":
+            jeux_solo.append(ligne)
+        elif section == "multi":
+            jeux_multi.append(ligne)
+
+    if type_jeu == "solo":
+        if jeux_solo:
+            jeu = random.choice(jeux_solo)
+            await ctx.send(f"🎮 Jeu **solo** recommandé : **{jeu}**")
+        else:
+            await ctx.send("⚠️ Aucun jeu solo trouvé dans le fichier.")
+    elif type_jeu == "multi":
+        if jeux_multi:
+            jeu = random.choice(jeux_multi)
+            await ctx.send(f"🎮 Jeu **multijoueur** recommandé : **{jeu}**")
+        else:
+            await ctx.send("⚠️ Aucun jeu multijoueur trouvé dans le fichier.")
+    else:
+        await ctx.send("❗ Type inconnu. Utilise `!recommande solo` ou `!recommande multi`.")
+
 
 recommande.category = "Fun"
 
