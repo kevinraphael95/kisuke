@@ -2,6 +2,7 @@ from keep_alive import keep_alive  # Démarre le serveur web pour maintenir le b
 
 import io
 import os
+import ast
 import random
 import asyncio
 import aiohttp
