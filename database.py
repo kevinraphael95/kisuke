@@ -1,25 +1,33 @@
 import os
 import psycopg2
+from urllib.parse import urlparse
 
+# Connexion à la base de données via DATABASE_URL
 def get_connection():
+    url = os.getenv("DATABASE_URL")
+    result = urlparse(url)
+
     return psycopg2.connect(
-        dbname=os.getenv("DB_NAME"),
-        user=os.getenv("DB_USER"),
-        password=os.getenv("DB_PASSWORD"),
-        host=os.getenv("DB_HOST"),
-        port=os.getenv("DB_PORT")
+        dbname=result.path[1:],
+        user=result.username,
+        password=result.password,
+        host=result.hostname,
+        port=result.port
     )
 
+# Initialisation des tables
 def init_db():
     conn = get_connection()
     cur = conn.cursor()
-    # Table pour le score des utilisateurs
+
+    # Table pour les scores Reiatsu
     cur.execute("""
         CREATE TABLE IF NOT EXISTS reiatsu_scores (
             user_id TEXT PRIMARY KEY,
             score INTEGER NOT NULL
         );
     """)
+
     # Table pour le salon de spawn des Reiatsu par serveur
     cur.execute("""
         CREATE TABLE IF NOT EXISTS reiatsu_channels (
@@ -27,10 +35,12 @@ def init_db():
             channel_id TEXT NOT NULL
         );
     """)
+
     conn.commit()
     cur.close()
     conn.close()
 
+# Obtenir le score d’un utilisateur
 def get_reiatsu(user_id):
     conn = get_connection()
     cur = conn.cursor()
@@ -40,6 +50,7 @@ def get_reiatsu(user_id):
     conn.close()
     return row[0] if row else 0
 
+# Ajouter du Reiatsu à un utilisateur
 def add_reiatsu(user_id, amount=1):
     conn = get_connection()
     cur = conn.cursor()
@@ -53,6 +64,7 @@ def add_reiatsu(user_id, amount=1):
     cur.close()
     conn.close()
 
+# Définir le salon pour les apparitions de Reiatsu
 def set_reiatsu_channel(guild_id, channel_id):
     conn = get_connection()
     cur = conn.cursor()
@@ -66,6 +78,7 @@ def set_reiatsu_channel(guild_id, channel_id):
     cur.close()
     conn.close()
 
+# Obtenir le salon défini pour un serveur
 def get_reiatsu_channel(guild_id):
     conn = get_connection()
     cur = conn.cursor()
