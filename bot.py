@@ -32,6 +32,8 @@ def get_prefix(bot, message):
 # Intents
 intents = discord.Intents.default()
 intents.message_content = True
+intents.reactions = True
+intents.members = True
 
 # Création du bot
 bot = commands.Bot(command_prefix=get_prefix, intents=intents, help_command=None)
@@ -57,6 +59,104 @@ async def on_message(message):
         )
     else:
         await bot.process_commands(message)
+
+#############################
+########## daily reiatsu ##########
+#############################
+
+REIATSU_FILE = "reiatsu_scores.json"
+MAX_EVENTS_PER_DAY = 4
+REACTION_EMOJI = "⚡"  # Par exemple un éclair, tu peux changer
+
+# Stocke les événements par jour (date : nb événements)
+events_today = 0
+today_date = datetime.now().date()
+
+# Chargement et sauvegarde des scores
+def load_reiatsu_scores():
+    try:
+        with open(REIATSU_FILE, "r") as f:
+            return json.load(f)
+    except:
+        return {}
+
+def save_reiatsu_scores(data):
+    with open(REIATSU_FILE, "w") as f:
+        json.dump(data, f, indent=4)
+
+reiatsu_scores = load_reiatsu_scores()
+
+# Reset compteur quotidien
+@tasks.loop(minutes=1)
+async def reset_daily_counter():
+    global events_today, today_date
+    now = datetime.now().date()
+    if now != today_date:
+        today_date = now
+        events_today = 0
+        print("Compteur d'événements Reiatsu remis à zéro pour la nouvelle journée.")
+
+# Tâche pour faire apparaître Reiatsu aléatoirement (ex. toutes les 1-3h)
+@tasks.loop(seconds=60)  # vérifie toutes les minutes pour optimiser, mais poste moins souvent
+async def spawn_reiatsu_event():
+    global events_today
+    if events_today >= MAX_EVENTS_PER_DAY:
+        return  # Limite atteinte aujourd'hui
+
+    # On décide aléatoirement si on spawn (ex: 1 chance sur 60 chaque minute = 1 spawn par heure en moyenne)
+    if random.randint(1, 60) == 1:
+        events_today += 1
+
+        # Choisis un canal texte où poster (ici premier canal du serveur, adapte selon besoin)
+        for guild in bot.guilds:
+            channel = guild.text_channels[0]  # À changer selon préférence
+
+            # Post message événement
+            msg = await channel.send("⚡ **Un nuage de Reiatsu apparaît !** Réagis avec ⚡ pour le collecter !")
+
+            # Ajoute la réaction pour faciliter la collecte
+            await msg.add_reaction(REACTION_EMOJI)
+
+            def check(reaction, user):
+                return (
+                    str(reaction.emoji) == REACTION_EMOJI
+                    and reaction.message.id == msg.id
+                    and not user.bot
+                )
+
+            try:
+                # Attend la première réaction pendant 30 secondes
+                reaction, user = await bot.wait_for("reaction_add", timeout=30.0, check=check)
+            except asyncio.TimeoutError:
+                await channel.send("⏰ Personne n'a collecté le Reiatsu cette fois...")
+                await msg.clear_reactions()
+            else:
+                # Donne un Reiatsu au user
+                user_id = str(user.id)
+                reiatsu_scores[user_id] = reiatsu_scores.get(user_id, 0) + 1
+                save_reiatsu_scores(reiatsu_scores)
+
+                await channel.send(f"🎉 {user.mention} a collecté 1 Reiatsu ! Total: {reiatsu_scores[user_id]}")
+
+                # Supprime les réactions pour éviter plusieurs collectes sur ce message
+                await msg.clear_reactions()
+
+            break  # On spawn qu'une fois par loop
+
+@bot.event
+async def on_ready():
+    print(f"Connecté en tant que {bot.user}!")
+    reset_daily_counter.start()
+    spawn_reiatsu_event.start()
+
+# Commande pour afficher son total de Reiatsu
+@bot.command(name="reiatsu")
+async def check_reiatsu(ctx):
+    user_id = str(ctx.author.id)
+    total = reiatsu_scores.get(user_id, 0)
+    await ctx.send(f"{ctx.author.mention}, tu as {total} Reiatsu.")
+
+
         
 #############################
 ########## général ##########
