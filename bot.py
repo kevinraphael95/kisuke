@@ -157,6 +157,38 @@ say.category = "Général"
 ########## fun ##########
 #############################
 
+
+########## bleachmoji ##########
+@bot.command()
+async def bleachmoji(ctx):
+    try:
+        with open("bleach_emojis.txt", "r", encoding="utf-8") as f:
+            lignes = f.readlines()
+
+        if not lignes:
+            await ctx.send("Le fichier d'emojis est vide.")
+            return
+
+        ligne = random.choice(lignes).strip()
+        if not ligne:
+            await ctx.send("Erreur de lecture du fichier.")
+            return
+
+        parts = ligne.split("|")
+        if len(parts) != 4:
+            await ctx.send("Erreur dans le format d'une ligne du fichier.")
+            return
+
+        nom, e1, e2, e3 = parts
+        emojis = random.choice([e1, e2, e3])
+        await ctx.send(f"**{nom}** est représenté par : {emojis}")
+
+    except FileNotFoundError:
+        await ctx.send("Fichier `bleach_emojis.txt` introuvable.")
+    except Exception as e:
+        await ctx.send(f"Erreur : {e}")
+bleachmoji.category = "Fun"
+
 ########## dog ##########
 @bot.command()
 async def dog(ctx):
