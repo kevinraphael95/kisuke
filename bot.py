@@ -9,9 +9,8 @@ import aiohttp
 from datetime import datetime
 from discord.ext import tasks, commands
 import discord
-from database import init_db, get_reiatsu, add_reiatsu
 from dotenv import load_dotenv
-from database import set_reiatsu_channel, get_reiatsu_channel
+
 
 
 # Répertoire de travail
