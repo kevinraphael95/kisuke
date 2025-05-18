@@ -291,8 +291,9 @@ async def combat_bleach(ctx):
         tour_order = [p1, p2] if p1_init >= p2_init else [p2, p1]
 
         def format_etat(p):
-            status = f"🌀 Effet : {p['status']} ({p['status_duree']} tour(s) restant)" if p["status"] else "✅ Aucun effet"
-            return f"**{p['nom']}** — ❤️ {p['vie']} PV | 🔋 {p['energie']} énergie | {status}"
+    status = f"🌀 Effet : {p['status']} ({p['status_duree']} tour(s) restant)" if p["status"] else "✅ Aucun effet"
+    vie_bar = barre_vie(p["vie"])
+    return f"**{p['nom']}**\n{vie_bar} | 🔋 {p['energie']} énergie\n{status}"
 
         log = f"⚔️ **Combat entre {p1['nom']} et {p2['nom']} !**\n\n"
 
