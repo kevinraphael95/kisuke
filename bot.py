@@ -16,10 +16,12 @@ from database import set_reiatsu_channel, get_reiatsu_channel
 
 # Répertoire de travail
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
-
 # Charger les variables d’environnement
 load_dotenv()
+# Initialiser la base de données Supabase
+init_db()
 TOKEN = os.getenv("DISCORD_TOKEN")
+
 
 # Préfixe dynamique
 def get_prefix(bot, message):
