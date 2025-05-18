@@ -470,30 +470,30 @@ parti.category = "Fun"
 
 
 ########## pendu ##########
-import discord
-from discord.ext import commands
-import aiohttp
-
 pendu_games = {}
 
 @bot.command(name="pendu", help="Lance une partie de pendu avec un mot aléatoire.")
 async def pendu(ctx):
-    # Vérifie si une partie est déjà en cours dans ce salon
     if ctx.channel.id in pendu_games:
-        await ctx.send("❌ Une partie de pendu est déjà en cours dans ce salon. Termine-la avant d'en commencer une nouvelle.")
+        await ctx.send("❌ Une partie de pendu est déjà en cours dans ce salon.")
         return
 
     async with aiohttp.ClientSession() as session:
-        async with session.get("https://trouve-mot.fr/api/random") as resp:
-            if resp.status != 200:
-                await ctx.send("❌ Impossible de récupérer un mot pour le pendu, réessaie plus tard.")
-                return
-            data = await resp.json()
+        try:
+            async with session.get("https://trouve-mot.fr/api/random") as resp:
+                if resp.status != 200:
+                    await ctx.send("❌ Impossible de récupérer un mot. Réessaie plus tard.")
+                    return
+                data = await resp.json()
+        except Exception as e:
+            await ctx.send("❌ Une erreur est survenue lors de la récupération du mot.")
+            return
 
-    # L’API renvoie une liste, on prend le premier élément et sa clé 'word'
+    if not data or "word" not in data[0]:
+        await ctx.send("❌ Réponse invalide de l'API. Réessaie.")
+        return
+
     word = data[0]["word"].lower()
-
-    # Initialise le mot masqué avec des _
     masked_word = ["_" if c.isalpha() else c for c in word]
 
     pendu_games[ctx.channel.id] = {
@@ -505,49 +505,55 @@ async def pendu(ctx):
 
     await ctx.send(
         f"🪢 Partie de pendu commencée !\nMot : `{' '.join(masked_word)}`\n"
-        f"Tente ta chance en proposant une lettre avec `{ctx.prefix}lettre <lettre>`."
+        f"Propose une lettre avec `{ctx.prefix}lettre <lettre>`."
     )
 
 @bot.command(name="lettre", help="Propose une lettre pour la partie de pendu en cours.")
 async def lettre(ctx, lettre: str):
     jeu = pendu_games.get(ctx.channel.id)
     if not jeu:
-        await ctx.send("❌ Il n'y a pas de partie de pendu en cours dans ce salon. Lance-en une avec `pendu`.")
+        await ctx.send("❌ Il n'y a pas de partie en cours ici. Lance-en une avec `!pendu`.")
         return
 
     lettre = lettre.lower()
     if len(lettre) != 1 or not lettre.isalpha():
-        await ctx.send("❌ Propose une seule lettre valide (a-z).")
+        await ctx.send("❌ Propose une seule lettre entre a et z.")
         return
 
     if lettre in jeu["guessed_letters"]:
-        await ctx.send(f"⚠️ Tu as déjà proposé la lettre `{lettre}`.")
+        await ctx.send(f"⚠️ La lettre `{lettre}` a déjà été proposée.")
         return
 
     jeu["guessed_letters"].add(lettre)
 
     if lettre in jeu["word"]:
-        # Remplace les _ par la lettre dans masked_word
         for i, c in enumerate(jeu["word"]):
             if c == lettre:
                 jeu["masked_word"][i] = lettre
 
         if "_" not in jeu["masked_word"]:
-            await ctx.send(f"🎉 Bravo {ctx.author.mention}, tu as deviné le mot : **{jeu['word']}** !")
+            await ctx.send(f"🎉 Bravo {ctx.author.mention}, tu as trouvé le mot : **{jeu['word']}** !")
             del pendu_games[ctx.channel.id]
         else:
-            await ctx.send(f"✅ Bien joué ! Mot : `{' '.join(jeu['masked_word'])}`\nLettres déjà proposées : {', '.join(sorted(jeu['guessed_letters']))}\nTentatives restantes : {jeu['attempts_left']}")
+            await ctx.send(
+                f"✅ Bonne lettre !\nMot : `{' '.join(jeu['masked_word'])}`\n"
+                f"Lettres proposées : {', '.join(sorted(jeu['guessed_letters']))}\n"
+                f"Tentatives restantes : {jeu['attempts_left']}"
+            )
     else:
         jeu["attempts_left"] -= 1
         if jeu["attempts_left"] <= 0:
-            await ctx.send(f"❌ Game over ! Tu as épuisé toutes tes tentatives. Le mot était **{jeu['word']}**.")
+            await ctx.send(f"💀 Perdu ! Le mot était **{jeu['word']}**.")
             del pendu_games[ctx.channel.id]
         else:
-            await ctx.send(f"❌ La lettre `{lettre}` n'est pas dans le mot.\nMot : `{' '.join(jeu['masked_word'])}`\nLettres déjà proposées : {', '.join(sorted(jeu['guessed_letters']))}\nTentatives restantes : {jeu['attempts_left']}")
+            await ctx.send(
+                f"❌ Mauvaise lettre.\nMot : `{' '.join(jeu['masked_word'])}`\n"
+                f"Lettres proposées : {', '.join(sorted(jeu['guessed_letters']))}\n"
+                f"Tentatives restantes : {jeu['attempts_left']}"
+            )
 
 pendu.category = "Fun"
 lettre.category = "Fun"
-
 
 
 
