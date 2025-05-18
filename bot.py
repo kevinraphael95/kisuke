@@ -188,11 +188,12 @@ cat.category = "Fun"
 @bot.command(name="chiffre")
 async def chiffre(ctx):
     number = random.randint(1, 100)
-    await ctx.send("🎯 J'ai choisi un nombre entre 1 et 100. Le premier à répondre avec le bon nombre **dans ce salon** gagne ! Vous avez 1 heure.")
+    await ctx.send(f"🎯 J'ai choisi un nombre entre 1 et 100. Le premier à répondre avec le bon nombre **dans ce salon** gagne ! Vous avez 1 heure.\n🔍 (Réponse pour test : **{number}**)")
 
     def check(m):
         return (
             m.channel == ctx.channel and
+            m.author != bot.user and
             m.content.isdigit() and
             int(m.content) == number
         )
@@ -201,7 +202,7 @@ async def chiffre(ctx):
         msg = await bot.wait_for("message", timeout=3600.0, check=check)
         await ctx.send(f"🎉 Bravo {msg.author.mention}, tu as trouvé le nombre **{number}** !")
     except asyncio.TimeoutError:
-        await ctx.send(f"⏰ Temps écoulé ! Personne n'a trouvé le nombre. C'était **{number}**.")  
+        await ctx.send(f"⏰ Temps écoulé ! Personne n'a trouvé le nombre. C'était **{number}**.")
 chiffre.category = "Fun"
 
 
