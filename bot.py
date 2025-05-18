@@ -181,7 +181,7 @@ async def bleachmoji(ctx):
 
         nom, e1, e2, e3 = parts
         emojis = random.choice([e1, e2, e3])
-        await ctx.send(f"**{nom}** est représenté par : {emojis}")
+        await ctx.send(f"{emojis} → ||{nom}||")
 
     except FileNotFoundError:
         await ctx.send("Fichier `bleach_emojis.txt` introuvable.")
