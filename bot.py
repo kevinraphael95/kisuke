@@ -468,6 +468,88 @@ async def parti(ctx):
 parti.category = "Fun"
 
 
+
+games = {}
+
+def format_word(word, guessed_letters):
+    return " ".join(c if c.lower() in guessed_letters else "▢" for c in word)
+
+@bot.command(name="pendu", help="Joue au pendu avec un mot aléatoire.")
+async def pendu(ctx):
+    if ctx.guild.id in games:
+        await ctx.send("❌ Une partie de pendu est déjà en cours dans ce serveur.")
+        return
+
+    async with aiohttp.ClientSession() as session:
+        async with session.get("https://trouve-mot.fr/api/random") as resp:
+            if resp.status != 200:
+                await ctx.send("❌ Impossible de récupérer un mot aléatoire pour le moment.")
+                return
+            data = await resp.json()
+            word = data["word"]
+
+    guessed_letters = set()
+    attempts_left = 6
+    display_word = format_word(word, guessed_letters)
+    await ctx.send(f"🕹️ Partie de pendu commencée ! Devine le mot :\n{display_word}\nTu as {attempts_left} essais.")
+
+    games[ctx.guild.id] = {
+        "word": word.lower(),
+        "guessed_letters": guessed_letters,
+        "attempts_left": attempts_left,
+        "channel": ctx.channel.id
+    }
+
+    def check(m):
+        return (
+            m.channel.id == ctx.channel.id
+            and m.author != bot.user
+            and len(m.content) == 1
+            and m.content.isalpha()
+            and ctx.guild.id in games
+            and m.channel.id == games[ctx.guild.id]["channel"]
+        )
+
+    while attempts_left > 0:
+        try:
+            msg = await bot.wait_for("message", check=check, timeout=120)
+        except asyncio.TimeoutError:
+            await ctx.send(f"⏰ Temps écoulé ! Le mot était : **{word}**. Fin de la partie.")
+            games.pop(ctx.guild.id, None)
+            return
+
+        letter = msg.content.lower()
+
+        if letter in guessed_letters:
+            await ctx.send(f"⚠️ La lettre `{letter}` a déjà été proposée.")
+            continue
+
+        guessed_letters.add(letter)
+
+        if letter in word.lower():
+            display_word = format_word(word, guessed_letters)
+            if "▢" not in display_word:
+                await ctx.send(f"🎉 Bravo {msg.author.mention}, tu as deviné le mot : **{word}** !")
+                games.pop(ctx.guild.id, None)
+                return
+            else:
+                await ctx.send(f"✅ Bonne lettre !\n{display_word}\nIl te reste {attempts_left} essais.")
+        else:
+            attempts_left -= 1
+            games[ctx.guild.id]["attempts_left"] = attempts_left
+            if attempts_left == 0:
+                await ctx.send(f"❌ Plus d'essais ! Le mot était : **{word}**. Fin de la partie.")
+                games.pop(ctx.guild.id, None)
+                return
+            else:
+                await ctx.send(f"❌ Mauvaise lettre !\n{display_word}\nIl te reste {attempts_left} essais.")
+
+    games.pop(ctx.guild.id, None)
+
+pendu.category = "Fun"
+
+
+
 ########## perso ##########
 @bot.command(help="Découvre quel personnage de Bleach tu es (toujours le même pour toi).")
 async def perso(ctx):
