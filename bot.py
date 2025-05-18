@@ -470,70 +470,83 @@ parti.category = "Fun"
 
 
 ########## pendu ##########
-@commands.command(name="pendu", help="Joue au pendu avec un mot aléatoire.")
-async def pendu(ctx):
-    await ctx.send("🕹️ Jeu du pendu lancé en DM...")
+import discord
+from discord.ext import commands
+import aiohttp
 
-    # Récupération du mot aléatoire via API
+pendu_games = {}
+
+@bot.command(name="pendu", help="Lance une partie de pendu avec un mot aléatoire.")
+async def pendu(ctx):
+    # Vérifie si une partie est déjà en cours dans ce salon
+    if ctx.channel.id in pendu_games:
+        await ctx.send("❌ Une partie de pendu est déjà en cours dans ce salon. Termine-la avant d'en commencer une nouvelle.")
+        return
+
     async with aiohttp.ClientSession() as session:
         async with session.get("https://trouve-mot.fr/api/random") as resp:
             if resp.status != 200:
-                await ctx.send("❌ Impossible de récupérer un mot aléatoire.")
+                await ctx.send("❌ Impossible de récupérer un mot pour le pendu, réessaie plus tard.")
                 return
             data = await resp.json()
-            if not data:
-                await ctx.send("❌ Aucun mot reçu de l'API.")
-                return
-            word = data[0]["word"].lower()
 
-    # Variables de jeu
-    guessed_letters = set()
-    tries_left = 6
-    display_word = ["_" if c.isalpha() else c for c in word]
+    # L’API renvoie une liste, on prend le premier élément et sa clé 'word'
+    word = data[0]["word"].lower()
 
-    def format_word():
-        return " ".join(display_word)
+    # Initialise le mot masqué avec des _
+    masked_word = ["_" if c.isalpha() else c for c in word]
 
-    def check(m):
-        return m.author == ctx.author and isinstance(m.channel, discord.DMChannel)
+    pendu_games[ctx.channel.id] = {
+        "word": word,
+        "masked_word": masked_word,
+        "attempts_left": 7,
+        "guessed_letters": set()
+    }
 
-    # Envoi du premier message dans les DM
-    dm = await ctx.author.create_dm()
-    await dm.send(f"🎮 Mot à deviner : {format_word()}\nTu as {tries_left} essais.\nPropose une lettre (envoie un message).")
+    await ctx.send(
+        f"🪢 Partie de pendu commencée !\nMot : `{' '.join(masked_word)}`\n"
+        f"Tente ta chance en proposant une lettre avec `{ctx.prefix}lettre <lettre>`."
+    )
 
-    while tries_left > 0 and "_" in display_word:
-        try:
-            msg = await ctx.bot.wait_for("message", timeout=120.0, check=check)
-        except asyncio.TimeoutError:
-            await dm.send("⏰ Temps écoulé, partie terminée !")
-            return
+@bot.command(name="lettre", help="Propose une lettre pour la partie de pendu en cours.")
+async def lettre(ctx, lettre: str):
+    jeu = pendu_games.get(ctx.channel.id)
+    if not jeu:
+        await ctx.send("❌ Il n'y a pas de partie de pendu en cours dans ce salon. Lance-en une avec `pendu`.")
+        return
 
-        guess = msg.content.lower()
-        if len(guess) != 1 or not guess.isalpha():
-            await dm.send("❌ Merci d'envoyer une seule lettre alphabétique.")
-            continue
+    lettre = lettre.lower()
+    if len(lettre) != 1 or not lettre.isalpha():
+        await ctx.send("❌ Propose une seule lettre valide (a-z).")
+        return
 
-        if guess in guessed_letters:
-            await dm.send(f"⚠️ Tu as déjà proposé la lettre `{guess}`.")
-            continue
+    if lettre in jeu["guessed_letters"]:
+        await ctx.send(f"⚠️ Tu as déjà proposé la lettre `{lettre}`.")
+        return
 
-        guessed_letters.add(guess)
+    jeu["guessed_letters"].add(lettre)
 
-        if guess in word:
-            for i, c in enumerate(word):
-                if c == guess:
-                    display_word[i] = guess
-            await dm.send(f"✅ Bien joué !\n{format_word()}\nEssais restants : {tries_left}")
+    if lettre in jeu["word"]:
+        # Remplace les _ par la lettre dans masked_word
+        for i, c in enumerate(jeu["word"]):
+            if c == lettre:
+                jeu["masked_word"][i] = lettre
+
+        if "_" not in jeu["masked_word"]:
+            await ctx.send(f"🎉 Bravo {ctx.author.mention}, tu as deviné le mot : **{jeu['word']}** !")
+            del pendu_games[ctx.channel.id]
         else:
-            tries_left -= 1
-            await dm.send(f"❌ Lettre `{guess}` incorrecte.\n{format_word()}\nEssais restants : {tries_left}")
-
-    if "_" not in display_word:
-        await dm.send(f"🎉 Bravo ! Tu as trouvé le mot `{word}`.")
+            await ctx.send(f"✅ Bien joué ! Mot : `{' '.join(jeu['masked_word'])}`\nLettres déjà proposées : {', '.join(sorted(jeu['guessed_letters']))}\nTentatives restantes : {jeu['attempts_left']}")
     else:
-        await dm.send(f"💀 Partie terminée. Le mot était `{word}`.")
+        jeu["attempts_left"] -= 1
+        if jeu["attempts_left"] <= 0:
+            await ctx.send(f"❌ Game over ! Tu as épuisé toutes tes tentatives. Le mot était **{jeu['word']}**.")
+            del pendu_games[ctx.channel.id]
+        else:
+            await ctx.send(f"❌ La lettre `{lettre}` n'est pas dans le mot.\nMot : `{' '.join(jeu['masked_word'])}`\nLettres déjà proposées : {', '.join(sorted(jeu['guessed_letters']))}\nTentatives restantes : {jeu['attempts_left']}")
 
 pendu.category = "Fun"
+lettre.category = "Fun"
 
 
 
