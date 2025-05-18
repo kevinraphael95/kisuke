@@ -185,45 +185,53 @@ async def cat(ctx):
 cat.category = "Fun"
 
 ########## chiffre ##########
-# Dictionnaire pour suivre l'état des jeux par salon
-active_games = set()
+# Suivi des jeux actifs par salon
+active_games = {}
 
 @bot.command(name="chiffre")
 async def chiffre(ctx):
     if ctx.channel.id in active_games:
-        await ctx.send("⚠️ Un jeu est déjà en cours dans ce salon. Attendez qu’il soit terminé.")
+        await ctx.send("⚠️ Un jeu est déjà en cours dans ce salon. Attendez qu’il soit terminé ou utilisez `!cancel` pour l'annuler.")
         return
 
-    active_games.add(ctx.channel.id)
     number = random.randint(1, 100)
-    await ctx.send(f"🎯 J'ai choisi un nombre entre 1 et 100. Le premier à répondre avec le bon nombre **dans ce salon** gagne ! Vous avez 1 heure.\n🔍 (Réponse pour test : **{number}**)")
+    await ctx.send(
+        f"🎯 J'ai choisi un nombre entre 1 et 100. Le premier à répondre avec le bon nombre **dans ce salon** gagne ! Vous avez 1 heure.\n"
+        f"🔍 (Réponse pour test : **{number}**)"
+    )
 
-    def check(m):
-        return (
-            m.channel == ctx.channel and
-            m.author != bot.user and
-            m.content.isdigit() and
-            int(m.content) == number
-        )
+    # Crée une tâche pour ce salon
+    async def wait_for_answer():
+        def check(m):
+            return (
+                m.channel == ctx.channel and
+                m.author != bot.user and
+                m.content.isdigit() and
+                int(m.content) == number
+            )
+        try:
+            msg = await bot.wait_for("message", timeout=3600.0, check=check)
+            await ctx.send(f"🎉 Bravo {msg.author.mention}, tu as trouvé le nombre **{number}** !")
+        except asyncio.TimeoutError:
+            await ctx.send(f"⏰ Temps écoulé ! Personne n'a trouvé le nombre. C'était **{number}**.")
+        finally:
+            active_games.pop(ctx.channel.id, None)
 
-    try:
-        msg = await bot.wait_for("message", timeout=3600.0, check=check)
-        await ctx.send(f"🎉 Bravo {msg.author.mention}, tu as trouvé le nombre **{number}** !")
-    except asyncio.TimeoutError:
-        await ctx.send(f"⏰ Temps écoulé ! Personne n'a trouvé le nombre. C'était **{number}**.")
-    finally:
-        active_games.remove(ctx.channel.id)
+    task = asyncio.create_task(wait_for_answer())
+    active_games[ctx.channel.id] = task
 
-@bot.command()
+@bot.command(name="cancel")
 async def cancel(ctx):
-    global game_in_progress
-    if game_in_progress:
-        game_in_progress = False
-        await ctx.send("Le jeu a été annulé.")
+    task = active_games.pop(ctx.channel.id, None)
+    if task:
+        task.cancel()
+        await ctx.send("🚫 Le jeu a été annulé dans ce salon.")
     else:
-        await ctx.send("Aucun jeu en cours à annuler.")
+        await ctx.send("❌ Aucun jeu en cours à annuler dans ce salon.")
 
+# Optionnel : catégorisation
 chiffre.category = "Fun"
+cancel.category = "Fun"
 
 
 
