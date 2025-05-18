@@ -16,10 +16,10 @@ from database import set_reiatsu_channel, get_reiatsu_channel
 
 # Répertoire de travail
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
+
 # Charger les variables d’environnement
 load_dotenv()
-# Initialiser la base de données Supabase
-init_db()
+
 TOKEN = os.getenv("DISCORD_TOKEN")
 
 
@@ -66,125 +66,6 @@ async def on_message(message):
         )
     else:
         await bot.process_commands(message)
-
-#############################
-########## daily reiatsu ##########
-#############################
-
-import asyncio
-import random
-from datetime import datetime
-from discord.ext import commands, tasks
-import discord
-
-MAX_EVENTS_PER_DAY = 4
-REACTION_EMOJI = "⚡"
-
-# 👉 Commande pour définir le salon de spawn
-@bot.command(name="setreiatsu", help="Définit ce salon pour les apparitions de Reiatsu (admin uniquement).")
-@commands.has_permissions(administrator=True)
-async def setreiatsu(ctx):
-    await asyncio.to_thread(set_reiatsu_channel, ctx.guild.id, ctx.channel.id)
-    await ctx.send(f"✅ Les Reiatsu apparaîtront désormais dans {ctx.channel.mention}.")
-setreiatsu.category = "Reiatsu"
-
-# 👉 Compteur d'événements par jour
-events_today = 0
-today_date = datetime.now().date()
-
-# ⏲️ Reset automatique chaque jour
-@tasks.loop(minutes=1)
-async def reset_daily_counter():
-    global events_today, today_date
-    now = datetime.now().date()
-    if now != today_date:
-        today_date = now
-        events_today = 0
-        print("🔁 Compteur Reiatsu remis à zéro pour la journée.")
-
-# 🌩️ Spawn aléatoire de Reiatsu
-@tasks.loop(seconds=60)
-async def spawn_reiatsu_event():
-    global events_today
-    if events_today >= MAX_EVENTS_PER_DAY:
-        return
-
-    if random.randint(1, 60) == 1:  # ~1 fois par heure
-        events_today += 1
-
-        for guild in bot.guilds:
-            channel_id = await asyncio.to_thread(get_reiatsu_channel, guild.id)
-            if not channel_id:
-                continue
-
-            channel = guild.get_channel(channel_id)
-            if not channel or not channel.permissions_for(guild.me).send_messages:
-                continue
-
-            print(f"⚡ Apparition de Reiatsu dans {guild.name}#{channel.name}")
-            msg = await channel.send("⚡ **Un nuage de Reiatsu apparaît !** Réagis avec ⚡ pour le collecter !")
-            await msg.add_reaction(REACTION_EMOJI)
-
-            def check(reaction, user):
-                return (
-                    str(reaction.emoji) == REACTION_EMOJI
-                    and reaction.message.id == msg.id
-                    and not user.bot
-                )
-
-            try:
-                reaction, user = await bot.wait_for("reaction_add", timeout=7200.0, check=check)
-            except asyncio.TimeoutError:
-                await channel.send("⏰ Personne n'a collecté le Reiatsu cette fois...")
-                await msg.clear_reactions()
-            else:
-                await asyncio.to_thread(add_reiatsu, user.id, 1)
-                total = await asyncio.to_thread(get_reiatsu, user.id)
-                await channel.send(f"🎉 {user.mention} a collecté 1 Reiatsu ! Total: {total}")
-                await msg.clear_reactions()
-
-            break  # Un seul événement à la fois
-
-# 👉 Commande pour consulter son total
-@bot.command(name="reiatsu", help="Affiche le total de Reiatsu que tu as collecté.")
-async def reiatsu(ctx):
-    total = await asyncio.to_thread(get_reiatsu, ctx.author.id)
-    await ctx.send(f"{ctx.author.mention}, tu as {total} Reiatsu.")
-reiatsu.category = "Reiatsu"
-
-# 👉 Commande pour tester manuellement (admin)
-@bot.command(name="testreiatsu", help="Force l'apparition d'un nuage de Reiatsu pour test (admin uniquement).")
-@commands.has_permissions(administrator=True)
-async def testreiatsu(ctx):
-    channel = ctx.channel
-    msg = await channel.send("⚡ **Un nuage de Reiatsu apparaît !** Réagis avec ⚡ pour le collecter !")
-    await msg.add_reaction(REACTION_EMOJI)
-
-    def check(reaction, user):
-        return (
-            str(reaction.emoji) == REACTION_EMOJI
-            and reaction.message.id == msg.id
-            and not user.bot
-        )
-
-    try:
-        reaction, user = await bot.wait_for("reaction_add", timeout=7200.0, check=check)
-    except asyncio.TimeoutError:
-        await channel.send("⏰ Personne n'a collecté le Reiatsu cette fois...")
-        await msg.clear_reactions()
-    else:
-        await asyncio.to_thread(add_reiatsu, user.id, 1)
-        total = await asyncio.to_thread(get_reiatsu, user.id)
-        await channel.send(f"🎉 {user.mention} a collecté 1 Reiatsu ! Total: {total}")
-        await msg.clear_reactions()
-testreiatsu.category = "Reiatsu"
-
-@testreiatsu.error
-async def testreiatsu_error(ctx, error):
-    if isinstance(error, commands.MissingPermissions):
-        await ctx.send("❌ Tu dois être **administrateur** pour utiliser cette commande.")
-    else:
-        raise error
 
         
 #############################
