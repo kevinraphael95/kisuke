@@ -342,20 +342,27 @@ async def combat_bleach(ctx):
                 modificateur = max(0, modificateur)
                 total_degats = base_degats + modificateur
 
-                # Esquive
-                esquive_chance = min(defenseur["stats"]["mobilité"] / 40 + random.uniform(0, 0.2), 0.5)
-                if random.random() < esquive_chance:
-                    log += f"💨 {defenseur['nom']} esquive l'attaque **{attaque['nom']}** avec le Shunpo !\n"
-                    if random.random() < 0.2:
-                        contre = 10 + defenseur["stats"]["attaque"] // 2
-                        attaquant["vie"] -= contre
-                        log += f"🔁 {defenseur['nom']} contre-attaque et inflige {contre} dégâts à {attaquant['nom']} !\n"
-                        if attaquant["vie"] <= 0:
-                            log += f"\n🏆 **{defenseur['nom']} remporte le combat par contre-attaque !**"
-                            await ctx.send(log)
-                            return
-                    log += "\n"
-                    continue
+                # Esquive avec coût d'énergie
+esquive_chance = min(defenseur["stats"]["mobilité"] / 40 + random.uniform(0, 0.2), 0.5)
+cout_esquive = 50 if attaque["type"] == "ultime" else 10
+
+if random.random() < esquive_chance and defenseur["energie"] >= cout_esquive:
+    defenseur["energie"] -= cout_esquive
+    log += f"💨 {defenseur['nom']} esquive l'attaque **{attaque['nom']}** avec le Shunpo ! (-{cout_esquive} énergie)\n"
+    
+    if random.random() < 0.2:
+        contre = 10 + defenseur["stats"]["attaque"] // 2
+        attaquant["vie"] -= contre
+        log += f"🔁 {defenseur['nom']} contre-attaque et inflige {contre} dégâts à {attaquant['nom']} !\n"
+        if attaquant["vie"] <= 0:
+            log += f"\n🏆 **{defenseur['nom']} remporte le combat par contre-attaque !**"
+            await ctx.send(log)
+            return
+    log += "\n"
+    continue
+elif random.random() < esquive_chance:
+    log += f"⚡ {defenseur['nom']} **aurait pu esquiver**, mais manque d'énergie (besoin de {cout_esquive}) !\n"
+
 
                 # Coup critique
                 critique = random.random() < min(0.1 + attaquant["stats"]["force"] / 50, 0.4)
