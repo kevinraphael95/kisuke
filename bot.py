@@ -329,6 +329,26 @@ async def combat_bleach(ctx):
         await ctx.send(f"⚠️ Une erreur est survenue : {e}")
 combat_bleach.category = "Fun"
 
+########## funfact ##########
+@bot.command(name="funfact")
+async def funfact(ctx):
+    try:
+        with open("funfacts.txt", "r", encoding="utf-8") as f:
+            facts = [line.strip() for line in f if line.strip()]
+        
+        if not facts:
+            await ctx.send("❌ Aucun fun fact disponible.")
+            return
+        
+        fact = random.choice(facts)
+        await ctx.send(f"🧠 **Fun Fact Bleach :** {fact}")
+    except FileNotFoundError:
+        await ctx.send("❌ Fichier `funfacts.txt` introuvable.")
+    except Exception as e:
+        await ctx.send(f"⚠️ Une erreur est survenue : {e}")
+
+funfact.category = "Fun"
+
 
 ########## parti ##########
 @bot.command(help="Génère un nom de parti politique aléatoire.")
