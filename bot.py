@@ -78,7 +78,7 @@ async def set_reiatsu(ctx):
     # Appel bloquant donc on utilise to_thread
     await asyncio.to_thread(set_reiatsu_channel, ctx.guild.id, ctx.channel.id)
     await ctx.send(f"✅ Les Reiatsu apparaîtront désormais dans {ctx.channel.mention}.")
-
+setreiatsu.category="Reiatsu"
 
 events_today = 0
 today_date = datetime.now().date()
@@ -140,7 +140,7 @@ async def spawn_reiatsu_event():
 async def check_reiatsu(ctx):
     total = await asyncio.to_thread(get_reiatsu, ctx.author.id)
     await ctx.send(f"{ctx.author.mention}, tu as {total} Reiatsu.")
-reiatsu.category = "Général"
+reiatsu.category = "Reiatsu"
 
 # Commande admin pour forcer l’apparition de Reiatsu
 @bot.command(name="testreiatsu", help="Force l'apparition d'un nuage de Reiatsu pour test (admin uniquement).")
@@ -223,6 +223,7 @@ async def help_command(ctx, commande: str = None):
             "Général": [],
             "Fun": [],
             "Admin": [],
+            "Reiatsu": [],
             "Autres": []
         }
 
