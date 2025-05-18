@@ -213,7 +213,18 @@ async def chiffre(ctx):
         await ctx.send(f"⏰ Temps écoulé ! Personne n'a trouvé le nombre. C'était **{number}**.")
     finally:
         active_games.remove(ctx.channel.id)
+
+@bot.command()
+async def cancel(ctx):
+    global game_in_progress
+    if game_in_progress:
+        game_in_progress = False
+        await ctx.send("Le jeu a été annulé.")
+    else:
+        await ctx.send("Aucun jeu en cours à annuler.")
+
 chiffre.category = "Fun"
+
 
 
 ########## combat ##########
