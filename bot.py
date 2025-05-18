@@ -234,6 +234,14 @@ chiffre.category = "Fun"
 cancel.category = "Fun"
 
 
+########## barres de vie pour la commande combat ##########
+def barre_vie(pv):
+    total = 20
+    p = max(0, min(100, pv))
+    rempli = int((p / 100) * total)
+    vide = total - rempli
+    return f"[{'█' * rempli}{'░' * vide}] {p} PV"
+
 
 ########## combat ##########
 @bot.command(name="combat", help="Simule un combat entre 2 personnages de Bleach avec stats et effets.")
