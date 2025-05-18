@@ -3,6 +3,7 @@ from keep_alive import keep_alive  # Démarre le serveur web pour maintenir le b
 import os
 import io
 import ast
+import asyncio
 import aiohttp
 import discord
 from discord.ext import commands
@@ -183,6 +184,25 @@ async def cat(ctx):
 
 cat.category = "Fun"
 
+########## chiffre ##########
+@bot.command(name="chiffre")
+async def chiffre(ctx):
+    number = random.randint(1, 100)
+    await ctx.send("🎯 J'ai choisi un nombre entre 1 et 100. Le premier à répondre avec le bon nombre **dans ce salon** gagne ! Vous avez 1 heure.")
+
+    def check(m):
+        return (
+            m.channel == ctx.channel and
+            m.content.isdigit() and
+            int(m.content) == number
+        )
+
+    try:
+        msg = await bot.wait_for("message", timeout=3600.0, check=check)
+        await ctx.send(f"🎉 Bravo {msg.author.mention}, tu as trouvé le nombre **{number}** !")
+    except asyncio.TimeoutError:
+        await ctx.send(f"⏰ Temps écoulé ! Personne n'a trouvé le nombre. C'était **{number}**.")  
+chiffre.category = "Fun"
 
 
 ########## combat ##########
