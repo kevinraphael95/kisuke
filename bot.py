@@ -63,6 +63,12 @@ async def on_message(message):
 ########## général ##########
 #############################
 
+########## Code ##########
+@bot.command()
+async def code(ctx):
+    await ctx.send("🔗 Code source du bot : https://github.com/kevinraphael95/bleach-discord-bot-test")
+code.category = "Général"
+
 ########## 👋 Hello ##########
 @bot.command(help="Affiche un message de bienvenue aléatoire.")
 async def hello(ctx):
