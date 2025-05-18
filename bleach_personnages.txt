@@ -1,7 +1,7 @@
 Ichigo Kurosaki|15,12,14,16,10,13|Getsuga Tensho:30:20:Onde d'énergie:normale|Zangetsu Rush:28:18:Coup croisé:normale|Final Getsuga:35:25:Explosion noire:normale|Mugetsu:60:40:Oblitération:ultime
 Rukia Kuchiki|11,13,13,18,14,11|Sode no Shirayuki:22:15:Gel partiel:normale|Tsugi no mai, Hakuren:27:18:Souffle glacé:normale|Tsugi no mai, Tsukishiro:25:15:Gel spatial:normale|Hakka no Togame:55:40:Congélation totale:ultime
 Renji Abarai|14,13,13,14,10,16|Zabimaru Allonge:28:20:Frappe étendue:normale|Zabimaru Rugissement:26:15:Onde de choc:normale|Zabimaru Spirale:30:20:Tranchant circulaire:normale|Hihiō Zabimaru:58:40:Fureur bestiale:ultime
-Byakuya Kuchiki|13,14,16,17,11,9|Senbonzakura:25:15:Lames florales:normale|Senkei:30:20:Tranchant pur:normale|Shukei: Hakuteiken:33:25:Épée blanche:normale|Bankai Kageyoshi:60:40:Mille pétales destructeurs:ultime
+Byakuya Kuchiki|13,14,16,17,11,9|Senbonzakura:25:15:Lames florales:normale|Senkei:30:20:Tranchant pur:normale|Shukei - Hakuteiken:33:25:Épée blanche:normale|Bankai Kageyoshi:60:40:Mille pétales destructeurs:ultime
 Tōshirō Hitsugaya|13,14,12,18,12,11|Hyōrinmaru:26:18:Dragon de glace:normale|Ryūsenka:24:15:Gel destructeur:normale|Sennen Hyōrō:28:20:Prison glacée:normale|Daiguren Hyōrinmaru:55:40:Tempête glaciale:ultime
 Kenpachi Zaraki|18,12,10,10,9,21|Coup Brutal:35:25:Tranchant furieux:normale|Charge Sauvage:30:20:Impact total:normale|Cri de Guerre:33:25:Intimidation:normale|No Eyepatch:60:40:Puissance déchaînée:ultime
 Mayuri Kurotsuchi|12,12,10,20,18,8|Ashisogi Jizō:20:10:Paralysie:normale|Neurotoxines:24:15:Altération mentale:normale|Gaz Corrosif:26:18:Affaiblissement:normale|Bankai: Jōkaku Enran:50:40:Empoisonnement total:ultime
