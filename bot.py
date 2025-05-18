@@ -242,7 +242,6 @@ def barre_vie(pv):
     vide = total - rempli
     return f"[{'█' * rempli}{'░' * vide}] {p} PV"
 
-
 ########## combat ##########
 @bot.command(name="combat", help="Simule un combat entre 2 personnages de Bleach avec stats et effets.")
 async def combat_bleach(ctx):
@@ -299,19 +298,20 @@ async def combat_bleach(ctx):
         tour_order = [p1, p2] if p1_init >= p2_init else [p2, p1]
 
         def format_etat(p):
-    status = f"🌀 Effet : {p['status']} ({p['status_duree']} tour(s) restant)" if p["status"] else "✅ Aucun effet"
-    vie_bar = barre_vie(p["vie"])
-    return f"**{p['nom']}**\n{vie_bar} | 🔋 {p['energie']} énergie\n{status}"
+            status = f"🌀 Effet : {p['status']} ({p['status_duree']} tour(s) restant)" if p["status"] else "✅ Aucun effet"
+            vie_bar = barre_vie(p["vie"])
+            return f"**{p['nom']}**\n{vie_bar} | 🔋 {p['energie']} énergie\n{status}"
 
         log = f"⚔️ **Combat entre {p1['nom']} et {p2['nom']} !**\n\n"
 
-        for tour in range(1, 6):  # 5 tours
+        for tour in range(1, 6):  # 5 tours max
             log += f"__🔁 Tour {tour}__\n\n"
             log += f"{format_etat(p1)}\n{format_etat(p2)}\n\n"
 
             for attaquant in tour_order:
                 defenseur = p1 if attaquant == p2 else p2
 
+                # Effets de statut
                 if attaquant["status"] == "gel":
                     log += f"❄️ {attaquant['nom']} est gelé et ne peut pas agir ce tour.\n\n"
                     attaquant["status_duree"] -= 1
@@ -335,6 +335,7 @@ async def combat_bleach(ctx):
                     if attaquant["status_duree"] <= 0:
                         attaquant["status"] = None
 
+                # Choix de l'attaque
                 possibles = [a for a in attaquant["attaques"] if a["cout"] <= attaquant["energie"] and (a["type"] != "ultime" or not a["utilisé"])]
                 if not possibles:
                     log += f"💤 {attaquant['nom']} n'a pas assez d'énergie pour attaquer.\n\n"
@@ -350,39 +351,38 @@ async def combat_bleach(ctx):
                 modificateur = max(0, modificateur)
                 total_degats = base_degats + modificateur
 
-                # 🔁 Esquive
+                # Esquive
                 esquive_chance = min(defenseur["stats"]["mobilité"] / 40 + random.uniform(0, 0.2), 0.5)
                 if random.random() < esquive_chance:
-                    log += f"💨 {defenseur['nom']} utilise le Shunpo pour esquiver l'attaque **{attaque['nom']}** !\n"
-
-                    # 🔁 Contre-attaque
+                    log += f"💨 {defenseur['nom']} esquive **{attaque['nom']}** avec un Shunpo rapide !\n"
                     if random.random() < 0.2:
                         contre_degats = 10 + defenseur["stats"]["attaque"] // 2
                         attaquant["vie"] -= contre_degats
-                        log += f"🔁 {defenseur['nom']} contre-attaque immédiatement et inflige {contre_degats} dégâts à {attaquant['nom']} !\n"
+                        log += f"🔁 {defenseur['nom']} contre-attaque et inflige {contre_degats} dégâts à {attaquant['nom']} !\n"
                         if attaquant["vie"] <= 0:
                             log += f"\n🏆 **{defenseur['nom']} remporte le combat par contre-attaque !**"
                             await ctx.send(log)
                             return
                     log += "\n"
-                    continue  # attaque esquivée, on passe à la suite
+                    continue
 
-                # 🔁 Coup critique
+                # Coup critique
                 crit_chance = min(0.1 + attaquant["stats"]["force"] / 50, 0.4)
                 critique = random.random() < crit_chance
                 if critique:
                     total_degats = int(total_degats * 1.5)
-                    log += "💥 Coup critique ! Dégâts amplifiés !\n"
+                    log += "💥 Coup critique !\n"
 
                 defenseur["vie"] -= total_degats
                 attaquant["energie"] -= attaque["cout"]
 
                 log += (
-                    f"💥 {attaquant['nom']} utilise **{attaque['nom']}** "
-                    f"(coût : {attaque['cout']} énergie, dégâts : {base_degats}+bonus)\n"
-                    f"➡️ {defenseur['nom']} perd {total_degats} PV (reste {max(defenseur['vie'], 0)} PV)\n"
+                    f"⚡ {attaquant['nom']} utilise **{attaque['nom']}** "
+                    f"(coût : {attaque['cout']}, dégâts : {base_degats}+bonus)\n"
+                    f"➡️ {defenseur['nom']} perd {total_degats} PV\n"
                 )
 
+                # Application des effets
                 effet = attaque["effet"].lower()
                 if effet in ["gel", "paralysie"]:
                     defenseur["status"] = "gel"
@@ -404,6 +404,7 @@ async def combat_bleach(ctx):
 
                 log += "\n"
 
+        # Fin du combat
         gagnant = p1 if p1["vie"] > p2["vie"] else p2
         log += f"__🧾 Résumé final__\n{format_etat(p1)}\n{format_etat(p2)}\n\n"
         log += f"🏁 **Fin du combat.**\n🏆 **{gagnant['nom']} l'emporte par avantage de vie !**"
