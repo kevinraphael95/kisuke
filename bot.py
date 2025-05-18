@@ -298,8 +298,6 @@ async def combat_bleach(ctx):
 
         for tour in range(1, 6):  # 5 tours
             log += f"__🔁 Tour {tour}__\n\n"
-
-            # Affichage de l'état avant chaque tour
             log += f"{format_etat(p1)}\n{format_etat(p2)}\n\n"
 
             for attaquant in tour_order:
@@ -343,6 +341,30 @@ async def combat_bleach(ctx):
                 modificateur = max(0, modificateur)
                 total_degats = base_degats + modificateur
 
+                # 🔁 Esquive
+                esquive_chance = min(defenseur["stats"]["mobilité"] / 40 + random.uniform(0, 0.2), 0.5)
+                if random.random() < esquive_chance:
+                    log += f"💨 {defenseur['nom']} utilise le Shunpo pour esquiver l'attaque **{attaque['nom']}** !\n"
+
+                    # 🔁 Contre-attaque
+                    if random.random() < 0.2:
+                        contre_degats = 10 + defenseur["stats"]["attaque"] // 2
+                        attaquant["vie"] -= contre_degats
+                        log += f"🔁 {defenseur['nom']} contre-attaque immédiatement et inflige {contre_degats} dégâts à {attaquant['nom']} !\n"
+                        if attaquant["vie"] <= 0:
+                            log += f"\n🏆 **{defenseur['nom']} remporte le combat par contre-attaque !**"
+                            await ctx.send(log)
+                            return
+                    log += "\n"
+                    continue  # attaque esquivée, on passe à la suite
+
+                # 🔁 Coup critique
+                crit_chance = min(0.1 + attaquant["stats"]["force"] / 50, 0.4)
+                critique = random.random() < crit_chance
+                if critique:
+                    total_degats = int(total_degats * 1.5)
+                    log += "💥 Coup critique ! Dégâts amplifiés !\n"
+
                 defenseur["vie"] -= total_degats
                 attaquant["energie"] -= attaque["cout"]
 
@@ -353,15 +375,15 @@ async def combat_bleach(ctx):
                 )
 
                 effet = attaque["effet"].lower()
-                if effet == "gel" or effet == "paralysie":
+                if effet in ["gel", "paralysie"]:
                     defenseur["status"] = "gel"
                     defenseur["status_duree"] = 1
                     log += f"❄️ {defenseur['nom']} est gelé pour 1 tour !\n"
-                elif effet == "confusion" or effet == "illusion":
+                elif effet in ["confusion", "illusion"]:
                     defenseur["status"] = "confusion"
                     defenseur["status_duree"] = 2
                     log += f"💫 {defenseur['nom']} est confus pendant 2 tours !\n"
-                elif effet == "poison" or effet == "corrosion":
+                elif effet in ["poison", "corrosion"]:
                     defenseur["status"] = "poison"
                     defenseur["status_duree"] = 3
                     log += f"☠️ {defenseur['nom']} est empoisonné pour 3 tours !\n"
