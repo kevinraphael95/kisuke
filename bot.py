@@ -1,54 +1,46 @@
 from keep_alive import keep_alive  # Démarre le serveur web pour maintenir le bot en ligne
 
-import io
 import os
+import io
 import ast
-import random
-import asyncio
 import aiohttp
-from datetime import datetime
-from discord.ext import tasks, commands
 import discord
+from discord.ext import commands
+import random
 from dotenv import load_dotenv
-
-
 
 # Répertoire de travail
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
+# définition et chargement ici
+def load_characters(filename="bleach_characters.txt"):
+    with open(filename, encoding="utf-8") as f:
+        characters = [line.strip() for line in f if line.strip()]
+    return characters
+
+bleach_characters = load_characters()
+
 # Charger les variables d’environnement
 load_dotenv()
-
 TOKEN = os.getenv("DISCORD_TOKEN")
-
 
 # Préfixe dynamique
 def get_prefix(bot, message):
+    load_dotenv()
     return os.getenv("COMMAND_PREFIX", "!")
 
 # Intents
 intents = discord.Intents.default()
 intents.message_content = True
-intents.reactions = True
-intents.members = True
 
 # Création du bot
 bot = commands.Bot(command_prefix=get_prefix, intents=intents, help_command=None)
-
-# Liste des personnages Bleach
-def load_characters(filename="bleach_characters.txt"):
-    with open(filename, encoding="utf-8") as f:
-        return [line.strip() for line in f if line.strip()]
-
-bleach_characters = load_characters()
 
 # Événement : bot prêt
 @bot.event
 async def on_ready():
     await bot.change_presence(activity=discord.Game(name="en train de coder !"))
     print(f"✅ Connecté en tant que {bot.user.name}")
-    reset_daily_counter.start()
-    spawn_reiatsu_event.start()
 
 # Répondre à une mention du bot
 @bot.event
@@ -65,18 +57,10 @@ async def on_message(message):
         )
     else:
         await bot.process_commands(message)
-
         
 #############################
 ########## général ##########
 #############################
-
-########## code ##########
-@bot.command(name="code", help="Envoie le lien du code source du bot.")
-async def code(ctx):
-    await ctx.send("📂 Voici le code source du bot sur GitHub :\n🔗 https://github.com/kevinraphael95/bleach-discord-bot-test")
-code.category = "Général"
-
 
 ########## 👋 Hello ##########
 @bot.command(help="Affiche un message de bienvenue aléatoire.")
@@ -114,7 +98,6 @@ async def help_command(ctx, commande: str = None):
             "Général": [],
             "Fun": [],
             "Admin": [],
-            "Reiatsu": [],
             "Autres": []
         }
 
@@ -128,7 +111,7 @@ async def help_command(ctx, commande: str = None):
         embed = discord.Embed(title="📜 Commandes par catégorie", color=discord.Color.blue())
 
         # Parcourir les catégories dans un ordre fixe
-        for cat in ["Général", "Fun", "Admin", "Reiatsu", "Autres"]:
+        for cat in ["Général", "Fun", "Admin", "Autres"]:
             cmds = categories.get(cat, [])
             if cmds:
                 # Trier les commandes par ordre alphabétique du nom
@@ -348,95 +331,6 @@ async def parti(ctx):
     nom_parti = f"{random.choice(premiers_mots)} {random.choice(adjectifs)} {random.choice(noms)}"
     await ctx.send(f"🏛️ Voici un nom de parti politique : **{nom_parti}**")
 parti.category = "Fun"
-
-
-
-########## pendu ##########
-pendu_games = {}
-
-@bot.command(name="pendu", help="Lance une partie de pendu avec un mot aléatoire.")
-async def pendu(ctx):
-    if ctx.channel.id in pendu_games:
-        await ctx.send("❌ Une partie de pendu est déjà en cours dans ce salon.")
-        return
-
-    async with aiohttp.ClientSession() as session:
-        try:
-            async with session.get("https://trouve-mot.fr/api/random") as resp:
-                if resp.status != 200:
-                    await ctx.send("❌ Impossible de récupérer un mot. Réessaie plus tard.")
-                    return
-                data = await resp.json()
-        except Exception as e:
-            await ctx.send("❌ Une erreur est survenue lors de la récupération du mot.")
-            return
-
-    if not data or "word" not in data[0]:
-        await ctx.send("❌ Réponse invalide de l'API. Réessaie.")
-        return
-
-    word = data[0]["word"].lower()
-    masked_word = ["_" if c.isalpha() else c for c in word]
-
-    pendu_games[ctx.channel.id] = {
-        "word": word,
-        "masked_word": masked_word,
-        "attempts_left": 7,
-        "guessed_letters": set()
-    }
-
-    await ctx.send(
-        f"🪢 Partie de pendu commencée !\nMot : `{' '.join(masked_word)}`\n"
-        f"Propose une lettre avec `{ctx.prefix}lettre <lettre>`."
-    )
-
-@bot.command(name="lettre", help="Propose une lettre pour la partie de pendu en cours.")
-async def lettre(ctx, lettre: str):
-    jeu = pendu_games.get(ctx.channel.id)
-    if not jeu:
-        await ctx.send("❌ Il n'y a pas de partie en cours ici. Lance-en une avec `!pendu`.")
-        return
-
-    lettre = lettre.lower()
-    if len(lettre) != 1 or not lettre.isalpha():
-        await ctx.send("❌ Propose une seule lettre entre a et z.")
-        return
-
-    if lettre in jeu["guessed_letters"]:
-        await ctx.send(f"⚠️ La lettre `{lettre}` a déjà été proposée.")
-        return
-
-    jeu["guessed_letters"].add(lettre)
-
-    if lettre in jeu["word"]:
-        for i, c in enumerate(jeu["word"]):
-            if c == lettre:
-                jeu["masked_word"][i] = lettre
-
-        if "_" not in jeu["masked_word"]:
-            await ctx.send(f"🎉 Bravo {ctx.author.mention}, tu as trouvé le mot : **{jeu['word']}** !")
-            del pendu_games[ctx.channel.id]
-        else:
-            await ctx.send(
-                f"✅ Bonne lettre !\nMot : `{' '.join(jeu['masked_word'])}`\n"
-                f"Lettres proposées : {', '.join(sorted(jeu['guessed_letters']))}\n"
-                f"Tentatives restantes : {jeu['attempts_left']}"
-            )
-    else:
-        jeu["attempts_left"] -= 1
-        if jeu["attempts_left"] <= 0:
-            await ctx.send(f"💀 Perdu ! Le mot était **{jeu['word']}**.")
-            del pendu_games[ctx.channel.id]
-        else:
-            await ctx.send(
-                f"❌ Mauvaise lettre.\nMot : `{' '.join(jeu['masked_word'])}`\n"
-                f"Lettres proposées : {', '.join(sorted(jeu['guessed_letters']))}\n"
-                f"Tentatives restantes : {jeu['attempts_left']}"
-            )
-
-pendu.category = "Fun"
-lettre.category = "Fun"
-
 
 
 ########## perso ##########
