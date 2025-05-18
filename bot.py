@@ -185,8 +185,16 @@ async def cat(ctx):
 cat.category = "Fun"
 
 ########## chiffre ##########
+# Dictionnaire pour suivre l'état des jeux par salon
+active_games = set()
+
 @bot.command(name="chiffre")
 async def chiffre(ctx):
+    if ctx.channel.id in active_games:
+        await ctx.send("⚠️ Un jeu est déjà en cours dans ce salon. Attendez qu’il soit terminé.")
+        return
+
+    active_games.add(ctx.channel.id)
     number = random.randint(1, 100)
     await ctx.send(f"🎯 J'ai choisi un nombre entre 1 et 100. Le premier à répondre avec le bon nombre **dans ce salon** gagne ! Vous avez 1 heure.\n🔍 (Réponse pour test : **{number}**)")
 
@@ -203,6 +211,8 @@ async def chiffre(ctx):
         await ctx.send(f"🎉 Bravo {msg.author.mention}, tu as trouvé le nombre **{number}** !")
     except asyncio.TimeoutError:
         await ctx.send(f"⏰ Temps écoulé ! Personne n'a trouvé le nombre. C'était **{number}**.")
+    finally:
+        active_games.remove(ctx.channel.id)
 chiffre.category = "Fun"
 
 
