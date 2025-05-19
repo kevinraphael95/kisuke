@@ -6,9 +6,12 @@ import ast
 import asyncio
 import aiohttp
 import discord
+import json
 from discord.ext import commands
 import random
 from dotenv import load_dotenv
+
+#############################
 
 # Répertoire de travail
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
@@ -59,43 +62,38 @@ async def on_message(message):
     else:
         await bot.process_commands(message)
         
-#############################
-########## général ##########
-#############################
+#######################################################################################
+############################# général ##########################################################
+#######################################################################################
 
-########## Code ##########
+
+############################# Code ##########################################################
+
 @bot.command()
 async def code(ctx):
     await ctx.send("🔗 Code source du bot : https://github.com/kevinraphael95/bleach-discord-bot-test")
 code.category = "Général"
 
-########## 👋 Hello ##########
+############################# 👋 Hello ##########################################################
+
 @bot.command(help="Affiche un message de bienvenue aléatoire.")
 async def hello(ctx):
     try:
-        with open("hello_messages.txt", "r", encoding="utf-8") as f:
-            messages = [line.strip() for line in f if line.strip()]
+        with open("hello_messages.json", "r", encoding="utf-8") as f:
+            data = json.load(f)
+            messages = data.get("messages", [])
         if messages:
             await ctx.send(random.choice(messages))
         else:
             await ctx.send("👋 Hello, je suis en ligne (mais sans message personnalisé) !")
     except FileNotFoundError:
-        await ctx.send("❌ Fichier `hello_messages.txt` introuvable.")
+        await ctx.send("❌ Fichier `hello_messages.json` introuvable.")
+    except json.JSONDecodeError:
+        await ctx.send("❌ Erreur de lecture du fichier `hello_messages.json`.")
 hello.category = "Général"
 
-# 🏓 Ping avec Embed + alias "test"
-@bot.command(aliases=["test"], help="Répond avec la latence du bot.")
-async def ping(ctx):
-    latence = round(bot.latency * 1000)
-    embed = discord.Embed(
-        title="🏓 Pong !",
-        description=f"📶 Latence : `{latence} ms`",
-        color=discord.Color.green()
-    )
-    await ctx.send(embed=embed)
-ping.category = "Général"
+############################# 📘 Commande : help ##########################################################
 
-########## 📘 Commande : help ##########
 @bot.command(name="help", help="Affiche la liste des commandes ou les infos sur une commande spécifique.")
 async def help_command(ctx, commande: str = None):
     prefix = get_prefix(bot, ctx.message)
@@ -145,7 +143,23 @@ async def help_command(ctx, commande: str = None):
             await ctx.send(embed=embed)
 help_command.category = "Général"
 
-########## 🗣️ Say ##########
+############################# 🏓 Ping avec Embed + alias "test" ##########################################################
+
+@bot.command(aliases=["test"], help="Répond avec la latence du bot.")
+async def ping(ctx):
+    latence = round(bot.latency * 1000)
+    embed = discord.Embed(
+        title="🏓 Pong !",
+        description=f"📶 Latence : `{latence} ms`",
+        color=discord.Color.green()
+    )
+    await ctx.send(embed=embed)
+ping.category = "Général"
+
+
+
+############################# 🗣️ Say ##########################################################
+
 @bot.command(help="Fait répéter un message par le bot et supprime le message d'origine.")
 async def say(ctx, *, message: str):
     try:
@@ -159,12 +173,13 @@ async def say(ctx, *, message: str):
     await ctx.send(message)
 say.category = "Général"
 
-#############################
-########## fun ##########
-#############################
+#######################################################################################
+############################# fun ##########################################################
+#######################################################################################
 
 
-########## bleachmoji ##########
+############################# bleachmoji ##########################################################
+
 @bot.command()
 async def bleachmoji(ctx):
     try:
@@ -195,20 +210,9 @@ async def bleachmoji(ctx):
         await ctx.send(f"Erreur : {e}")
 bleachmoji.category = "Fun"
 
-########## dog ##########
-@bot.command()
-async def dog(ctx):
-    async with aiohttp.ClientSession() as session:
-        async with session.get("https://dog.ceo/api/breeds/image/random") as response:
-            if response.status == 200:
-                data = await response.json()
-                image_url = data["message"]
-                await ctx.send(f"Voici un toutou aléatoire ! 🐶\n{image_url}")
-            else:
-                await ctx.send("Impossible de récupérer une image de chien 😢")
-dog.category = "Fun"
 
-########## cat ##########
+############################# cat ##########################################################
+
 @bot.command()
 async def cat(ctx):
     async with aiohttp.ClientSession() as session:
@@ -222,7 +226,8 @@ async def cat(ctx):
 
 cat.category = "Fun"
 
-########## chiffre ##########
+############################# chiffre ##########################################################
+
 # Suivi des jeux actifs par salon
 active_games = {}
 
@@ -271,7 +276,8 @@ async def cancel(ctx):
 chiffre.category = "Fun"
 cancel.category = "Fun"
 
-########## combat ##########
+############################# combat ##########################################################
+
 @bot.command(name="combat", help="Simule un combat entre 2 personnages de Bleach avec stats et effets.")
 async def combat_bleach(ctx):
     import random
@@ -454,8 +460,23 @@ async def combat_bleach(ctx):
 combat_bleach.category = "Fun"
 
 
+############################# dog ##########################################################
 
-########## funfact ##########
+@bot.command()
+async def dog(ctx):
+    async with aiohttp.ClientSession() as session:
+        async with session.get("https://dog.ceo/api/breeds/image/random") as response:
+            if response.status == 200:
+                data = await response.json()
+                image_url = data["message"]
+                await ctx.send(f"Voici un toutou aléatoire ! 🐶\n{image_url}")
+            else:
+                await ctx.send("Impossible de récupérer une image de chien 😢")
+dog.category = "Fun"
+
+
+############################# funfact ##########################################################
+
 @bot.command(name="funfact")
 async def funfact(ctx):
     try:
@@ -472,11 +493,11 @@ async def funfact(ctx):
         await ctx.send("❌ Fichier `funfacts.txt` introuvable.")
     except Exception as e:
         await ctx.send(f"⚠️ Une erreur est survenue : {e}")
-
 funfact.category = "Fun"
 
 
-########## parti ##########
+############################# parti ##########################################################
+
 @bot.command(help="Génère un nom de parti politique aléatoire.")
 async def parti(ctx):
     with open("partis_data.json", "r", encoding="utf-8") as f:
@@ -491,7 +512,8 @@ async def parti(ctx):
 parti.category = "Fun"
 
 
-########## perso ##########
+############################# perso ##########################################################
+
 @bot.command(help="Découvre quel personnage de Bleach tu es (toujours le même pour toi).")
 async def perso(ctx):
     user_id = ctx.author.id
@@ -501,7 +523,8 @@ async def perso(ctx):
 perso.category = "Fun"
 
 
-########## phrase ##########
+############################# phrase ##########################################################
+
 @bot.command(name="phrase", help="Génère une phrase aléatoire à partir de listes de mots.")
 async def phrase(ctx):
     try:
@@ -538,7 +561,8 @@ async def phrase(ctx):
 phrase.category = "Fun"
 
 
-########## 🪙 Pile ou face ##########
+############################# 🪙 Pile ou face ##########################################################
+
 @bot.command(help="Lance une pièce : pile ou face.")
 async def pof(ctx):
     resultat = random.choice(["🪙 Pile !", "🪙 Face !"])
@@ -547,7 +571,8 @@ pof.category = "Fun"
 
 
 
-########## recommande ##########
+############################# recommande ##########################################################
+
 @bot.command(help="commande + solo ou multi. Le bot te recommande un jeu.")
 async def recommande(ctx, type_jeu: str = None):
     import random
@@ -605,11 +630,12 @@ recommande.category = "Fun"
 
 
 
-#############################
-########## admin ##########
-#############################
+#######################################################################################
+############################# admin ##########################################################
+#######################################################################################
 
-########## 🔧 Préfixe (admin uniquement) ##########
+############################# 🔧 Préfixe (admin uniquement) ##########################################################
+
 @bot.command(help="Affiche ou change le préfixe du bot (admin uniquement).")
 @commands.has_permissions(administrator=True)
 async def prefixe(ctx, nouveau: str = None):
