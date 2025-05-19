@@ -454,8 +454,8 @@ async def combat_bleach(ctx):
 combat_bleach.category = "Fun"
 
 
-########## divisionquizz ##########
-QUESTIONS_FILE = 'questions_divisionquiz.txt'  # Met le fichier dans le même dossier que ton script
+########## divisionquizzz ##########
+QUESTIONS_FILE = 'questions_divisionquizz.txt'  # Met le fichier dans le même dossier que ton script
 
 # Mapping des réponses aux divisions avec leurs points
 SCORES_DIVISIONS = {
@@ -524,8 +524,8 @@ def load_questions():
             questions.append({'id': qid, 'question': question_text, 'options': options})
     return questions
 
-@bot.command(name='divisionquiz')
-async def divisionquiz(ctx):
+@bot.command(name='divisionquizz')
+async def divisionquizz(ctx):
     all_questions = load_questions()
     if len(all_questions) < 15:
         await ctx.send("Pas assez de questions pour lancer le quiz.")
