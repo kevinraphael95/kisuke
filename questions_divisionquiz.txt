@@ -58,3 +58,43 @@
 58|Comment préfères-tu te battre ?|⚡:Agile|💪:Puissant|🤫:Discret|🧠:Calculateur
 59|Quel est ton plus grand rêve ?|🏆:Gloire|📚:Savoir|🕊️:Paix|💪:Force
 60|Quel est ton plus grand défaut ?|🕰️:Impatience|🗣️:Impulsivité|🤐:Silence|🧩:Perfectionnisme
+61|Quel est ton moyen préféré de reconnaissance ?|🔍:Observation|🤫:Discrétion|🗣️:Communication|🎯:Précision
+62|Quelle est ta plus grande qualité en groupe ?|🤝:Cohésion|🧠:Intelligence collective|⚔️:Force|🛡️:Protection
+63|Comment te comportes-tu face à un danger soudain ?|⚡:Réaction rapide|🧘:Calme|🏃:Fuite|🛡️:Défense
+64|Quelle est ta vision de la justice ?|⚖️:Équité stricte|❤️:Pardon|🛡️:Protection des faibles|🗡️:Punition sévère
+65|Quel est ton rapport à l’honneur ?|🏅:Fondamental|🧠:Relatif|🤝:Indispensable|🕊️:Personnel
+66|Quel type d’ennemi redoutes-tu ?|👹:Brute|🧠:Stratège|🕵️:Espion|🔥:Imprévisible
+67|Quelle est ta plus grande fierté ?|🏆:Victoire|📚:Savoir acquis|🤝:Relations|🛡️:Protection offerte
+68|Comment réagis-tu face à l’échec ?|📈:Apprentissage|⚡:Colère|🧘:Acceptation|🤐:Refus d’en parler
+69|Quel est ton élément naturel préféré ?|🌊:Eau|🔥:Feu|🌪️:Vent|🌍:Terre
+70|Quelle est ta façon de gérer la pression ?|🧘:Calme|🏃:Action rapide|🧠:Analyse|🔥:Détermination
+71|Quelle est ta plus grande qualité en combat ?|⚔️:Puissance|🎯:Précision|💨:Vitesse|🛡️:Défense
+72|Comment décrirais-tu ton style de leadership ?|🦁:Dominant|🐢:Protecteur|🦅:Visionnaire|🐍:Stratégique
+73|Quelle est ta plus grande faiblesse ?|🕰️:Impatience|🗣️:Impulsivité|🤐:Secret|🧩:Doute
+74|Quelle est ta relation avec tes alliés ?|🤝:Forte|🧠:Calculée|🛡️:Protectrice|🎯:Précise
+75|Comment préfères-tu apprendre ?|📚:Théorie|🛠️:Pratique|👥:En groupe|🎯:Par essais
+76|Quelle est ta devise personnelle ?|🏆:Toujours vaincre|🧠:Savoir est pouvoir|🤝:L’union fait la force|🛡️:Protection avant tout
+77|Quel est ton rôle préféré dans un combat ?|⚔️:Attaquant|🛡️:Défenseur|🧠:Stratège|💉:Soigneur
+78|Quelle est ta plus grande peur ?|👻:Échec|🤡:Trahison|🕸️:Isolement|🔥:Défaite
+79|Comment gères-tu la défaite ?|📈:Leçon|⚡:Colère|🧘:Acceptation|🤐:Silence
+80|Quel est ton type d’attaque préféré ?|💥:Puissante|🎯:Précise|💨:Rapide|🛡️:Défensive
+81|Quelle est ta plus grande qualité hors combat ?|❤️:Loyauté|🤫:Discrétion|💡:Intelligence|🦾:Force physique
+82|Quel est ton plus grand défaut ?|🕰️:Impatience|🗣️:Impulsivité|🤐:Secret|🧩:Perfectionnisme
+83|Quelle est ta principale source d’énergie ?|🔥:Passion|🧠:Intellect|💪:Force|🤝:Soutien
+84|Quelle est ta plus grande motivation ?|🏆:Gloire|📚:Savoir|💪:Puissance|🤝:Alliances
+85|Comment réagis-tu aux ordres ?|🗣️:Obéissance|🤐:Réserve|🧠:Analyse|⚡:Rapidité d’exécution
+86|Quelle est ta méthode préférée pour gagner ?|🎯:Précision|💥:Force brute|🧠:Stratégie|🤝:Alliances
+87|Quel est ton rapport à la discipline ?|🏅:Essentielle|🧠:Relative|🤝:Nécessaire|🕊️:Flexible
+88|Quelle est ta plus grande qualité tactique ?|🧠:Analyse|⚔️:Prise d’initiative|🛡️:Protection|🎯:Précision
+89|Quel est ton plus grand atout psychologique ?|🧘:Calme|🔥:Passion|⚡:Réflexes|🛡️:Résilience
+90|Comment te prépares-tu mentalement ?|🧘:Méditation|📚:Lecture|🏃:Entraînement|🔧:Préparation
+91|Quelle est ta plus grande inspiration ?|🏆:Ancêtres|📚:Sages|🤝:Alliés|🛡️:Protecteurs
+92|Quel est ton type d’ennemi préféré ?|⚔️:Guerrier|🧠:Stratège|🤫:Furtif|🔥:Impulsif
+93|Comment préfères-tu te battre ?|⚡:Agile|💪:Puissant|🤫:Discret|🧠:Calculateur
+94|Quel est ton plus grand rêve ?|🏆:Gloire|📚:Savoir|🕊️:Paix|💪:Force
+95|Quel est ton plus grand défaut ?|🕰️:Impatience|🗣️:Impulsivité|🤐:Silence|🧩:Perfectionnisme
+96|Quelle est ta méthode de résolution de conflit ?|🤝:Dialogue|⚔️:Combat|🧠:Stratégie|🛡️:Protection
+97|Quel est ton style de vie préféré ?|🏞️:Nature|🏙️:Ville|🏰:Forteresse|🧪:Laboratoire
+98|Quel est ton moyen préféré de communication ?|🗣️:Verbal|✍️:Écrit|📡:Technologie|🤫:Silence
+99|Quelle est ta plus grande faiblesse émotionnelle ?|😢:Empathie|😡:Colère|😨:Peur|😶:Indifférence
+100|Quelle est ta réaction face à une provocation ?|⚔️:Riposte|🧠:Ignorer|🤝:Dialoguer|🛡️:Se défendre
