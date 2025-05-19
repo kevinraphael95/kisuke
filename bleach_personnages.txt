@@ -40,4 +40,5 @@ Senjumaru Shutara|14,15,16,18,19,11|Soie Tranchante:26:16:Attaque de précision:
 Ōetsu Nimaiya|17,14,15,16,13,15|Sayafushi:30:20:Tranchant parfait:normale|Coup Improvisé:26:16:Création instantanée:normale|Jet d’Encre:25:14:Vision brouillée:normale|Shinsō Sayafushi:60:40:Découpe absolue:ultime
 Ichibē Hyōsube|16,16,12,18,18,13|Jet d’Encre:26:16:Oblitération de nom:normale|Règle du Verbe:28:18:Manipulation existentielle:normale|Nom Volé:30:20:Diminution de puissance:normale|Shirafude Ichimonji:65:42:Nom effacé du monde:ultime
 Kirio Hikifune|13,15,14,17,19,12|Sustentation Spirituelle:0:12:Renforcement allié:normale|Frappe Nourricière:26:16:Coup chargé:normale|Recette de Vie:28:18:Soutien vital:normale|Forme Compressée:60:40:Explosion nutritionnelle:ultime
-
+Kaname Tōsen|14,13,14,15,16,12|Shunpō Frappe:25:15:Charge rapide:normale|Douleur Spirituelle:27:18:Attaque aveuglante:normale|Frappe Vengeur:30:20:Assaut furieux:normale|Bankai Suzumushi Tsuishiki:60:40:Silence absolu:ultime
+Inchimaru Gin|15,14,13,16,12,14|Shinsō Piercing:28:18:Attaque rapide:normale|Furtivité:25:15:Discrétion mortelle:normale|Coup Vipère:30:20:Tranchant précis:normale|Bankai Kamishini no Yari:60:40:Perforation extrême:ultime
