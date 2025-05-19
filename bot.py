@@ -454,6 +454,146 @@ async def combat_bleach(ctx):
 combat_bleach.category = "Fun"
 
 
+########## divisionquizz ##########
+QUESTIONS_FILE = 'questions_divisionquiz.txt'  # Met le fichier dans le même dossier que ton script
+
+# Mapping des réponses aux divisions avec leurs points
+SCORES_DIVISIONS = {
+    # réponse : {division: points, ...}
+    'Courage': {'1ère Division': 3, '11ème Division': 2},
+    'Protection': {'2ème Division': 4, '7ème Division': 2},
+    'Soutien': {'3ème Division': 4, '4ème Division': 1},
+    'Guérison': {'4ème Division': 5},
+    'Rapidité': {'5ème Division': 5},
+    'Discipline': {'6ème Division': 5},
+    'Stratégie': {'6ème Division': 3, '8ème Division': 4},
+    'Espionnage': {'9ème Division': 5},
+    'Précision': {'10ème Division': 5},
+    'Agressif': {'11ème Division': 5},
+    'Technologie': {'12ème Division': 5},
+    'Force brute': {'1ère Division': 5},
+    'Défense stratégique': {'7ème Division': 5},
+    'Analyse': {'8ème Division': 4},
+    'Discrétion': {'9ème Division': 3},
+    'Tireur d’élite': {'10ème Division': 5},
+    'Loyalité': {'3ème Division': 3, '2ème Division': 2},
+    'Soin': {'4ème Division': 5},
+    'Calme et réfléchi': {'6ème Division': 4},
+    'Agressif': {'11ème Division': 5},
+    'Agir vite': {'5ème Division': 4},
+    'Ingéniosité': {'12ème Division': 4},
+    'Commandant': {'1ère Division': 4},
+    'Espion': {'9ème Division': 5},
+    'Soigneur': {'4ème Division': 5},
+    'Observateur': {'9ème Division': 3},
+    'Leader': {'1ère Division': 4},
+    'Protecteur': {'2ème Division': 5},
+    'Force': {'1ère Division': 5},
+    'Passionné': {'11ème Division': 3},
+    'Calme et ordre': {'6ème Division': 3},
+    'Mystère': {'9ème Division': 3},
+    'Fiable': {'3ème Division': 4},
+    'Gloire': {'1ère Division': 3},
+    'Paix': {'4ème Division': 3},
+    'Rapidement': {'5ème Division': 4},
+    'Prudemment': {'6ème Division': 3},
+}
+
+intents = discord.Intents.default()
+intents.message_content = True
+bot = commands.Bot(command_prefix="!", intents=intents)
+
+def load_questions():
+    questions = []
+    with open(QUESTIONS_FILE, 'r', encoding='utf-8') as f:
+        for line in f:
+            line = line.strip()
+            if not line or line.startswith('#'):
+                continue
+            parts = line.split('|')
+            if len(parts) < 3:
+                continue
+            qid = parts[0]
+            question_text = parts[1]
+            options_raw = parts[2:]
+            options = []
+            for opt in options_raw:
+                if ':' in opt:
+                    emoji, answer = opt.split(':', 1)
+                    options.append((emoji, answer))
+            questions.append({'id': qid, 'question': question_text, 'options': options})
+    return questions
+
+@bot.command(name='divisionquiz')
+async def divisionquiz(ctx):
+    all_questions = load_questions()
+    if len(all_questions) < 15:
+        await ctx.send("Pas assez de questions pour lancer le quiz.")
+        return
+
+    selected_questions = random.sample(all_questions, 15)
+
+    division_scores = {
+        '1ère Division': 0,
+        '2ème Division': 0,
+        '3ème Division': 0,
+        '4ème Division': 0,
+        '5ème Division': 0,
+        '6ème Division': 0,
+        '7ème Division': 0,
+        '8ème Division': 0,
+        '9ème Division': 0,
+        '10ème Division': 0,
+        '11ème Division': 0,
+        '12ème Division': 0,
+    }
+
+    await ctx.send(f"{ctx.author.mention}, le quiz commence ! Réponds aux questions avec les réactions emoji.")
+
+    for i, q in enumerate(selected_questions, 1):
+        text = f"**Question {i}/15 :** {q['question']}\n"
+        for emoji, answer in q['options']:
+            text += f"{emoji} : {answer}\n"
+        msg = await ctx.send(text)
+
+        for emoji, _ in q['options']:
+            await msg.add_reaction(emoji)
+
+        def check(reaction, user):
+            return (
+                user == ctx.author and
+                reaction.message.id == msg.id and
+                any(str(reaction.emoji) == e for e, _ in q['options'])
+            )
+
+        try:
+            reaction, user = await bot.wait_for('reaction_add', timeout=60.0, check=check)
+        except asyncio.TimeoutError:
+            await ctx.send(f"{ctx.author.mention}, temps écoulé pour cette question, on passe à la suivante.")
+            continue
+
+        chosen_answer = None
+        for emoji, answer in q['options']:
+            if str(reaction.emoji) == emoji:
+                chosen_answer = answer
+                break
+
+        if chosen_answer and chosen_answer in SCORES_DIVISIONS:
+            for division, pts in SCORES_DIVISIONS[chosen_answer].items():
+                division_scores[division] += pts
+
+    # Trouver la division avec le score max
+    best_division = max(division_scores, key=division_scores.get)
+    best_score = division_scores[best_division]
+
+    # Affichage final avec un peu plus d'infos
+    await ctx.send(
+        f"{ctx.author.mention}, ton résultat est : **{best_division}** avec un score de {best_score}.\n"
+        "Voici tes scores complets :\n" +
+        "\n".join(f"{div}: {score}" for div, score in division_scores.items())
+    )
+divisionquizz.category = "Fun"
+
 
 ########## funfact ##########
 @bot.command(name="funfact")
