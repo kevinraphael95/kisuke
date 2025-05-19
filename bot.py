@@ -546,19 +546,33 @@ async def phrase(ctx):
         with open("phrases_listes.txt", "r", encoding="utf-8") as f:
             content = f.read()
 
-        # Sépare les 4 listes entre crochets par lignes vides
+        # Sépare les 4 listes par double saut de ligne
         listes = [ast.literal_eval(lst) for lst in content.strip().split('\n\n')]
-
         sujets, verbes, complements, adverbes = listes
 
-        phrase_generee = f"{random.choice(sujets)} {random.choice(verbes)} {random.choice(complements)} {random.choice(adverbes)}."
-        await ctx.send(phrase_generee)
+        # Sélection aléatoire
+        sujet = random.choice(sujets)
+        verbe = random.choice(verbes)
+        complement = random.choice(complements)
+        adverbe = random.choice(adverbes)
+
+        # Déterminer article du sujet
+        article_sujet = "L'" if sujet[0].lower() in "aeiou" else "Le " if random.random() < 0.5 else "La "
+        # Déterminer article du complément
+        article_complement = "l'" if complement[0].lower() in "aeiou" else "le " if random.random() < 0.5 else "la "
+
+        # Ajuster article avec élision si nécessaire
+        if article_sujet.strip().lower() in ["l'", "l’"]:
+            phrase_complete = f"{article_sujet}{sujet} {verbe} {article_complement}{complement} {adverbe}."
+        else:
+            phrase_complete = f"{article_sujet}{sujet} {verbe} {article_complement}{complement} {adverbe}."
+
+        await ctx.send(phrase_complete)
 
     except FileNotFoundError:
         await ctx.send("❌ Fichier `phrases_listes.txt` introuvable.")
     except Exception as e:
         await ctx.send(f"⚠️ Une erreur est survenue : {e}")
-
 phrase.category = "Fun"
 
 
