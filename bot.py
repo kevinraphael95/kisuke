@@ -479,50 +479,12 @@ funfact.category = "Fun"
 ########## parti ##########
 @bot.command(help="Génère un nom de parti politique aléatoire.")
 async def parti(ctx):
-    premiers_mots = [
-        "Parti", "Mouvement", "Union", "Coalition", "Front", "Alliance", "Rassemblement", "Collectif", "Congrès",
-        "Fédération", "Syndicat", "Bloc", "Cercle", "Comité", "Assemblée", "Association", "Organisation", "Ligue",
-        "Confédération", "République", "Convention", "Société", "Force", "Ordre", "Phalange", "Campagne", "Brigade",
-        "Réseau", "Unité", "Groupe", "Commission", "Délégation", "Section", "Faction", "Collectivité", "Conférence",
-        "Coordination", "Plateforme", "Conseil", "Initiative", "Élan", "Accord", "Mission", "Engagement", "Forum",
-        "Pacte", "Voix", "Chemin", "Sentier", "Marche", "Appel", "Serment", "Souffle", "Chant", "Idée", "Défi", "Table",
-        "Union Civique", "Espoir", "Relève", "Cap", "Projet", "Symbole", "Nouveau Départ", "Avenir", "Perspective",
-        "Éveil", "Nouvelle Voie", "Solidarité", "Impact", "Refondation", "Vision", "Transition", "Offensive", "Volonté",
-        "Esprit", "Déclaration", "Position", "Engrenage", "Manifeste", "Pouvoir", "Regard", "Lueur", "Force Vive",
-        "Fer de lance", "Boussole", "Moteur", "Cohorte", "Orientation", "Arc", "Barrage", "Voie", "Signal", "Ligne",
-        "Feuille de route", "Clé", "Tournant", "Mur", "Barrière", "Bataillon"
-    ]
+    with open("partis_data.json", "r", encoding="utf-8") as f:
+        data = json.load(f)
 
-    adjectifs = [
-        "Populaire", "Républicain", "Social", "Démocratique", "National", "Écologique", "Progressiste", "Libéral",
-        "Indépendant", "Patriotique", "Conservateur", "Radical", "Souverain", "Moderne", "Humaniste", "Révolutionnaire",
-        "Communautaire", "Pluraliste", "Citoyen", "Socialiste", "Capitaliste", "Fédéral", "Populiste", "Égalitaire",
-        "Patriotique", "Internationaliste", "Constitutionnel", "Pacifique", "Éthique", "Réformiste", "Sociétal", "Populaire",
-        "Historique", "Économique", "Énergétique", "Technologique", "Agricole", "Industriel", "Cultural", "Social-démocrate",
-        "Anti-corruption", "Nationaliste", "Libertaire", "Conservateur", "Dynamique", "Progressif", "Social-libéral",
-        "Écologiste", "Féministe", "Pacifiste", "Militant", "Engagé", "Électoral", "Populaire", "Populiste", "Éthique",
-        "Moderniste", "Constitutionnel", "Réformateur", "Soutenable", "Solidaire", "Intégrationniste", "Inclusif", "Responsable",
-        "Social-national", "Républicain", "Libéral-démocrate", "Anti-autoritaire", "Social-républicain", "Participatif",
-        "Populaire", "Social-démocrate", "Agrarien", "Communautaire", "Patriotique", "Autonome", "Populaire", "Écologiste",
-        "Fédéraliste", "Historique", "Moderne", "Démocratique-populaire", "Populaire", "Conservateur", "Radical", "Populaire",
-        "Souverainiste", "Révolutionnaire", "Internationaliste", "Social", "Égalitaire", "Populaire", "Libéral", "Démocrate"
-    ]
-
-    noms = [
-        "Français", "Citoyen", "Révolutionnaire", "Travailleur", "Solidaire", "Indépendant", "Souverain", "Patriotique",
-        "Réformateur", "Populaire", "Social", "Démocratique", "National", "Écologique", "Progressiste", "Libéral",
-        "Égalitaire", "Fédéral", "Constitutionnel", "Pacifique", "Humaniste", "Radical", "Communautaire", "Pluraliste",
-        "Militant", "Éthique", "Internationaliste", "Moderne", "Engagé", "Historique", "Populiste", "Agricole", "Industriel",
-        "Technologique", "Socialiste", "Capitaliste", "Féministe", "Pacifiste", "Populaire", "Populiste", "Soutenable",
-        "Solidaire", "Inclusif", "Responsable", "Nationaliste", "Libertaire", "Conservateur", "Réformiste", "Social-libéral",
-        "Dynamique", "Écologiste", "Anti-corruption", "Participatif", "Autonome", "Fédéraliste", "Militant", "Révolutionnaire",
-        "Humanitaire", "Communiste", "Social-démocrate", "Patriotique", "Populaire", "Progressiste", "Républicain",
-        "Nationaliste", "Réformateur", "Social", "Populaire", "Radical", "Moderne", "Sociétal", "Pacifique", "Républicain",
-        "Social", "Libéral", "Démocrate", "Souverain", "Patriotique", "Populaire", "Révolutionnaire", "National",
-        "Écologique", "Indépendant", "Travailleur", "Socialiste", "Populaire", "Patriotique", "Libéral", "Réformiste",
-        "Progressiste", "Humaniste", "Constitutionnel", "Pacifique", "Éthique", "Engagé", "Solidaire", "Égalitaire",
-        "Social", "Populaire", "Citoyen", "Révolutionnaire"
-    ]
+    premiers_mots = data["premiers_mots"]
+    adjectifs = data["adjectifs"]
+    noms = data["noms"]
 
     nom_parti = f"{random.choice(premiers_mots)} {random.choice(adjectifs)} {random.choice(noms)}"
     await ctx.send(f"🏛️ Voici un nom de parti politique : **{nom_parti}**")
