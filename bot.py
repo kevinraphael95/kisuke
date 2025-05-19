@@ -272,22 +272,33 @@ chiffre.category = "Fun"
 cancel.category = "Fun"
 
 ########## combat ##########
-@bot.command(name="combat", help="Simule un combat entre 2 personnages de Bleach avec stats et effets.")
+@bot.command(name="combat", help="Simule un combat entre 2 personnages de Bleach avec stats, effets, affinités et Bankai.")
 async def combat_bleach(ctx):
     import random
 
     def format_etat_ligne(p):
         coeur = f"❤️ {max(p['vie'], 0)} PV"
         batterie = f"🔋 {p['energie']} énergie"
-        if p["status"] == "gel":
-            statut = f"❄️ Gelé ({p['status_duree']} tour)"
-        elif p["status"] == "confusion":
-            statut = f"💫 Confus ({p['status_duree']} tours)"
-        elif p["status"] == "poison":
-            statut = f"☠️ Empoisonné ({p['status_duree']} tours)"
-        else:
-            statut = "✅ Aucun effet"
-        return f"{p['nom']} — {coeur} | {batterie} | {statut}"
+        statut = {
+            None: "✅ Aucun effet",
+            "gel": f"❄️ Gelé ({p['status_duree']} tour)",
+            "confusion": f"💫 Confus ({p['status_duree']} tours)",
+            "poison": f"☠️ Empoisonné ({p['status_duree']} tours)"
+        }.get(p["status"], "❓")
+        bankai = "🌌 Bankai libéré" if p["bankai"] else ""
+        return f"{p['nom']} — {coeur} | {batterie} | {statut} {bankai}"
+
+    affinite_table = {
+        "feu": {"faible": "eau", "fort": "glace"},
+        "glace": {"faible": "feu", "fort": "poison"},
+        "foudre": {"faible": "terre", "fort": "eau"},
+        "poison": {"faible": "glace", "fort": "terre"},
+        "eau": {"faible": "foudre", "fort": "feu"},
+        "terre": {"faible": "poison", "fort": "foudre"},
+        "lumiere": {"faible": "ténèbres", "fort": "poison"},
+        "ténèbres": {"faible": "lumiere", "fort": "glace"},
+        "neutre": {"faible": None, "fort": None}
+    }
 
     try:
         with open("bleach_personnages.txt", "r", encoding="utf-8") as f:
@@ -323,7 +334,10 @@ async def combat_bleach(ctx):
                 "energie": 100,
                 "vie": 100,
                 "status": None,
-                "status_duree": 0
+                "status_duree": 0,
+                "buffs": {},
+                "bankai": False,
+                "affinite": random.choice(list(affinite_table.keys()))
             }
 
         p1 = parse_perso(perso1_data)
@@ -333,18 +347,19 @@ async def combat_bleach(ctx):
         p2_init = p2["stats"]["mobilité"] + random.randint(0, 10)
         tour_order = [p1, p2] if p1_init >= p2_init else [p2, p1]
 
-        log = f"⚔️ **Combat entre {p1['nom']} et {p2['nom']} !**\n\n"
+        log = f"⚔️ **Combat entre {p1['nom']} et {p2['nom']} !**\n"
+        log += f"🌪️ {p1['nom']} maîtrise l'affinité **{p1['affinite']}**, {p2['nom']} maîtrise **{p2['affinite']}**.\n\n"
 
-        for tour in range(1, 6):
+        for tour in range(1, 10):
             log += f"__🔁 Tour {tour}__\n\n"
             log += f"{format_etat_ligne(p1)}\n{format_etat_ligne(p2)}\n\n"
 
             for attaquant in tour_order:
                 defenseur = p1 if attaquant == p2 else p2
-
                 if attaquant["vie"] <= 0 or defenseur["vie"] <= 0:
                     continue
 
+                # Effets de statut
                 if attaquant["status"] == "gel":
                     log += f"❄️ {attaquant['nom']} est gelé et ne peut pas agir.\n\n"
                     attaquant["status_duree"] -= 1
@@ -368,6 +383,15 @@ async def combat_bleach(ctx):
                     if attaquant["status_duree"] <= 0:
                         attaquant["status"] = None
 
+                # Libération du Bankai
+                if not attaquant["bankai"] and attaquant["vie"] <= 50 and attaquant["energie"] >= 50:
+                    attaquant["bankai"] = True
+                    attaquant["energie"] += 30
+                    attaquant["vie"] += 20
+                    for stat in ["attaque", "défense", "pression"]:
+                        attaquant["stats"][stat] += 5
+                    log += f"🌌 {attaquant['nom']} libère son **Bankai** ! Stats renforcées, PV et énergie restaurés.\n\n"
+
                 possibles = [a for a in attaquant["attaques"] if a["cout"] <= attaquant["energie"] and (a["type"] != "ultime" or not a["utilisé"])]
                 if not possibles:
                     log += f"💤 {attaquant['nom']} n'a pas assez d'énergie pour attaquer.\n\n"
@@ -382,44 +406,50 @@ async def combat_bleach(ctx):
                 tentative_esquive = random.random()
                 cout_esquive = 50 if attaque["type"] == "ultime" else 10
 
-                if tentative_esquive < esquive_chance:
-                    if defenseur["energie"] >= cout_esquive:
-                        defenseur["energie"] -= cout_esquive
-                        log += f"💨 {defenseur['nom']} esquive l'attaque **{attaque['nom']}** avec le Shunpo ! (-{cout_esquive} énergie)\n"
-                        
-                        if random.random() < 0.2:
-                            contre = 10 + defenseur["stats"]["attaque"] // 2
-                            attaquant["vie"] -= contre
-                            log += f"🔁 {defenseur['nom']} contre-attaque et inflige {contre} dégâts à {attaquant['nom']} !\n"
-                            if attaquant["vie"] <= 0:
-                                log += f"\n🏆 **{defenseur['nom']} remporte le combat par contre-attaque !**"
-                                await ctx.send(log)
-                                return
-                        log += "\n"
-                        continue
-                    else:
-                        log += f"⚡ {defenseur['nom']} **aurait pu esquiver**, mais manque d'énergie (besoin de {cout_esquive}) !\n"
+                if tentative_esquive < esquive_chance and defenseur["energie"] >= cout_esquive:
+                    defenseur["energie"] -= cout_esquive
+                    log += f"💨 {defenseur['nom']} esquive **{attaque['nom']}** ! (-{cout_esquive} énergie)\n"
+                    if random.random() < 0.2:
+                        contre = 10 + defenseur["stats"]["attaque"] // 2
+                        attaquant["vie"] -= contre
+                        log += f"🔁 Contre-attaque ! {attaquant['nom']} perd {contre} PV.\n"
+                        if attaquant["vie"] <= 0:
+                            log += f"\n🏆 **{defenseur['nom']} gagne par contre-attaque !**"
+                            await ctx.send(log)
+                            return
+                    log += "\n"
+                    continue
 
-                base_degats = attaque["degats"]
-                modificateur = (attaquant["stats"]["attaque"] + attaquant["stats"]["force"]) - defenseur["stats"]["défense"]
-                modificateur += attaquant["stats"]["pression"] // 5
-                modificateur = max(0, modificateur)
-                total_degats = base_degats + modificateur
+                # Calcul des dégâts
+                base = attaque["degats"]
+                bonus = (attaquant["stats"]["attaque"] + attaquant["stats"]["force"]) - defenseur["stats"]["défense"]
+                bonus += attaquant["stats"]["pression"] // 5
+                total = base + max(0, bonus)
 
-                critique = random.random() < min(0.1 + attaquant["stats"]["force"] / 50, 0.4)
-                if critique:
-                    total_degats = int(total_degats * 1.5)
-                    log += "💥 Coup critique ! Dégâts amplifiés !\n"
+                # Affinités
+                aff = attaque["effet"].lower()
+                if affinite_table.get(aff, {}).get("fort") == defenseur["affinite"]:
+                    total = int(total * 1.3)
+                    log += f"🔥 Affinité forte ! Dégâts amplifiés.\n"
+                elif affinite_table.get(aff, {}).get("faible") == defenseur["affinite"]:
+                    total = int(total * 0.7)
+                    log += f"💧 Affinité faible... dégâts réduits.\n"
 
-                defenseur["vie"] -= total_degats
+                # Critique
+                if random.random() < min(0.1 + attaquant["stats"]["force"] / 50, 0.4):
+                    total = int(total * 1.5)
+                    log += f"💥 Coup critique !\n"
+
+                # Application
+                defenseur["vie"] -= total
                 attaquant["energie"] -= attaque["cout"]
 
                 log += (
-                    f"💥 {attaquant['nom']} utilise **{attaque['nom']}** "
-                    f"(coût : {attaque['cout']} énergie, dégâts : {base_degats}+bonus)\n"
-                    f"➡️ {defenseur['nom']} perd {total_degats} PV (reste {max(defenseur['vie'], 0)} PV)\n"
+                    f"💢 {attaquant['nom']} utilise **{attaque['nom']}** (coût {attaque['cout']})\n"
+                    f"➡️ {defenseur['nom']} perd {total} PV (reste {max(defenseur['vie'], 0)} PV)\n"
                 )
 
+                # Effets
                 effet = attaque["effet"].lower()
                 if effet in ["gel", "paralysie"]:
                     defenseur["status"] = "gel"
@@ -432,7 +462,16 @@ async def combat_bleach(ctx):
                 elif effet in ["poison", "corrosion"]:
                     defenseur["status"] = "poison"
                     defenseur["status_duree"] = 3
-                    log += f"☠️ {defenseur['nom']} est empoisonné pour 3 tours !\n"
+                    log += f"☠️ {defenseur['nom']} est empoisonné !\n"
+                elif effet in ["bouclier"]:
+                    attaquant["stats"]["défense"] += 5
+                    log += f"🛡️ {attaquant['nom']} gagne un bonus de défense !\n"
+                elif effet in ["buff"]:
+                    attaquant["stats"]["attaque"] += 5
+                    log += f"📈 {attaquant['nom']} augmente son attaque !\n"
+                elif effet in ["debuff"]:
+                    defenseur["stats"]["défense"] = max(0, defenseur["stats"]["défense"] - 5)
+                    log += f"📉 {defenseur['nom']} voit sa défense réduite !\n"
 
                 if defenseur["vie"] <= 0:
                     log += f"\n🏆 **{attaquant['nom']} remporte le combat par KO !**"
@@ -449,9 +488,10 @@ async def combat_bleach(ctx):
     except FileNotFoundError:
         await ctx.send("❌ Fichier `bleach_personnages.txt` introuvable.")
     except Exception as e:
-        await ctx.send(f"⚠️ Une erreur est survenue : {e}")
+        await ctx.send(f"⚠️ Erreur : {e}")
 
 combat_bleach.category = "Fun"
+
 
 
 
