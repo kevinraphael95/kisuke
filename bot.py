@@ -514,10 +514,24 @@ parti.category = "Fun"
 
 @bot.command(help="Découvre quel personnage de Bleach tu es (toujours le même pour toi).")
 async def perso(ctx):
-    user_id = ctx.author.id
-    index = (user_id * 31 + 17) % len(bleach_characters)
-    personnage = bleach_characters[index]
-    await ctx.send(f"{ctx.author.mention}, tu es **{personnage}** ! (C'est ta destinée dans le monde de Bleach 🔥)")
+    try:
+        with open("bleach_characters.json", "r", encoding="utf-8") as f:
+            bleach_characters = json.load(f)
+
+        if not bleach_characters:
+            await ctx.send("Le fichier des personnages est vide.")
+            return
+
+        user_id = ctx.author.id
+        index = (user_id * 31 + 17) % len(bleach_characters)
+        personnage = bleach_characters[index]
+        await ctx.send(f"{ctx.author.mention}, tu es **{personnage}** ! (C'est ta destinée dans le monde de Bleach 🔥)")
+
+    except FileNotFoundError:
+        await ctx.send("❌ Fichier `bleach_characters.json` introuvable.")
+    except Exception as e:
+        await ctx.send(f"⚠️ Erreur : {e}")
+
 perso.category = "Fun"
 
 
