@@ -614,4 +614,621 @@
       }
     ]
   }
+  [
+  {
+    "nom": "Tia Harribel",
+    "statistiques": {
+      "attaque": 13,
+      "defense": 15,
+      "vitesse": 11,
+      "intelligence": 15,
+      "perception": 10,
+      "spirituel": 14
+    },
+    "capacites": [
+      {
+        "nom": "Cascada",
+        "degats": 30,
+        "cout": 20,
+        "effet": "Jet d’eau mortel",
+        "type": "normale"
+      },
+      {
+        "nom": "Barracuda Slash",
+        "degats": 25,
+        "cout": 15,
+        "effet": "Coup liquide",
+        "type": "normale"
+      },
+      {
+        "nom": "Marea Alta",
+        "degats": 27,
+        "cout": 18,
+        "effet": "Inondation",
+        "type": "normale"
+      },
+      {
+        "nom": "Espada del Mar",
+        "degats": 55,
+        "cout": 40,
+        "effet": "Tsunami tranchant",
+        "type": "ultime"
+      }
+    ]
+  },
+  {
+    "nom": "Coyote Starrk",
+    "statistiques": {
+      "attaque": 16,
+      "defense": 13,
+      "vitesse": 14,
+      "intelligence": 14,
+      "perception": 11,
+      "spirituel": 13
+    },
+    "capacites": [
+      {
+        "nom": "Cero Metralleta",
+        "degats": 32,
+        "cout": 22,
+        "effet": "Tir en rafale",
+        "type": "normale"
+      },
+      {
+        "nom": "Invocation des loups",
+        "degats": 30,
+        "cout": 20,
+        "effet": "Doubles attaques",
+        "type": "normale"
+      },
+      {
+        "nom": "Bala Multiple",
+        "degats": 25,
+        "cout": 15,
+        "effet": "Fusillade",
+        "type": "normale"
+      },
+      {
+        "nom": "Resurrección Lobo",
+        "degats": 60,
+        "cout": 40,
+        "effet": "Déluge spirituel",
+        "type": "ultime"
+      }
+    ]
+  },
+  {
+    "nom": "Baraggan Louisenbairn",
+    "statistiques": {
+      "attaque": 13,
+      "defense": 16,
+      "vitesse": 10,
+      "intelligence": 14,
+      "perception": 12,
+      "spirituel": 10
+    },
+    "capacites": [
+      {
+        "nom": "Axe Vieillissante",
+        "degats": 30,
+        "cout": 20,
+        "effet": "Pourrissement",
+        "type": "normale"
+      },
+      {
+        "nom": "Campo de Muerte",
+        "degats": 0,
+        "cout": 10,
+        "effet": "Ralentissement",
+        "type": "normale"
+      },
+      {
+        "nom": "Brume Mortelle",
+        "degats": 28,
+        "cout": 18,
+        "effet": "Souffle toxique",
+        "type": "normale"
+      },
+      {
+        "nom": "Aging Touch",
+        "degats": 60,
+        "cout": 40,
+        "effet": "Dissolution temporelle",
+        "type": "ultime"
+      }
+    ]
+  },
+  {
+    "nom": "Nnoitra Gilga",
+    "statistiques": {
+      "attaque": 17,
+      "defense": 13,
+      "vitesse": 11,
+      "intelligence": 11,
+      "perception": 10,
+      "spirituel": 19
+    },
+    "capacites": [
+      {
+        "nom": "Coup Circulaire",
+        "degats": 33,
+        "cout": 25,
+        "effet": "Tranchant puissant",
+        "type": "normale"
+      },
+      {
+        "nom": "Double Fauche",
+        "degats": 30,
+        "cout": 20,
+        "effet": "Attaque tournoyante",
+        "type": "normale"
+      },
+      {
+        "nom": "Cri de Rage",
+        "degats": 28,
+        "cout": 18,
+        "effet": "Provocation",
+        "type": "normale"
+      },
+      {
+        "nom": "Forma Completa",
+        "degats": 58,
+        "cout": 40,
+        "effet": "Dualité destructrice",
+        "type": "ultime"
+      }
+    ]
+  },
+  {
+    "nom": "Szayelaporro Granz",
+    "statistiques": {
+      "attaque": 12,
+      "defense": 14,
+      "vitesse": 13,
+      "intelligence": 18,
+      "perception": 15,
+      "spirituel": 9
+    },
+    "capacites": [
+      {
+        "nom": "Clonage ADN",
+        "degats": 0,
+        "cout": 15,
+        "effet": "Copie partielle",
+        "type": "normale"
+      },
+      {
+        "nom": "Manipulation Cellulaire",
+        "degats": 20,
+        "cout": 15,
+        "effet": "Désorganisation",
+        "type": "normale"
+      },
+      {
+        "nom": "Marionnette",
+        "degats": 26,
+        "cout": 18,
+        "effet": "Contrôle forcé",
+        "type": "normale"
+      },
+      {
+        "nom": "Resurrección Forcée",
+        "degats": 50,
+        "cout": 40,
+        "effet": "Démembrement génétique",
+        "type": "ultime"
+      }
+    ]
+  },
+  {
+    "nom": "Shunsui Kyōraku",
+    "statistiques": {
+      "attaque": 14,
+      "defense": 13,
+      "vitesse": 15,
+      "intelligence": 17,
+      "perception": 11,
+      "spirituel": 12
+    },
+    "capacites": [
+      {
+        "nom": "Katen Kyōkotsu",
+        "degats": 25,
+        "cout": 15,
+        "effet": "Jeu mortel",
+        "type": "normale"
+      },
+      {
+        "nom": "Bushōgoma",
+        "degats": 28,
+        "cout": 18,
+        "effet": "Toupie tranchante",
+        "type": "normale"
+      },
+      {
+        "nom": "Takaoni",
+        "degats": 26,
+        "cout": 20,
+        "effet": "Règle aérienne",
+        "type": "normale"
+      },
+      {
+        "nom": "Bankai Karamatsu Shinjū",
+        "degats": 60,
+        "cout": 40,
+        "effet": "Tragédie partagée",
+        "type": "ultime"
+      }
+    ]
+  },
+  {
+    "nom": "Jūshirō Ukitake",
+    "statistiques": {
+      "attaque": 13,
+      "defense": 14,
+      "vitesse": 14,
+      "intelligence": 18,
+      "perception": 15,
+      "spirituel": 9
+    },
+    "capacites": [
+      {
+        "nom": "Sōgyo no Kotowari",
+        "degats": 22,
+        "cout": 15,
+        "effet": "Renvoi d’énergie",
+        "type": "normale"
+      },
+      {
+        "nom": "Onde Spirituelle",
+        "degats": 24,
+        "cout": 15,
+        "effet": "Flux inversé",
+        "type": "normale"
+      },
+      {
+        "nom": "Mur Spirituel",
+        "degats": 0,
+        "cout": 10,
+        "effet": "Bouclier absorbant",
+        "type": "normale"
+      },
+      {
+        "nom": "Sacrifice Spirituel",
+        "degats": 55,
+        "cout": 40,
+        "effet": "Partage vital",
+        "type": "ultime"
+      }
+    ]
+  },
+  {
+    "nom": "Shinji Hirako",
+    "statistiques": {
+      "attaque": 14,
+      "defense": 13,
+      "vitesse": 14,
+      "intelligence": 16,
+      "perception": 13,
+      "spirituel": 11
+    },
+    "capacites": [
+      {
+        "nom": "Sakanade",
+        "degats": 25,
+        "cout": 15,
+        "effet": "Confusion inversée",
+        "type": "normale"
+      },
+      {
+        "nom": "Vision Inversée",
+        "degats": 26,
+        "cout": 18,
+        "effet": "Illusion mentale",
+        "type": "normale"
+      },
+      {
+        "nom": "Inversion Totale",
+        "degats": 30,
+        "cout": 20,
+        "effet": "Attaque surprise",
+        "type": "normale"
+      },
+      {
+        "nom": "Bankai Sakashima Yokoshima Happōfusagari",
+        "degats": 58,
+        "cout": 40,
+        "effet": "Chaos complet",
+        "type": "ultime"
+      }
+    ]
+  },
+  {
+    "nom": "Kisuke Urahara",
+    "statistiques": {
+      "attaque": 14,
+      "defense": 12,
+      "vitesse": 15,
+      "intelligence": 19,
+      "perception": 16,
+      "spirituel": 10
+    },
+    "capacites": [
+      {
+        "nom": "Benihime Slash",
+        "degats": 25,
+        "cout": 15,
+        "effet": "Lame sanglante",
+        "type": "normale"
+      },
+      {
+        "nom": "Mur de Sang",
+        "degats": 0,
+        "cout": 15,
+        "effet": "Bouclier rouge",
+        "type": "normale"
+      },
+      {
+        "nom": "Explosion Cramoisie",
+        "degats": 28,
+        "cout": 20,
+        "effet": "Déflagration",
+        "type": "normale"
+      },
+      {
+        "nom": "Shibari Bankai",
+        "degats": 60,
+        "cout": 40,
+        "effet": "Reconstruction totale",
+        "type": "ultime"
+      }
+    ]
+  },
+  {
+    "nom": "Yamamoto Genryūsai",
+    "statistiques": {
+      "attaque": 18,
+      "defense": 15,
+      "vitesse": 10,
+      "intelligence": 16,
+      "perception": 10,
+      "spirituel": 20
+    },
+    "capacites": [
+      {
+        "nom": "Ryūjin Jakka",
+        "degats": 35,
+        "cout": 25,
+        "effet": "Flammes ancestrales",
+        "type": "normale"
+      },
+      {
+        "nom": "Flammes Ardentes",
+        "degats": 30,
+        "cout": 20,
+        "effet": "Brasier destructeur",
+        "type": "normale"
+      },
+      {
+        "nom": "Ennetsu Jigoku",
+        "degats": 33,
+        "cout": 25,
+        "effet": "Prison ardente",
+        "type": "normale"
+      },
+      {
+        "nom": "Zanka no Tachi",
+        "degats": 65,
+        "cout": 40,
+        "effet": "Apocalypse en feu",
+        "type": "ultime"
+      }
+    ]
+  },
+  {
+    "nom": "Rangiku Matsumoto",
+    "statistiques": {
+      "attaque": 12,
+      "defense": 11,
+      "vitesse": 14,
+      "intelligence": 13,
+      "perception": 11,
+      "spirituel": 13
+    },
+    "capacites": [
+      {
+        "nom": "Haineko",
+        "degats": 24,
+        "cout": 15,
+        "effet": "Cendres coupantes",
+        "type": "normale"
+      },
+      {
+        "nom": "Brume Cendrée",
+        "degats": 22,
+        "cout": 12,
+        "effet": "Dissolution",
+        "type": "normale"
+      },
+      {
+        "nom": "Vent de Cendres",
+        "degats": 26,
+        "cout": 18,
+        "effet": "Érosion",
+        "type": "normale"
+      },
+      {
+        "nom": "Explosion Furtive",
+        "degats": 52,
+        "cout": 40,
+        "effet": "Cendres infernales",
+        "type": "ultime"
+      }
+    ]
+  },
+  {
+    "nom": "Ikkaku Madarame",
+    "statistiques": {
+      "attaque": 16,
+      "defense": 12,
+      "vitesse": 12,
+      "intelligence": 11,
+      "perception": 9,
+      "spirituel": 17
+    },
+    "capacites": [
+      {
+        "nom": "Hōzukimaru",
+        "degats": 28,
+        "cout": 18,
+        "effet": "Lance brutale",
+        "type": "normale"
+      },
+      {
+        "nom": "Charge Frontale",
+        "degats": 30,
+        "cout": 20,
+        "effet": "Percée furieuse",
+        "type": "normale"
+      },
+      {
+        "nom": "Tourbillon",
+        "degats": 26,
+        "cout": 15,
+        "effet": "Rotation tranchante",
+        "type": "normale"
+      },
+      {
+        "nom": "Ryūmon Hōzukimaru",
+        "degats": 58,
+        "cout": 40,
+        "effet": "Rage martiale",
+        "type": "ultime"
+      }
+    ]
+  },
+  {
+    "nom": "Yumichika Ayasegawa",
+    "statistiques": {
+      "attaque": 13,
+      "defense": 12,
+      "vitesse": 14,
+      "intelligence": 13,
+      "perception": 15,
+      "spirituel": 11
+    },
+    "capacites": [
+      {
+        "nom": "Ruriiro Kujaku",
+        "degats": 25,
+        "cout": 15,
+        "effet": "Drain spirituel",
+        "type": "normale"
+      },
+      {
+        "nom": "Fleur Spirituelle",
+        "degats": 20,
+        "cout": 10,
+        "effet": "Absorption vitale",
+        "type": "normale"
+      },
+      {
+        "nom": "Coup Esthétique",
+        "degats": 26,
+        "cout": 18,
+        "effet": "Beauté mortelle",
+        "type": "normale"
+      },
+      {
+        "nom": "Déchaînement Floral",
+        "degats": 55,
+        "cout": 40,
+        "effet": "Annihilation élégante",
+        "type": "ultime"
+      }
+    ]
+  },
+  {
+    "nom": "Izuru Kira",
+    "statistiques": {
+      "attaque": 12,
+      "defense": 13,
+      "vitesse": 13,
+      "intelligence": 14,
+      "perception": 14,
+      "spirituel": 10
+    },
+    "capacites": [
+      {
+        "nom": "Wabisuke",
+        "degats": 24,
+        "cout": 15,
+        "effet": "Poid doublé",
+        "type": "normale"
+      },
+      {
+        "nom": "Tranchant Accablant",
+        "degats": 26,
+        "cout": 18,
+        "effet": "Lourdeur extrême",
+        "type": "normale"
+      },
+      {
+        "nom": "Affliction Spirituelle",
+        "degats": 28,
+        "cout": 20,
+        "effet": "Soumission",
+        "type": "normale"
+      },
+      {
+        "nom": "Jugement de Wabisuke",
+        "degats": 55,
+        "cout": 40,
+        "effet": "Écrasement final",
+        "type": "ultime"
+      }
+    ]
+  },
+  {
+    "nom": "Hisagi Shūhei",
+    "statistiques": {
+      "attaque": 14,
+      "defense": 13,
+      "vitesse": 14,
+      "intelligence": 15,
+      "perception": 13,
+      "spirituel": 13
+    },
+    "capacites": [
+      {
+        "nom": "Kazeshini",
+        "degats": 28,
+        "cout": 18,
+        "effet": "Lames jumeaux",
+        "type": "normale"
+      },
+      {
+        "nom": "Frappe Oblique",
+        "degats": 26,
+        "cout": 15,
+        "effet": "Double entaille",
+        "type": "normale"
+      },
+      {
+        "nom": "Tranchant Rapide",
+        "degats": 30,
+        "cout": 20,
+        "effet": "Découpe vive",
+        "type": "normale"
+      },
+      {
+        "nom": "Rage de Kazeshini",
+        "degats": 58,
+        "cout": 40,
+        "effet": "Tourbillon mortel",
+        "type": "ultime"
+      }
+    ]
+  }
+]
 ]
