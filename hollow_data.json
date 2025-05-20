@@ -3,13 +3,17 @@
     "Vasto", "Gran", "Sleipnir", "Kuro", "Aka", "Shiro", "Dai", "Oni", "Yami", "Kage",
     "Zan", "Haka", "Mugen", "Raiko", "Jigoku", "Tenma", "Guren", "Byaku", "Roku", "Tsuki",
     "Sei", "Rai", "Gin", "Zetsu", "Horu", "Kai", "Rokujo", "Juro", "Noctu", "Kurai",
-    "Kōri", "Shin", "Inku", "Meiyo", "Hōmura", "Enma", "Hisoka", "Oboro", "Kurai", "Fumei"
+    "Kōri", "Shin", "Inku", "Meiyo", "Hōmura", "Enma", "Hisoka", "Oboro", "Fumei", 
+    "Tensa", "Hono", "Rei", "Kiba", "Hibiki", "Seki", "Fushin", "Kyoku", "Shinku",
+    "Inka", "Suika", "Kurotsuki", "Senju", "Ranbu", "Shura", "Kyouka", "Kurenai"
   ],
   "suffixes": [
     "ron", "zaru", "thos", "gami", "kaze", "tenshi", "mori", "kiba", "ryu", "ka",
     "naga", "suke", "ra", "maru", "zan", "tora", "jaku", "jin", "no", "kaido",
     "shi", "ku", "ro", "yo", "ken", "sora", "yume", "hane", "do", "sei",
-    "hou", "ji", "rei", "tsu", "zen", "kin", "rou", "me", "yoji", "haku"
+    "hou", "ji", "rei", "tsu", "zen", "kin", "rou", "me", "yoji", "haku", 
+    "tsuki", "sen", "yurei", "shiro", "kyo", "ha", "hi", "ra", "shun", "kou", 
+    "fu", "ryo", "en", "kai", "kuro", "satsu", "kyu"
   ],
   "descriptions": [
     "Un Hollow qui manipule les ombres comme des lames invisibles.",
@@ -51,6 +55,34 @@
     "Un Hollow rieur qui se nourrit de peur et de folie.",
     "Un Hollow au regard vide qui aspire les espoirs de ses victimes.",
     "Un Hollow venu d’un autre plan, incompréhensible et monstrueux.",
-    "Un Hollow au masque brisé, témoin d’une douleur éternelle."
+    "Un Hollow au masque brisé, témoin d’une douleur éternelle.",
+    "Un Hollow dont le masque brisé laisse apparaître des fragments de son ancienne humanité, capable de manipuler les âmes errantes.",
+    "Un Arrancar dont la Resurrección libère des flammes spirituelles capables de brûler l’essence même du reiatsu adverse.",
+    "Un être aux mouvements imprévisibles, utilisant une vitesse surpassant même le Sonido classique.",
+    "Ce Hollow manie des chaînes spirituelles pouvant lier et drainer l’énergie vitale de ses ennemis.",
+    "Un guerrier portant un masque orné de cornes torsadées, dont les attaques tranchent aussi bien la chair que l’esprit.",
+    "Un Hollow dont le cri retentissant provoque une onde de choc mentale paralysante, semant la terreur sur le champ de bataille.",
+    "Une entité sombre capable de générer des illusions qui déforment la perception du temps et de l’espace.",
+    "Un Arrancar dont les membres peuvent s’allonger à l’infini, transperçant n’importe quelle défense.",
+    "Un Hollow à l’aura glaciale, capable de figer le reiatsu ennemi au simple contact de son souffle.",
+    "Un esprit guerrier, fusionné avec un Zanpakutō volé, décuplant sa puissance destructrice.",
+    "Un Hollow qui contrôle les ombres comme des lames tranchantes, attaquant depuis les ténèbres sans être vu.",
+    "Un être masqué à la force brute exceptionnelle, dont la régénération rapide le rend quasi immortel.",
+    "Un Hollow amphibien surgissant des profondeurs, capable d’empoisonner ses victimes avec un souffle toxique.",
+    "Un Hollow serpentiforme, agile et furtif, capable d’étrangler ses ennemis avec ses multiples bras.",
+    "Un Hollow au masque translucide qui reflète les souvenirs et faiblesses de ceux qui croisent son regard.",
+    "Un Hollow en armure lourde, absorbant les attaques et les renvoyant sous forme d’ondes spirituelles dévastatrices.",
+    "Un guerrier errant, enchaîné par ses regrets, mais animé d’une rage inextinguible au combat.",
+    "Un Hollow qui manipule le feu spirituel pour créer des explosions destructrices à chaque respiration.",
+    "Un Hollow capable d’absorber les énergies spirituelles environnantes pour renforcer ses propres attaques.",
+    "Un Hollow aux ailes d’os tranchantes comme des rasoirs, capable de décimer une armée en un battement d’aile.",
+    "Un Hollow dévoreur d’esprits errants, affamé et insatiable, ne laissant que désolation derrière lui.",
+    "Un Hollow traquant les âmes en murmurant leurs anciens noms, semant le doute et la peur dans le cœur de ses proies.",
+    "Un Hollow en constante métamorphose, changeant de forme pour s’adapter à chaque affrontement.",
+    "Un Hollow à la peau de cristal rouge, aussi froid qu’indestructible, défiant toutes les attaques.",
+    "Un Hollow rieur et cruel, se nourrissant de la peur et de la folie de ses adversaires.",
+    "Un Hollow au regard vide, aspirant lentement l’espoir de ses victimes jusqu’à les briser.",
+    "Un Hollow venu d’un autre plan, dont la nature et les intentions restent un mystère insondable.",
+    "Un Hollow au masque brisé, porteur d’une douleur éternelle et d’une rage dévastatrice."
   ]
 }
