@@ -269,7 +269,7 @@ cancel.category = "Fun"
 ############################# combat ##########################################################
 
 @bot.command(name="combat", help="Simule un combat entre 2 personnages de Bleach avec stats et effets.")
-async def combat_bleach(ctx):
+async def combat(ctx):
     import random
     import json
 
