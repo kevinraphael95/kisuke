@@ -616,7 +616,7 @@
   },
   {
     "nom": "Tia Harribel",
-    "statistiques": {
+    "stats": {
       "attaque": 13,
       "defense": 15,
       "vitesse": 11,
@@ -657,7 +657,7 @@
   },
   {
     "nom": "Coyote Starrk",
-    "statistiques": {
+    "stats": {
       "attaque": 16,
       "defense": 13,
       "vitesse": 14,
@@ -698,7 +698,7 @@
   },
   {
     "nom": "Baraggan Louisenbairn",
-    "statistiques": {
+    "stats": {
       "attaque": 13,
       "defense": 16,
       "vitesse": 10,
@@ -739,7 +739,7 @@
   },
   {
     "nom": "Nnoitra Gilga",
-    "statistiques": {
+    "stats": {
       "attaque": 17,
       "defense": 13,
       "vitesse": 11,
@@ -780,7 +780,7 @@
   },
   {
     "nom": "Szayelaporro Granz",
-    "statistiques": {
+    "stats": {
       "attaque": 12,
       "defense": 14,
       "vitesse": 13,
@@ -821,7 +821,7 @@
   },
   {
     "nom": "Shunsui Kyōraku",
-    "statistiques": {
+    "stats": {
       "attaque": 14,
       "defense": 13,
       "vitesse": 15,
@@ -862,7 +862,7 @@
   },
   {
     "nom": "Jūshirō Ukitake",
-    "statistiques": {
+    "stats": {
       "attaque": 13,
       "defense": 14,
       "vitesse": 14,
@@ -903,7 +903,7 @@
   },
   {
     "nom": "Shinji Hirako",
-    "statistiques": {
+    "stats": {
       "attaque": 14,
       "defense": 13,
       "vitesse": 14,
@@ -944,7 +944,7 @@
   },
   {
     "nom": "Kisuke Urahara",
-    "statistiques": {
+    "stats": {
       "attaque": 14,
       "defense": 12,
       "vitesse": 15,
@@ -985,7 +985,7 @@
   },
   {
     "nom": "Yamamoto Genryūsai",
-    "statistiques": {
+    "stats": {
       "attaque": 18,
       "defense": 15,
       "vitesse": 10,
@@ -1026,7 +1026,7 @@
   },
   {
     "nom": "Rangiku Matsumoto",
-    "statistiques": {
+    "stats": {
       "attaque": 12,
       "defense": 11,
       "vitesse": 14,
@@ -1067,7 +1067,7 @@
   },
   {
     "nom": "Ikkaku Madarame",
-    "statistiques": {
+    "stats": {
       "attaque": 16,
       "defense": 12,
       "vitesse": 12,
@@ -1108,7 +1108,7 @@
   },
   {
     "nom": "Yumichika Ayasegawa",
-    "statistiques": {
+    "stats": {
       "attaque": 13,
       "defense": 12,
       "vitesse": 14,
@@ -1149,7 +1149,7 @@
   },
   {
     "nom": "Izuru Kira",
-    "statistiques": {
+    "stats": {
       "attaque": 12,
       "defense": 13,
       "vitesse": 13,
@@ -1190,7 +1190,7 @@
   },
   {
     "nom": "Hisagi Shūhei",
-    "statistiques": {
+    "stats": {
       "attaque": 14,
       "defense": 13,
       "vitesse": 14,
