@@ -468,6 +468,37 @@ async def funfact(ctx):
 funfact.category = "Fun"
 
 
+############################# hollowify ##########################################################
+
+
+@bot.command(help="Transforme un utilisateur en Hollow avec une description stylée.")
+async def hollowify(ctx, member: discord.Member = None):
+    member = member or ctx.author
+
+    prefixes = ["Vasto", "Gran", "Sleipnir", "Kuro", "Aka", "Shiro", "Dai", "Oni", "Yami", "Kage"]
+    suffixes = ["ron", "zaru", "thos", "gami", "kaze", "tenshi", "mori", "kiba", "ryu", "ka"]
+
+    hollow_types = [
+        "Un Hollow qui manipule les ombres comme des lames invisibles.",
+        "Un Hollow à la vitesse fulgurante capable de disparaître en un instant.",
+        "Un Hollow avec un masque de crâne et une force brute incroyable.",
+        "Un Hollow qui contrôle les flammes spirituelles destructrices.",
+        "Un Hollow capable d’absorber l’énergie spirituelle de ses ennemis.",
+        "Un Hollow aux cris perçants pouvant paralyser ses adversaires.",
+        "Un Hollow qui se régénère rapidement et est quasi indestructible.",
+        "Un Hollow avec un masque orné de cornes tordues et terrifiantes.",
+        "Un Hollow silencieux qui attaque depuis les ombres sans prévenir.",
+        "Un Hollow capable de manipuler la peur et les illusions."
+    ]
+
+    nom_hollow = random.choice(prefixes) + random.choice(suffixes)
+    description = random.choice(hollow_types)
+
+    await ctx.send(f"💀 **{member.display_name}** se transforme en Hollow : **{nom_hollow}** !\n{description}")
+
+hollowify.category = "Fun"
+
+
 
 ############################# parti ##########################################################
 
