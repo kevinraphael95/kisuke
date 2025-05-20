@@ -183,31 +183,29 @@ say.category = "Général"
 @bot.command()
 async def bleachmoji(ctx):
     try:
-        with open("bleach_emojis.txt", "r", encoding="utf-8") as f:
-            lignes = f.readlines()
+        with open("bleach_emojis.json", "r", encoding="utf-8") as f:
+            personnages = json.load(f)
 
-        if not lignes:
+        if not personnages:
             await ctx.send("Le fichier d'emojis est vide.")
             return
 
-        ligne = random.choice(lignes).strip()
-        if not ligne:
-            await ctx.send("Erreur de lecture du fichier.")
+        personnage = random.choice(personnages)
+        nom = personnage.get("nom")
+        emojis = personnage.get("emojis")
+
+        if not nom or not emojis:
+            await ctx.send("Erreur de format dans le fichier JSON.")
             return
 
-        parts = ligne.split("|")
-        if len(parts) != 4:
-            await ctx.send("Erreur dans le format d'une ligne du fichier.")
-            return
-
-        nom, e1, e2, e3 = parts
-        emojis = random.choice([e1, e2, e3])
-        await ctx.send(f"{emojis} → ||{nom}||")
+        emoji_selection = random.choice(emojis)
+        await ctx.send(f"{emoji_selection} → ||{nom}||")
 
     except FileNotFoundError:
-        await ctx.send("Fichier `bleach_emojis.txt` introuvable.")
+        await ctx.send("❌ Fichier `bleach_emojis.json` introuvable.")
     except Exception as e:
-        await ctx.send(f"Erreur : {e}")
+        await ctx.send(f"⚠️ Erreur : {e}")
+
 bleachmoji.category = "Fun"
 
 
