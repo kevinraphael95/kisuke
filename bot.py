@@ -428,7 +428,7 @@ async def combat_bleach(ctx):
         await ctx.send("❌ Fichier `bleach_personnages.json` introuvable.")
     except Exception as e:
         await ctx.send(f"⚠️ Une erreur est survenue : {e}")
-                    
+        
 combat.category = "Fun"
 
 
