@@ -140,7 +140,7 @@ help_command.category = "Général"
 
 @bot.command()
 async def invitation(ctx):
-    await ctx.send("🔗 Lien d'invitation du bot : https://github.com/kevinraphael95/bleach-discord-bot-test")
+    await ctx.send("🔗 Lien d'invitation du bot : https://discord.com/oauth2/authorize?client_id=1372563051752194151")
 invitation.category = "Général"
 
 ############################# 🏓 Ping avec Embed + alias "test" ##########################################################
