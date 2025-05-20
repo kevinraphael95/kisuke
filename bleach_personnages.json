@@ -618,7 +618,7 @@
     "nom": "Tia Harribel",
     "stats": {
       "attaque": 13,
-      "defense": 15,
+      "défense": 15,
       "vitesse": 11,
       "mobilité": 15,
       "pression": 10,
@@ -659,7 +659,7 @@
     "nom": "Coyote Starrk",
     "stats": {
       "attaque": 16,
-      "defense": 13,
+      "défense": 13,
       "vitesse": 14,
       "mobilité": 14,
       "pression": 11,
@@ -700,7 +700,7 @@
     "nom": "Baraggan Louisenbairn",
     "stats": {
       "attaque": 13,
-      "defense": 16,
+      "défense": 16,
       "vitesse": 10,
       "mobilité": 14,
       "pression": 12,
@@ -741,7 +741,7 @@
     "nom": "Nnoitra Gilga",
     "stats": {
       "attaque": 17,
-      "defense": 13,
+      "défense": 13,
       "vitesse": 11,
       "mobilité": 11,
       "pression": 10,
@@ -782,7 +782,7 @@
     "nom": "Szayelaporro Granz",
     "stats": {
       "attaque": 12,
-      "defense": 14,
+      "défense": 14,
       "vitesse": 13,
       "mobilité": 18,
       "pression": 15,
@@ -823,7 +823,7 @@
     "nom": "Shunsui Kyōraku",
     "stats": {
       "attaque": 14,
-      "defense": 13,
+      "défense": 13,
       "vitesse": 15,
       "mobilité": 17,
       "pression": 11,
@@ -864,7 +864,7 @@
     "nom": "Jūshirō Ukitake",
     "stats": {
       "attaque": 13,
-      "defense": 14,
+      "défense": 14,
       "vitesse": 14,
       "mobilité": 18,
       "pression": 15,
@@ -905,7 +905,7 @@
     "nom": "Shinji Hirako",
     "stats": {
       "attaque": 14,
-      "defense": 13,
+      "défense": 13,
       "vitesse": 14,
       "mobilité": 16,
       "pression": 13,
@@ -946,7 +946,7 @@
     "nom": "Kisuke Urahara",
     "stats": {
       "attaque": 14,
-      "defense": 12,
+      "défense": 12,
       "vitesse": 15,
       "mobilité": 19,
       "pression": 16,
@@ -987,7 +987,7 @@
     "nom": "Yamamoto Genryūsai",
     "stats": {
       "attaque": 18,
-      "defense": 15,
+      "défense": 15,
       "vitesse": 10,
       "mobilité": 16,
       "pression": 10,
@@ -1028,7 +1028,7 @@
     "nom": "Rangiku Matsumoto",
     "stats": {
       "attaque": 12,
-      "defense": 11,
+      "défense": 11,
       "vitesse": 14,
       "mobilité": 13,
       "pression": 11,
@@ -1069,7 +1069,7 @@
     "nom": "Ikkaku Madarame",
     "stats": {
       "attaque": 16,
-      "defense": 12,
+      "défense": 12,
       "vitesse": 12,
       "mobilité": 11,
       "pression": 9,
@@ -1110,7 +1110,7 @@
     "nom": "Yumichika Ayasegawa",
     "stats": {
       "attaque": 13,
-      "defense": 12,
+      "défense": 12,
       "vitesse": 14,
       "mobilité": 13,
       "pression": 15,
@@ -1151,7 +1151,7 @@
     "nom": "Izuru Kira",
     "stats": {
       "attaque": 12,
-      "defense": 13,
+      "défense": 13,
       "vitesse": 13,
       "mobilité": 14,
       "pression": 14,
@@ -1192,7 +1192,7 @@
     "nom": "Hisagi Shūhei",
     "stats": {
       "attaque": 14,
-      "defense": 13,
+      "défense": 13,
       "vitesse": 14,
       "mobilité": 15,
       "pression": 13,
