@@ -17,7 +17,7 @@ from dotenv import load_dotenv
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
 # définition et chargement ici
-def load_characters(filename="bleach_characters.txt"):
+def load_characters(filename="bleach_characters.json"):
     with open(filename, encoding="utf-8") as f:
         characters = [line.strip() for line in f if line.strip()]
     return characters
