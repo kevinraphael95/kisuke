@@ -483,26 +483,27 @@ funfact.category = "Fun"
 async def hollowify(ctx, member: discord.Member = None):
     member = member or ctx.author
 
-    prefixes = ["Vasto", "Gran", "Sleipnir", "Kuro", "Aka", "Shiro", "Dai", "Oni", "Yami", "Kage"]
-    suffixes = ["ron", "zaru", "thos", "gami", "kaze", "tenshi", "mori", "kiba", "ryu", "ka"]
+    try:
+        with open("hollow_data.json", "r", encoding="utf-8") as f:
+            data = json.load(f)
 
-    hollow_types = [
-        "Un Hollow qui manipule les ombres comme des lames invisibles.",
-        "Un Hollow à la vitesse fulgurante capable de disparaître en un instant.",
-        "Un Hollow avec un masque de crâne et une force brute incroyable.",
-        "Un Hollow qui contrôle les flammes spirituelles destructrices.",
-        "Un Hollow capable d’absorber l’énergie spirituelle de ses ennemis.",
-        "Un Hollow aux cris perçants pouvant paralyser ses adversaires.",
-        "Un Hollow qui se régénère rapidement et est quasi indestructible.",
-        "Un Hollow avec un masque orné de cornes tordues et terrifiantes.",
-        "Un Hollow silencieux qui attaque depuis les ombres sans prévenir.",
-        "Un Hollow capable de manipuler la peur et les illusions."
-    ]
+        prefixes = data.get("prefixes", [])
+        suffixes = data.get("suffixes", [])
+        descriptions = data.get("descriptions", [])
 
-    nom_hollow = random.choice(prefixes) + random.choice(suffixes)
-    description = random.choice(hollow_types)
+        if not prefixes or not suffixes or not descriptions:
+            await ctx.send("❌ Le fichier hollow_data.json est incomplet ou mal formaté.")
+            return
 
-    await ctx.send(f"💀 **{member.display_name}** se transforme en Hollow : **{nom_hollow}** !\n{description}")
+        nom_hollow = random.choice(prefixes) + random.choice(suffixes)
+        description = random.choice(descriptions)
+
+        await ctx.send(f"💀 **{member.display_name}** se transforme en Hollow : **{nom_hollow}** !\n{description}")
+
+    except FileNotFoundError:
+        await ctx.send("❌ Le fichier `hollow_data.json` est introuvable.")
+    except Exception as e:
+        await ctx.send(f"❌ Une erreur est survenue : {e}")
 
 hollowify.category = "Fun"
 
