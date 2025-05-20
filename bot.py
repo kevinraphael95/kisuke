@@ -656,14 +656,26 @@ recommande.category = "Fun"
 ############################# ship ##########################################################
 
 @bot.command()
-async def ship(ctx, perso1: str, perso2: str):
+async def ship(ctx, *, noms_complets: str):
+    import json
+    import hashlib
+
     try:
+        noms_split = noms_complets.split(" ")
+
+        if len(noms_split) < 2:
+            await ctx.send("❌ Utilise : `!ship <personnage 1> <personnage 2>`")
+            return
+
+        # Découpe intelligente (moitié-moitié)
+        mid = len(noms_split) // 2
+        perso1 = " ".join(noms_split[:mid])
+        perso2 = " ".join(noms_split[mid:])
+
         with open("persos.json", "r", encoding="utf-8") as f:
             persos = json.load(f)
 
-        noms = [p["nom"] for p in persos]
-
-        # Trouver les persos dans la base
+        # Recherche des noms exacts insensibles à la casse
         p1 = next((p for p in persos if p["nom"].lower() == perso1.lower()), None)
         p2 = next((p for p in persos if p["nom"].lower() == perso2.lower()), None)
 
@@ -672,28 +684,24 @@ async def ship(ctx, perso1: str, perso2: str):
             return
 
         if perso1.lower() == perso2.lower():
-            await ctx.send("Tu veux vraiment ship **{}** avec lui-même ?!".format(p1["nom"]))
+            await ctx.send(f"Tu veux vraiment ship **{p1['nom']}** avec lui-même ?!")
             return
 
-        # Créer une clé unique mais ordonnée pour que ship(a,b) == ship(b,a)
         noms_ordonnes = sorted([p1["nom"], p2["nom"]])
         clef = f"{noms_ordonnes[0]}+{noms_ordonnes[1]}"
-
-        # Générer un hash pour un score fixe
         hash_bytes = hashlib.md5(clef.encode()).digest()
-        score = int.from_bytes(hash_bytes, 'big') % 101  # entre 0 et 100
+        score = int.from_bytes(hash_bytes, 'big') % 101
 
-        # Message de compatibilité
         if score >= 90:
-            reaction = "âmes sœurs !"
+            reaction = "âmes sœurs ! 💞"
         elif score >= 70:
-            reaction = "excellente alchimie !"
+            reaction = "excellente alchimie ! 🔥"
         elif score >= 50:
-            reaction = "bonne entente."
+            reaction = "bonne entente. 😊"
         elif score >= 30:
-            reaction = "relation compliquée..."
+            reaction = "relation compliquée... 😬"
         else:
-            reaction = "aucune chance !"
+            reaction = "aucune chance ! 💔"
 
         await ctx.send(f"**{p1['nom']}** ❤️ **{p2['nom']}** → Compatibilité : **{score}%** — {reaction}")
 
