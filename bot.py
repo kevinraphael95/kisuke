@@ -16,14 +16,6 @@ from dotenv import load_dotenv
 # Répertoire de travail
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
-# définition et chargement ici
-def load_characters(filename="bleach_characters.json"):
-    with open(filename, encoding="utf-8") as f:
-        characters = [line.strip() for line in f if line.strip()]
-    return characters
-
-bleach_characters = load_characters()
-
 # Charger les variables d’environnement
 load_dotenv()
 TOKEN = os.getenv("DISCORD_TOKEN")
