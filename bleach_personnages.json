@@ -312,7 +312,7 @@
         "type": "normale"
       },
       {
-        "nom": "Slash Spirituel",
+        "nom": "Slash force",
         "degats": 30,
         "cout": 20,
         "effet": "Désorientation",
@@ -342,7 +342,7 @@
         "nom": "Reishi Pfeil",
         "degats": 22,
         "cout": 10,
-        "effet": "Flèche spirituelle",
+        "effet": "Flèche forcele",
         "type": "normale"
       },
       {
@@ -620,9 +620,9 @@
       "attaque": 13,
       "defense": 15,
       "vitesse": 11,
-      "intelligence": 15,
-      "perception": 10,
-      "spirituel": 14
+      "mobilité": 15,
+      "pression": 10,
+      "force": 14
     },
     "attaques": [
       {
@@ -661,9 +661,9 @@
       "attaque": 16,
       "defense": 13,
       "vitesse": 14,
-      "intelligence": 14,
-      "perception": 11,
-      "spirituel": 13
+      "mobilité": 14,
+      "pression": 11,
+      "force": 13
     },
     "attaques": [
       {
@@ -691,7 +691,7 @@
         "nom": "Resurrección Lobo",
         "degats": 60,
         "cout": 40,
-        "effet": "Déluge spirituel",
+        "effet": "Déluge force",
         "type": "ultime"
       }
     ]
@@ -702,9 +702,9 @@
       "attaque": 13,
       "defense": 16,
       "vitesse": 10,
-      "intelligence": 14,
-      "perception": 12,
-      "spirituel": 10
+      "mobilité": 14,
+      "pression": 12,
+      "force": 10
     },
     "attaques": [
       {
@@ -743,9 +743,9 @@
       "attaque": 17,
       "defense": 13,
       "vitesse": 11,
-      "intelligence": 11,
-      "perception": 10,
-      "spirituel": 19
+      "mobilité": 11,
+      "pression": 10,
+      "force": 19
     },
     "attaques": [
       {
@@ -784,9 +784,9 @@
       "attaque": 12,
       "defense": 14,
       "vitesse": 13,
-      "intelligence": 18,
-      "perception": 15,
-      "spirituel": 9
+      "mobilité": 18,
+      "pression": 15,
+      "force": 9
     },
     "attaques": [
       {
@@ -825,9 +825,9 @@
       "attaque": 14,
       "defense": 13,
       "vitesse": 15,
-      "intelligence": 17,
-      "perception": 11,
-      "spirituel": 12
+      "mobilité": 17,
+      "pression": 11,
+      "force": 12
     },
     "attaques": [
       {
@@ -866,9 +866,9 @@
       "attaque": 13,
       "defense": 14,
       "vitesse": 14,
-      "intelligence": 18,
-      "perception": 15,
-      "spirituel": 9
+      "mobilité": 18,
+      "pression": 15,
+      "force": 9
     },
     "attaques": [
       {
@@ -879,21 +879,21 @@
         "type": "normale"
       },
       {
-        "nom": "Onde Spirituelle",
+        "nom": "Onde forcele",
         "degats": 24,
         "cout": 15,
         "effet": "Flux inversé",
         "type": "normale"
       },
       {
-        "nom": "Mur Spirituel",
+        "nom": "Mur force",
         "degats": 0,
         "cout": 10,
         "effet": "Bouclier absorbant",
         "type": "normale"
       },
       {
-        "nom": "Sacrifice Spirituel",
+        "nom": "Sacrifice force",
         "degats": 55,
         "cout": 40,
         "effet": "Partage vital",
@@ -907,9 +907,9 @@
       "attaque": 14,
       "defense": 13,
       "vitesse": 14,
-      "intelligence": 16,
-      "perception": 13,
-      "spirituel": 11
+      "mobilité": 16,
+      "pression": 13,
+      "force": 11
     },
     "attaques": [
       {
@@ -948,9 +948,9 @@
       "attaque": 14,
       "defense": 12,
       "vitesse": 15,
-      "intelligence": 19,
-      "perception": 16,
-      "spirituel": 10
+      "mobilité": 19,
+      "pression": 16,
+      "force": 10
     },
     "attaques": [
       {
@@ -989,9 +989,9 @@
       "attaque": 18,
       "defense": 15,
       "vitesse": 10,
-      "intelligence": 16,
-      "perception": 10,
-      "spirituel": 20
+      "mobilité": 16,
+      "pression": 10,
+      "force": 20
     },
     "attaques": [
       {
@@ -1030,9 +1030,9 @@
       "attaque": 12,
       "defense": 11,
       "vitesse": 14,
-      "intelligence": 13,
-      "perception": 11,
-      "spirituel": 13
+      "mobilité": 13,
+      "pression": 11,
+      "force": 13
     },
     "attaques": [
       {
@@ -1071,9 +1071,9 @@
       "attaque": 16,
       "defense": 12,
       "vitesse": 12,
-      "intelligence": 11,
-      "perception": 9,
-      "spirituel": 17
+      "mobilité": 11,
+      "pression": 9,
+      "force": 17
     },
     "attaques": [
       {
@@ -1112,20 +1112,20 @@
       "attaque": 13,
       "defense": 12,
       "vitesse": 14,
-      "intelligence": 13,
-      "perception": 15,
-      "spirituel": 11
+      "mobilité": 13,
+      "pression": 15,
+      "force": 11
     },
     "attaques": [
       {
         "nom": "Ruriiro Kujaku",
         "degats": 25,
         "cout": 15,
-        "effet": "Drain spirituel",
+        "effet": "Drain force",
         "type": "normale"
       },
       {
-        "nom": "Fleur Spirituelle",
+        "nom": "Fleur forcele",
         "degats": 20,
         "cout": 10,
         "effet": "Absorption vitale",
@@ -1153,9 +1153,9 @@
       "attaque": 12,
       "defense": 13,
       "vitesse": 13,
-      "intelligence": 14,
-      "perception": 14,
-      "spirituel": 10
+      "mobilité": 14,
+      "pression": 14,
+      "force": 10
     },
     "attaques": [
       {
@@ -1173,7 +1173,7 @@
         "type": "normale"
       },
       {
-        "nom": "Affliction Spirituelle",
+        "nom": "Affliction forcele",
         "degats": 28,
         "cout": 20,
         "effet": "Soumission",
@@ -1194,9 +1194,9 @@
       "attaque": 14,
       "defense": 13,
       "vitesse": 14,
-      "intelligence": 15,
-      "perception": 13,
-      "spirituel": 13
+      "mobilité": 15,
+      "pression": 13,
+      "force": 13
     },
     "attaques": [
       {
@@ -1463,7 +1463,7 @@
         "nom": "Acrobatie Verte",
         "degats": 26,
         "cout": 16,
-        "effet": "Bond spirituel",
+        "effet": "Bond force",
         "type": "normale"
       },
       {
@@ -1501,7 +1501,7 @@
         "type": "normale"
       },
       {
-        "nom": "Écrasement Spirituel",
+        "nom": "Écrasement force",
         "degats": 30,
         "cout": 20,
         "effet": "Domination brute",
@@ -1692,7 +1692,7 @@
     },
     "attaques": [
       {
-        "nom": "Sustentation Spirituelle",
+        "nom": "Sustentation forcele",
         "degats": 0,
         "cout": 12,
         "effet": "Renforcement allié",
@@ -1740,7 +1740,7 @@
         "type": "normale"
       },
       {
-        "nom": "Douleur Spirituelle",
+        "nom": "Douleur forcele",
         "degats": 27,
         "cout": 18,
         "effet": "Attaque aveuglante",
