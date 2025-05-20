@@ -656,42 +656,31 @@ recommande.category = "Fun"
 ############################# ship ##########################################################
 
 @bot.command()
-async def ship(ctx, *, noms_complets: str):
+async def ship(ctx):
     import json
     import hashlib
+    import random
 
     try:
-        noms_split = noms_complets.split(" ")
-
-        if len(noms_split) < 2:
-            await ctx.send("❌ Utilise : `!ship <personnage 1> <personnage 2>`")
-            return
-
-        # Découpe intelligente (moitié-moitié)
-        mid = len(noms_split) // 2
-        perso1 = " ".join(noms_split[:mid])
-        perso2 = " ".join(noms_split[mid:])
-
-        with open("persos.json", "r", encoding="utf-8") as f:
+        with open("bleach_personnages.json", "r", encoding="utf-8") as f:
             persos = json.load(f)
 
-        # Recherche des noms exacts insensibles à la casse
-        p1 = next((p for p in persos if p["nom"].lower() == perso1.lower()), None)
-        p2 = next((p for p in persos if p["nom"].lower() == perso2.lower()), None)
-
-        if not p1 or not p2:
-            await ctx.send("❌ Un ou les deux personnages sont introuvables.")
+        if len(persos) < 2:
+            await ctx.send("❌ Il faut au moins deux personnages dans `bleach_personnages.json`.")
             return
 
-        if perso1.lower() == perso2.lower():
-            await ctx.send(f"Tu veux vraiment ship **{p1['nom']}** avec lui-même ?!")
-            return
+        # Choisir deux personnages différents au hasard
+        p1, p2 = random.sample(persos, 2)
 
+        # Toujours le même résultat pour un même couple : on trie les noms
         noms_ordonnes = sorted([p1["nom"], p2["nom"]])
         clef = f"{noms_ordonnes[0]}+{noms_ordonnes[1]}"
+
+        # Hash déterministe pour score de 0 à 100
         hash_bytes = hashlib.md5(clef.encode()).digest()
         score = int.from_bytes(hash_bytes, 'big') % 101
 
+        # Réaction selon le score
         if score >= 90:
             reaction = "âmes sœurs ! 💞"
         elif score >= 70:
@@ -706,7 +695,7 @@ async def ship(ctx, *, noms_complets: str):
         await ctx.send(f"**{p1['nom']}** ❤️ **{p2['nom']}** → Compatibilité : **{score}%** — {reaction}")
 
     except FileNotFoundError:
-        await ctx.send("❌ Fichier `persos.json` introuvable.")
+        await ctx.send("❌ Fichier `bleach_personnages.json` introuvable.")
     except Exception as e:
         await ctx.send(f"⚠️ Erreur : {e}")
 
