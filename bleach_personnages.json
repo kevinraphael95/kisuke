@@ -1228,6 +1228,580 @@
         "type": "ultime"
       }
     ]
+  },
+    {
+    "nom": "Kensei Muguruma",
+    "stats": {
+      "attaque": 17,
+      "défense": 13,
+      "vitesse": 14,
+      "mobilité": 15,
+      "pression": 13,
+      "force": 16
+    },
+    "attaques": [
+      {
+        "nom": "Tachikaze Slash",
+        "degats": 28,
+        "cout": 18,
+        "effet": "Fente sous vide",
+        "type": "normale"
+      },
+      {
+        "nom": "Shunpō Uppercut",
+        "degats": 26,
+        "cout": 16,
+        "effet": "Poing éclair",
+        "type": "normale"
+      },
+      {
+        "nom": "Détonation du Vent",
+        "degats": 30,
+        "cout": 20,
+        "effet": "Onde perçante",
+        "type": "normale"
+      },
+      {
+        "nom": "Bankai Tekken Tachikaze",
+        "degats": 60,
+        "cout": 40,
+        "effet": "Explosion à bout portant",
+        "type": "ultime"
+      }
+    ]
+  },
+  {
+    "nom": "Rōjūrō Ōtoribashi",
+    "stats": {
+      "attaque": 14,
+      "défense": 14,
+      "vitesse": 15,
+      "mobilité": 17,
+      "pression": 13,
+      "force": 13
+    },
+    "attaques": [
+      {
+        "nom": "Kinshara Strike",
+        "degats": 26,
+        "cout": 16,
+        "effet": "Fouet rythmique",
+        "type": "normale"
+      },
+      {
+        "nom": "Melody Hypnotique",
+        "degats": 28,
+        "cout": 18,
+        "effet": "Illusion sonore",
+        "type": "normale"
+      },
+      {
+        "nom": "Opera Fantôme",
+        "degats": 30,
+        "cout": 20,
+        "effet": "Déflagration harmonique",
+        "type": "normale"
+      },
+      {
+        "nom": "Bankai Kinshara Butōdan",
+        "degats": 58,
+        "cout": 42,
+        "effet": "Concert de lames",
+        "type": "ultime"
+      }
+    ]
+  },
+  {
+    "nom": "Sajin Komamura",
+    "stats": {
+      "attaque": 18,
+      "défense": 12,
+      "vitesse": 11,
+      "mobilité": 13,
+      "pression": 11,
+      "force": 20
+    },
+    "attaques": [
+      {
+        "nom": "Frappe de Tenken",
+        "degats": 30,
+        "cout": 20,
+        "effet": "Lame géante",
+        "type": "normale"
+      },
+      {
+        "nom": "Poing du Loup",
+        "degats": 28,
+        "cout": 18,
+        "effet": "Force sauvage",
+        "type": "normale"
+      },
+      {
+        "nom": "Cri de l'Honneur",
+        "degats": 25,
+        "cout": 14,
+        "effet": "Provocation furieuse",
+        "type": "normale"
+      },
+      {
+        "nom": "Kokujo Tengen Myo'o",
+        "degats": 60,
+        "cout": 42,
+        "effet": "Jugement du colosse",
+        "type": "ultime"
+      }
+    ]
+  },
+  {
+    "nom": "Lisa Yadōmaru",
+    "stats": {
+      "attaque": 14,
+      "défense": 14,
+      "vitesse": 15,
+      "mobilité": 15,
+      "pression": 14,
+      "force": 12
+    },
+    "attaques": [
+      {
+        "nom": "Fente Acrobatique",
+        "degats": 28,
+        "cout": 18,
+        "effet": "Attaque tournoyante",
+        "type": "normale"
+      },
+      {
+        "nom": "Lecture Rapide",
+        "degats": 25,
+        "cout": 14,
+        "effet": "Analyse instantanée",
+        "type": "normale"
+      },
+      {
+        "nom": "Shunkō Pression",
+        "degats": 30,
+        "cout": 20,
+        "effet": "Frappe spirite",
+        "type": "normale"
+      },
+      {
+        "nom": "Bankai du Silence",
+        "degats": 58,
+        "cout": 40,
+        "effet": "Onde dévastatrice",
+        "type": "ultime"
+      }
+    ]
+  },
+  {
+    "nom": "Hiyori Sarugaki",
+    "stats": {
+      "attaque": 13,
+      "défense": 13,
+      "vitesse": 15,
+      "mobilité": 14,
+      "pression": 12,
+      "force": 14
+    },
+    "attaques": [
+      {
+        "nom": "Hurlement de Rage",
+        "degats": 26,
+        "cout": 16,
+        "effet": "Cri paralysant",
+        "type": "normale"
+      },
+      {
+        "nom": "Coup de Sandale",
+        "degats": 24,
+        "cout": 14,
+        "effet": "Frustration incarnée",
+        "type": "normale"
+      },
+      {
+        "nom": "Déchaînement Brutal",
+        "degats": 28,
+        "cout": 18,
+        "effet": "Combo furieux",
+        "type": "normale"
+      },
+      {
+        "nom": "Shunkō Explosif",
+        "degats": 55,
+        "cout": 40,
+        "effet": "Impact bestial",
+        "type": "ultime"
+      }
+    ]
+  },
+  {
+    "nom": "Mashiro Kuna",
+    "stats": {
+      "attaque": 15,
+      "défense": 13,
+      "vitesse": 15,
+      "mobilité": 13,
+      "pression": 11,
+      "force": 14
+    },
+    "attaques": [
+      {
+        "nom": "Mashiro Kick",
+        "degats": 32,
+        "cout": 24,
+        "effet": "Coup de pied supersonique",
+        "type": "normale"
+      },
+      {
+        "nom": "Mashiro Spécial",
+        "degats": 30,
+        "cout": 20,
+        "effet": "Saut lunaire",
+        "type": "normale"
+      },
+      {
+        "nom": "Acrobatie Verte",
+        "degats": 26,
+        "cout": 16,
+        "effet": "Bond spirituel",
+        "type": "normale"
+      },
+      {
+        "nom": "Mashiro Super Mode",
+        "degats": 60,
+        "cout": 40,
+        "effet": "Explosion arc-en-ciel",
+        "type": "ultime"
+      }
+    ]
+  },
+  {
+    "nom": "Ikomikidomoe",
+    "stats": {
+      "attaque": 17,
+      "défense": 15,
+      "vitesse": 12,
+      "mobilité": 10,
+      "pression": 10,
+      "force": 18
+    },
+    "attaques": [
+      {
+        "nom": "Frappe Colossale",
+        "degats": 33,
+        "cout": 25,
+        "effet": "Écrasement bestial",
+        "type": "normale"
+      },
+      {
+        "nom": "Hurlement de Rage",
+        "degats": 28,
+        "cout": 18,
+        "effet": "Intimidation totale",
+        "type": "normale"
+      },
+      {
+        "nom": "Écrasement Spirituel",
+        "degats": 30,
+        "cout": 20,
+        "effet": "Domination brute",
+        "type": "normale"
+      },
+      {
+        "nom": "Forme Déchaînée",
+        "degats": 60,
+        "cout": 42,
+        "effet": "Cataclysme incarné",
+        "type": "ultime"
+      }
+    ]
+  },
+  {
+    "nom": "Tenjirō Kirinji",
+    "stats": {
+      "attaque": 15,
+      "défense": 14,
+      "vitesse": 13,
+      "mobilité": 19,
+      "pression": 17,
+      "force": 12
+    },
+    "attaques": [
+      {
+        "nom": "Fontaine Curative",
+        "degats": 20,
+        "cout": 10,
+        "effet": "Soin mineur",
+        "type": "normale"
+      },
+      {
+        "nom": "Jet d’Eau Bouillante",
+        "degats": 28,
+        "cout": 18,
+        "effet": "Brûlure ciblée",
+        "type": "normale"
+      },
+      {
+        "nom": "Bain Revigorant",
+        "degats": 26,
+        "cout": 15,
+        "effet": "Régénération lente",
+        "type": "normale"
+      },
+      {
+        "nom": "Ondes du Bain Royal",
+        "degats": 55,
+        "cout": 40,
+        "effet": "Guérison totale",
+        "type": "ultime"
+      }
+    ]
+  },
+  {
+    "nom": "Senjumaru Shutara",
+    "stats": {
+      "attaque": 14,
+      "défense": 15,
+      "vitesse": 16,
+      "mobilité": 18,
+      "pression": 19,
+      "force": 11
+    },
+    "attaques": [
+      {
+        "nom": "Soie Tranchante",
+        "degats": 26,
+        "cout": 16,
+        "effet": "Attaque de précision",
+        "type": "normale"
+      },
+      {
+        "nom": "Tissage Hypnotique",
+        "degats": 28,
+        "cout": 18,
+        "effet": "Contrainte sensorielle",
+        "type": "normale"
+      },
+      {
+        "nom": "Marionnette de Soie",
+        "degats": 30,
+        "cout": 20,
+        "effet": "Contrôle total",
+        "type": "normale"
+      },
+      {
+        "nom": "Atatameru",
+        "degats": 60,
+        "cout": 42,
+        "effet": "Confinement impérial",
+        "type": "ultime"
+      }
+    ]
+  },
+  {
+    "nom": "Ōetsu Nimaiya",
+    "stats": {
+      "attaque": 17,
+      "défense": 14,
+      "vitesse": 15,
+      "mobilité": 16,
+      "pression": 13,
+      "force": 15
+    },
+    "attaques": [
+      {
+        "nom": "Sayafushi",
+        "degats": 30,
+        "cout": 20,
+        "effet": "Tranchant parfait",
+        "type": "normale"
+      },
+      {
+        "nom": "Coup Improvisé",
+        "degats": 26,
+        "cout": 16,
+        "effet": "Création instantanée",
+        "type": "normale"
+      },
+      {
+        "nom": "Jet d’Encre",
+        "degats": 25,
+        "cout": 14,
+        "effet": "Vision brouillée",
+        "type": "normale"
+      },
+      {
+        "nom": "Shinsō Sayafushi",
+        "degats": 60,
+        "cout": 40,
+        "effet": "Découpe absolue",
+        "type": "ultime"
+      }
+    ]
+  },
+  {
+    "nom": "Ichibē Hyōsube",
+    "stats": {
+      "attaque": 16,
+      "défense": 16,
+      "vitesse": 12,
+      "mobilité": 18,
+      "pression": 18,
+      "force": 13
+    },
+    "attaques": [
+      {
+        "nom": "Jet d’Encre",
+        "degats": 26,
+        "cout": 16,
+        "effet": "Oblitération de nom",
+        "type": "normale"
+      },
+      {
+        "nom": "Règle du Verbe",
+        "degats": 28,
+        "cout": 18,
+        "effet": "Manipulation existentielle",
+        "type": "normale"
+      },
+      {
+        "nom": "Nom Volé",
+        "degats": 30,
+        "cout": 20,
+        "effet": "Diminution de puissance",
+        "type": "normale"
+      },
+      {
+        "nom": "Shirafude Ichimonji",
+        "degats": 65,
+        "cout": 42,
+        "effet": "Nom effacé du monde",
+        "type": "ultime"
+      }
+    ]
+  },
+  {
+    "nom": "Kirio Hikifune",
+    "stats": {
+      "attaque": 13,
+      "défense": 15,
+      "vitesse": 14,
+      "mobilité": 17,
+      "pression": 19,
+      "force": 12
+    },
+    "attaques": [
+      {
+        "nom": "Sustentation Spirituelle",
+        "degats": 0,
+        "cout": 12,
+        "effet": "Renforcement allié",
+        "type": "normale"
+      },
+      {
+        "nom": "Frappe Nourricière",
+        "degats": 26,
+        "cout": 16,
+        "effet": "Coup chargé",
+        "type": "normale"
+      },
+      {
+        "nom": "Recette de Vie",
+        "degats": 28,
+        "cout": 18,
+        "effet": "Soutien vital",
+        "type": "normale"
+      },
+      {
+        "nom": "Forme Compressée",
+        "degats": 60,
+        "cout": 40,
+        "effet": "Explosion nutritionnelle",
+        "type": "ultime"
+      }
+    ]
+  },
+  {
+    "nom": "Kaname Tōsen",
+    "stats": {
+      "attaque": 14,
+      "défense": 13,
+      "vitesse": 14,
+      "mobilité": 15,
+      "pression": 16,
+      "force": 12
+    },
+    "attaques": [
+      {
+        "nom": "Shunpō Frappe",
+        "degats": 25,
+        "cout": 15,
+        "effet": "Charge rapide",
+        "type": "normale"
+      },
+      {
+        "nom": "Douleur Spirituelle",
+        "degats": 27,
+        "cout": 18,
+        "effet": "Attaque aveuglante",
+        "type": "normale"
+      },
+      {
+        "nom": "Frappe Vengeur",
+        "degats": 30,
+        "cout": 20,
+        "effet": "Assaut furieux",
+        "type": "normale"
+      },
+      {
+        "nom": "Bankai Suzumushi Tsuishiki",
+        "degats": 60,
+        "cout": 40,
+        "effet": "Silence absolu",
+        "type": "ultime"
+      }
+    ]
+  },
+  {
+    "nom": "Ichimaru Gin",
+    "stats": {
+      "attaque": 15,
+      "défense": 14,
+      "vitesse": 13,
+      "mobilité": 16,
+      "pression": 12,
+      "force": 14
+    },
+    "attaques": [
+      {
+        "nom": "Shinsō Piercing",
+        "degats": 28,
+        "cout": 18,
+        "effet": "Attaque rapide",
+        "type": "normale"
+      },
+      {
+        "nom": "Furtivité",
+        "degats": 25,
+        "cout": 15,
+        "effet": "Discrétion mortelle",
+        "type": "normale"
+      },
+      {
+        "nom": "Coup Vipère",
+        "degats": 30,
+        "cout": 20,
+        "effet": "Tranchant précis",
+        "type": "normale"
+      },
+      {
+        "nom": "Bankai Kamishini no Yari",
+        "degats": 60,
+        "cout": 40,
+        "effet": "Perforation extrême",
+        "type": "ultime"
+      }
+    ]
   }
 ]
 
