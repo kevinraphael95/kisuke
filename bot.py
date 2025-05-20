@@ -36,8 +36,10 @@ bot = commands.Bot(command_prefix=get_prefix, intents=intents, help_command=None
 # Événement : bot prêt
 @bot.event
 async def on_ready():
-    await bot.change_presence(type=discord.ActivityType.watching, name="Bleach")
+    activity = discord.Activity(type=discord.ActivityType.watching, name="Bleach")
+    await bot.change_presence(activity=activity)
     print(f"✅ Connecté en tant que {bot.user.name}")
+
 
 # Répondre à une mention du bot
 @bot.event
