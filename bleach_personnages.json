@@ -1,0 +1,617 @@
+[
+  {
+    "nom": "Ichigo Kurosaki",
+    "stats": {
+      "attaque": 15,
+      "défense": 12,
+      "vitesse": 14,
+      "mobilité": 16,
+      "pression": 10,
+      "force": 13
+    },
+    "attaques": [
+      {
+        "nom": "Getsuga Tensho",
+        "degats": 30,
+        "cout": 20,
+        "effet": "Onde d'énergie",
+        "type": "normale"
+      },
+      {
+        "nom": "Zangetsu Rush",
+        "degats": 28,
+        "cout": 18,
+        "effet": "Coup croisé",
+        "type": "normale"
+      },
+      {
+        "nom": "Final Getsuga",
+        "degats": 35,
+        "cout": 25,
+        "effet": "Explosion noire",
+        "type": "normale"
+      },
+      {
+        "nom": "Mugetsu",
+        "degats": 60,
+        "cout": 40,
+        "effet": "Oblitération",
+        "type": "ultime"
+      }
+    ]
+  },
+  {
+    "nom": "Rukia Kuchiki",
+    "stats": {
+      "attaque": 11,
+      "défense": 13,
+      "vitesse": 13,
+      "mobilité": 18,
+      "pression": 14,
+      "force": 11
+    },
+    "attaques": [
+      {
+        "nom": "Sode no Shirayuki",
+        "degats": 22,
+        "cout": 15,
+        "effet": "Gel partiel",
+        "type": "normale"
+      },
+      {
+        "nom": "Tsugi no mai, Hakuren",
+        "degats": 27,
+        "cout": 18,
+        "effet": "Souffle glacé",
+        "type": "normale"
+      },
+      {
+        "nom": "Tsugi no mai, Tsukishiro",
+        "degats": 25,
+        "cout": 15,
+        "effet": "Gel spatial",
+        "type": "normale"
+      },
+      {
+        "nom": "Hakka no Togame",
+        "degats": 55,
+        "cout": 40,
+        "effet": "Congélation totale",
+        "type": "ultime"
+      }
+    ]
+  },
+  {
+    "nom": "Renji Abarai",
+    "stats": {
+      "attaque": 14,
+      "défense": 13,
+      "vitesse": 13,
+      "mobilité": 14,
+      "pression": 10,
+      "force": 16
+    },
+    "attaques": [
+      {
+        "nom": "Zabimaru Allonge",
+        "degats": 28,
+        "cout": 20,
+        "effet": "Frappe étendue",
+        "type": "normale"
+      },
+      {
+        "nom": "Zabimaru Rugissement",
+        "degats": 26,
+        "cout": 15,
+        "effet": "Onde de choc",
+        "type": "normale"
+      },
+      {
+        "nom": "Zabimaru Spirale",
+        "degats": 30,
+        "cout": 20,
+        "effet": "Tranchant circulaire",
+        "type": "normale"
+      },
+      {
+        "nom": "Hihiō Zabimaru",
+        "degats": 58,
+        "cout": 40,
+        "effet": "Fureur bestiale",
+        "type": "ultime"
+      }
+    ]
+  },
+  {
+    "nom": "Byakuya Kuchiki",
+    "stats": {
+      "attaque": 13,
+      "défense": 14,
+      "vitesse": 16,
+      "mobilité": 17,
+      "pression": 11,
+      "force": 9
+    },
+    "attaques": [
+      {
+        "nom": "Senbonzakura",
+        "degats": 25,
+        "cout": 15,
+        "effet": "Lames florales",
+        "type": "normale"
+      },
+      {
+        "nom": "Senkei",
+        "degats": 30,
+        "cout": 20,
+        "effet": "Tranchant pur",
+        "type": "normale"
+      },
+      {
+        "nom": "Shukei - Hakuteiken",
+        "degats": 33,
+        "cout": 25,
+        "effet": "Épée blanche",
+        "type": "normale"
+      },
+      {
+        "nom": "Bankai Kageyoshi",
+        "degats": 60,
+        "cout": 40,
+        "effet": "Mille pétales destructeurs",
+        "type": "ultime"
+      }
+    ]
+  },
+  {
+    "nom": "Tōshirō Hitsugaya",
+    "stats": {
+      "attaque": 13,
+      "défense": 14,
+      "vitesse": 12,
+      "mobilité": 18,
+      "pression": 12,
+      "force": 11
+    },
+    "attaques": [
+      {
+        "nom": "Hyōrinmaru",
+        "degats": 26,
+        "cout": 18,
+        "effet": "Dragon de glace",
+        "type": "normale"
+      },
+      {
+        "nom": "Ryūsenka",
+        "degats": 24,
+        "cout": 15,
+        "effet": "Gel destructeur",
+        "type": "normale"
+      },
+      {
+        "nom": "Sennen Hyōrō",
+        "degats": 28,
+        "cout": 20,
+        "effet": "Prison glacée",
+        "type": "normale"
+      },
+      {
+        "nom": "Daiguren Hyōrinmaru",
+        "degats": 55,
+        "cout": 40,
+        "effet": "Tempête glaciale",
+        "type": "ultime"
+      }
+    ]
+  },
+  {
+    "nom": "Kenpachi Zaraki",
+    "stats": {
+      "attaque": 18,
+      "défense": 12,
+      "vitesse": 10,
+      "mobilité": 10,
+      "pression": 9,
+      "force": 21
+    },
+    "attaques": [
+      {
+        "nom": "Coup Brutal",
+        "degats": 35,
+        "cout": 25,
+        "effet": "Tranchant furieux",
+        "type": "normale"
+      },
+      {
+        "nom": "Charge Sauvage",
+        "degats": 30,
+        "cout": 20,
+        "effet": "Impact total",
+        "type": "normale"
+      },
+      {
+        "nom": "Cri de Guerre",
+        "degats": 33,
+        "cout": 25,
+        "effet": "Intimidation",
+        "type": "normale"
+      },
+      {
+        "nom": "No Eyepatch",
+        "degats": 60,
+        "cout": 40,
+        "effet": "Puissance déchaînée",
+        "type": "ultime"
+      }
+    ]
+  },
+  {
+    "nom": "Mayuri Kurotsuchi",
+    "stats": {
+      "attaque": 12,
+      "défense": 12,
+      "vitesse": 10,
+      "mobilité": 20,
+      "pression": 18,
+      "force": 8
+    },
+    "attaques": [
+      {
+        "nom": "Ashisogi Jizō",
+        "degats": 20,
+        "cout": 10,
+        "effet": "Paralysie",
+        "type": "normale"
+      },
+      {
+        "nom": "Neurotoxines",
+        "degats": 24,
+        "cout": 15,
+        "effet": "Altération mentale",
+        "type": "normale"
+      },
+      {
+        "nom": "Gaz Corrosif",
+        "degats": 26,
+        "cout": 18,
+        "effet": "Affaiblissement",
+        "type": "normale"
+      },
+      {
+        "nom": "Bankai Jōkaku Enran",
+        "degats": 50,
+        "cout": 40,
+        "effet": "Empoisonnement total",
+        "type": "ultime"
+      }
+    ]
+  },
+  {
+    "nom": "Sōsuke Aizen",
+    "stats": {
+      "attaque": 15,
+      "défense": 13,
+      "vitesse": 14,
+      "mobilité": 18,
+      "pression": 17,
+      "force": 3
+    },
+    "attaques": [
+      {
+        "nom": "Kyōka Suigetsu",
+        "degats": 28,
+        "cout": 15,
+        "effet": "Illusion parfaite",
+        "type": "normale"
+      },
+      {
+        "nom": "Hypnose Suprême",
+        "degats": 26,
+        "cout": 18,
+        "effet": "Confusion mentale",
+        "type": "normale"
+      },
+      {
+        "nom": "Slash Spirituel",
+        "degats": 30,
+        "cout": 20,
+        "effet": "Désorientation",
+        "type": "normale"
+      },
+      {
+        "nom": "Fusion Hōgyoku",
+        "degats": 60,
+        "cout": 40,
+        "effet": "Transcendance divine",
+        "type": "ultime"
+      }
+    ]
+  },
+  {
+    "nom": "Uryū Ishida",
+    "stats": {
+      "attaque": 14,
+      "défense": 12,
+      "vitesse": 15,
+      "mobilité": 14,
+      "pression": 17,
+      "force": 8
+    },
+    "attaques": [
+      {
+        "nom": "Reishi Pfeil",
+        "degats": 22,
+        "cout": 10,
+        "effet": "Flèche spirituelle",
+        "type": "normale"
+      },
+      {
+        "nom": "Seele Schneider",
+        "degats": 28,
+        "cout": 18,
+        "effet": "Épée vibrante",
+        "type": "normale"
+      },
+      {
+        "nom": "Heilig Pfeil",
+        "degats": 25,
+        "cout": 15,
+        "effet": "Perforation rapide",
+        "type": "normale"
+      },
+      {
+        "nom": "Letzt Stil",
+        "degats": 55,
+        "cout": 40,
+        "effet": "Explosion Quincy",
+        "type": "ultime"
+      }
+    ]
+  },
+  {
+    "nom": "Yoruichi Shihouin",
+    "stats": {
+      "attaque": 13,
+      "défense": 12,
+      "vitesse": 19,
+      "mobilité": 14,
+      "pression": 12,
+      "force": 10
+    },
+    "attaques": [
+      {
+        "nom": "Shunpo Kick",
+        "degats": 24,
+        "cout": 15,
+        "effet": "Attaque éclair",
+        "type": "normale"
+      },
+      {
+        "nom": "Shunkō Blitz",
+        "degats": 26,
+        "cout": 18,
+        "effet": "Vague électrique",
+        "type": "normale"
+      },
+      {
+        "nom": "Raijin Griffe",
+        "degats": 28,
+        "cout": 20,
+        "effet": "Électrocution",
+        "type": "normale"
+      },
+      {
+        "nom": "Mode Raijin",
+        "degats": 58,
+        "cout": 40,
+        "effet": "Assaut divin",
+        "type": "ultime"
+      }
+    ]
+  },
+  {
+    "nom": "Kisuke Urahara",
+    "stats": {
+      "attaque": 14,
+      "défense": 13,
+      "vitesse": 14,
+      "mobilité": 18,
+      "pression": 15,
+      "force": 9
+    },
+    "attaques": [
+      {
+        "nom": "Benihime Rayon",
+        "degats": 26,
+        "cout": 15,
+        "effet": "Rayon de sang",
+        "type": "normale"
+      },
+      {
+        "nom": "Champ Protecteur",
+        "degats": 0,
+        "cout": 10,
+        "effet": "Bouclier défensif",
+        "type": "normale"
+      },
+      {
+        "nom": "Onde de Répulsion",
+        "degats": 22,
+        "cout": 15,
+        "effet": "Repoussement",
+        "type": "normale"
+      },
+      {
+        "nom": "Kannonbiraki Benihime Aratame",
+        "degats": 55,
+        "cout": 40,
+        "effet": "Désintégration totale",
+        "type": "ultime"
+      }
+    ]
+  },
+  {
+    "nom": "Shinji Hirako",
+    "stats": {
+      "attaque": 13,
+      "défense": 13,
+      "vitesse": 13,
+      "mobilité": 17,
+      "pression": 14,
+      "force": 11
+    },
+    "attaques": [
+      {
+        "nom": "Sakanade Tranche",
+        "degats": 25,
+        "cout": 15,
+        "effet": "Inversion des sens",
+        "type": "normale"
+      },
+      {
+        "nom": "Distorsion",
+        "degats": 27,
+        "cout": 18,
+        "effet": "Vision inversée",
+        "type": "normale"
+      },
+      {
+        "nom": "Feinte Mentale",
+        "degats": 23,
+        "cout": 15,
+        "effet": "Illusion confuse",
+        "type": "normale"
+      },
+      {
+        "nom": "Bankai Inversé",
+        "degats": 58,
+        "cout": 40,
+        "effet": "Chaos absolu",
+        "type": "ultime"
+      }
+    ]
+  },
+  {
+    "nom": "Grimmjow Jaegerjaquez",
+    "stats": {
+      "attaque": 16,
+      "défense": 12,
+      "vitesse": 14,
+      "mobilité": 12,
+      "pression": 9,
+      "force": 18
+    },
+    "attaques": [
+      {
+        "nom": "Garras del Pantera",
+        "degats": 30,
+        "cout": 20,
+        "effet": "Griffes sauvages",
+        "type": "normale"
+      },
+      {
+        "nom": "Coup Frontal",
+        "degats": 28,
+        "cout": 18,
+        "effet": "Frappe directe",
+        "type": "normale"
+      },
+      {
+        "nom": "Desgarón",
+        "degats": 33,
+        "cout": 25,
+        "effet": "Lames géantes",
+        "type": "normale"
+      },
+      {
+        "nom": "Pantera Final",
+        "degats": 60,
+        "cout": 40,
+        "effet": "Démolition totale",
+        "type": "ultime"
+      }
+    ]
+  },
+  {
+    "nom": "Ulquiorra Cifer",
+    "stats": {
+      "attaque": 15,
+      "défense": 14,
+      "vitesse": 13,
+      "mobilité": 15,
+      "pression": 12,
+      "force": 16
+    },
+    "attaques": [
+      {
+        "nom": "Lanza del Relámpago",
+        "degats": 35,
+        "cout": 25,
+        "effet": "Foudre destructrice",
+        "type": "normale"
+      },
+      {
+        "nom": "Mur Obscur",
+        "degats": 0,
+        "cout": 12,
+        "effet": "Barrière noire",
+        "type": "normale"
+      },
+      {
+        "nom": "Regeneration",
+        "degats": 0,
+        "cout": 10,
+        "effet": "Récupération",
+        "type": "normale"
+      },
+      {
+        "nom": "Segunda Etapa",
+        "degats": 60,
+        "cout": 40,
+        "effet": "Anéantissement",
+        "type": "ultime"
+      }
+    ]
+  },
+  {
+    "nom": "Nelliel Tu Odelschwanck",
+    "stats": {
+      "attaque": 14,
+      "défense": 14,
+      "vitesse": 12,
+      "mobilité": 13,
+      "pression": 11,
+      "force": 15
+    },
+    "attaques": [
+      {
+        "nom": "Lance Charge",
+        "degats": 28,
+        "cout": 18,
+        "effet": "Percée frontale",
+        "type": "normale"
+      },
+      {
+        "nom": "Cero Dardo",
+        "degats": 30,
+        "cout": 20,
+        "effet": "Projectile énergétique",
+        "type": "normale"
+      },
+      {
+        "nom": "Tourbillon",
+        "degats": 26,
+        "cout": 15,
+        "effet": "Rotation défensive",
+        "type": "normale"
+      },
+      {
+        "nom": "Forma Completa",
+        "degats": 58,
+        "cout": 40,
+        "effet": "Puissance pure",
+        "type": "ultime"
+      }
+    ]
+  }
+]
