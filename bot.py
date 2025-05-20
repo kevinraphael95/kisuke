@@ -517,23 +517,26 @@ parti.category = "Fun"
 async def perso(ctx):
     try:
         with open("bleach_characters.json", "r", encoding="utf-8") as f:
-            bleach_characters = json.load(f)
+            characters = json.load(f)
 
-        if not bleach_characters:
-            await ctx.send("Le fichier des personnages est vide.")
+        if not characters or not isinstance(characters, list):
+            await ctx.send("❌ Le fichier des personnages est vide ou invalide.")
             return
 
         user_id = ctx.author.id
-        index = (user_id * 31 + 17) % len(bleach_characters)
-        personnage = bleach_characters[index]
+        index = (user_id * 31 + 17) % len(characters)
+        personnage = characters[index]
         await ctx.send(f"{ctx.author.mention}, tu es **{personnage}** ! (C'est ta destinée dans le monde de Bleach 🔥)")
 
     except FileNotFoundError:
         await ctx.send("❌ Fichier `bleach_characters.json` introuvable.")
+    except json.JSONDecodeError:
+        await ctx.send("❌ Le fichier JSON est mal formaté.")
     except Exception as e:
         await ctx.send(f"⚠️ Erreur : {e}")
 
 perso.category = "Fun"
+
 
 
 ############################# phrase ##########################################################
