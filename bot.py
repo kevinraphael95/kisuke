@@ -7,6 +7,7 @@ import asyncio
 import aiohttp
 import discord
 import json
+import hashlib
 from discord.ext import commands
 import random
 from dotenv import load_dotenv
@@ -641,6 +642,59 @@ async def recommande(ctx, type_jeu: str = None):
     )
 
 recommande.category = "Fun"
+
+
+
+############################# ship ##########################################################
+
+@bot.command()
+async def ship(ctx, perso1: str, perso2: str):
+    try:
+        with open("persos.json", "r", encoding="utf-8") as f:
+            persos = json.load(f)
+
+        noms = [p["nom"] for p in persos]
+
+        # Trouver les persos dans la base
+        p1 = next((p for p in persos if p["nom"].lower() == perso1.lower()), None)
+        p2 = next((p for p in persos if p["nom"].lower() == perso2.lower()), None)
+
+        if not p1 or not p2:
+            await ctx.send("❌ Un ou les deux personnages sont introuvables.")
+            return
+
+        if perso1.lower() == perso2.lower():
+            await ctx.send("Tu veux vraiment ship **{}** avec lui-même ?!".format(p1["nom"]))
+            return
+
+        # Créer une clé unique mais ordonnée pour que ship(a,b) == ship(b,a)
+        noms_ordonnes = sorted([p1["nom"], p2["nom"]])
+        clef = f"{noms_ordonnes[0]}+{noms_ordonnes[1]}"
+
+        # Générer un hash pour un score fixe
+        hash_bytes = hashlib.md5(clef.encode()).digest()
+        score = int.from_bytes(hash_bytes, 'big') % 101  # entre 0 et 100
+
+        # Message de compatibilité
+        if score >= 90:
+            reaction = "âmes sœurs !"
+        elif score >= 70:
+            reaction = "excellente alchimie !"
+        elif score >= 50:
+            reaction = "bonne entente."
+        elif score >= 30:
+            reaction = "relation compliquée..."
+        else:
+            reaction = "aucune chance !"
+
+        await ctx.send(f"**{p1['nom']}** ❤️ **{p2['nom']}** → Compatibilité : **{score}%** — {reaction}")
+
+    except FileNotFoundError:
+        await ctx.send("❌ Fichier `persos.json` introuvable.")
+    except Exception as e:
+        await ctx.send(f"⚠️ Erreur : {e}")
+
+ship.category = "Fun"
 
 
 
