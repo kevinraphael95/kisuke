@@ -478,8 +478,8 @@ dog.category = "Fun"
 @bot.command(name="funfact")
 async def funfact(ctx):
     try:
-        with open("funfacts.txt", "r", encoding="utf-8") as f:
-            facts = [line.strip() for line in f if line.strip()]
+        with open("funfacts_bleach.json", "r", encoding="utf-8") as f:
+            facts = json.load(f)
         
         if not facts:
             await ctx.send("❌ Aucun fun fact disponible.")
@@ -488,10 +488,11 @@ async def funfact(ctx):
         fact = random.choice(facts)
         await ctx.send(f"🧠 **Fun Fact Bleach :** {fact}")
     except FileNotFoundError:
-        await ctx.send("❌ Fichier `funfacts.txt` introuvable.")
+        await ctx.send("❌ Fichier `funfacts_bleach.json` introuvable.")
     except Exception as e:
         await ctx.send(f"⚠️ Une erreur est survenue : {e}")
 funfact.category = "Fun"
+
 
 
 ############################# parti ##########################################################
