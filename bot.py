@@ -579,58 +579,45 @@ pof.category = "Fun"
 
 ############################# recommande ##########################################################
 
-@bot.command(help="commande + solo ou multi. Le bot te recommande un jeu.")
+@bot.command(help="commande + solo ou multi. Le bot te recommande un jeu avec année et genre.")
 async def recommande(ctx, type_jeu: str = None):
+    import json
     import random
 
     if type_jeu is None:
-        await ctx.send("Il faut ajouter l'argument 'solo' ou l'argument 'multi' à la commande pour que le bot recommande un jeu solo ou multijoueur.")
+        await ctx.send("❗ Utilise la commande avec `solo` ou `multi` pour obtenir une recommandation.")
         return
 
     type_jeu = type_jeu.lower()
 
     try:
-        with open("jeux.txt", "r", encoding="utf-8") as f:
-            lignes = f.readlines()
+        with open("jeux.json", "r", encoding="utf-8") as f:
+            data = json.load(f)
     except FileNotFoundError:
-        await ctx.send("❌ Fichier `jeux.txt` introuvable.")
+        await ctx.send("❌ Le fichier `jeux.json` est introuvable.")
+        return
+    except json.JSONDecodeError:
+        await ctx.send("❌ Le fichier `jeux.json` est mal formé.")
         return
 
-    jeux_solo = []
-    jeux_multi = []
-    section = None
+    if type_jeu not in data:
+        await ctx.send("❗ Spécifie soit `solo` soit `multi`.")
+        return
 
-    for ligne in lignes:
-        ligne = ligne.strip()
-        if ligne == "[SOLO]":
-            section = "solo"
-            continue
-        elif ligne == "[MULTI]":
-            section = "multi"
-            continue
-        elif not ligne or ligne.startswith("#"):
-            continue  # ignorer les lignes vides ou commentaires
+    jeux = data[type_jeu]
+    if not jeux:
+        await ctx.send(f"⚠️ Aucun jeu {type_jeu} trouvé.")
+        return
 
-        if section == "solo":
-            jeux_solo.append(ligne)
-        elif section == "multi":
-            jeux_multi.append(ligne)
+    jeu = random.choice(jeux)
+    titre = jeu.get("titre", "Jeu inconnu")
+    annee = jeu.get("annee", "année inconnue")
+    genre = jeu.get("genre", "genre inconnu")
 
-    if type_jeu == "solo":
-        if jeux_solo:
-            jeu = random.choice(jeux_solo)
-            await ctx.send(f"🎮 Jeu **solo** recommandé : **{jeu}**")
-        else:
-            await ctx.send("⚠️ Aucun jeu solo trouvé dans le fichier.")
-    elif type_jeu == "multi":
-        if jeux_multi:
-            jeu = random.choice(jeux_multi)
-            await ctx.send(f"🎮 Jeu **multijoueur** recommandé : **{jeu}**")
-        else:
-            await ctx.send("⚠️ Aucun jeu multijoueur trouvé dans le fichier.")
-    else:
-        await ctx.send("Il faut ajouter l'argument 'solo' ou l'argument 'multi' à la commande pour que le bot recommande un jeu solo ou multijoueur.")
-
+    await ctx.send(
+        f"🎮 Jeu **{type_jeu}** recommandé : **{titre}**\n"
+        f"🗓️ Année : {annee} | 🧩 Genre : {genre}"
+    )
 
 recommande.category = "Fun"
 
