@@ -136,6 +136,13 @@ async def help_command(ctx, commande: str = None):
             await ctx.send(embed=embed)
 help_command.category = "Général"
 
+############################# invitation ##########################################################
+
+@bot.command()
+async def invitation(ctx):
+    await ctx.send("🔗 Lien d'invitation du bot : https://github.com/kevinraphael95/bleach-discord-bot-test")
+invitation.category = "Général"
+
 ############################# 🏓 Ping avec Embed + alias "test" ##########################################################
 
 @bot.command(aliases=["test"], help="Répond avec la latence du bot.")
