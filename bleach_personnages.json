@@ -624,7 +624,7 @@
       "perception": 10,
       "spirituel": 14
     },
-    "capacites": [
+    "attaques": [
       {
         "nom": "Cascada",
         "degats": 30,
@@ -665,7 +665,7 @@
       "perception": 11,
       "spirituel": 13
     },
-    "capacites": [
+    "attaques": [
       {
         "nom": "Cero Metralleta",
         "degats": 32,
@@ -706,7 +706,7 @@
       "perception": 12,
       "spirituel": 10
     },
-    "capacites": [
+    "attaques": [
       {
         "nom": "Axe Vieillissante",
         "degats": 30,
@@ -747,7 +747,7 @@
       "perception": 10,
       "spirituel": 19
     },
-    "capacites": [
+    "attaques": [
       {
         "nom": "Coup Circulaire",
         "degats": 33,
@@ -788,7 +788,7 @@
       "perception": 15,
       "spirituel": 9
     },
-    "capacites": [
+    "attaques": [
       {
         "nom": "Clonage ADN",
         "degats": 0,
@@ -829,7 +829,7 @@
       "perception": 11,
       "spirituel": 12
     },
-    "capacites": [
+    "attaques": [
       {
         "nom": "Katen Kyōkotsu",
         "degats": 25,
@@ -870,7 +870,7 @@
       "perception": 15,
       "spirituel": 9
     },
-    "capacites": [
+    "attaques": [
       {
         "nom": "Sōgyo no Kotowari",
         "degats": 22,
@@ -911,7 +911,7 @@
       "perception": 13,
       "spirituel": 11
     },
-    "capacites": [
+    "attaques": [
       {
         "nom": "Sakanade",
         "degats": 25,
@@ -952,7 +952,7 @@
       "perception": 16,
       "spirituel": 10
     },
-    "capacites": [
+    "attaques": [
       {
         "nom": "Benihime Slash",
         "degats": 25,
@@ -993,7 +993,7 @@
       "perception": 10,
       "spirituel": 20
     },
-    "capacites": [
+    "attaques": [
       {
         "nom": "Ryūjin Jakka",
         "degats": 35,
@@ -1034,7 +1034,7 @@
       "perception": 11,
       "spirituel": 13
     },
-    "capacites": [
+    "attaques": [
       {
         "nom": "Haineko",
         "degats": 24,
@@ -1075,7 +1075,7 @@
       "perception": 9,
       "spirituel": 17
     },
-    "capacites": [
+    "attaques": [
       {
         "nom": "Hōzukimaru",
         "degats": 28,
@@ -1116,7 +1116,7 @@
       "perception": 15,
       "spirituel": 11
     },
-    "capacites": [
+    "attaques": [
       {
         "nom": "Ruriiro Kujaku",
         "degats": 25,
@@ -1157,7 +1157,7 @@
       "perception": 14,
       "spirituel": 10
     },
-    "capacites": [
+    "attaques": [
       {
         "nom": "Wabisuke",
         "degats": 24,
@@ -1198,7 +1198,7 @@
       "perception": 13,
       "spirituel": 13
     },
-    "capacites": [
+    "attaques": [
       {
         "nom": "Kazeshini",
         "degats": 28,
