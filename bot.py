@@ -525,39 +525,45 @@ perso.category = "Fun"
 
 ############################# phrase ##########################################################
 
-@bot.command(name="phrase", help="Génère une phrase aléatoire à partir de listes de mots.")
+@bot.command(name="phrase", help="Génère une phrase aléatoire avec accords (via JSON).")
 async def phrase(ctx):
     try:
-        with open("phrases_listes.txt", "r", encoding="utf-8") as f:
-            content = f.read()
+        with open("phrases_listes.json", "r", encoding="utf-8") as f:
+            data = json.load(f)
 
-        # Sépare les 4 listes par double saut de ligne
-        listes = [ast.literal_eval(lst) for lst in content.strip().split('\n\n')]
-        sujets, verbes, complements, adverbes = listes
+        sujet_data = random.choice(data["sujets"])
+        sujet = sujet_data["mot"]
+        genre_sujet = sujet_data["genre"]
 
-        # Sélection aléatoire
-        sujet = random.choice(sujets)
-        verbe = random.choice(verbes)
-        complement = random.choice(complements)
-        adverbe = random.choice(adverbes)
+        verbe = random.choice(data["verbes"])
 
-        # Déterminer article du sujet
-        article_sujet = "L'" if sujet[0].lower() in "aeiou" else "Le " if random.random() < 0.5 else "La "
-        # Déterminer article du complément
-        article_complement = "l'" if complement[0].lower() in "aeiou" else "le " if random.random() < 0.5 else "la "
+        complement_data = random.choice(data["complements"])
+        complement = complement_data["mot"]
+        genre_complement = complement_data["genre"]
 
-        # Ajuster article avec élision si nécessaire
-        if article_sujet.strip().lower() in ["l'", "l’"]:
-            phrase_complete = f"{article_sujet}{sujet} {verbe} {article_complement}{complement} {adverbe}."
+        adverbe = random.choice(data["adverbes"])
+
+        # Article pour le sujet
+        if sujet[0].lower() in "aeiou":
+            article_sujet = "L'"
         else:
-            phrase_complete = f"{article_sujet}{sujet} {verbe} {article_complement}{complement} {adverbe}."
+            article_sujet = "Le " if genre_sujet == "m" else "La "
+
+        # Article pour le complément
+        if complement[0].lower() in "aeiou":
+            article_complement = "l'"
+        else:
+            article_complement = "le " if genre_complement == "m" else "la "
+
+        phrase_complete = f"{article_sujet}{sujet} {verbe} {article_complement}{complement} {adverbe}."
 
         await ctx.send(phrase_complete)
 
     except FileNotFoundError:
-        await ctx.send("❌ Fichier `phrases_listes.txt` introuvable.")
+        await ctx.send("❌ Fichier `phrases_listes.json` introuvable.")
     except Exception as e:
         await ctx.send(f"⚠️ Une erreur est survenue : {e}")
+
 phrase.category = "Fun"
 
 
