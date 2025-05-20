@@ -1,0 +1,756 @@
+{
+    "solo": [
+        {
+            "titre": "The Witcher 3: Wild Hunt",
+            "annee": 2015,
+            "genre": "RPG"
+        },
+        {
+            "titre": "God of War",
+            "annee": 2018,
+            "genre": "Action-Aventure"
+        },
+        {
+            "titre": "Red Dead Redemption 2",
+            "annee": 2018,
+            "genre": "Action-Aventure"
+        },
+        {
+            "titre": "Hollow Knight",
+            "annee": 2017,
+            "genre": "Metroidvania"
+        },
+        {
+            "titre": "Celeste",
+            "annee": 2018,
+            "genre": "Plateforme"
+        },
+        {
+            "titre": "Dark Souls III",
+            "annee": 2016,
+            "genre": "Action-RPG"
+        },
+        {
+            "titre": "Sekiro: Shadows Die Twice",
+            "annee": 2019,
+            "genre": "Action-Aventure"
+        },
+        {
+            "titre": "Death Stranding",
+            "annee": 2019,
+            "genre": "Action"
+        },
+        {
+            "titre": "Resident Evil 4 Remake",
+            "annee": 2023,
+            "genre": "Survie-Horreur"
+        },
+        {
+            "titre": "Cyberpunk 2077",
+            "annee": 2020,
+            "genre": "RPG"
+        },
+        {
+            "titre": "Solo Game 1",
+            "annee": 2012,
+            "genre": "RPG"
+        },
+        {
+            "titre": "Solo Game 2",
+            "annee": 2012,
+            "genre": "Survie"
+        },
+        {
+            "titre": "Solo Game 3",
+            "annee": 2023,
+            "genre": "Indé"
+        },
+        {
+            "titre": "Solo Game 4",
+            "annee": 2020,
+            "genre": "Plateforme"
+        },
+        {
+            "titre": "Solo Game 5",
+            "annee": 2014,
+            "genre": "Indé"
+        },
+        {
+            "titre": "Solo Game 6",
+            "annee": 2014,
+            "genre": "Indé"
+        },
+        {
+            "titre": "Solo Game 7",
+            "annee": 2010,
+            "genre": "Metroidvania"
+        },
+        {
+            "titre": "Solo Game 8",
+            "annee": 2021,
+            "genre": "Action-Aventure"
+        },
+        {
+            "titre": "Solo Game 9",
+            "annee": 2021,
+            "genre": "Action-Aventure"
+        },
+        {
+            "titre": "Solo Game 10",
+            "annee": 2019,
+            "genre": "Indé"
+        },
+        {
+            "titre": "Solo Game 11",
+            "annee": 2005,
+            "genre": "RPG"
+        },
+        {
+            "titre": "Solo Game 12",
+            "annee": 2024,
+            "genre": "Survie"
+        },
+        {
+            "titre": "Solo Game 13",
+            "annee": 2024,
+            "genre": "Plateforme"
+        },
+        {
+            "titre": "Solo Game 14",
+            "annee": 2013,
+            "genre": "Metroidvania"
+        },
+        {
+            "titre": "Solo Game 15",
+            "annee": 2012,
+            "genre": "RPG"
+        },
+        {
+            "titre": "Solo Game 16",
+            "annee": 2024,
+            "genre": "RPG"
+        },
+        {
+            "titre": "Solo Game 17",
+            "annee": 2008,
+            "genre": "Indé"
+        },
+        {
+            "titre": "Solo Game 18",
+            "annee": 2007,
+            "genre": "Survie"
+        },
+        {
+            "titre": "Solo Game 19",
+            "annee": 2023,
+            "genre": "Metroidvania"
+        },
+        {
+            "titre": "Solo Game 20",
+            "annee": 2021,
+            "genre": "Indé"
+        },
+        {
+            "titre": "Solo Game 21",
+            "annee": 2005,
+            "genre": "Indé"
+        },
+        {
+            "titre": "Solo Game 22",
+            "annee": 2019,
+            "genre": "Indé"
+        },
+        {
+            "titre": "Solo Game 23",
+            "annee": 2022,
+            "genre": "Metroidvania"
+        },
+        {
+            "titre": "Solo Game 24",
+            "annee": 2012,
+            "genre": "RPG"
+        },
+        {
+            "titre": "Solo Game 25",
+            "annee": 2019,
+            "genre": "RPG"
+        },
+        {
+            "titre": "Solo Game 26",
+            "annee": 2019,
+            "genre": "Indé"
+        },
+        {
+            "titre": "Solo Game 27",
+            "annee": 2015,
+            "genre": "RPG"
+        },
+        {
+            "titre": "Solo Game 28",
+            "annee": 2011,
+            "genre": "RPG"
+        },
+        {
+            "titre": "Solo Game 29",
+            "annee": 2019,
+            "genre": "Indé"
+        },
+        {
+            "titre": "Solo Game 30",
+            "annee": 2012,
+            "genre": "Action-Aventure"
+        },
+        {
+            "titre": "Solo Game 31",
+            "annee": 2008,
+            "genre": "RPG"
+        },
+        {
+            "titre": "Solo Game 32",
+            "annee": 2010,
+            "genre": "Horreur"
+        },
+        {
+            "titre": "Solo Game 33",
+            "annee": 2009,
+            "genre": "Metroidvania"
+        },
+        {
+            "titre": "Solo Game 34",
+            "annee": 2024,
+            "genre": "Plateforme"
+        },
+        {
+            "titre": "Solo Game 35",
+            "annee": 2014,
+            "genre": "Indé"
+        },
+        {
+            "titre": "Solo Game 36",
+            "annee": 2005,
+            "genre": "Plateforme"
+        },
+        {
+            "titre": "Solo Game 37",
+            "annee": 2017,
+            "genre": "Horreur"
+        },
+        {
+            "titre": "Solo Game 38",
+            "annee": 2007,
+            "genre": "Metroidvania"
+        },
+        {
+            "titre": "Solo Game 39",
+            "annee": 2021,
+            "genre": "RPG"
+        },
+        {
+            "titre": "Solo Game 40",
+            "annee": 2006,
+            "genre": "Survie"
+        },
+        {
+            "titre": "Solo Game 41",
+            "annee": 2012,
+            "genre": "Metroidvania"
+        },
+        {
+            "titre": "Solo Game 42",
+            "annee": 2020,
+            "genre": "RPG"
+        },
+        {
+            "titre": "Solo Game 43",
+            "annee": 2007,
+            "genre": "Action-Aventure"
+        },
+        {
+            "titre": "Solo Game 44",
+            "annee": 2020,
+            "genre": "Horreur"
+        },
+        {
+            "titre": "Solo Game 45",
+            "annee": 2005,
+            "genre": "Puzzle"
+        },
+        {
+            "titre": "Solo Game 46",
+            "annee": 2020,
+            "genre": "Horreur"
+        },
+        {
+            "titre": "Solo Game 47",
+            "annee": 2024,
+            "genre": "Metroidvania"
+        },
+        {
+            "titre": "Solo Game 48",
+            "annee": 2018,
+            "genre": "Indé"
+        },
+        {
+            "titre": "Solo Game 49",
+            "annee": 2006,
+            "genre": "RPG"
+        },
+        {
+            "titre": "Solo Game 50",
+            "annee": 2010,
+            "genre": "Survie"
+        },
+        {
+            "titre": "Solo Game 51",
+            "annee": 2005,
+            "genre": "Indé"
+        },
+        {
+            "titre": "Solo Game 52",
+            "annee": 2023,
+            "genre": "Indé"
+        },
+        {
+            "titre": "Solo Game 53",
+            "annee": 2011,
+            "genre": "Action-Aventure"
+        },
+        {
+            "titre": "Solo Game 54",
+            "annee": 2023,
+            "genre": "Indé"
+        },
+        {
+            "titre": "Solo Game 55",
+            "annee": 2017,
+            "genre": "Puzzle"
+        },
+        {
+            "titre": "Solo Game 56",
+            "annee": 2006,
+            "genre": "Indé"
+        },
+        {
+            "titre": "Solo Game 57",
+            "annee": 2018,
+            "genre": "Action-Aventure"
+        },
+        {
+            "titre": "Solo Game 58",
+            "annee": 2013,
+            "genre": "Survie"
+        },
+        {
+            "titre": "Solo Game 59",
+            "annee": 2005,
+            "genre": "RPG"
+        },
+        {
+            "titre": "Solo Game 60",
+            "annee": 2017,
+            "genre": "Indé"
+        },
+        {
+            "titre": "Solo Game 61",
+            "annee": 2022,
+            "genre": "Action-Aventure"
+        },
+        {
+            "titre": "Solo Game 62",
+            "annee": 2007,
+            "genre": "RPG"
+        },
+        {
+            "titre": "Solo Game 63",
+            "annee": 2016,
+            "genre": "Horreur"
+        },
+        {
+            "titre": "Solo Game 64",
+            "annee": 2014,
+            "genre": "Plateforme"
+        },
+        {
+            "titre": "Solo Game 65",
+            "annee": 2023,
+            "genre": "RPG"
+        }
+    ],
+    "multi": [
+        {
+            "titre": "Valorant",
+            "annee": 2020,
+            "genre": "FPS"
+        },
+        {
+            "titre": "League of Legends",
+            "annee": 2009,
+            "genre": "MOBA"
+        },
+        {
+            "titre": "Rocket League",
+            "annee": 2015,
+            "genre": "Sport/Voiture"
+        },
+        {
+            "titre": "Counter-Strike 2",
+            "annee": 2023,
+            "genre": "FPS"
+        },
+        {
+            "titre": "Overwatch 2",
+            "annee": 2022,
+            "genre": "FPS"
+        },
+        {
+            "titre": "Fortnite",
+            "annee": 2017,
+            "genre": "Battle Royale"
+        },
+        {
+            "titre": "Apex Legends",
+            "annee": 2019,
+            "genre": "Battle Royale"
+        },
+        {
+            "titre": "Minecraft",
+            "annee": 2011,
+            "genre": "Sandbox"
+        },
+        {
+            "titre": "Deep Rock Galactic",
+            "annee": 2020,
+            "genre": "Coop FPS"
+        },
+        {
+            "titre": "Phasmophobia",
+            "annee": 2020,
+            "genre": "Horreur Coop"
+        },
+        {
+            "titre": "Multi Game 1",
+            "annee": 2023,
+            "genre": "MMO"
+        },
+        {
+            "titre": "Multi Game 2",
+            "annee": 2007,
+            "genre": "Survie"
+        },
+        {
+            "titre": "Multi Game 3",
+            "annee": 2009,
+            "genre": "Sandbox"
+        },
+        {
+            "titre": "Multi Game 4",
+            "annee": 2017,
+            "genre": "FPS"
+        },
+        {
+            "titre": "Multi Game 5",
+            "annee": 2012,
+            "genre": "MMO"
+        },
+        {
+            "titre": "Multi Game 6",
+            "annee": 2024,
+            "genre": "Survie"
+        },
+        {
+            "titre": "Multi Game 7",
+            "annee": 2022,
+            "genre": "MMO"
+        },
+        {
+            "titre": "Multi Game 8",
+            "annee": 2008,
+            "genre": "FPS"
+        },
+        {
+            "titre": "Multi Game 9",
+            "annee": 2012,
+            "genre": "Survie"
+        },
+        {
+            "titre": "Multi Game 10",
+            "annee": 2007,
+            "genre": "Stratégie"
+        },
+        {
+            "titre": "Multi Game 11",
+            "annee": 2017,
+            "genre": "Course"
+        },
+        {
+            "titre": "Multi Game 12",
+            "annee": 2011,
+            "genre": "MOBA"
+        },
+        {
+            "titre": "Multi Game 13",
+            "annee": 2015,
+            "genre": "Course"
+        },
+        {
+            "titre": "Multi Game 14",
+            "annee": 2018,
+            "genre": "Coop"
+        },
+        {
+            "titre": "Multi Game 15",
+            "annee": 2013,
+            "genre": "MOBA"
+        },
+        {
+            "titre": "Multi Game 16",
+            "annee": 2019,
+            "genre": "Course"
+        },
+        {
+            "titre": "Multi Game 17",
+            "annee": 2021,
+            "genre": "Stratégie"
+        },
+        {
+            "titre": "Multi Game 18",
+            "annee": 2021,
+            "genre": "Survie"
+        },
+        {
+            "titre": "Multi Game 19",
+            "annee": 2005,
+            "genre": "Battle Royale"
+        },
+        {
+            "titre": "Multi Game 20",
+            "annee": 2023,
+            "genre": "Course"
+        },
+        {
+            "titre": "Multi Game 21",
+            "annee": 2013,
+            "genre": "MOBA"
+        },
+        {
+            "titre": "Multi Game 22",
+            "annee": 2013,
+            "genre": "Course"
+        },
+        {
+            "titre": "Multi Game 23",
+            "annee": 2024,
+            "genre": "Battle Royale"
+        },
+        {
+            "titre": "Multi Game 24",
+            "annee": 2012,
+            "genre": "Survie"
+        },
+        {
+            "titre": "Multi Game 25",
+            "annee": 2006,
+            "genre": "Sandbox"
+        },
+        {
+            "titre": "Multi Game 26",
+            "annee": 2016,
+            "genre": "FPS"
+        },
+        {
+            "titre": "Multi Game 27",
+            "annee": 2018,
+            "genre": "Sandbox"
+        },
+        {
+            "titre": "Multi Game 28",
+            "annee": 2005,
+            "genre": "Sandbox"
+        },
+        {
+            "titre": "Multi Game 29",
+            "annee": 2014,
+            "genre": "Survie"
+        },
+        {
+            "titre": "Multi Game 30",
+            "annee": 2016,
+            "genre": "MOBA"
+        },
+        {
+            "titre": "Multi Game 31",
+            "annee": 2012,
+            "genre": "Battle Royale"
+        },
+        {
+            "titre": "Multi Game 32",
+            "annee": 2020,
+            "genre": "FPS"
+        },
+        {
+            "titre": "Multi Game 33",
+            "annee": 2020,
+            "genre": "Coop"
+        },
+        {
+            "titre": "Multi Game 34",
+            "annee": 2016,
+            "genre": "Sandbox"
+        },
+        {
+            "titre": "Multi Game 35",
+            "annee": 2020,
+            "genre": "MMO"
+        },
+        {
+            "titre": "Multi Game 36",
+            "annee": 2006,
+            "genre": "MMO"
+        },
+        {
+            "titre": "Multi Game 37",
+            "annee": 2014,
+            "genre": "Battle Royale"
+        },
+        {
+            "titre": "Multi Game 38",
+            "annee": 2022,
+            "genre": "Course"
+        },
+        {
+            "titre": "Multi Game 39",
+            "annee": 2018,
+            "genre": "Battle Royale"
+        },
+        {
+            "titre": "Multi Game 40",
+            "annee": 2012,
+            "genre": "MOBA"
+        },
+        {
+            "titre": "Multi Game 41",
+            "annee": 2019,
+            "genre": "Survie"
+        },
+        {
+            "titre": "Multi Game 42",
+            "annee": 2017,
+            "genre": "Survie"
+        },
+        {
+            "titre": "Multi Game 43",
+            "annee": 2012,
+            "genre": "Stratégie"
+        },
+        {
+            "titre": "Multi Game 44",
+            "annee": 2018,
+            "genre": "MMO"
+        },
+        {
+            "titre": "Multi Game 45",
+            "annee": 2010,
+            "genre": "MOBA"
+        },
+        {
+            "titre": "Multi Game 46",
+            "annee": 2023,
+            "genre": "Stratégie"
+        },
+        {
+            "titre": "Multi Game 47",
+            "annee": 2024,
+            "genre": "FPS"
+        },
+        {
+            "titre": "Multi Game 48",
+            "annee": 2021,
+            "genre": "Coop"
+        },
+        {
+            "titre": "Multi Game 49",
+            "annee": 2019,
+            "genre": "MOBA"
+        },
+        {
+            "titre": "Multi Game 50",
+            "annee": 2013,
+            "genre": "Coop"
+        },
+        {
+            "titre": "Multi Game 51",
+            "annee": 2018,
+            "genre": "MMO"
+        },
+        {
+            "titre": "Multi Game 52",
+            "annee": 2010,
+            "genre": "MMO"
+        },
+        {
+            "titre": "Multi Game 53",
+            "annee": 2020,
+            "genre": "Sandbox"
+        },
+        {
+            "titre": "Multi Game 54",
+            "annee": 2021,
+            "genre": "Coop"
+        },
+        {
+            "titre": "Multi Game 55",
+            "annee": 2017,
+            "genre": "FPS"
+        },
+        {
+            "titre": "Multi Game 56",
+            "annee": 2012,
+            "genre": "Survie"
+        },
+        {
+            "titre": "Multi Game 57",
+            "annee": 2013,
+            "genre": "MOBA"
+        },
+        {
+            "titre": "Multi Game 58",
+            "annee": 2008,
+            "genre": "MOBA"
+        },
+        {
+            "titre": "Multi Game 59",
+            "annee": 2022,
+            "genre": "Course"
+        },
+        {
+            "titre": "Multi Game 60",
+            "annee": 2017,
+            "genre": "Coop"
+        },
+        {
+            "titre": "Multi Game 61",
+            "annee": 2021,
+            "genre": "MMO"
+        },
+        {
+            "titre": "Multi Game 62",
+            "annee": 2007,
+            "genre": "FPS"
+        },
+        {
+            "titre": "Multi Game 63",
+            "annee": 2015,
+            "genre": "Coop"
+        },
+        {
+            "titre": "Multi Game 64",
+            "annee": 2021,
+            "genre": "MMO"
+        },
+        {
+            "titre": "Multi Game 65",
+            "annee": 2014,
+            "genre": "Survie"
+        }
+    ]
+}
