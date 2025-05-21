@@ -26,6 +26,13 @@ from dotenv import load_dotenv
 # Répertoire de travail
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
+# Charger les réponses depuis le fichier JSON à la racine du projet
+REPONSES_JSON_PATH = "reponses.json"
+with open(REPONSES_JSON_PATH, encoding="utf-8") as f:
+    REPONSES = json.load(f)
+
+GIFS_FOLDER = "gifs"
+
 # Charger les variables d’environnement
 load_dotenv()
 TOKEN = os.getenv("DISCORD_TOKEN")
