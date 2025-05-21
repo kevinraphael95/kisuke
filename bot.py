@@ -518,53 +518,42 @@ hollowify.category = "Fun"
 @bot.command()
 async def kido(ctx, *args):
     with open("kido_data.json", "r", encoding="utf-8") as f:
-        data = json.load(f)
+        data = json.load(f)  # data est une LISTE de sorts
 
     kido_type = None
     numero = None
 
-    # Analyse des arguments
     for arg in args:
         if arg.lower() in ["hado", "hadō"]:
-            kido_type = "Hado"
+            kido_type = "Hadō"
         elif arg.lower() == "bakudo":
-            kido_type = "Bakudo"
+            kido_type = "Bakudō"
         elif arg.isdigit():
             numero = int(arg)
 
-    # Recherche d’un Kido précis si numéro est donné
+    # Filtrer les sorts en fonction du type si précisé
+    filtered_data = data
+    if kido_type:
+        filtered_data = [k for k in data if k.get("categorie") == kido_type]
+
+    # Chercher par numéro si précisé
     if numero is not None:
-        types_to_search = [kido_type] if kido_type else ["Hado", "Bakudo"]
-        found = None
-        for t in types_to_search:
-            for k in data[t]:
-                if k["numero"] == numero:
-                    kido = k.copy()
-                    kido["type"] = t
-                    found = kido
-                    break
-            if found:
-                break
+        found = next((k for k in filtered_data if k.get("numero") == numero), None)
         if not found:
             return await ctx.send("❌ Aucun Kido trouvé avec ce numéro.")
+        kido = found
+        kido["type"] = kido.get("categorie", "Inconnu")
     else:
-        # Tirage aléatoire
-        if kido_type:
-            kido_list = data.get(kido_type, [])
-            if not kido_list:
-                return await ctx.send(f"❌ Aucun sort trouvé pour le type {kido_type}.")
-            kido = random.choice(kido_list)
-            kido["type"] = kido_type
-        else:
-            t = random.choice(["Hado", "Bakudo"])
-            kido = random.choice(data[t])
-            kido["type"] = t
+        if not filtered_data:
+            return await ctx.send("❌ Aucun sort trouvé pour ce type.")
+        kido = random.choice(filtered_data)
+        kido["type"] = kido.get("categorie", "Inconnu")
 
     # Embed
     embed = discord.Embed(
         title=f"{kido['type']} #{kido['numero']} — {kido['nom']}",
-        description=kido['description'],
-        color=discord.Color.red() if kido["type"] == "Hado" else discord.Color.blue()
+        description=kido.get('description', 'Aucune description.'),
+        color=discord.Color.red() if kido["type"] == "Hadō" else discord.Color.blue()
     )
     embed.set_footer(text="Kido de l'univers Bleach")
     if "gif" in kido and kido["gif"]:
