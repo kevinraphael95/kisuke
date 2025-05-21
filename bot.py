@@ -513,6 +513,66 @@ async def hollowify(ctx, member: discord.Member = None):
 
 hollowify.category = "Fun"
 
+############################# kido ##########################################################
+
+@bot.command()
+async def kido(ctx, *args):
+    with open("kido_data.json", "r", encoding="utf-8") as f:
+        data = json.load(f)
+
+    kido_type = None
+    numero = None
+
+    # Analyse des arguments
+    for arg in args:
+        if arg.lower() in ["hado", "hadō"]:
+            kido_type = "Hado"
+        elif arg.lower() == "bakudo":
+            kido_type = "Bakudo"
+        elif arg.isdigit():
+            numero = int(arg)
+
+    # Recherche d’un Kido précis si numéro est donné
+    if numero is not None:
+        types_to_search = [kido_type] if kido_type else ["Hado", "Bakudo"]
+        found = None
+        for t in types_to_search:
+            for k in data[t]:
+                if k["numero"] == numero:
+                    kido = k.copy()
+                    kido["type"] = t
+                    found = kido
+                    break
+            if found:
+                break
+        if not found:
+            return await ctx.send("❌ Aucun Kido trouvé avec ce numéro.")
+    else:
+        # Tirage aléatoire
+        if kido_type:
+            kido_list = data.get(kido_type, [])
+            if not kido_list:
+                return await ctx.send(f"❌ Aucun sort trouvé pour le type {kido_type}.")
+            kido = random.choice(kido_list)
+            kido["type"] = kido_type
+        else:
+            t = random.choice(["Hado", "Bakudo"])
+            kido = random.choice(data[t])
+            kido["type"] = t
+
+    # Embed
+    embed = discord.Embed(
+        title=f"{kido['type']} #{kido['numero']} — {kido['nom']}",
+        description=kido['description'],
+        color=discord.Color.red() if kido["type"] == "Hado" else discord.Color.blue()
+    )
+    embed.set_footer(text="Kido de l'univers Bleach")
+    if "gif" in kido and kido["gif"]:
+        embed.set_image(url=kido["gif"])
+
+    await ctx.send(embed=embed)
+
+kido.category = "Fun"
 
 
 ############################# parti ##########################################################
