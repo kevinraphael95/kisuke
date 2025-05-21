@@ -292,11 +292,8 @@ async def versus(ctx, joueur1: discord.Member, joueur2: discord.Member):
 
     p1 = p1.copy()
     p2 = p2.copy()
-
-    p1["vie"] = 100
-    p2["vie"] = 100
-    p1["energie"] = 100
-    p2["energie"] = 100
+    p1["vie"] = p2["vie"] = 100
+    p1["energie"] = p2["energie"] = 100
 
     buffs = {p1["nom"]: {}, p2["nom"]: {}}
     debuffs = {p1["nom"]: {}, p2["nom"]: {}}
@@ -306,9 +303,7 @@ async def versus(ctx, joueur1: discord.Member, joueur2: discord.Member):
             if effet["type"] == "degats":
                 cible["vie"] -= effet["valeur"]
             elif effet["type"] == "soin":
-                cible["vie"] += effet["valeur"]
-                if cible["vie"] > 100:
-                    cible["vie"] = 100
+                cible["vie"] = min(100, cible["vie"] + effet["valeur"])
             elif effet["type"] == "buff":
                 buffs[cible["nom"]][effet["stat"]] = effet["valeur"]
             elif effet["type"] == "debuff":
@@ -362,9 +357,20 @@ async def versus(ctx, joueur1: discord.Member, joueur2: discord.Member):
         if combat_termine:
             break
 
-    # Fonction pour envoyer le log en plusieurs embeds si nécessaire
+    # ✅ Envoi du log en embeds propres
     async def send_log(log, titre="⚔️ Résultat du combat"):
-        chunks = [log[i:i+4000] for i in range(0, len(log), 4000)]
+        lines = log.splitlines()
+        current_chunk = ""
+        chunks = []
+
+        for line in lines:
+            if len(current_chunk) + len(line) + 1 > 4000:
+                chunks.append(current_chunk)
+                current_chunk = ""
+            current_chunk += line + "\n"
+        if current_chunk:
+            chunks.append(current_chunk)
+
         for i, chunk in enumerate(chunks):
             embed = discord.Embed(
                 title=titre if len(chunks) == 1 else f"{titre} (partie {i+1})",
@@ -374,6 +380,7 @@ async def versus(ctx, joueur1: discord.Member, joueur2: discord.Member):
             await ctx.send(embed=embed)
 
     await send_log(log)
+    return
 
 
 combat.category = "Fun"
