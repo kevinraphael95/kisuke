@@ -1,3 +1,2 @@
 # bleach-discord-bot-test
-bleach discord bot test, 
-codé avec chat gpt
+just trying to make a discord bot with the theme of the manga bleach, for fun
