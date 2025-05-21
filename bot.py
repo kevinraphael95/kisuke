@@ -321,6 +321,8 @@ async def versus(ctx, joueur1: discord.Member, joueur2: discord.Member):
         return max(0, base)
 
     tour = 1
+    combat_termine = False
+
     while p1["vie"] > 0 and p2["vie"] > 0:
         log += f"__**Tour {tour}**__\n"
         tour += 1
@@ -349,41 +351,29 @@ async def versus(ctx, joueur1: discord.Member, joueur2: discord.Member):
 
             if defenseur["vie"] <= 0:
                 log += f"\n🏆 **{attaquant['nom']} remporte le combat par KO !**"
-                embed = discord.Embed(
-                    title="⚔️ Résultat du combat",
-                    description=log,
-                    color=discord.Color.red()
-                )
-                await ctx.send(embed=embed)
-                return
+                combat_termine = True
+                break
 
             if attaquant["vie"] <= 0:
                 log += f"\n🏆 **{defenseur['nom']} remporte le combat par contre-attaque !**"
-                embed = discord.Embed(
-                    title="⚔️ Résultat du combat",
-                    description=log,
-                    color=discord.Color.red()
-                )
-                await ctx.send(embed=embed)
-                return
+                combat_termine = True
+                break
 
-    MAX_LEN = 4000
-    if len(log) <= MAX_LEN:
-        embed = discord.Embed(
-            title=f"⚔️ Combat entre {p1['nom']} et {p2['nom']}",
-            description=log,
-            color=discord.Color.red()
-        )
-        await ctx.send(embed=embed)
-    else:
-        chunks = [log[i:i+MAX_LEN] for i in range(0, len(log), MAX_LEN)]
+        if combat_termine:
+            break
+
+    # Fonction pour envoyer le log en plusieurs embeds si nécessaire
+    async def send_log(log, titre="⚔️ Résultat du combat"):
+        chunks = [log[i:i+4000] for i in range(0, len(log), 4000)]
         for i, chunk in enumerate(chunks):
             embed = discord.Embed(
-                title=f"⚔️ Combat (partie {i+1})",
+                title=titre if len(chunks) == 1 else f"{titre} (partie {i+1})",
                 description=chunk,
                 color=discord.Color.red()
             )
             await ctx.send(embed=embed)
+
+    await send_log(log)
 
 
 combat.category = "Fun"
