@@ -193,12 +193,29 @@ say.category = "Général"
 @bot.event
 async def on_message(message):
     if message.author.bot:
-        return  # On ignore les messages des bots
+        return
 
-    if "bleach" in message.content.lower():
-        await message.channel.send("Bleach best manga ever 🔥")
+    contenu = message.content.lower()
 
-    await bot.process_commands(message)  # Nécessaire pour que les commandes continuent à marcher
+    for mot in REPONSES:
+        if mot in contenu:
+            textes = REPONSES[mot]
+            texte = random.choice(textes)
+
+            dossier_gif = os.path.join(GIFS_FOLDER, mot)
+            if os.path.exists(dossier_gif):
+                gifs_dispo = [f for f in os.listdir(dossier_gif) if f.endswith((".gif", ".mp4"))]
+                if gifs_dispo:
+                    gif_choisi = random.choice(gifs_dispo)
+                    chemin = os.path.join(dossier_gif, gif_choisi)
+                    file = discord.File(chemin, filename=gif_choisi)
+                    await message.channel.send(content=texte, file=file)
+                    break
+            # Si pas de GIF, juste envoyer le message
+            await message.channel.send(texte)
+            break
+
+    await bot.process_commands(message)
 
 
 
