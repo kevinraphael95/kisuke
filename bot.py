@@ -11,6 +11,8 @@ import hashlib
 from discord.ext import commands
 import random
 from dotenv import load_dotenv
+from discord.ui import View, Select, Button
+
 
 #############################
 
@@ -731,6 +733,171 @@ async def ship(ctx):
         await ctx.send(f"⚠️ Erreur : {e}")
 
 ship.category = "Fun"
+
+
+############################# versus ##########################################################
+
+@bot.command(name="versus", help="Combat interactif entre deux joueurs avec des personnages Bleach.")
+async def versus(ctx):
+    with open("bleach_personnages.json", "r", encoding="utf-8") as f:
+        personnages = json.load(f)
+
+    # Demande aux 2 joueurs de rejoindre
+    await ctx.send("🧑‍🤝‍🧑 Deux joueurs doivent réagir pour rejoindre le combat. Réagissez avec ✋.")
+
+    joueurs = []
+
+    def check_reaction(reaction, user):
+        return str(reaction.emoji) == "✋" and user != bot.user and user not in joueurs
+
+    while len(joueurs) < 2:
+        reaction, user = await bot.wait_for("reaction_add", check=check_reaction)
+        joueurs.append(user)
+        await ctx.send(f"✅ {user.mention} a rejoint le combat.")
+
+    # Attribution aléatoire des personnages
+    p1_data, p2_data = random.sample(personnages, 2)
+    p1, p2 = joueurs
+    p1_data["joueur"] = p1
+    p2_data["joueur"] = p2
+
+    for perso in (p1_data, p2_data):
+        perso["vie"] = 100
+        perso["energie"] = 100
+        perso["status"] = None
+        perso["status_duree"] = 0
+        for atk in perso["attaques"]:
+            atk["utilisé"] = False
+
+    await ctx.send(f"🎮 **Combat : {p1.mention} ( {p1_data['nom']} ) vs {p2.mention} ( {p2_data['nom']} ) !**")
+
+    combat_terminé = False
+    tour = 1
+    combattants = [p1_data, p2_data]
+
+    def format_etat(p):
+        statut = "✅ Aucun effet"
+        if p["status"] == "gel":
+            statut = f"❄️ Gelé ({p['status_duree']} tour)"
+        elif p["status"] == "confusion":
+            statut = f"💫 Confus ({p['status_duree']} tours)"
+        elif p["status"] == "poison":
+            statut = f"☠️ Empoisonné ({p['status_duree']} tours)"
+        return f"{p['nom']} ({p['joueur'].mention}) — ❤️ {p['vie']} PV | 🔋 {p['energie']} énergie | {statut}"
+
+    async def jouer_tour(joueur_data, adverse_data):
+        nonlocal combat_terminé
+
+        # Vérifie gel
+        if joueur_data["status"] == "gel":
+            joueur_data["status_duree"] -= 1
+            if joueur_data["status_duree"] <= 0:
+                joueur_data["status"] = None
+            await ctx.send(f"❄️ {joueur_data['nom']} est gelé et ne peut pas agir.")
+            return
+
+        # Vérifie poison
+        if joueur_data["status"] == "poison":
+            joueur_data["vie"] -= 5
+            joueur_data["status_duree"] -= 1
+            if joueur_data["status_duree"] <= 0:
+                joueur_data["status"] = None
+            await ctx.send(f"☠️ {joueur_data['nom']} est empoisonné et perd 5 PV.")
+
+        # Confusion
+        if joueur_data["status"] == "confusion":
+            if random.random() < 0.4:
+                joueur_data["vie"] -= 10
+                joueur_data["status_duree"] -= 1
+                if joueur_data["status_duree"] <= 0:
+                    joueur_data["status"] = None
+                await ctx.send(f"💫 {joueur_data['nom']} est confus et se blesse ! (-10 PV)")
+                return
+
+        attaques_possibles = [
+            a for a in joueur_data["attaques"]
+            if a["cout"] <= joueur_data["energie"] and (a["type"] != "ultime" or not a["utilisé"])
+        ]
+
+        if not attaques_possibles:
+            await ctx.send(f"💤 {joueur_data['nom']} n’a pas assez d’énergie pour attaquer.")
+            return
+
+        # Menu interactif de sélection
+        options = [discord.SelectOption(label=a["nom"], description=f"{a['type']} — {a['cout']} énergie") for a in attaques_possibles]
+        select = Select(placeholder="Choisissez une attaque", options=options)
+
+        async def select_callback(interaction):
+            if interaction.user != joueur_data["joueur"]:
+                await interaction.response.send_message("Ce n’est pas ton tour !", ephemeral=True)
+                return
+
+            attaque = next(a for a in attaques_possibles if a["nom"] == select.values[0])
+            if attaque["type"] == "ultime":
+                attaque["utilisé"] = True
+
+            esquive_chance = min(adverse_data["stats"]["mobilité"] / 40 + random.uniform(0, 0.2), 0.5)
+            esquive_possible = random.random() < esquive_chance and adverse_data["energie"] >= 10
+
+            log = ""
+
+            if esquive_possible:
+                cout = 50 if attaque["type"] == "ultime" else 10
+                adverse_data["energie"] -= cout
+                log += f"💨 {adverse_data['nom']} esquive avec le Shunpo ! (-{cout} énergie)"
+            else:
+                base = attaque["degats"]
+                mod = joueur_data["stats"]["attaque"] + joueur_data["stats"]["force"] - adverse_data["stats"]["défense"]
+                total = base + max(0, mod)
+                if random.random() < min(0.1 + joueur_data["stats"]["force"] / 50, 0.4):
+                    total = int(total * 1.5)
+                    log += "💥 Coup critique !\n"
+                adverse_data["vie"] -= total
+                joueur_data["energie"] -= attaque["cout"]
+                log += f"💥 {joueur_data['nom']} utilise **{attaque['nom']}** : {total} dégâts."
+
+                effet = attaque["effet"].lower()
+                if effet == "gel":
+                    adverse_data["status"] = "gel"
+                    adverse_data["status_duree"] = 1
+                    log += f"\n❄️ {adverse_data['nom']} est gelé !"
+                elif effet == "confusion":
+                    adverse_data["status"] = "confusion"
+                    adverse_data["status_duree"] = 2
+                    log += f"\n💫 {adverse_data['nom']} est confus !"
+                elif effet == "poison":
+                    adverse_data["status"] = "poison"
+                    adverse_data["status_duree"] = 3
+                    log += f"\n☠️ {adverse_data['nom']} est empoisonné !"
+
+                if adverse_data["vie"] <= 0:
+                    combat_terminé = True
+                    log += f"\n🏆 **{joueur_data['nom']} remporte le combat !**"
+
+            await interaction.response.edit_message(content=log + "\n\n" + format_etat(joueur_data) + "\n" + format_etat(adverse_data), view=None)
+
+        select.callback = select_callback
+        view = View()
+        view.add_item(select)
+        await ctx.send(f"🎯 {joueur_data['joueur'].mention}, c'est ton tour !", view=view)
+
+    while not combat_terminé and tour <= 5:
+        await ctx.send(f"🔁 __Tour {tour}__")
+        await ctx.send(format_etat(p1_data) + "\n" + format_etat(p2_data))
+        for j, adv in [(p1_data, p2_data), (p2_data, p1_data)]:
+            if j["vie"] > 0:
+                await jouer_tour(j, adv)
+                await bot.wait_for("message", check=lambda m: False, timeout=30)  # attente de l'interaction
+            if combat_terminé:
+                break
+        tour += 1
+
+    if not combat_terminé:
+        vainqueur = p1_data if p1_data["vie"] > p2_data["vie"] else p2_data
+        await ctx.send(f"🏁 Fin du combat après 5 tours. **{vainqueur['nom']} l’emporte par PV restants !**")
+
+versus.category = "Fun"
+
 
 
 
