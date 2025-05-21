@@ -189,6 +189,19 @@ say.category = "Général"
 #######################################################################################
 
 
+############################# bleach ##########################################################
+@bot.event
+async def on_message(message):
+    if message.author.bot:
+        return  # On ignore les messages des bots
+
+    if "bleach" in message.content.lower():
+        await message.channel.send("Bleach best manga ever 🔥")
+
+    await bot.process_commands(message)  # Nécessaire pour que les commandes continuent à marcher
+
+
+
 ############################# bleachmoji ##########################################################
 
 @bot.command()
