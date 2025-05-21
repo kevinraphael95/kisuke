@@ -779,175 +779,168 @@ ship.category = "Fun"
 
 ############################# versus ##########################################################
 
-@bot.command(name="versus", help="Combat interactif entre deux joueurs avec des personnages Bleach.")
-async def versus(ctx):
-    with open("bleach_personnages.json", "r", encoding="utf-8") as f:
-        personnages = json.load(f)
+with open("bleach_personnages.json", "r", encoding="utf-8") as f:
+    personnages_data = json.load(f)
 
-    # Envoie du message d'invitation et ajout de la réaction ✋
-    message_invite = await ctx.send("🧑‍🤝‍🧑 Deux joueurs doivent réagir pour rejoindre le combat. Réagissez avec ✋.")
-    await message_invite.add_reaction("✋")
+def charger_personnage(nom, joueur):
+    perso = personnages_data[nom].copy()
+    perso["nom"] = nom
+    perso["joueur"] = joueur
+    perso["vie"] = perso["stats"]["puissance"] * 10
+    perso["energie"] = 100
+    perso["bankai"] = False
+    perso["status"] = None
+    perso["status_duree"] = 0
+    return perso
 
-    joueurs = []
-
-    def check_reaction(reaction, user):
-        return (
-            reaction.message.id == message_invite.id
-            and str(reaction.emoji) == "✋"
-            and user != bot.user
-            and user not in joueurs
-        )
-
-    while len(joueurs) < 2:
-        try:
-            reaction, user = await bot.wait_for("reaction_add", timeout=60.0, check=check_reaction)
-        except asyncio.TimeoutError:
-            await ctx.send("⏰ Temps écoulé. Le combat est annulé.")
-            return
-        joueurs.append(user)
-        await ctx.send(f"✅ {user.mention} a rejoint le combat.")
-
-
-    # Attribution aléatoire des personnages
-    p1_data, p2_data = random.sample(personnages, 2)
-    p1, p2 = joueurs
-    p1_data["joueur"] = p1
-    p2_data["joueur"] = p2
-
-    for perso in (p1_data, p2_data):
-        perso["vie"] = 100
-        perso["energie"] = 100
-        perso["status"] = None
-        perso["status_duree"] = 0
-        for atk in perso["attaques"]:
-            atk["utilisé"] = False
-
-    await ctx.send(f"🎮 **Combat : {p1.mention} ( {p1_data['nom']} ) vs {p2.mention} ( {p2_data['nom']} ) !**")
-
-    combat_terminé = False
-    tour = 1
-    combattants = [p1_data, p2_data]
-
-    def format_etat(p):
+def get_etat_embed(p1, p2, titre="État du combat"):
+    embed = discord.Embed(title=titre, color=0x3498db)
+    for perso in [p1, p2]:
         statut = "✅ Aucun effet"
-        if p["status"] == "gel":
-            statut = f"❄️ Gelé ({p['status_duree']} tour)"
-        elif p["status"] == "confusion":
-            statut = f"💫 Confus ({p['status_duree']} tours)"
-        elif p["status"] == "poison":
-            statut = f"☠️ Empoisonné ({p['status_duree']} tours)"
-        return f"{p['nom']} ({p['joueur'].mention}) — ❤️ {p['vie']} PV | 🔋 {p['energie']} énergie | {statut}"
+        if perso["status"] == "gel":
+            statut = f"❄️ Gelé ({perso['status_duree']} tour)"
+        elif perso["status"] == "confusion":
+            statut = f"💫 Confus ({perso['status_duree']} tours)"
+        elif perso["status"] == "poison":
+            statut = f"☠️ Empoisonné ({perso['status_duree']} tours)"
+        embed.add_field(
+            name=f"{perso['nom']} ({perso['joueur'].display_name})",
+            value=f"❤️ {perso['vie']} PV\n🔋 {perso['energie']} énergie\n📛 {statut}",
+            inline=False
+        )
+    return embed
 
-    async def jouer_tour(joueur_data, adverse_data):
-        nonlocal combat_terminé
+def appliquer_effets(perso):
+    if perso["status"] == "gel":
+        perso["status_duree"] -= 1
+        if perso["status_duree"] <= 0:
+            perso["status"] = None
+        return False  # Impossible d’agir
+    if perso["status"] == "confusion":
+        perso["status_duree"] -= 1
+        if perso["status_duree"] <= 0:
+            perso["status"] = None
+        return random.random() > 0.5  # 50% de chances d'agir
+    if perso["status"] == "poison":
+        perso["vie"] -= 5
+        perso["status_duree"] -= 1
+        if perso["status_duree"] <= 0:
+            perso["status"] = None
+    return True  # Peut agir
 
-        # Vérifie gel
-        if joueur_data["status"] == "gel":
-            joueur_data["status_duree"] -= 1
-            if joueur_data["status_duree"] <= 0:
-                joueur_data["status"] = None
-            await ctx.send(f"❄️ {joueur_data['nom']} est gelé et ne peut pas agir.")
+async def jouer_tour(ctx, joueur, perso_joueur, perso_adverse):
+    if perso_joueur["vie"] <= 0:
+        return
+
+    peut_agir = appliquer_effets(perso_joueur)
+    if not peut_agir:
+        await ctx.send(f"{joueur.mention} est dans l'incapacité d'agir ce tour !")
+        await asyncio.sleep(2)
+        return
+
+    future = asyncio.get_event_loop().create_future()
+    view = View(timeout=30)
+
+    async def select_callback(interaction):
+        if interaction.user != joueur:
+            await interaction.response.send_message("Ce n'est pas ton tour !", ephemeral=True)
             return
 
-        # Vérifie poison
-        if joueur_data["status"] == "poison":
-            joueur_data["vie"] -= 5
-            joueur_data["status_duree"] -= 1
-            if joueur_data["status_duree"] <= 0:
-                joueur_data["status"] = None
-            await ctx.send(f"☠️ {joueur_data['nom']} est empoisonné et perd 5 PV.")
-
-        # Confusion
-        if joueur_data["status"] == "confusion":
-            if random.random() < 0.4:
-                joueur_data["vie"] -= 10
-                joueur_data["status_duree"] -= 1
-                if joueur_data["status_duree"] <= 0:
-                    joueur_data["status"] = None
-                await ctx.send(f"💫 {joueur_data['nom']} est confus et se blesse ! (-10 PV)")
-                return
-
-        attaques_possibles = [
-            a for a in joueur_data["attaques"]
-            if a["cout"] <= joueur_data["energie"] and (a["type"] != "ultime" or not a["utilisé"])
-        ]
-
-        if not attaques_possibles:
-            await ctx.send(f"💤 {joueur_data['nom']} n’a pas assez d’énergie pour attaquer.")
-            return
-
-        # Menu interactif de sélection
-        options = [discord.SelectOption(label=a["nom"], description=f"{a['type']} — {a['cout']} énergie") for a in attaques_possibles]
-        select = Select(placeholder="Choisissez une attaque", options=options)
-
-        async def select_callback(interaction):
-            if interaction.user != joueur_data["joueur"]:
-                await interaction.response.send_message("Ce n’est pas ton tour !", ephemeral=True)
-                return
-
-            attaque = next(a for a in attaques_possibles if a["nom"] == select.values[0])
-            if attaque["type"] == "ultime":
-                attaque["utilisé"] = True
-
-            esquive_chance = min(adverse_data["stats"]["mobilité"] / 40 + random.uniform(0, 0.2), 0.5)
-            esquive_possible = random.random() < esquive_chance and adverse_data["energie"] >= 10
-
-            log = ""
-
-            if esquive_possible:
-                cout = 50 if attaque["type"] == "ultime" else 10
-                adverse_data["energie"] -= cout
-                log += f"💨 {adverse_data['nom']} esquive avec le Shunpo ! (-{cout} énergie)"
+        attaque_choisie = interaction.data["values"][0]
+        if attaque_choisie == "bankai":
+            if perso_joueur["energie"] >= 50 and not perso_joueur["bankai"]:
+                perso_joueur["bankai"] = True
+                perso_joueur["energie"] -= 50
+                perso_joueur["vie"] += 30
+                await interaction.response.edit_message(content=f"{joueur.mention} libère son **Bankai** ! 🌌", view=None)
             else:
-                base = attaque["degats"]
-                mod = joueur_data["stats"]["attaque"] + joueur_data["stats"]["force"] - adverse_data["stats"]["défense"]
-                total = base + max(0, mod)
-                if random.random() < min(0.1 + joueur_data["stats"]["force"] / 50, 0.4):
-                    total = int(total * 1.5)
-                    log += "💥 Coup critique !\n"
-                adverse_data["vie"] -= total
-                joueur_data["energie"] -= attaque["cout"]
-                log += f"💥 {joueur_data['nom']} utilise **{attaque['nom']}** : {total} dégâts."
+                await interaction.response.send_message("Tu ne peux pas utiliser le Bankai maintenant !", ephemeral=True)
+            future.set_result(True)
+            return
 
-                effet = attaque["effet"].lower()
-                if effet == "gel":
-                    adverse_data["status"] = "gel"
-                    adverse_data["status_duree"] = 1
-                    log += f"\n❄️ {adverse_data['nom']} est gelé !"
-                elif effet == "confusion":
-                    adverse_data["status"] = "confusion"
-                    adverse_data["status_duree"] = 2
-                    log += f"\n💫 {adverse_data['nom']} est confus !"
-                elif effet == "poison":
-                    adverse_data["status"] = "poison"
-                    adverse_data["status_duree"] = 3
-                    log += f"\n☠️ {adverse_data['nom']} est empoisonné !"
+        attaque = next((a for a in perso_joueur["attaques"] + [perso_joueur["ultime"]] if a["nom"] == attaque_choisie), None)
+        if not attaque:
+            await interaction.response.send_message("Attaque invalide.", ephemeral=True)
+            return
 
-                if adverse_data["vie"] <= 0:
-                    combat_terminé = True
-                    log += f"\n🏆 **{joueur_data['nom']} remporte le combat !**"
+        if perso_joueur["energie"] < attaque["cout"]:
+            await interaction.response.send_message("Pas assez d'énergie !", ephemeral=True)
+            return
 
-            await interaction.response.edit_message(content=log + "\n\n" + format_etat(joueur_data) + "\n" + format_etat(adverse_data), view=None)
+        perso_joueur["energie"] -= attaque["cout"]
+        degats = attaque["puissance"] + perso_joueur["stats"]["force"]
+        if perso_joueur["bankai"]:
+            degats += 10
 
-        select.callback = select_callback
-        view = View()
-        view.add_item(select)
-        await ctx.send(f"🎯 {joueur_data['joueur'].mention}, c'est ton tour !", view=view)
+        perso_adverse["vie"] -= degats
+        effets = {
+            "gel": "❄️ est gelé !",
+            "poison": "☠️ est empoisonné !",
+            "confusion": "💫 est confus !",
+            "buff": "📈 gagne un bonus !",
+            "debuff": "📉 subit un malus !"
+        }
+        effet = attaque.get("effet")
+        if effet in ["gel", "poison", "confusion"]:
+            perso_adverse["status"] = effet
+            perso_adverse["status_duree"] = 2
 
-    while not combat_terminé and tour <= 5:
-        await ctx.send(f"🔁 __Tour {tour}__")
-        await ctx.send(format_etat(p1_data) + "\n" + format_etat(p2_data))
-        for j, adv in [(p1_data, p2_data), (p2_data, p1_data)]:
-            if j["vie"] > 0:
-                await jouer_tour(j, adv)
-                await bot.wait_for("message", check=lambda m: False, timeout=30)  # attente de l'interaction
-            if combat_terminé:
-                break
+        msg = f"{joueur.mention} utilise **{attaque['nom']}** sur {perso_adverse['joueur'].mention} et inflige {degats} dégâts !"
+        if effet in effets:
+            msg += f"\n{perso_adverse['joueur'].mention} {effets[effet]}"
+        await interaction.response.edit_message(content=msg, view=None)
+        future.set_result(True)
+
+    attaques = perso_joueur["attaques"]
+    options = [discord.SelectOption(label=a["nom"], description=f"{a['description']} ({a['cout']}⚡)") for a in attaques]
+    if perso_joueur["energie"] >= perso_joueur["ultime"]["cout"]:
+        options.append(discord.SelectOption(label=perso_joueur["ultime"]["nom"], description=f"{perso_joueur['ultime']['description']} ({perso_joueur['ultime']['cout']}⚡)"))
+    if not perso_joueur["bankai"] and perso_joueur["energie"] >= 50:
+        options.append(discord.SelectOption(label="bankai", description="Libère ton Bankai (50⚡)"))
+
+    select = Select(placeholder="Choisis ton attaque", options=options)
+    select.callback = select_callback
+    view.add_item(select)
+
+    await ctx.send(embed=get_etat_embed(perso_joueur, perso_adverse, f"🌀 Tour de {joueur.display_name}"), view=view)
+    try:
+        await asyncio.wait_for(future, timeout=30)
+    except asyncio.TimeoutError:
+        await ctx.send(f"{joueur.mention} a mis trop de temps à répondre ! Tour passé.")
+
+@bot.command()
+async def versus(ctx, joueur1: discord.Member, joueur2: discord.Member, perso1_nom: str, perso2_nom: str):
+    if perso1_nom not in personnages_data or perso2_nom not in personnages_data:
+        await ctx.send("Un des personnages n'existe pas.")
+        return
+
+    p1 = charger_personnage(perso1_nom, joueur1)
+    p2 = charger_personnage(perso2_nom, joueur2)
+
+    tour = 1
+    await ctx.send(f"⚔️ **Combat entre {joueur1.display_name} et {joueur2.display_name} !** ⚔️\n{p1['nom']} VS {p2['nom']} !")
+
+    while p1["vie"] > 0 and p2["vie"] > 0:
+        if p1["stats"]["vitesse"] >= p2["stats"]["vitesse"]:
+            await jouer_tour(ctx, joueur1, p1, p2)
+            if p2["vie"] <= 0: break
+            await jouer_tour(ctx, joueur2, p2, p1)
+        else:
+            await jouer_tour(ctx, joueur2, p2, p1)
+            if p1["vie"] <= 0: break
+            await jouer_tour(ctx, joueur1, p1, p2)
         tour += 1
 
-    if not combat_terminé:
-        vainqueur = p1_data if p1_data["vie"] > p2_data["vie"] else p2_data
-        await ctx.send(f"🏁 Fin du combat après 5 tours. **{vainqueur['nom']} l’emporte par PV restants !**")
+    gagnant = joueur1 if p1["vie"] > 0 else joueur2
+    perdant = joueur2 if p1["vie"] > 0 else joueur1
+    embed_fin = discord.Embed(
+        title="🏆 Victoire !",
+        description=f"{gagnant.mention} a vaincu {perdant.mention} après {tour} tours !",
+        color=0xf1c40f
+    )
+    embed_fin.add_field(name="Statut final", value=f"{p1['nom']}: {p1['vie']} PV — {p2['nom']}: {p2['vie']} PV", inline=False)
+    await ctx.send(embed=embed_fin)
+
 
 versus.category = "Fun"
 
