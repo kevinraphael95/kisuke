@@ -1,0 +1,434 @@
+[
+  {
+    "numero": 1,
+    "nom": "Sai",
+    "kanji": "塞, Restriction",
+    "type": "Emprisonnement",
+    "categorie": "Bakudō",
+    "incantation": null,
+    "gif": "sai.gif"
+  },
+  {
+    "numero": 4,
+    "nom": "Hainawa",
+    "kanji": "這縄, Corde rampante",
+    "type": "Emprisonnement",
+    "categorie": "Bakudō",
+    "incantation": null,
+    "gif": "hainawa.gif"
+  },
+  {
+    "numero": 8,
+    "nom": "Seki",
+    "kanji": "斥, Repoussoir",
+    "type": "Protection",
+    "categorie": "Bakudō",
+    "incantation": null,
+    "gif": "seki.gif"
+  },
+  {
+    "numero": 9,
+    "nom": "Geki",
+    "kanji": "撃, Frappe",
+    "type": "Emprisonnement",
+    "categorie": "Bakudō",
+    "incantation": null,
+    "gif": "geki.gif"
+  },
+  {
+    "numero": 9,
+    "nom": "Hōrin",
+    "kanji": "崩輪, Cercle d'effondrement",
+    "type": "Emprisonnement",
+    "categorie": "Bakudō",
+    "incantation": null,
+    "gif": "hōrin.gif"
+  },
+  {
+    "numero": 21,
+    "nom": "Sekienton",
+    "kanji": "赤煙遁, Fumée rouge de fuite",
+    "type": "Diversion",
+    "categorie": "Bakudō",
+    "incantation": null,
+    "gif": "sekienton.gif"
+  },
+  {
+    "numero": 26,
+    "nom": "Kyokkō",
+    "kanji": "曲光, Lumière Courbée",
+    "type": "Pistage",
+    "categorie": "Bakudō",
+    "incantation": null,
+    "gif": "kyokkō.gif"
+  },
+  {
+    "numero": 30,
+    "nom": "Shitotsu Sansen",
+    "kanji": "嘴突三閃, Coup de bec en 3 étincelles",
+    "type": "Emprisonnement",
+    "categorie": "Bakudō",
+    "incantation": null,
+    "gif": "shitotsu_sansen.gif"
+  },
+  {
+    "numero": 37,
+    "nom": "Tsuriboshi",
+    "kanji": "吊星, Étoile suspendue",
+    "type": "Protection",
+    "categorie": "Bakudō",
+    "incantation": null,
+    "gif": "tsuriboshi.gif"
+  },
+  {
+    "numero": 39,
+    "nom": "Enkōsen",
+    "kanji": "円閘扇, Verrouillage Élémental Tournoyant",
+    "type": "Protection",
+    "categorie": "Bakudō",
+    "incantation": null,
+    "gif": "enkōsen.gif"
+  },
+  {
+    "numero": 58,
+    "nom": "Kakushitsuijaku",
+    "kanji": "摑趾追雀, Moineaux traceurs",
+    "type": "Pistage",
+    "categorie": "Bakudō",
+    "incantation": null,
+    "gif": "kakushitsuijaku.gif"
+  },
+  {
+    "numero": 61,
+    "nom": "Rikujōkōrō",
+    "kanji": "六杖光牢, Flash à six branches",
+    "type": "Emprisonnement",
+    "categorie": "Bakudō",
+    "incantation": null,
+    "gif": "rikujōkōrō.gif"
+  },
+  {
+    "numero": 62,
+    "nom": "Hyapporankan",
+    "kanji": "百歩欄干, Clôture de cent pas",
+    "type": "Emprisonnement",
+    "categorie": "Bakudō",
+    "incantation": null,
+    "gif": "hyapporankan.gif"
+  },
+  {
+    "numero": 63,
+    "nom": "Sajō Sabaku",
+    "kanji": "鎖条鎖縛, Enchaînement",
+    "type": "Emprisonnement",
+    "categorie": "Bakudō",
+    "incantation": null,
+    "gif": "sajō_sabaku.gif"
+  },
+  {
+    "numero": 73,
+    "nom": "Tōzanshō",
+    "kanji": "倒山晶, Éboulement de la montagne de cristal",
+    "type": "Protection",
+    "categorie": "Bakudō",
+    "incantation": null,
+    "gif": "tōzanshō.gif"
+  },
+  {
+    "numero": 75,
+    "nom": "Gōchūtekkan",
+    "kanji": "五柱鉄貫, Cinq piliers de métal",
+    "type": "Emprisonnement",
+    "categorie": "Bakudō",
+    "incantation": null,
+    "gif": "gōchūtekkan.gif"
+  },
+  {
+    "numero": 77,
+    "nom": "Tenteikūra",
+    "kanji": "天挺空羅, Filet céleste couvrant le ciel",
+    "type": "Télépathie",
+    "categorie": "Bakudō",
+    "incantation": null,
+    "gif": "tenteikūra.gif"
+  },
+  {
+    "numero": 79,
+    "nom": "Kujō Shibari",
+    "kanji": "九曜縛, Liens des neuf rayons",
+    "type": "Emprisonnement",
+    "categorie": "Bakudō",
+    "incantation": null,
+    "gif": "kujō_shibari.gif"
+  },
+  {
+    "numero": 81,
+    "nom": "Dankū",
+    "kanji": "斷空, Mur coupant l'espace",
+    "type": "Protection",
+    "categorie": "Bakudō",
+    "incantation": null,
+    "gif": "dankū.gif"
+  },
+  {
+    "numero": 99,
+    "nom": "Kin",
+    "kanji": "禁, Restriction",
+    "type": "Emprisonnement",
+    "categorie": "Bakudō",
+    "incantation": null,
+    "gif": "kin.gif"
+  },
+  {
+    "numero": 99,
+    "nom": "Bankin",
+    "kanji": "卍禁, Restriction complète",
+    "type": "Emprisonnement",
+    "categorie": "Bakudō",
+    "incantation": null,
+    "gif": "bankin.gif"
+  },
+  {
+    "numero": null,
+    "nom": "Hakufuku",
+    "kanji": "白伏, Dissimulation blanche",
+    "type": "Inconnu",
+    "categorie": "Bakudō",
+    "incantation": null,
+    "gif": "hakufuku.gif"
+  },
+  {
+    "numero": null,
+    "nom": "Inemuri",
+    "kanji": "威眠, Sommeil forcé",
+    "type": "Sommeil",
+    "categorie": "Bakudō",
+    "incantation": null,
+    "gif": "inemuri.gif"
+  },
+  {
+    "numero": null,
+    "nom": "Tanma Otoshi",
+    "kanji": "タンマ落とし, Délai d'expiration",
+    "type": "Sommeil",
+    "categorie": "Bakudō",
+    "incantation": null,
+    "gif": "tanma_otoshi.gif"
+  },
+  {
+    "numero": null,
+    "nom": "Shibireyubi",
+    "kanji": "しびれ指, Doigts paralysants",
+    "type": "Emprisonnement",
+    "categorie": "Bakudō",
+    "incantation": null,
+    "gif": "shibireyubi.gif"
+  },
+  {
+    "numero": 1,
+    "nom": "Shō",
+    "kanji": "衝, Poussée",
+    "type": "Hadō",
+    "categorie": "Hadō",
+    "incantation": null,
+    "gif": "shō.gif"
+  },
+  {
+    "numero": 4,
+    "nom": "Byakurai",
+    "kanji": "白雷, Foudre blanche",
+    "type": "Hadō",
+    "categorie": "Hadō",
+    "incantation": null,
+    "gif": "byakurai.gif"
+  },
+  {
+    "numero": 11,
+    "nom": "Tsuzuri Raiden",
+    "kanji": "綴雷電, Faisceau d'éclairs",
+    "type": "Hadō",
+    "categorie": "Hadō",
+    "incantation": null,
+    "gif": "tsuzuri_raiden.gif"
+  },
+  {
+    "numero": 12,
+    "nom": "Fushibi",
+    "kanji": "伏火, Feu caché",
+    "type": "Hadō",
+    "categorie": "Hadō",
+    "incantation": null,
+    "gif": "fushibi.gif"
+  },
+  {
+    "numero": 31,
+    "nom": "Shakkahō",
+    "kanji": "赤火砲, Boulet de feu rouge",
+    "type": "Hadō",
+    "categorie": "Hadō",
+    "incantation": null,
+    "gif": "shakkahō.gif"
+  },
+  {
+    "numero": 32,
+    "nom": "Ōkasen",
+    "kanji": "黄火閃, Tir de feu jaune",
+    "type": "Hadō",
+    "categorie": "Hadō",
+    "incantation": null,
+    "gif": "ōkasen.gif"
+  },
+  {
+    "numero": 33,
+    "nom": "Sōkatsui",
+    "kanji": "蒼火墜, Chute de flammes bleues",
+    "type": "Hadō",
+    "categorie": "Hadō",
+    "incantation": null,
+    "gif": "sōkatsui.gif"
+  },
+  {
+    "numero": 54,
+    "nom": "Haien",
+    "kanji": "廃炎, Destruction par les flammes",
+    "type": "Hadō",
+    "categorie": "Hadō",
+    "incantation": null,
+    "gif": "haien.gif"
+  },
+  {
+    "numero": 57,
+    "nom": "Daichi Tenyō",
+    "kanji": "大地転踊, Danse de la terre retournée",
+    "type": "Hadō",
+    "categorie": "Hadō",
+    "incantation": null,
+    "gif": "daichi_tenyō.gif"
+  },
+  {
+    "numero": 58,
+    "nom": "Tenran",
+    "kanji": "闐嵐, Tempête vigoureuse",
+    "type": "Hadō",
+    "categorie": "Hadō",
+    "incantation": null,
+    "gif": "tenran.gif"
+  },
+  {
+    "numero": 63,
+    "nom": "Raikōhō",
+    "kanji": "雷吼炮, Canon du tonnerre rugissant",
+    "type": "Hadō",
+    "categorie": "Hadō",
+    "incantation": null,
+    "gif": "raikōhō.gif"
+  },
+  {
+    "numero": 73,
+    "nom": "Sōren Sōkatsui",
+    "kanji": "双漣蒼火墜, Chute de flammes bleues, Lotus jumeaux",
+    "type": "Hadō",
+    "categorie": "Hadō",
+    "incantation": null,
+    "gif": "sōren_sōkatsui.gif"
+  },
+  {
+    "numero": 78,
+    "nom": "Zangerin",
+    "kanji": "斬華輪, Anneau de fleur tranchant",
+    "type": "Hadō",
+    "categorie": "Hadō",
+    "incantation": null,
+    "gif": "zangerin.gif"
+  },
+  {
+    "numero": 88,
+    "nom": "Hiryū Gekizoku Shinten Raihō",
+    "kanji": "飛竜撃賊震天雷炮, Frappe du dragon volant, Canon foudroyant les cieux",
+    "type": "Hadō",
+    "categorie": "Hadō",
+    "incantation": null,
+    "gif": "hiryū_gekizoku_shinten_raihō.gif"
+  },
+  {
+    "numero": 90,
+    "nom": "Kurohitsugi",
+    "kanji": "黒棺, Cercueil noir",
+    "type": "Hadō",
+    "categorie": "Hadō",
+    "incantation": null,
+    "gif": "kurohitsugi.gif"
+  },
+  {
+    "numero": 91,
+    "nom": "Senjū Kōten Taihō",
+    "kanji": "千手皎天汰炮, Canon des rayons célestes aux mille mains",
+    "type": "Hadō",
+    "categorie": "Hadō",
+    "incantation": null,
+    "gif": "senjū_kōten_taihō.gif"
+  },
+  {
+    "numero": 96,
+    "nom": "Ittō Kasō",
+    "kanji": "一刀火葬, Crémation d'un seul coup d'épée",
+    "type": "Hadō",
+    "categorie": "Hadō",
+    "incantation": null,
+    "gif": "ittō_kasō.gif"
+  },
+  {
+    "numero": 99,
+    "nom": "Goryūtenmetsu",
+    "kanji": "五龍転滅, Cinq dragons tourbillonnants de la destruction",
+    "type": "Hadō",
+    "categorie": "Hadō",
+    "incantation": null,
+    "gif": "goryūtenmetsu.gif"
+  },
+  {
+    "numero": null,
+    "nom": "Kongōbaku",
+    "kanji": "金剛爆, Explosion de diamant",
+    "type": "Hadō",
+    "categorie": "Hadō",
+    "incantation": null,
+    "gif": "kongōbaku.gif"
+  },
+  {
+    "numero": null,
+    "nom": "Gaki Rekkō",
+    "kanji": "牙気裂光, Flash d'énergie dormante",
+    "type": "Hadō",
+    "categorie": "Hadō",
+    "incantation": null,
+    "gif": "gaki_rekkō.gif"
+  },
+  {
+    "numero": null,
+    "nom": "Hyōga Seiran",
+    "kanji": "氷河晴嵐, Tempête de crocs glacés",
+    "type": "Hadō",
+    "categorie": "Hadō",
+    "incantation": null,
+    "gif": "hyōga_seiran.gif"
+  },
+  {
+    "numero": null,
+    "nom": "Kaizō Kidō - Jūgeki Byakurai",
+    "kanji": "重撃白雷 (改造鬼道), Kidō modifié - Frappe lourde de la Foudre blanche",
+    "type": "Hadō",
+    "categorie": "Hadō",
+    "incantation": null,
+    "gif": "kaizō_kidō_-_jūgeki_byakurai.gif"
+  },
+  {
+    "numero": null,
+    "nom": "Ura Hadō : Sannodō - Teppūsatsu",
+    "kanji": "裏破道: 三の道 — 鉄風殺, Hadō secret : Troisième voie - Assassin du vent d’acier",
+    "type": "Hadō",
+    "categorie": "Hadō",
+    "incantation": null,
+    "gif": "ura_hadō_:_sannodō_-_teppūsatsu.gif"
+  }
+]
