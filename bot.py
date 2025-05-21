@@ -280,18 +280,16 @@ cancel.category = "Fun"
 
 @bot.command(name="combat", help="Simule un combat entre 2 personnages de Bleach avec stats et effets.")
 async def combat(ctx):
-    import random
-    import json
 
     def format_etat_ligne(p):
         coeur = f"❤️ {max(p['vie'], 0)} PV"
         batterie = f"🔋 {p['energie']} énergie"
         if p["status"] == "gel":
-            statut = f"❄️ Gelé ({p['status_duree']} tour)"
+            statut = f"❄️ Gelé ({p['status_duree']} tour{'s' if p['status_duree'] > 1 else ''})"
         elif p["status"] == "confusion":
-            statut = f"💫 Confus ({p['status_duree']} tours)"
+            statut = f"💫 Confus ({p['status_duree']} tour{'s' if p['status_duree'] > 1 else ''})"
         elif p["status"] == "poison":
-            statut = f"☠️ Empoisonné ({p['status_duree']} tours)"
+            statut = f"☠️ Empoisonné ({p['status_duree']} tour{'s' if p['status_duree'] > 1 else ''})"
         else:
             statut = "✅ Aucun effet"
         return f"{p['nom']} — {coeur} | {batterie} | {statut}"
@@ -304,7 +302,10 @@ async def combat(ctx):
             await ctx.send("❌ Pas assez de personnages dans le fichier.")
             return
 
+        # Choix aléatoire de 2 persos
         p1, p2 = random.sample(personnages, 2)
+
+        # Initialisation des stats de combat
         for p in (p1, p2):
             p["energie"] = 100
             p["vie"] = 100
@@ -313,6 +314,7 @@ async def combat(ctx):
             for atk in p["attaques"]:
                 atk["utilisé"] = False
 
+        # Initiative (mobilité + hasard)
         p1_init = p1["stats"]["mobilité"] + random.randint(0, 10)
         p2_init = p2["stats"]["mobilité"] + random.randint(0, 10)
         tour_order = [p1, p2] if p1_init >= p2_init else [p2, p1]
@@ -326,9 +328,11 @@ async def combat(ctx):
             for attaquant in tour_order:
                 defenseur = p1 if attaquant == p2 else p2
 
+                # Si un des deux est KO, on passe au suivant
                 if attaquant["vie"] <= 0 or defenseur["vie"] <= 0:
                     continue
 
+                # Gestion des statuts
                 if attaquant["status"] == "gel":
                     log += f"❄️ {attaquant['nom']} est gelé et ne peut pas agir.\n\n"
                     attaquant["status_duree"] -= 1
@@ -352,6 +356,7 @@ async def combat(ctx):
                     if attaquant["status_duree"] <= 0:
                         attaquant["status"] = None
 
+                # Choix des attaques possibles
                 possibles = [
                     a for a in attaquant["attaques"]
                     if a["cout"] <= attaquant["energie"] and (a["type"] != "ultime" or not a["utilisé"])
@@ -364,7 +369,7 @@ async def combat(ctx):
                 if attaque["type"] == "ultime":
                     attaque["utilisé"] = True
 
-                # Esquive
+                # Tentative d'esquive
                 esquive_chance = min(defenseur["stats"]["mobilité"] / 40 + random.uniform(0, 0.2), 0.5)
                 tentative_esquive = random.random()
                 cout_esquive = 50 if attaque["type"] == "ultime" else 10
@@ -373,6 +378,7 @@ async def combat(ctx):
                     if defenseur["energie"] >= cout_esquive:
                         defenseur["energie"] -= cout_esquive
                         log += f"💨 {defenseur['nom']} esquive l'attaque **{attaque['nom']}** avec le Shunpo ! (-{cout_esquive} énergie)\n"
+                        # Contre-attaque possible
                         if random.random() < 0.2:
                             contre = 10 + defenseur["stats"]["attaque"] // 2
                             attaquant["vie"] -= contre
@@ -386,15 +392,17 @@ async def combat(ctx):
                     else:
                         log += f"⚡ {defenseur['nom']} **aurait pu esquiver**, mais manque d'énergie !\n"
 
+                # Calcul des dégâts
                 base_degats = attaque["degats"]
                 modificateur = (
                     attaquant["stats"]["attaque"]
                     + attaquant["stats"]["force"]
-                    - defenseur["stats"]["défense"]
-                    + attaquant["stats"]["pression"] // 5
+                    - defenseur["stats"].get("défense", 0)  # .get pour éviter erreur si clef absente
+                    + attaquant["stats"].get("pression", 0) // 5
                 )
                 total_degats = base_degats + max(0, modificateur)
 
+                # Critique
                 if random.random() < min(0.1 + attaquant["stats"]["force"] / 50, 0.4):
                     total_degats = int(total_degats * 1.5)
                     log += "💥 Coup critique ! Dégâts amplifiés !\n"
@@ -408,6 +416,7 @@ async def combat(ctx):
                     f"➡️ {defenseur['nom']} perd {total_degats} PV\n"
                 )
 
+                # Application des effets de statut
                 effet = attaque["effet"].lower()
                 if effet in ["gel", "paralysie"]:
                     defenseur["status"] = "gel"
@@ -429,17 +438,37 @@ async def combat(ctx):
 
                 log += "\n"
 
+        # Fin des 5 tours, victoire au PV
         gagnant = p1 if p1["vie"] > p2["vie"] else p2
         log += f"__🧾 Résumé final__\n{format_etat_ligne(p1)}\n{format_etat_ligne(p2)}\n\n"
         log += f"🏁 **Fin du combat.**\n🏆 **{gagnant['nom']} l'emporte par avantage de vie !**"
-        await ctx.send(log)
+
+        # Envoi du log, en plusieurs embeds si trop long
+        MAX_LEN = 4000
+        if len(log) <= MAX_LEN:
+            embed = discord.Embed(
+                title=f"⚔️ Combat entre {p1['nom']} et {p2['nom']}",
+                description=log,
+                color=discord.Color.red()
+            )
+            await ctx.send(embed=embed)
+        else:
+            chunks = [log[i:i+MAX_LEN] for i in range(0, len(log), MAX_LEN)]
+            for i, chunk in enumerate(chunks):
+                embed = discord.Embed(
+                    title=f"⚔️ Combat (partie {i+1})",
+                    description=chunk,
+                    color=discord.Color.red()
+                )
+                await ctx.send(embed=embed)
 
     except FileNotFoundError:
         await ctx.send("❌ Fichier `bleach_personnages.json` introuvable.")
     except Exception as e:
         await ctx.send(f"⚠️ Une erreur est survenue : {e}")
-        
+
 combat.category = "Fun"
+
 
 
 ############################# dog ##########################################################
