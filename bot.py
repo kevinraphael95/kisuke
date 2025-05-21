@@ -1,18 +1,24 @@
 from keep_alive import keep_alive  # Démarre le serveur web pour maintenir le bot en ligne
 
+# 1. Modules standards Python
 import os
 import io
 import ast
 import asyncio
-import aiohttp
-import discord
 import json
 import hashlib
-from discord.ext import commands
 import random
-from dotenv import load_dotenv
+
+# 2. Modules tiers
+import aiohttp
+import discord
+from discord.ext import commands
 from discord.ui import View, Select, Button
 from discord import SelectOption, Interaction, Embed
+from dotenv import load_dotenv
+
+# 3. Modules locaux (pas dans ton exemple)
+# import mon_module_perso
 
 
 #############################
