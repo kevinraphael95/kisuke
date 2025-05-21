@@ -513,56 +513,6 @@ async def hollowify(ctx, member: discord.Member = None):
 
 hollowify.category = "Fun"
 
-############################# kido ##########################################################
-
-@bot.command()
-async def kido(ctx, *args):
-    with open("kido_data.json", "r", encoding="utf-8") as f:
-        data = json.load(f)  # data est une LISTE de sorts
-
-    kido_type = None
-    numero = None
-
-    for arg in args:
-        if arg.lower() in ["hado", "hadō"]:
-            kido_type = "Hadō"
-        elif arg.lower() == "bakudo":
-            kido_type = "Bakudō"
-        elif arg.isdigit():
-            numero = int(arg)
-
-    # Filtrer les sorts en fonction du type si précisé
-    filtered_data = data
-    if kido_type:
-        filtered_data = [k for k in data if k.get("categorie") == kido_type]
-
-    # Chercher par numéro si précisé
-    if numero is not None:
-        found = next((k for k in filtered_data if k.get("numero") == numero), None)
-        if not found:
-            return await ctx.send("❌ Aucun Kido trouvé avec ce numéro.")
-        kido = found
-        kido["type"] = kido.get("categorie", "Inconnu")
-    else:
-        if not filtered_data:
-            return await ctx.send("❌ Aucun sort trouvé pour ce type.")
-        kido = random.choice(filtered_data)
-        kido["type"] = kido.get("categorie", "Inconnu")
-
-    # Embed
-    embed = discord.Embed(
-        title=f"{kido['type']} #{kido['numero']} — {kido['nom']}",
-        description=kido.get('description', 'Aucune description.'),
-        color=discord.Color.red() if kido["type"] == "Hadō" else discord.Color.blue()
-    )
-    embed.set_footer(text="Kido de l'univers Bleach")
-    if "gif" in kido and kido["gif"]:
-        embed.set_image(url=kido["gif"])
-
-    await ctx.send(embed=embed)
-
-kido.category = "Fun"
-
 
 ############################# parti ##########################################################
 
@@ -834,18 +784,29 @@ async def versus(ctx):
     with open("bleach_personnages.json", "r", encoding="utf-8") as f:
         personnages = json.load(f)
 
-    # Demande aux 2 joueurs de rejoindre
-    await ctx.send("🧑‍🤝‍🧑 Deux joueurs doivent réagir pour rejoindre le combat. Réagissez avec ✋.")
+    # Envoie du message d'invitation et ajout de la réaction ✋
+    message_invite = await ctx.send("🧑‍🤝‍🧑 Deux joueurs doivent réagir pour rejoindre le combat. Réagissez avec ✋.")
+    await message_invite.add_reaction("✋")
 
     joueurs = []
 
     def check_reaction(reaction, user):
-        return str(reaction.emoji) == "✋" and user != bot.user and user not in joueurs
+        return (
+            reaction.message.id == message_invite.id
+            and str(reaction.emoji) == "✋"
+            and user != bot.user
+            and user not in joueurs
+        )
 
     while len(joueurs) < 2:
-        reaction, user = await bot.wait_for("reaction_add", check=check_reaction)
+        try:
+            reaction, user = await bot.wait_for("reaction_add", timeout=60.0, check=check_reaction)
+        except asyncio.TimeoutError:
+            await ctx.send("⏰ Temps écoulé. Le combat est annulé.")
+            return
         joueurs.append(user)
         await ctx.send(f"✅ {user.mention} a rejoint le combat.")
+
 
     # Attribution aléatoire des personnages
     p1_data, p2_data = random.sample(personnages, 2)
