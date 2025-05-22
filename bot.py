@@ -102,7 +102,13 @@ async def on_message(message):
 # ─────────────────────────────────────────────
 
 # Salon où le Reiatsu spawn
-reiatsu_channel_id = 123456789012345678  # à remplacer
+async def get_reiatsu_channel(bot, guild_id):
+    data = supabase.table("reiatsu_config").select("channel_id").eq("guild_id", str(guild_id)).execute()
+    if data.data:
+        channel_id = int(data.data[0]["channel_id"])
+        return bot.get_channel(channel_id)
+    return None
+
 
 class ReiatsuSpawner:
     def __init__(self, bot):
@@ -110,12 +116,16 @@ class ReiatsuSpawner:
         self.channel = None
         self.spawn_loop.start()
 
-    @tasks.loop(minutes=60)  # Change à ta convenance
+    @tasks.loop(minutes=60)
     async def spawn_loop(self):
         if self.channel is None:
-            self.channel = self.bot.get_channel(reiatsu_channel_id)
-            if self.channel is None:
-                return
+            self.channel = await get_reiatsu_channel(self.bot, YOUR_GUILD_ID)  # Remplace avec ton vrai ID
+
+        if self.channel is None:
+            return
+
+
+
 
         message = await self.channel.send("💠 **Un Reiatsu sauvage apparaît ! Cliquez sur 💠 pour l'absorber !**")
         await message.add_reaction("💠")
@@ -145,6 +155,28 @@ class ReiatsuSpawner:
             await self.channel.send(f"{user.mention} a absorbé le Reiatsu et gagné **+1** point !")
         except asyncio.TimeoutError:
             await self.channel.send("Le Reiatsu s'est dissipé dans l'air... personne ne l'a absorbé.")
+
+# setreiatsu
+# ─────────────────────────────────────────────
+
+@bot.command(name="setreiatsu")
+@commands.has_permissions(administrator=True)
+async def setreiatsu(ctx):
+    channel_id = ctx.channel.id
+    guild_id = ctx.guild.id
+
+    # Vérifie si une config existe déjà
+    data = supabase.table("reiatsu_config").select("id").eq("guild_id", str(guild_id)).execute()
+    if data.data:
+        supabase.table("reiatsu_config").update({"channel_id": str(channel_id)}).eq("guild_id", str(guild_id)).execute()
+    else:
+        supabase.table("reiatsu_config").insert({
+            "guild_id": str(guild_id),
+            "channel_id": str(channel_id)
+        }).execute()
+
+    await ctx.send(f"💠 Le salon actuel ({ctx.channel.mention}) est maintenant le salon Reiatsu.")
+setreiatsu.category = "Général"
 
 
 # Code 
