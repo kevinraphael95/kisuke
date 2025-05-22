@@ -69,6 +69,12 @@ async def on_ready():
     await bot.change_presence(activity=activity)
     print(f"✅ Connecté en tant que {bot.user.name}")
 
+    # Lancer le spawn automatique maintenant que la boucle tourne
+    if not hasattr(bot, "reiatsu_spawner"):
+        bot.reiatsu_spawner = ReiatsuSpawner(bot)
+        print("🔁 Spawn Reiatsu lancé.")
+
+
 
 # ─────────────────────────────────────────────
 # on message
@@ -1373,8 +1379,7 @@ print("Fichiers dans le dossier :", os.listdir())
 # ▶️ Lancement
 # ─────────────────────────────────────────────
 
-# Lance le spawn automatique toutes les heures
-ReiatsuSpawner(bot) 
+
 # Démarre le serveur web pour le keep-alive
 keep_alive()
 # Lancer le bot
