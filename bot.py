@@ -81,7 +81,7 @@ async def on_message(message):
         return
 
     # Répondre à la mention du bot
-    if message.content.strip() in (f"<@{bot.user.id}>", f"<@!{bot.user.id}>"):
+    if bot.user in message.mentions and len(message.mentions) == 1 and message.content.strip().startswith(f"<@"):
         prefix = get_prefix(bot, message)
 
         embed = discord.Embed(
