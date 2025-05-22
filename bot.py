@@ -83,12 +83,20 @@ async def on_message(message):
     # Répondre à la mention du bot
     if message.content.strip() in (f"<@{bot.user.id}>", f"<@!{bot.user.id}>"):
         prefix = get_prefix(bot, message)
-        cmds = [command.name for command in bot.commands if not command.hidden]
-        await message.channel.send(
-            f"👋 Mon préfixe est : `{prefix}`\n📜 Commandes disponibles : "
-            + ", ".join(f"`{prefix}{cmd}`" for cmd in cmds)
+
+        embed = discord.Embed(
+            title="Bleach Bot",
+            description="Bonjour, je suis un bot basé sur l'univers de **Bleach** !\n"
+                        f"Mon préfixe est : `{prefix}`\n\n"
+                        f"📜 Tape `{prefix}help` pour voir toutes les commandes disponibles.",
+            color=discord.Color.orange()
         )
-        return  # On arrête ici si c'était juste une mention
+        embed.set_thumbnail(url=bot.user.avatar.url if bot.user.avatar else discord.Embed.Empty)
+        embed.set_footer(text="Zangetsu veille sur toi.")
+
+        await message.channel.send(embed=embed)
+        return
+
 
     # Réponse aux mots-clés (comme "bleach")
     contenu = message.content.lower()
