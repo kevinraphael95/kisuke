@@ -177,7 +177,7 @@ async def setreiatsu(ctx):
         }).execute()
 
     await ctx.send(f"💠 Le salon actuel ({ctx.channel.mention}) est maintenant le salon Reiatsu.")
-setreiatsu.category = "Général"
+setreiatsu.category = "Reiatsu"
 
 
 # reiatsu
@@ -195,7 +195,7 @@ async def reiatsu(ctx, member: discord.Member = None):
         points = 0
 
     await ctx.send(f"💠 {user.mention} a **{points}** points de Reiatsu.")
-reiatsu.category = "Général"
+reiatsu.category = "Reiatsu"
 
 # addreiatsu
 # ─────────────────────────────────────────────
@@ -221,7 +221,7 @@ async def addreiatsu(ctx, member: discord.Member, amount: int):
         }).execute()
 
     await ctx.send(f"✅ Ajouté **+{amount}** points de Reiatsu à {member.mention}.")
-addreiatsu.category = "Admin"
+addreiatsu.category = "Reiatsu"
 
 
 # delreiatsu
@@ -244,7 +244,7 @@ async def delreiatsu(ctx, member: discord.Member, amount: int):
         await ctx.send(f"✅ Retiré **-{amount}** points à {member.mention}. Nouveau total : **{new_total}**.")
     else:
         await ctx.send("❌ Ce membre n’a pas encore de Reiatsu enregistré.")
-delreiatsu.category = "Admin"
+delreiatsu.category = "Reiatsu"
 
 
 
@@ -273,8 +273,8 @@ async def spawnreiatsu(ctx):
         )
 
     try:
-        reaction, user = await self.bot.wait_for("reaction_add", timeout=10800.0, check=check)  # 3h en secondes
-
+        # ✅ ICI : on enlève `self.`, car on n'est PAS dans une classe.
+        reaction, user = await bot.wait_for("reaction_add", timeout=10800.0, check=check)  # 3h en secondes
 
         # Ajoute ou update le score de Reiatsu de l'utilisateur
         data = supabase.table("reiatsu").select("id", "points").eq("user_id", str(user.id)).execute()
@@ -292,7 +292,8 @@ async def spawnreiatsu(ctx):
     except asyncio.TimeoutError:
         await channel.send("Le Reiatsu s'est dissipé dans l'air... personne ne l'a absorbé.")
 
-spawnreiatsu.category = "Admin"
+spawnreiatsu.category = "Reiatsu"
+
 
 
 # reiatsu channel
@@ -314,7 +315,7 @@ async def reiatsuchannel(ctx):
             await ctx.send("⚠️ Le salon configuré n'existe plus ou n'est pas accessible.")
     else:
         await ctx.send("❌ Aucun salon Reiatsu n’a encore été configuré avec `!setreiatsu`.")
-reiatsuchannel.category = "Admin"
+reiatsuchannel.category = "Reiatsu"
 
 
 
@@ -362,6 +363,7 @@ async def help_command(ctx, commande: str = None):
         categories = {
             "Général": [],
             "Fun": [],
+            "Reiatsu": [],
             "Admin": [],
             "Autres": []
         }
