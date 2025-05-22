@@ -70,13 +70,17 @@ async def on_ready():
     print(f"✅ Connecté en tant que {bot.user.name}")
 
 
+# ─────────────────────────────────────────────
+# on message
+# ─────────────────────────────────────────────
 
-# Répondre à une mention du bot
+
 @bot.event
 async def on_message(message):
     if message.author.bot:
         return
 
+    # Répondre à la mention du bot
     if message.content.strip() in (f"<@{bot.user.id}>", f"<@!{bot.user.id}>"):
         prefix = get_prefix(bot, message)
         cmds = [command.name for command in bot.commands if not command.hidden]
@@ -84,8 +88,31 @@ async def on_message(message):
             f"👋 Mon préfixe est : `{prefix}`\n📜 Commandes disponibles : "
             + ", ".join(f"`{prefix}{cmd}`" for cmd in cmds)
         )
-    else:
-        await bot.process_commands(message)
+        return  # On arrête ici si c'était juste une mention
+
+    # Réponse aux mots-clés (comme "bleach")
+    contenu = message.content.lower()
+    for mot in REPONSES:
+        if mot in contenu:
+            textes = REPONSES[mot]
+            texte = random.choice(textes)
+
+            dossier_gif = os.path.join(GIFS_FOLDER, mot)
+            if os.path.exists(dossier_gif):
+                gifs_dispo = [f for f in os.listdir(dossier_gif) if f.endswith((".gif", ".mp4"))]
+                if gifs_dispo:
+                    gif_choisi = random.choice(gifs_dispo)
+                    chemin = os.path.join(dossier_gif, gif_choisi)
+                    file = discord.File(chemin, filename=gif_choisi)
+                    await message.channel.send(content=texte, file=file)
+                    break
+            # Si pas de GIF, juste envoyer le message
+            await message.channel.send(texte)
+            break
+
+    # Laisser les autres commandes fonctionner
+    await bot.process_commands(message)
+
 
 # ─────────────────────────────────────────────
 # commandes
@@ -486,37 +513,6 @@ say.category = "Général"
 # ─────────────────────────────────────────────
 # fun 
 # ─────────────────────────────────────────────
-
-
-# bleach 
-# ─────────────────────────────────────────────
-
-@bot.event
-async def on_message(message):
-    if message.author.bot:
-        return
-
-    contenu = message.content.lower()
-
-    for mot in REPONSES:
-        if mot in contenu:
-            textes = REPONSES[mot]
-            texte = random.choice(textes)
-
-            dossier_gif = os.path.join(GIFS_FOLDER, mot)
-            if os.path.exists(dossier_gif):
-                gifs_dispo = [f for f in os.listdir(dossier_gif) if f.endswith((".gif", ".mp4"))]
-                if gifs_dispo:
-                    gif_choisi = random.choice(gifs_dispo)
-                    chemin = os.path.join(dossier_gif, gif_choisi)
-                    file = discord.File(chemin, filename=gif_choisi)
-                    await message.channel.send(content=texte, file=file)
-                    break
-            # Si pas de GIF, juste envoyer le message
-            await message.channel.send(texte)
-            break
-
-    await bot.process_commands(message)
 
 
 
