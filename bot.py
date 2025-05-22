@@ -229,7 +229,7 @@ async def on_message(message):
 ############################# bleachmoji ##########################################################
 
 @bot.command()
-async def bleachmoji(ctx):
+async def bmoji(ctx):
     try:
         with open("bleach_emojis.json", "r", encoding="utf-8") as f:
             personnages = json.load(f)
@@ -254,7 +254,7 @@ async def bleachmoji(ctx):
     except Exception as e:
         await ctx.send(f"⚠️ Erreur : {e}")
 
-bleachmoji.category = "Fun"
+bmoji.category = "Fun"
 
 
 ############################# cat ##########################################################
