@@ -263,17 +263,15 @@ async def spawnreiatsu(ctx):
         await ctx.send("❌ Aucun salon Reiatsu n'a été configuré. Utilisez `!setreiatsu` d'abord.")
         return
 
-    
     embed = discord.Embed(
-    title="💠 Un Reiatsu sauvage apparaît !",
-    description="Cliquez sur la réaction 💠 pour l'absorber.",
-    color=discord.Color.purple()
-)
-message = await channel.send(embed=embed)
-await message.add_reaction("💠")
+        title="💠 Un Reiatsu sauvage apparaît !",
+        description="Cliquez sur la réaction 💠 pour l'absorber.",
+        color=discord.Color.purple()
+    )
+    message = await channel.send(embed=embed)
+    await message.add_reaction("💠")
 
-
-    def check(reaction, user):
+    def check(reaction, user):  # ✅ Corrigé ici : aligné correctement
         return (
             reaction.message.id == message.id and 
             str(reaction.emoji) == "💠" and 
@@ -281,10 +279,8 @@ await message.add_reaction("💠")
         )
 
     try:
-        # ✅ ICI : on enlève `self.`, car on n'est PAS dans une classe.
-        reaction, user = await bot.wait_for("reaction_add", timeout=10800.0, check=check)  # 3h en secondes
+        reaction, user = await bot.wait_for("reaction_add", timeout=10800.0, check=check)  # 3h
 
-        # Ajoute ou update le score de Reiatsu de l'utilisateur
         data = supabase.table("reiatsu").select("id", "points").eq("user_id", str(user.id)).execute()
         if data.data:
             current_points = data.data[0]["points"]
@@ -299,6 +295,7 @@ await message.add_reaction("💠")
         await channel.send(f"{user.mention} a absorbé le Reiatsu et gagné **+1** point !")
     except asyncio.TimeoutError:
         await channel.send("Le Reiatsu s'est dissipé dans l'air... personne ne l'a absorbé.")
+
 
 spawnreiatsu.category = "Reiatsu"
 
