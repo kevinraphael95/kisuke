@@ -378,7 +378,8 @@ async def help_command(ctx, commande: str = None):
         embed = discord.Embed(title="📜 Commandes par catégorie", color=discord.Color.blue())
 
         # Parcourir les catégories dans un ordre fixe
-        for cat in ["Général", "Fun", "Admin", "Autres"]:
+        for cat in ["Général", "Fun", "Reiatsu", "Admin", "Autres"]:
+            
             cmds = categories.get(cat, [])
             if cmds:
                 # Trier les commandes par ordre alphabétique du nom
