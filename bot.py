@@ -138,7 +138,8 @@ class ReiatsuSpawner:
             )
 
         try:
-            reaction, user = await self.bot.wait_for("reaction_add", timeout=60.0, check=check)
+            reaction, user = await self.bot.wait_for("reaction_add", timeout=10800.0, check=check)  # 3h en secondes
+
 
             # Ajoute ou update le score de Reiatsu de l'utilisateur
             data = supabase.table("reiatsu").select("id", "points").eq("user_id", str(user.id)).execute()
@@ -272,7 +273,8 @@ async def spawnreiatsu(ctx):
         )
 
     try:
-        reaction, user = await bot.wait_for("reaction_add", timeout=60.0, check=check)
+        reaction, user = await self.bot.wait_for("reaction_add", timeout=10800.0, check=check)  # 3h en secondes
+
 
         # Ajoute ou update le score de Reiatsu de l'utilisateur
         data = supabase.table("reiatsu").select("id", "points").eq("user_id", str(user.id)).execute()
