@@ -179,6 +179,76 @@ async def setreiatsu(ctx):
 setreiatsu.category = "Général"
 
 
+# reiatsu
+# ─────────────────────────────────────────────
+
+@bot.command(name="reiatsu")
+async def reiatsu(ctx, member: discord.Member = None):
+    """Affiche le score de Reiatsu d'un membre (ou soi-même)."""
+    user = member or ctx.author
+    data = supabase.table("reiatsu").select("points").eq("user_id", str(user.id)).execute()
+
+    if data.data:
+        points = data.data[0]["points"]
+    else:
+        points = 0
+
+    await ctx.send(f"💠 {user.mention} a **{points}** points de Reiatsu.")
+reiatsu.category = "Général"
+
+# addreiatsu
+# ─────────────────────────────────────────────
+
+@bot.command(name="addreiatsu")
+@commands.has_permissions(administrator=True)
+async def addreiatsu(ctx, member: discord.Member, amount: int):
+    """Ajoute des points de Reiatsu à un membre."""
+    if amount <= 0:
+        await ctx.send("❌ Le montant doit être positif.")
+        return
+
+    data = supabase.table("reiatsu").select("points").eq("user_id", str(member.id)).execute()
+
+    if data.data:
+        current = data.data[0]["points"]
+        supabase.table("reiatsu").update({"points": current + amount}).eq("user_id", str(member.id)).execute()
+    else:
+        supabase.table("reiatsu").insert({
+            "user_id": str(member.id),
+            "username": member.name,
+            "points": amount
+        }).execute()
+
+    await ctx.send(f"✅ Ajouté **+{amount}** points de Reiatsu à {member.mention}.")
+addreiatsu.category = "Admin"
+
+
+# delreiatsu
+# ─────────────────────────────────────────────
+
+@bot.command(name="delreiatsu")
+@commands.has_permissions(administrator=True)
+async def delreiatsu(ctx, member: discord.Member, amount: int):
+    """Retire des points de Reiatsu à un membre."""
+    if amount <= 0:
+        await ctx.send("❌ Le montant doit être positif.")
+        return
+
+    data = supabase.table("reiatsu").select("points").eq("user_id", str(member.id)).execute()
+
+    if data.data:
+        current = data.data[0]["points"]
+        new_total = max(0, current - amount)
+        supabase.table("reiatsu").update({"points": new_total}).eq("user_id", str(member.id)).execute()
+        await ctx.send(f"✅ Retiré **-{amount}** points à {member.mention}. Nouveau total : **{new_total}**.")
+    else:
+        await ctx.send("❌ Ce membre n’a pas encore de Reiatsu enregistré.")
+delreiatsu.category = "Admin"
+
+
+
+
+
 # Code 
 # ─────────────────────────────────────────────
 
