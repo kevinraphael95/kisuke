@@ -12,6 +12,8 @@ import random
 # 2. Modules tiers
 import aiohttp
 import discord
+from discord.ext import tasks
+from supabase_client import supabase  # Ton fichier déjà prêt
 from discord.ext import commands
 from discord.ui import View, Select, Button
 from discord import SelectOption, Interaction, Embed
@@ -76,6 +78,55 @@ async def on_message(message):
 #######################################################################################
 ############################# général ##########################################################
 #######################################################################################
+
+############################# test reiatsu ##########################################################
+
+
+# Salon où le Reiatsu spawn
+reiatsu_channel_id = 123456789012345678  # à remplacer
+
+class ReiatsuSpawner:
+    def __init__(self, bot):
+        self.bot = bot
+        self.channel = None
+        self.spawn_loop.start()
+
+    @tasks.loop(minutes=60)  # Change à ta convenance
+    async def spawn_loop(self):
+        if self.channel is None:
+            self.channel = self.bot.get_channel(reiatsu_channel_id)
+            if self.channel is None:
+                return
+
+        message = await self.channel.send("💠 **Un Reiatsu sauvage apparaît ! Cliquez sur 💠 pour l'absorber !**")
+        await message.add_reaction("💠")
+
+        def check(reaction, user):
+            return (
+                reaction.message.id == message.id and 
+                str(reaction.emoji) == "💠" and 
+                not user.bot
+            )
+
+        try:
+            reaction, user = await self.bot.wait_for("reaction_add", timeout=60.0, check=check)
+
+            # Ajoute ou update le score de Reiatsu de l'utilisateur
+            data = supabase.table("reiatsu").select("id", "points").eq("user_id", str(user.id)).execute()
+            if data.data:
+                current_points = data.data[0]["points"]
+                supabase.table("reiatsu").update({"points": current_points + 1}).eq("user_id", str(user.id)).execute()
+            else:
+                supabase.table("reiatsu").insert({
+                    "user_id": str(user.id),
+                    "username": str(user.name),
+                    "points": 1
+                }).execute()
+
+            await self.channel.send(f"{user.mention} a absorbé le Reiatsu et gagné **+1** point !")
+        except asyncio.TimeoutError:
+            await self.channel.send("Le Reiatsu s'est dissipé dans l'air... personne ne l'a absorbé.")
+
 
 
 ############################# Code ##########################################################
