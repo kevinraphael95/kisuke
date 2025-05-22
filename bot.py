@@ -123,13 +123,12 @@ class ReiatsuSpawner:
                 continue
 
             embed = discord.Embed(
-    title="💠 Un Reiatsu sauvage apparaît !",
-    description="Cliquez sur la réaction 💠 pour l'absorber.",
-    color=discord.Color.purple()
-)
-message = await channel.send(embed=embed)
-await message.add_reaction("💠")
-
+                title="💠 Un Reiatsu sauvage apparaît !",
+                description="Cliquez sur la réaction 💠 pour l'absorber.",
+                color=discord.Color.purple()
+            )
+            message = await channel.send(embed=embed)
+            await message.add_reaction("💠")
 
             def check(reaction, user):
                 return (
@@ -141,6 +140,7 @@ await message.add_reaction("💠")
             try:
                 reaction, user = await self.bot.wait_for("reaction_add", timeout=10800.0, check=check)
 
+                # Récupère ou initialise le score
                 data = supabase.table("reiatsu").select("id", "points").eq("user_id", str(user.id)).execute()
                 if data.data:
                     current_points = data.data[0]["points"]
@@ -155,6 +155,7 @@ await message.add_reaction("💠")
                 await channel.send(f"{user.mention} a absorbé le Reiatsu et gagné **+1** point !")
             except asyncio.TimeoutError:
                 await channel.send("Le Reiatsu s'est dissipé dans l'air... personne ne l'a absorbé.")
+
 
 
 # setreiatsu
