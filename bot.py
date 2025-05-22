@@ -247,6 +247,54 @@ delreiatsu.category = "Admin"
 
 
 
+# spawn
+# ─────────────────────────────────────────────
+
+@bot.command(name="spawnreiatsu")
+@commands.has_permissions(administrator=True)
+async def spawnreiatsu(ctx):
+    """Force le spawn d'un Reiatsu dans le salon configuré."""
+    guild_id = ctx.guild.id
+    channel = await get_reiatsu_channel(bot, guild_id)
+
+    if channel is None:
+        await ctx.send("❌ Aucun salon Reiatsu n'a été configuré. Utilisez `!setreiatsu` d'abord.")
+        return
+
+    message = await channel.send("💠 **Un Reiatsu sauvage apparaît ! Cliquez sur 💠 pour l'absorber !**")
+    await message.add_reaction("💠")
+
+    def check(reaction, user):
+        return (
+            reaction.message.id == message.id and 
+            str(reaction.emoji) == "💠" and 
+            not user.bot
+        )
+
+    try:
+        reaction, user = await bot.wait_for("reaction_add", timeout=60.0, check=check)
+
+        # Ajoute ou update le score de Reiatsu de l'utilisateur
+        data = supabase.table("reiatsu").select("id", "points").eq("user_id", str(user.id)).execute()
+        if data.data:
+            current_points = data.data[0]["points"]
+            supabase.table("reiatsu").update({"points": current_points + 1}).eq("user_id", str(user.id)).execute()
+        else:
+            supabase.table("reiatsu").insert({
+                "user_id": str(user.id),
+                "username": str(user.name),
+                "points": 1
+            }).execute()
+
+        await channel.send(f"{user.mention} a absorbé le Reiatsu et gagné **+1** point !")
+    except asyncio.TimeoutError:
+        await channel.send("Le Reiatsu s'est dissipé dans l'air... personne ne l'a absorbé.")
+
+spawnreiatsu.category = "Admin"
+
+
+
+
 
 
 # Code 
