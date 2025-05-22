@@ -160,7 +160,7 @@ class ReiatsuSpawner:
 # setreiatsu
 # ─────────────────────────────────────────────
 
-@bot.command(name="setreiatsu")
+@bot.command(name="setreiatsu", aliases=["setrts"])
 @commands.has_permissions(administrator=True)
 async def setreiatsu(ctx):
     channel_id = ctx.channel.id
@@ -183,7 +183,7 @@ setreiatsu.category = "Reiatsu"
 # reiatsu
 # ─────────────────────────────────────────────
 
-@bot.command(name="reiatsu")
+@bot.command(name="reiatsu", aliases=["rts"])
 async def reiatsu(ctx, member: discord.Member = None):
     """Affiche le score de Reiatsu d'un membre (ou soi-même)."""
     user = member or ctx.author
@@ -200,7 +200,7 @@ reiatsu.category = "Reiatsu"
 # addreiatsu
 # ─────────────────────────────────────────────
 
-@bot.command(name="addreiatsu")
+@bot.command(name="addreiatsu", aliases=["rts+"])
 @commands.has_permissions(administrator=True)
 async def addreiatsu(ctx, member: discord.Member, amount: int):
     """Ajoute des points de Reiatsu à un membre."""
@@ -227,7 +227,7 @@ addreiatsu.category = "Reiatsu"
 # delreiatsu
 # ─────────────────────────────────────────────
 
-@bot.command(name="delreiatsu")
+@bot.command(name="delreiatsu", aliases=["rts-"])
 @commands.has_permissions(administrator=True)
 async def delreiatsu(ctx, member: discord.Member, amount: int):
     """Retire des points de Reiatsu à un membre."""
@@ -251,7 +251,7 @@ delreiatsu.category = "Reiatsu"
 # spawn
 # ─────────────────────────────────────────────
 
-@bot.command(name="spawnreiatsu")
+@bot.command(name="spawnreiatsu", aliases=["spawnrts"])
 @commands.has_permissions(administrator=True)
 async def spawnreiatsu(ctx):
     """Force le spawn d'un Reiatsu dans le salon configuré."""
@@ -299,7 +299,7 @@ spawnreiatsu.category = "Reiatsu"
 # reiatsu channel
 # ─────────────────────────────────────────────
 
-@bot.command(name="reiatsuchannel")
+@bot.command(name="reiatsuchannel", aliases=["rtschannel"])
 @commands.has_permissions(administrator=True)
 async def reiatsuchannel(ctx):
     """Affiche le salon configuré pour le spawn de Reiatsu."""
