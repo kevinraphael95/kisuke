@@ -113,49 +113,49 @@ async def get_reiatsu_channel(bot, guild_id):
 class ReiatsuSpawner:
     def __init__(self, bot):
         self.bot = bot
-        self.channel = None
         self.spawn_loop.start()
 
     @tasks.loop(minutes=60)
     async def spawn_loop(self):
-        if self.channel is None:
-            self.channel = await get_reiatsu_channel(self.bot, YOUR_GUILD_ID)  # Remplace avec ton vrai ID
+        for guild in self.bot.guilds:
+            channel = await get_reiatsu_channel(self.bot, guild.id)
+            if not channel:
+                continue
 
-        if self.channel is None:
-            return
-
-
-
-
-        message = await self.channel.send("💠 **Un Reiatsu sauvage apparaît ! Cliquez sur 💠 pour l'absorber !**")
-        await message.add_reaction("💠")
-
-        def check(reaction, user):
-            return (
-                reaction.message.id == message.id and 
-                str(reaction.emoji) == "💠" and 
-                not user.bot
-            )
-
-        try:
-            reaction, user = await self.bot.wait_for("reaction_add", timeout=10800.0, check=check)  # 3h en secondes
+            embed = discord.Embed(
+    title="💠 Un Reiatsu sauvage apparaît !",
+    description="Cliquez sur la réaction 💠 pour l'absorber.",
+    color=discord.Color.purple()
+)
+message = await channel.send(embed=embed)
+await message.add_reaction("💠")
 
 
-            # Ajoute ou update le score de Reiatsu de l'utilisateur
-            data = supabase.table("reiatsu").select("id", "points").eq("user_id", str(user.id)).execute()
-            if data.data:
-                current_points = data.data[0]["points"]
-                supabase.table("reiatsu").update({"points": current_points + 1}).eq("user_id", str(user.id)).execute()
-            else:
-                supabase.table("reiatsu").insert({
-                    "user_id": str(user.id),
-                    "username": str(user.name),
-                    "points": 1
-                }).execute()
+            def check(reaction, user):
+                return (
+                    reaction.message.id == message.id and
+                    str(reaction.emoji) == "💠" and
+                    not user.bot
+                )
 
-            await self.channel.send(f"{user.mention} a absorbé le Reiatsu et gagné **+1** point !")
-        except asyncio.TimeoutError:
-            await self.channel.send("Le Reiatsu s'est dissipé dans l'air... personne ne l'a absorbé.")
+            try:
+                reaction, user = await self.bot.wait_for("reaction_add", timeout=10800.0, check=check)
+
+                data = supabase.table("reiatsu").select("id", "points").eq("user_id", str(user.id)).execute()
+                if data.data:
+                    current_points = data.data[0]["points"]
+                    supabase.table("reiatsu").update({"points": current_points + 1}).eq("user_id", str(user.id)).execute()
+                else:
+                    supabase.table("reiatsu").insert({
+                        "user_id": str(user.id),
+                        "username": str(user.name),
+                        "points": 1
+                    }).execute()
+
+                await channel.send(f"{user.mention} a absorbé le Reiatsu et gagné **+1** point !")
+            except asyncio.TimeoutError:
+                await channel.send("Le Reiatsu s'est dissipé dans l'air... personne ne l'a absorbé.")
+
 
 # setreiatsu
 # ─────────────────────────────────────────────
@@ -262,8 +262,15 @@ async def spawnreiatsu(ctx):
         await ctx.send("❌ Aucun salon Reiatsu n'a été configuré. Utilisez `!setreiatsu` d'abord.")
         return
 
-    message = await channel.send("💠 **Un Reiatsu sauvage apparaît ! Cliquez sur 💠 pour l'absorber !**")
-    await message.add_reaction("💠")
+    
+    embed = discord.Embed(
+    title="💠 Un Reiatsu sauvage apparaît !",
+    description="Cliquez sur la réaction 💠 pour l'absorber.",
+    color=discord.Color.purple()
+)
+message = await channel.send(embed=embed)
+await message.add_reaction("💠")
+
 
     def check(reaction, user):
         return (
@@ -317,6 +324,37 @@ async def reiatsuchannel(ctx):
         await ctx.send("❌ Aucun salon Reiatsu n’a encore été configuré avec `!setreiatsu`.")
 reiatsuchannel.category = "Reiatsu"
 
+
+# leaderbord général
+# ─────────────────────────────────────────────
+
+@bot.command(name="leaderboard", aliases=["toprts", "topreiatsu"])
+async def leaderboard(ctx, limit: int = 10):
+    """Affiche le classement des membres avec le plus de points de Reiatsu."""
+    if limit < 1 or limit > 50:
+        await ctx.send("❌ Le nombre d’entrées doit être entre 1 et 50.")
+        return
+
+    # Récupère les top utilisateurs
+    result = supabase.table("reiatsu").select("username", "points").order("points", desc=True).limit(limit).execute()
+
+    if not result.data:
+        await ctx.send("📉 Aucun Reiatsu n’a encore été collecté.")
+        return
+
+    embed = discord.Embed(
+        title=f"🏆 Classement Reiatsu - Top {limit}",
+        description="Voici les utilisateurs avec le plus de points de Reiatsu.",
+        color=discord.Color.purple()
+    )
+
+    for i, row in enumerate(result.data, start=1):
+        username = row["username"]
+        points = row["points"]
+        embed.add_field(name=f"{i}. {username}", value=f"💠 {points} points", inline=False)
+
+    await ctx.send(embed=embed)
+leaderboard.category = "Reiatsu"
 
 
 
@@ -1333,6 +1371,8 @@ print("Fichiers dans le dossier :", os.listdir())
 # ▶️ Lancement
 # ─────────────────────────────────────────────
 
+# Lance le spawn automatique toutes les heures
+ReiatsuSpawner(bot) 
 # Démarre le serveur web pour le keep-alive
 keep_alive()
 # Lancer le bot
