@@ -33,6 +33,7 @@ load_dotenv()
 TOKEN = os.getenv("DISCORD_TOKEN")
 COMMAND_PREFIX = os.getenv("COMMAND_PREFIX", "!")
 INVITE_URL = os.getenv("INVITE_URL")
+app_id = os.getenv("DISCORD_APP_ID")
 
 # Charger les réponses préconfigurées
 REPONSES_JSON_PATH = "reponses.json"
@@ -842,6 +843,47 @@ async def dog(ctx):
             else:
                 await ctx.send("Impossible de récupérer une image de chien 😢")
 dog.category = "Fun"
+
+
+# emojisapp
+# ─────────────────────────────────────────────
+
+@bot.command(name="emojisapp", help="Affiche les emojis ajoutés à l'application via le portail developer.")
+async def emojisapp(ctx):
+
+    headers = {
+        "Authorization": f"Bot {token}"
+    }
+
+    url = f"https://discord.com/api/v10/applications/{app_id}/assets"
+
+    async with aiohttp.ClientSession() as session:
+        async with session.get(url, headers=headers) as resp:
+            if resp.status != 200:
+                return await ctx.send("❌ Impossible de récupérer les emojis de l'application.")
+
+            data = await resp.json()
+
+            emojis = []
+            for asset in data:
+                if asset["type"] == 1:  # 1 = emoji
+                    emoji_name = asset["name"]
+                    emoji_id = asset["id"]
+                    emojis.append(f"<:{emoji_name}:{emoji_id}>")
+
+            if not emojis:
+                await ctx.send("ℹ️ Aucun emoji trouvé dans l'application.")
+                return
+
+            description = "\n".join(emojis[:20])  # Discord limite à ~2000 caractères
+            embed = discord.Embed(
+                title="🧩 Emojis de l'application",
+                description=description,
+                color=discord.Color.orange()
+            )
+            await ctx.send(embed=embed)
+emojisapp.category = "Fun"
+
 
 
 # funfact 
