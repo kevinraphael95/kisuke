@@ -431,6 +431,7 @@ async def pausereiatsu(ctx):
         await ctx.send("⏸️ Le spawn automatique de Reiatsu est maintenant en pause.")
     else:
         await ctx.send("❌ Le spawner Reiatsu n'est pas actif.")
+pausereiatsu.category = "Reiatsu"
 
 # unpausereiatsu
 # ─────────────────────────────────────────────
@@ -443,11 +444,12 @@ async def unpausereiatsu(ctx):
         await ctx.send("▶️ Le spawn automatique de Reiatsu a repris.")
     else:
         await ctx.send("❌ Le spawner Reiatsu n'est pas actif.")
+unpausereiatsu.category = "Reiatsu"
 
 # temps reiatsu
 # ─────────────────────────────────────────────
 
-@bot.command(name="tempsreiatsu")
+@bot.command(aliases=["tpsrts"], name="tempsreiatsu")
 async def tempsreiatsu(ctx):
     if hasattr(bot, "reiatsu_spawner"):
         seconds = bot.reiatsu_spawner.time_until_next_spawn()
@@ -461,7 +463,7 @@ async def tempsreiatsu(ctx):
             await ctx.send(f"⏳ Prochain spawn automatique dans **{minutes}m {secondes}s**.")
     else:
         await ctx.send("❌ Le spawner Reiatsu n'est pas actif.")
-
+tempsreiatsu.category = "Reiatsu"
 
 
 
