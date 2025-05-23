@@ -415,6 +415,7 @@ code.category = "Général"
 # ─────────────────────────────────────────────
 
 @bot.command(help="Affiche un message de bienvenue aléatoire.")
+@commands.cooldown(rate=1, per=10, type=commands.BucketType.user)
 async def hello(ctx):
     try:
         with open("hello_messages.json", "r", encoding="utf-8") as f:
@@ -852,7 +853,7 @@ dog.category = "Fun"
 async def emojisapp(ctx):
 
     headers = {
-        "Authorization": f"Bot {token}"
+        "Authorization": f"Bot {TOKEN}"
     }
 
     url = f"https://discord.com/api/v10/applications/{app_id}/assets"
@@ -1412,6 +1413,19 @@ async def prefixe(ctx, nouveau: str = None):
 
         await ctx.send(f"✅ Préfixe changé en : `{nouveau}`. Redémarre le bot pour que le changement prenne effet.")
 prefixe.category = "Admin"
+
+
+# ─────────────────────────────────────────────
+# en cas de cooldown
+# ─────────────────────────────────────────────
+
+@bot.event
+async def on_command_error(ctx, error):
+    if isinstance(error, commands.CommandOnCooldown):
+        await ctx.send(f"🕒 Patiente un peu ! Réessaie dans {error.retry_after:.1f} secondes.")
+    else:
+        raise error
+
 
 # Debug infos
 print("Dossier de travail actuel :", os.getcwd())
