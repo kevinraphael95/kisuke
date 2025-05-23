@@ -909,6 +909,38 @@ async def funfact(ctx):
 funfact.category = "Fun"
 
 
+# hollow
+# ─────────────────────────────────────────────
+
+
+@bot.command(name="hollow", help="Fait apparaître un Hollow à éliminer.")
+@commands.cooldown(rate=1, per=60, type=commands.BucketType.channel)
+async def hollow(ctx):
+    embed = discord.Embed(
+        title="⚠️ Un Hollow est apparu !",
+        description="Réagis avec **☠️** pour le vaincre !",
+        color=discord.Color.red()
+    )
+    embed.set_image(url="https://static.wikia.nocookie.net/bleach/images/e/e2/Ep1FishboneDProfile.png/revision/latest/thumbnail/width/360/height/360?cb=20210310035252&path-prefix=en")
+    embed.set_footer(text="Sois rapide, ou il s'échappera...")
+
+    message = await ctx.send(embed=embed)
+    await message.add_reaction("☠️")
+
+    def check(reaction, user):
+        return (
+            reaction.message.id == message.id and
+            str(reaction.emoji) == "☠️" and
+            not user.bot
+        )
+
+    try:
+        reaction, user = await bot.wait_for("reaction_add", timeout=60.0, check=check)
+        await ctx.send(f"{user.mention} a vaincu le Hollow !")
+    except asyncio.TimeoutError:
+        await ctx.send("Le Hollow s'est échappé...")
+
+
 # hollowify 
 # ─────────────────────────────────────────────
 
