@@ -32,6 +32,7 @@ os.chdir(os.path.dirname(os.path.abspath(__file__)))
 load_dotenv()
 TOKEN = os.getenv("DISCORD_TOKEN")
 COMMAND_PREFIX = os.getenv("COMMAND_PREFIX", "!")
+INVITE_URL = os.getenv("INVITE_URL")
 
 # Charger les réponses préconfigurées
 REPONSES_JSON_PATH = "reponses.json"
@@ -489,8 +490,9 @@ help_command.category = "Général"
 
 @bot.command(help="Affiche le lien d'invitation du bot.")
 async def invitation(ctx):
-    await ctx.send("🔗 Lien d'invitation du bot : https://discord.com/oauth2/authorize?client_id=1372563051752194151")
+    await ctx.send(f"🔗 Lien d'invitation du bot : {INVITE_URL}")
 invitation.category = "Général"
+
 
 # 🏓 Ping avec Embed + alias "test" ##
 # ─────────────────────────────────────────────
