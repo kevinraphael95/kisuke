@@ -259,6 +259,27 @@ async def setreiatsu(ctx):
 setreiatsu.category = "Reiatsu"
 
 
+
+
+# unsetreiatsu
+# ─────────────────────────────────────────────
+
+@bot.command(name="unsetreiatsu", aliases=["unsetrts"])
+@commands.has_permissions(administrator=True)
+async def unsetreiatsu(ctx):
+    """Supprime le salon configuré pour le spawn de Reiatsu."""
+    guild_id = str(ctx.guild.id)
+
+    data = supabase.table("reiatsu_config").select("id").eq("guild_id", guild_id).execute()
+    if data.data:
+        supabase.table("reiatsu_config").delete().eq("guild_id", guild_id).execute()
+        await ctx.send("🗑️ Le salon Reiatsu a été supprimé de la configuration.")
+    else:
+        await ctx.send("❌ Aucun salon Reiatsu n'était configuré pour ce serveur.")
+unsetreiatsu.category = "Reiatsu"
+
+
+
 # reiatsu
 # ─────────────────────────────────────────────
 
