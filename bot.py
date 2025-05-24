@@ -68,11 +68,17 @@ GIFS_FOLDER = "gifs"
 
 @bot.event
 async def on_ready():
+    global INSTANCE_ID  # ← 👈 CE QUI MANQUAIT
     print(f"✅ Connecté en tant que {bot.user.name}")
     activity = discord.Activity(type=discord.ActivityType.watching, name="Bleach")
     await bot.change_presence(activity=activity)
 
     now = datetime.utcnow().isoformat()
+
+    # 🔁 Nouveau ID généré à chaque démarrage
+    INSTANCE_ID = str(uuid.uuid4())
+    with open("instance_id.txt", "w") as f:
+        f.write(INSTANCE_ID)
 
     # 🔒 Vérifie le verrou actuel
     lock = supabase.table("bot_lock").select("instance_id").eq("id", "reiatsu_lock").execute()
@@ -99,6 +105,7 @@ async def on_ready():
 
     bot.reiatsu_spawner.resume()
     print("▶️ Spawn Reiatsu activé.")
+
 
 # ─────────────────────────────────────────────────
 # on message
