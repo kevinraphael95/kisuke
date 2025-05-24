@@ -166,34 +166,39 @@ async def get_reiatsu_channel(bot, guild_id):
 class ReiatsuSpawner:
     def __init__(self, bot):
         self.bot = bot
-        self.spawn_loop = self.spawn_loop_body  # Référence vers la tâche
+        self.spawn_loop = self.spawn_loop_body
 
     @tasks.loop(seconds=60)
     async def spawn_loop_body(self):
         await self.bot.wait_until_ready()
         now = int(time.time())
 
-        for guild in self.bot.guilds:
-            guild_id = str(guild.id)
+        # On récupère toutes les configurations
+        configs = supabase.table("reiatsu_config") \
+            .select("guild_id", "channel_id", "last_spawn_at", "delay_minutes") \
+            .execute()
 
-            # Lire la config Supabase du serveur
-            config = supabase.table("reiatsu_config") \
-                .select("channel_id", "last_spawn_at", "delay_minutes") \
-                .eq("guild_id", guild_id).execute()
-
-            if not config.data:
+        for conf in configs.data:
+            guild_id = conf["guild_id"]
+            channel_id = conf.get("channel_id")
+            if not channel_id:
                 continue
 
-            conf = config.data[0]
             last_spawn_str = conf.get("last_spawn_at")
-            last_spawn = parser.parse(last_spawn_str).timestamp() if last_spawn_str else 0
             delay = conf.get("delay_minutes") or 1800
 
-            if now - int(last_spawn) < int(delay):
-                continue  # ⏳ Pas encore le moment
+            # Détermine s'il faut spawner
+            if not last_spawn_str:
+                should_spawn = True
+            else:
+                last_spawn = parser.parse(last_spawn_str).timestamp()
+                should_spawn = now - int(last_spawn) >= int(delay)
 
-            # ✅ Spawn
-            channel = self.bot.get_channel(int(conf["channel_id"]))
+            if not should_spawn:
+                continue  # Pas encore le moment
+
+            # ✅ Spawn Reiatsu
+            channel = self.bot.get_channel(int(channel_id))
             if not channel:
                 continue
 
@@ -214,6 +219,7 @@ class ReiatsuSpawner:
 
             try:
                 reaction, user = await self.bot.wait_for("reaction_add", timeout=10800.0, check=check)
+
                 data = supabase.table("reiatsu").select("id", "points").eq("user_id", str(user.id)).execute()
                 if data.data:
                     current = data.data[0]["points"]
@@ -224,11 +230,13 @@ class ReiatsuSpawner:
                         "username": str(user.name),
                         "points": 1
                     }).execute()
+
                 await channel.send(f"{user.mention} a absorbé le Reiatsu et gagné **+1** point !")
+
             except asyncio.TimeoutError:
                 await channel.send("Le Reiatsu s'est dissipé dans l'air... personne ne l'a absorbé.")
 
-            # 🔄 Mise à jour Supabase
+            # 🔄 Met à jour le prochain spawn
             new_delay = random.randint(1800, 5400)
             supabase.table("reiatsu_config").update({
                 "last_spawn_at": datetime.utcnow().isoformat(),
@@ -242,6 +250,7 @@ class ReiatsuSpawner:
     def resume(self):
         if not self.spawn_loop.is_running():
             self.spawn_loop.start()
+
 
 
 
