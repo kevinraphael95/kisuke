@@ -80,11 +80,41 @@ async def on_ready():
     activity = discord.Activity(type=discord.ActivityType.watching, name="Bleach")
     await bot.change_presence(activity=activity)
 
-    if not hasattr(bot, "reiatsu_spawner"):
-        bot.reiatsu_spawner = ReiatsuSpawner(bot)
+    # Vérifie verrou en base
+    now = datetime.utcnow().isoformat()
+    lock_data = supabase.table("bot_lock").select("*").eq("id", "reiatsu_lock").execute()
 
-    bot.reiatsu_spawner.resume()
-    print("🔁 Spawn Reiatsu actif.")
+    should_start = False
+
+    if not lock_data.data:
+        # Aucun verrou → on prend
+        should_start = True
+    else:
+        existing = lock_data.data[0]
+        updated_at = parser.parse(existing["updated_at"]).timestamp()
+        age = time.time() - updated_at
+
+        if age > 300:  # Si le lock date de plus de 5 min, on considère que c’est mort
+            should_start = True
+        else:
+            print("⛔ Une autre instance est active. Ce bot reste passif.")
+            return
+
+    if should_start:
+        # On prend ou renouvelle le verrou
+        supabase.table("bot_lock").upsert({
+            "id": "reiatsu_lock",
+            "instance_id": INSTANCE_ID,
+            "updated_at": now
+        }).execute()
+        print(f"🔓 Verrou actif par cette instance ({INSTANCE_ID})")
+
+        if not hasattr(bot, "reiatsu_spawner"):
+            bot.reiatsu_spawner = ReiatsuSpawner(bot)
+
+        bot.reiatsu_spawner.resume()
+        print("▶️ Spawn Reiatsu activé.")
+
 
 
 
