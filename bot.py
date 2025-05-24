@@ -83,37 +83,46 @@ async def on_ready():
     should_start = False
 
     if not lock.data:
+        # Pas de verrou → je démarre
         should_start = True
+
     else:
         existing = lock.data[0]
+        locked_instance = existing.get("instance_id")
         updated_at = parser.parse(existing["updated_at"]).timestamp()
         age = time.time() - updated_at
 
-        if existing.get("instance_id") == INSTANCE_ID:
+        # Cas 1 : c’est MOI qui suis déjà locké → je continue
+        if locked_instance == INSTANCE_ID:
             should_start = True
+            print("🔁 Cette instance détient déjà le verrou.")
+
+        # Cas 2 : l’autre bot est mort depuis plus de 60 sec → je prends la place
         elif age > 60:
             should_start = True
+            print("🕒 L’ancienne instance est expirée. Je prends le verrou.")
 
         else:
             print("⛔ Une autre instance est active. Ce bot reste passif.")
             bot.is_main_instance = False
-            await bot.close()  # ⛔ Déconnecte immédiatement
             return
 
-    if should_start:
-        supabase.table("bot_lock").upsert({
-            "id": "reiatsu_lock",
-            "instance_id": INSTANCE_ID,
-            "updated_at": now
-        }).execute()
+    # 🔐 Mise à jour immédiate du verrou avec NOTRE instance ID
+    supabase.table("bot_lock").upsert({
+        "id": "reiatsu_lock",
+        "instance_id": INSTANCE_ID,
+        "updated_at": now
+    }).execute()
 
-        bot.is_main_instance = True
-        print(f"🔓 Verrou pris par cette instance ({INSTANCE_ID})")
+    bot.is_main_instance = True
+    print(f"🔓 Verrou pris par cette instance ({INSTANCE_ID})")
 
-        if not hasattr(bot, "reiatsu_spawner"):
-            bot.reiatsu_spawner = ReiatsuSpawner(bot)
-        bot.reiatsu_spawner.resume()
-        print("▶️ Spawn Reiatsu activé.")
+    if not hasattr(bot, "reiatsu_spawner"):
+        bot.reiatsu_spawner = ReiatsuSpawner(bot)
+
+    bot.reiatsu_spawner.resume()
+    print("▶️ Spawn Reiatsu activé.")
+
 
 
 
