@@ -10,6 +10,7 @@ import json
 import hashlib
 import random
 import time
+import uuid
 
 # Modules tiers
 import aiohttp
@@ -39,6 +40,9 @@ TOKEN = os.getenv("DISCORD_TOKEN")
 COMMAND_PREFIX = os.getenv("COMMAND_PREFIX", "!")
 INVITE_URL = os.getenv("INVITE_URL")
 app_id = os.getenv("DISCORD_APP_ID")
+
+# ID unique de cette instance du bot
+INSTANCE_ID = str(uuid.uuid4())  # 🔒 Sert à éviter les doubles exécutions Render
 
 # Charger les réponses préconfigurées
 REPONSES_JSON_PATH = "reponses.json"
