@@ -160,91 +160,56 @@ async def get_reiatsu_channel(bot, guild_id):
 class ReiatsuSpawner:
     def __init__(self, bot):
         self.bot = bot
-        self.running = True
-        self.paused = False
-        self.task = self.bot.loop.create_task(self.spawn_loop())
-        self.next_spawn_timestamp = None
+        self.next_spawn_timestamp = time.time() + random.randint(1800, 5400)  # 30 à 90 min
+        self.spawn_loop.start()
 
-    def pause(self):
-        self.paused = True
 
-    def resume(self):
-        self.paused = False
+    @tasks.loop(minutes=1)
+    async def spawn_loop(self):
+        await self.bot.wait_until_ready()
+        self.next_spawn_timestamp = time.time() + random.randint(1800, 5400)
+
+        for guild in self.bot.guilds:
+            channel = await get_reiatsu_channel(self.bot, guild.id)
+            if not channel:
+                continue
+
+            embed = discord.Embed(
+                title="💠 Un Reiatsu sauvage apparaît !",
+                description="Cliquez sur la réaction 💠 pour l'absorber.",
+                color=discord.Color.purple()
+            )
+            message = await channel.send(embed=embed)
+            await message.add_reaction("💠")
+
+            def check(reaction, user):
+                return (
+                    reaction.message.id == message.id and
+                    str(reaction.emoji) == "💠" and
+                    not user.bot
+                )
+
+            try:
+                reaction, user = await self.bot.wait_for("reaction_add", timeout=10800.0, check=check)
+                data = supabase.table("reiatsu").select("id", "points").eq("user_id", str(user.id)).execute()
+                if data.data:
+                    current_points = data.data[0]["points"]
+                    supabase.table("reiatsu").update({"points": current_points + 1}).eq("user_id", str(user.id)).execute()
+                else:
+                    supabase.table("reiatsu").insert({
+                        "user_id": str(user.id),
+                        "username": str(user.name),
+                        "points": 1
+                    }).execute()
+                await channel.send(f"{user.mention} a absorbé le Reiatsu et gagné **+1** point !")
+            except asyncio.TimeoutError:
+                await channel.send("Le Reiatsu s'est dissipé dans l'air... personne ne l'a absorbé.")
 
     def time_until_next_spawn(self):
         if self.next_spawn_timestamp is None:
-            return None
+            self.next_spawn_timestamp = time.time() + random.randint(1800, 3600)
         return max(0, int(self.next_spawn_timestamp - time.time()))
 
-    async def spawn_loop(self):
-        await self.bot.wait_until_ready()
-        while self.running:
-            if self.paused:
-                await asyncio.sleep(5)
-                continue
-
-            for guild in self.bot.guilds:
-                guild_id = str(guild.id)
-                config = supabase.table("reiatsu_config").select("channel_id", "last_spawn_at", "delay_minutes").eq("guild_id", guild_id).execute()
-                if not config.data:
-                    continue
-
-                channel_id = config.data[0]["channel_id"]
-                channel = self.bot.get_channel(int(channel_id))
-                if not channel:
-                    continue
-
-                last_spawn_at = config.data[0].get("last_spawn_at")
-                delay_minutes = config.data[0].get("delay_minutes")
-
-                if last_spawn_at and delay_minutes:
-                    now = time.time()
-                    elapsed = now - time.mktime(time.strptime(last_spawn_at, "%Y-%m-%dT%H:%M:%S%z"))
-                    if elapsed < delay_minutes * 60:
-                        continue
-
-                embed = discord.Embed(
-                    title="💠 Un Reiatsu sauvage apparaît !",
-                    description="Cliquez sur la réaction 💠 pour l'absorber.",
-                    color=discord.Color.purple()
-                )
-                message = await channel.send(embed=embed)
-                await message.add_reaction("💠")
-
-                def check(reaction, user):
-                    return (
-                        reaction.message.id == message.id and
-                        str(reaction.emoji) == "💠" and
-                        not user.bot
-                    )
-
-                try:
-                    reaction, user = await self.bot.wait_for("reaction_add", timeout=10800.0, check=check)
-
-                    data = supabase.table("reiatsu").select("id", "points").eq("user_id", str(user.id)).execute()
-                    if data.data:
-                        current_points = data.data[0]["points"]
-                        supabase.table("reiatsu").update({"points": current_points + 1}).eq("user_id", str(user.id)).execute()
-                    else:
-                        supabase.table("reiatsu").insert({
-                            "user_id": str(user.id),
-                            "username": str(user.name),
-                            "points": 1
-                        }).execute()
-
-                    await channel.send(f"{user.mention} a absorbé le Reiatsu et gagné **+1** point !")
-                except asyncio.TimeoutError:
-                    await channel.send("Le Reiatsu s'est dissipé dans l'air... personne ne l'a absorbé.")
-
-                wait_minutes = random.randint(45, 90)
-                self.next_spawn_timestamp = time.time() + (wait_minutes * 60)
-
-                supabase.table("reiatsu_config").update({
-                    "last_spawn_at": time.strftime("%Y-%m-%dT%H:%M:%S+0000", time.gmtime()),
-                    "delay_minutes": wait_minutes
-                }).eq("guild_id", guild_id).execute()
-
-                await asyncio.sleep(wait_minutes * 60)
 
 
 # setreiatsu
