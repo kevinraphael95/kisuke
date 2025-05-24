@@ -43,7 +43,6 @@ app_id = os.getenv("DISCORD_APP_ID")
 
 # ID unique de cette instance du bot
 INSTANCE_ID = str(uuid.uuid4())  # 🔒 Sert à éviter les doubles exécutions Render
-IS_MAIN_INSTANCE = False
 
 # Charger les réponses préconfigurées
 REPONSES_JSON_PATH = "reponses.json"
@@ -70,6 +69,8 @@ def get_prefix(bot, message):
 
 # Création du bot
 bot = commands.Bot(command_prefix=get_prefix, intents=intents, help_command=None)
+bot.is_main_instance = False  # ✅ Ajoute cette ligne
+
 
 # ─────────────────────────────────────────────
 # 🔔 Événements du bot
@@ -81,38 +82,40 @@ async def on_ready():
     activity = discord.Activity(type=discord.ActivityType.watching, name="Bleach")
     await bot.change_presence(activity=activity)
 
-    # Vérifie verrou en base
+    # Vérifie ou prend le verrou
     now = datetime.utcnow().isoformat()
-    lock_data = supabase.table("bot_lock").select("*").eq("id", "reiatsu_lock").execute()
+    lock = supabase.table("bot_lock").select("*").eq("id", "reiatsu_lock").execute()
 
     should_start = False
 
-    if not lock_data.data:
-        # Aucun verrou → on prend
+    if not lock.data:
         should_start = True
     else:
-        existing = lock_data.data[0]
+        existing = lock.data[0]
         updated_at = parser.parse(existing["updated_at"]).timestamp()
         age = time.time() - updated_at
 
-        if age > 300:  # Si le lock date de plus de 5 min, on considère que c’est mort
+        # Si vieux verrou (ex: instance morte), on le reprend
+        if age > 60:  # ⚠️ ici 60 secondes (tu peux mettre 30 ou 300)
             should_start = True
         else:
-            print("⛔ Une autre instance est active. Ce bot reste passif.")
-            return
+            # Même instance ? → on continue
+            if existing.get("instance_id") == INSTANCE_ID:
+                should_start = True
+            else:
+                print("⛔ Une autre instance est active. Ce bot reste passif.")
+                bot.is_main_instance = False
+                return
 
     if should_start:
-        # On prend ou renouvelle le verrou
         supabase.table("bot_lock").upsert({
             "id": "reiatsu_lock",
             "instance_id": INSTANCE_ID,
             "updated_at": now
         }).execute()
 
-        global IS_MAIN_INSTANCE  # ✅ OBLIGATOIRE
-        IS_MAIN_INSTANCE = True  # ✅ sinon la variable reste False
-
-        print(f"🔓 Verrou actif par cette instance ({INSTANCE_ID})")
+        bot.is_main_instance = True
+        print(f"🔓 Verrou pris par cette instance ({INSTANCE_ID})")
 
         if not hasattr(bot, "reiatsu_spawner"):
             bot.reiatsu_spawner = ReiatsuSpawner(bot)
@@ -130,7 +133,7 @@ async def on_ready():
 
 @bot.event
 async def on_message(message):
-    if not IS_MAIN_INSTANCE:
+    if not getattr(bot, "is_main_instance", False):
         return  # Ignore si ce n’est pas l’instance principale
 
     if message.author.bot:
