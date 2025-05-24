@@ -75,29 +75,30 @@ async def on_ready():
     now = datetime.now(timezone.utc)
     now_iso = now.isoformat()
 
-    # 🔒 Vérifie le verrou dans Supabase
     lock = supabase.table("bot_lock").select("*").eq("id", "reiatsu_lock").execute()
 
     if lock.data:
         locked_instance = lock.data[0]["instance_id"]
         updated_at = parser.parse(lock.data[0]["updated_at"])
 
-        # 🛠 Fix pour timezone mismatch
         if updated_at.tzinfo is None:
             updated_at = updated_at.replace(tzinfo=timezone.utc)
 
         age = (now - updated_at).total_seconds()
 
-        if locked_instance != INSTANCE_ID and age < 60:
-            print(f"⛔ Une autre instance ({locked_instance}) est active depuis {int(age)}s. Abandon.")
-            import sys
-            sys.exit(1)
+        if locked_instance != INSTANCE_ID:
+            if age < 60:
+                print(f"⛔ Une autre instance ({locked_instance}) est active depuis {int(age)}s. Abandon.")
+                import sys
+                sys.exit(1)
+            else:
+                print(f"⚠️ Ancien verrou expiré ({int(age)}s). Suppression...")
+                supabase.table("bot_lock").delete().eq("id", "reiatsu_lock").execute()
 
-        print(f"🔁 Verrou expiré ({int(age)}s), reprise de contrôle.")
     else:
         print("🔓 Aucun verrou existant, prise de contrôle.")
 
-    # 🔐 Prise ou mise à jour du verrou
+    # 🔐 Prise du verrou
     supabase.table("bot_lock").upsert({
         "id": "reiatsu_lock",
         "instance_id": INSTANCE_ID,
@@ -112,6 +113,7 @@ async def on_ready():
 
     bot.reiatsu_spawner.resume()
     print("▶️ Spawn Reiatsu activé.")
+
 
 
 
