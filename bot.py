@@ -145,6 +145,9 @@ async def on_message(message):
 # test reiatsu
 # ─────────────────────────────────────────────
 
+# test reiatsu
+# ─────────────────────────────────────────────
+
 # Salon où le Reiatsu spawn
 async def get_reiatsu_channel(bot, guild_id):
     data = supabase.table("reiatsu_config").select("channel_id").eq("guild_id", str(guild_id)).execute()
@@ -181,9 +184,24 @@ class ReiatsuSpawner:
                 continue
 
             for guild in self.bot.guilds:
-                channel = await get_reiatsu_channel(self.bot, guild.id)
+                guild_id = str(guild.id)
+                config = supabase.table("reiatsu_config").select("channel_id", "last_spawn_at", "delay_minutes").eq("guild_id", guild_id).execute()
+                if not config.data:
+                    continue
+
+                channel_id = config.data[0]["channel_id"]
+                channel = self.bot.get_channel(int(channel_id))
                 if not channel:
                     continue
+
+                last_spawn_at = config.data[0].get("last_spawn_at")
+                delay_minutes = config.data[0].get("delay_minutes")
+
+                if last_spawn_at and delay_minutes:
+                    now = time.time()
+                    elapsed = now - time.mktime(time.strptime(last_spawn_at, "%Y-%m-%dT%H:%M:%S%z"))
+                    if elapsed < delay_minutes * 60:
+                        continue
 
                 embed = discord.Embed(
                     title="💠 Un Reiatsu sauvage apparaît !",
@@ -215,13 +233,18 @@ class ReiatsuSpawner:
                         }).execute()
 
                     await channel.send(f"{user.mention} a absorbé le Reiatsu et gagné **+1** point !")
-
                 except asyncio.TimeoutError:
                     await channel.send("Le Reiatsu s'est dissipé dans l'air... personne ne l'a absorbé.")
 
-            wait_minutes = random.randint(45, 90)
-            self.next_spawn_timestamp = time.time() + (wait_minutes * 60)
-            await asyncio.sleep(wait_minutes * 60)
+                wait_minutes = random.randint(45, 90)
+                self.next_spawn_timestamp = time.time() + (wait_minutes * 60)
+
+                supabase.table("reiatsu_config").update({
+                    "last_spawn_at": time.strftime("%Y-%m-%dT%H:%M:%S+0000", time.gmtime()),
+                    "delay_minutes": wait_minutes
+                }).eq("guild_id", guild_id).execute()
+
+                await asyncio.sleep(wait_minutes * 60)
 
 
 # setreiatsu
