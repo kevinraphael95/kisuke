@@ -631,43 +631,43 @@ ping.category = "Général"
 @bot.command(aliases=["r"], name="react", help="Réagit au message ciblé avec un emoji animé, puis le retire après 3 minutes.")
 async def react(ctx, emoji_name: str):
     try:
-        await ctx.message.delete()  # Supprime le message de commande
-    except discord.Forbidden:
-        pass  # Ignorer si le bot n’a pas la permission
-    except discord.HTTPException:
-        pass  # Ignorer les erreurs de suppression
+        await ctx.message.delete()
+    except (discord.Forbidden, discord.HTTPException):
+        pass
 
     name = emoji_name.strip(":").lower()
 
-    # Recherche de l’emoji animé
     emoji = next((e for e in ctx.guild.emojis if e.animated and e.name.lower() == name), None)
     if not emoji:
-        return  # Emoji introuvable
+        await ctx.send(f"Emoji animé `:{name}:` introuvable sur ce serveur.", delete_after=5)
+        return
 
     target_message = None
 
-    # Si la commande est une réponse à un message
     if ctx.message.reference:
         try:
             target_message = await ctx.channel.fetch_message(ctx.message.reference.message_id)
         except discord.NotFound:
+            await ctx.send("Message référencé introuvable.", delete_after=5)
             return
     else:
-        # Sinon, chercher le dernier message humain avant la commande
         async for msg in ctx.channel.history(limit=20, before=ctx.message.created_at):
-            if not msg.author.bot:
+            if msg.id != ctx.message.id:
                 target_message = msg
                 break
 
-    if not target_message:
-        return  # Aucun message ciblé
+    if not target_message or target_message.id == ctx.message.id:
+        await ctx.send("Aucun message valide à réagir.", delete_after=5)
+        return
 
     try:
         await target_message.add_reaction(emoji)
-        await asyncio.sleep(180)  # Attendre 3 minutes
+        print(f"Réaction {emoji} ajoutée au message {target_message.id}")
+        await asyncio.sleep(180)
         await target_message.remove_reaction(emoji, ctx.guild.me)
-    except:
-        pass  # Ignore les erreurs
+        print(f"Réaction {emoji} retirée du message {target_message.id}")
+    except Exception as e:
+        print(f"Erreur en ajoutant/enlevant la réaction : {e}")
 react.category = "Général"
 
 
