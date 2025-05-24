@@ -93,9 +93,11 @@ async def on_ready():
             should_start = True
         elif age > 60:
             should_start = True
+
         else:
             print("⛔ Une autre instance est active. Ce bot reste passif.")
             bot.is_main_instance = False
+            await bot.close()  # ⛔ Déconnecte immédiatement
             return
 
     if should_start:
