@@ -135,9 +135,6 @@ async def on_message(message):
     if message.author.bot:
         return
 
-    await bot.process_commands(message)
-
-
     # Répondre à la mention du bot
     if bot.user in message.mentions and len(message.mentions) == 1 and message.content.strip().startswith(f"<@"):
         prefix = get_prefix(bot, message)
@@ -151,10 +148,8 @@ async def on_message(message):
         )
         embed.set_thumbnail(url=bot.user.avatar.url if bot.user.avatar else discord.Embed.Empty)
         embed.set_footer(text="Zangetsu veille sur toi.")
-
         await message.channel.send(embed=embed)
         return
-
 
     # Réponse aux mots-clés (comme "bleach")
     contenu = message.content.lower()
@@ -176,8 +171,9 @@ async def on_message(message):
             await message.channel.send(texte)
             break
 
-    # Laisser les autres commandes fonctionner
+    # Laisser les commandes fonctionner
     await bot.process_commands(message)
+
 
 
 # ─────────────────────────────────────────────
