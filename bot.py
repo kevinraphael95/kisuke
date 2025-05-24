@@ -921,7 +921,7 @@ dog.category = "Fun"
 # ─────────────────────────────────────────────
 
 @bot.command(aliases=["e"], name="emoji")
-async def send_emoji(ctx, emoji_name: str = None):
+async def emoji(ctx, emoji_name: str = None):
     if emoji_name:
         # Rechercher l'emoji correspondant
         for emoji in ctx.guild.emojis:
