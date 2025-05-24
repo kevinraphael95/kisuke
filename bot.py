@@ -102,24 +102,15 @@ async def on_ready():
             return
 
     if should_start:
-    # On prend ou renouvelle le verrou
-    supabase.table("bot_lock").upsert({
-        "id": "reiatsu_lock",
-        "instance_id": INSTANCE_ID,
-        "updated_at": now
-    }).execute()
+        # On prend ou renouvelle le verrou
+        supabase.table("bot_lock").upsert({
+            "id": "reiatsu_lock",
+            "instance_id": INSTANCE_ID,
+            "updated_at": now
+        }).execute()
 
-    global IS_MAIN_INSTANCE  # ✅ OBLIGATOIRE
-    IS_MAIN_INSTANCE = True  # ✅ sinon la variable reste False
-
-    print(f"🔓 Verrou actif par cette instance ({INSTANCE_ID})")
-
-    if not hasattr(bot, "reiatsu_spawner"):
-        bot.reiatsu_spawner = ReiatsuSpawner(bot)
-
-    bot.reiatsu_spawner.resume()
-    print("▶️ Spawn Reiatsu activé.")
-
+        global IS_MAIN_INSTANCE  # ✅ OBLIGATOIRE
+        IS_MAIN_INSTANCE = True  # ✅ sinon la variable reste False
 
         print(f"🔓 Verrou actif par cette instance ({INSTANCE_ID})")
 
@@ -128,7 +119,6 @@ async def on_ready():
 
         bot.reiatsu_spawner.resume()
         print("▶️ Spawn Reiatsu activé.")
-
 
 
 
