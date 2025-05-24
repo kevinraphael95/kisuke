@@ -78,36 +78,8 @@ async def on_ready():
     await bot.change_presence(activity=activity)
 
     now = datetime.utcnow().isoformat()
-    lock = supabase.table("bot_lock").select("*").eq("id", "reiatsu_lock").execute()
 
-    should_start = False
-
-    if not lock.data:
-        # Pas de verrou → je démarre
-        should_start = True
-
-    else:
-        existing = lock.data[0]
-        locked_instance = existing.get("instance_id")
-        updated_at = parser.parse(existing["updated_at"]).timestamp()
-        age = time.time() - updated_at
-
-        # Cas 1 : c’est MOI qui suis déjà locké → je continue
-        if locked_instance == INSTANCE_ID:
-            should_start = True
-            print("🔁 Cette instance détient déjà le verrou.")
-
-        # Cas 2 : l’autre bot est mort depuis plus de 60 sec → je prends la place
-        elif age > 60:
-            should_start = True
-            print("🕒 L’ancienne instance est expirée. Je prends le verrou.")
-
-        else:
-            print("⛔ Une autre instance est active. Ce bot reste passif.")
-            bot.is_main_instance = False
-            return
-
-    # 🔐 Mise à jour immédiate du verrou avec NOTRE instance ID
+    # 🧠 Prend le contrôle dès le démarrage (aucune condition, écrase direct)
     supabase.table("bot_lock").upsert({
         "id": "reiatsu_lock",
         "instance_id": INSTANCE_ID,
@@ -115,7 +87,7 @@ async def on_ready():
     }).execute()
 
     bot.is_main_instance = True
-    print(f"🔓 Verrou pris par cette instance ({INSTANCE_ID})")
+    print(f"🔓 Nouvelle instance active ({INSTANCE_ID})")
 
     if not hasattr(bot, "reiatsu_spawner"):
         bot.reiatsu_spawner = ReiatsuSpawner(bot)
@@ -126,14 +98,14 @@ async def on_ready():
 
 
 
-
 # ─────────────────────────────────────────────
 # on message
 # ─────────────────────────────────────────────
 
-
 @bot.event
 async def on_message(message):
+    await bot.wait_until_ready()  # ✅ S'assure que le bot est prêt
+
     if not getattr(bot, "is_main_instance", False):
         return  # Ignore si ce n’est pas l’instance principale
 
@@ -146,7 +118,7 @@ async def on_message(message):
     if (
         bot.user in message.mentions
         and len(message.mentions) == 1
-        and message.content.strip().startswith(f"<@")
+        and message.content.strip().startswith(f"<@{bot.user.id}")
     ):
         prefix = get_prefix(bot, message)
 
@@ -162,7 +134,7 @@ async def on_message(message):
         await message.channel.send(embed=embed)
         return
 
-    # Réponse aux mots-clés (comme "bleach", "bankai", etc.)
+    # Réponse aux mots-clés
     for mot in REPONSES:
         if mot in contenu:
             textes = REPONSES[mot]
@@ -176,13 +148,13 @@ async def on_message(message):
                     chemin = os.path.join(dossier_gif, gif_choisi)
                     file = discord.File(chemin, filename=gif_choisi)
                     await message.channel.send(content=texte, file=file)
-                    break
-            # Si pas de GIF, envoyer seulement le texte
+                    return
             await message.channel.send(texte)
-            break
+            return
 
-    # Exécuter les commandes (si !commande ou préfixe)
+    # Exécuter les commandes
     await bot.process_commands(message)
+
 
 
 
@@ -221,6 +193,11 @@ class ReiatsuSpawner:
     @tasks.loop(seconds=60)
     async def spawn_loop_body(self):
         await self.bot.wait_until_ready()
+
+        # ✅ NE RIEN FAIRE si ce n’est pas l’instance principale
+        if not getattr(self.bot, "is_main_instance", False):
+            return
+
         now = int(time.time())
 
         # On récupère toutes les configurations
@@ -245,7 +222,7 @@ class ReiatsuSpawner:
                 should_spawn = now - int(last_spawn) >= int(delay)
 
             if not should_spawn:
-                continue  # Pas encore le moment
+                continue
 
             # ✅ Spawn Reiatsu
             channel = self.bot.get_channel(int(channel_id))
@@ -300,6 +277,7 @@ class ReiatsuSpawner:
     def resume(self):
         if not self.spawn_loop.is_running():
             self.spawn_loop.start()
+
 
 
 
