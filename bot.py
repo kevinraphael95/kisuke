@@ -68,37 +68,37 @@ GIFS_FOLDER = "gifs"
 
 @bot.event
 async def on_ready():
-    global INSTANCE_ID  # ← 👈 CE QUI MANQUAIT
     print(f"✅ Connecté en tant que {bot.user.name}")
-    activity = discord.Activity(type=discord.ActivityType.watching, name="Bleach")
-    await bot.change_presence(activity=activity)
+    await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name="Bleach"))
 
-    now = datetime.utcnow().isoformat()
+    now = datetime.utcnow()
+    now_iso = now.isoformat()
 
-    # 🔁 Nouveau ID généré à chaque démarrage
-    INSTANCE_ID = str(uuid.uuid4())
-    with open("instance_id.txt", "w") as f:
-        f.write(INSTANCE_ID)
-
-    # 🔒 Vérifie le verrou actuel
-    lock = supabase.table("bot_lock").select("instance_id").eq("id", "reiatsu_lock").execute()
+    lock = supabase.table("bot_lock").select("*").eq("id", "reiatsu_lock").execute()
 
     if lock.data:
         locked_instance = lock.data[0]["instance_id"]
-        if locked_instance != INSTANCE_ID:
-            print(f"⛔ Cette instance ({INSTANCE_ID}) n'est pas autorisée (actuelle : {locked_instance}). Arrêt.")
-            import sys
-            sys.exit(1)  # 💥 TUE LE PROCESSUS immédiatement
+        updated_at = parser.parse(lock.data[0]["updated_at"])
+        age = (now - updated_at).total_seconds()
 
-    # 🔐 Sinon, on écrase le verrou avec notre ID
+        if locked_instance != INSTANCE_ID and age < 60:
+            print(f"⛔ Une autre instance ({locked_instance}) est active depuis {int(age)}s. Abandon.")
+            import sys
+            sys.exit(1)
+
+        print(f"🔁 Verrou expiré ({int(age)}s), reprise de contrôle.")
+    else:
+        print("🔓 Aucun verrou existant, prise de contrôle.")
+
+    # Écrase ou crée le verrou
     supabase.table("bot_lock").upsert({
         "id": "reiatsu_lock",
         "instance_id": INSTANCE_ID,
-        "updated_at": now
+        "updated_at": now_iso
     }).execute()
 
     bot.is_main_instance = True
-    print(f"🔓 Nouvelle instance active ({INSTANCE_ID})")
+    print(f"✅ Instance principale active : {INSTANCE_ID}")
 
     if not hasattr(bot, "reiatsu_spawner"):
         bot.reiatsu_spawner = ReiatsuSpawner(bot)
