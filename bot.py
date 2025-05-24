@@ -94,19 +94,19 @@ async def on_ready():
 
 @bot.event
 async def on_message(message):
-    try:
-        with open("instance_id.txt", "r") as f:
-            current_id = f.read().strip()
-    except FileNotFoundError:
-        current_id = None
-
-    if INSTANCE_ID != current_id:
-        return  # Ancienne instance, ne répond pas
+    # Vérifie l’instance active via Supabase (et non plus le fichier local)
+    lock = supabase.table("bot_lock").select("instance_id").eq("id", "reiatsu_lock").execute()
+    if lock.data and lock.data[0]["instance_id"] != INSTANCE_ID:
+        return  # ⛔ Ancienne instance, on ignore
 
     if message.author.bot:
         return
 
     contenu = message.content.lower()
+
+    # Reste du code inchangé...
+    # ...
+
 
     # Répondre à la mention du bot
     if (
