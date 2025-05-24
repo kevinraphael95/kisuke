@@ -164,57 +164,72 @@ class ReiatsuSpawner:
         self.spawn_loop.start()
 
     @tasks.loop(seconds=60)
-    async def spawn_loop(self):
-        await self.bot.wait_until_ready()
+async def spawn_loop(self):
+    await self.bot.wait_until_ready()
 
-        now = time.time()
-        if now < self.next_spawn_timestamp:
-            return  # ❌ Pas encore l'heure
+    now = int(time.time())
 
-        # ✅ C’est l’heure ! On fait spawn
-        for guild in self.bot.guilds:
-            channel = await get_reiatsu_channel(self.bot, guild.id)
-            if not channel:
-                continue
+    for guild in self.bot.guilds:
+        guild_id = str(guild.id)
 
-            embed = discord.Embed(
-                title="💠 Un Reiatsu sauvage apparaît !",
-                description="Cliquez sur la réaction 💠 pour l'absorber.",
-                color=discord.Color.purple()
+        # Lire la config Supabase du serveur
+        config = supabase.table("reiatsu_config") \
+            .select("channel_id", "last_spawn_at", "delay_minutes") \
+            .eq("guild_id", guild_id).execute()
+
+        if not config.data:
+            continue  # Aucun salon configuré pour ce serveur
+
+        conf = config.data[0]
+        last_spawn = conf.get("last_spawn_at") or 0
+        delay = conf.get("delay_minutes") or 1800  # par défaut : 30 min
+
+        if now - int(last_spawn) < int(delay):
+            continue  # ⏳ Pas encore l’heure
+
+        # ✅ Spawn du Reiatsu
+        channel = self.bot.get_channel(int(conf["channel_id"]))
+        if not channel:
+            continue
+
+        embed = discord.Embed(
+            title="💠 Un Reiatsu sauvage apparaît !",
+            description="Cliquez sur la réaction 💠 pour l'absorber.",
+            color=discord.Color.purple()
+        )
+        message = await channel.send(embed=embed)
+        await message.add_reaction("💠")
+
+        def check(reaction, user):
+            return (
+                reaction.message.id == message.id and
+                str(reaction.emoji) == "💠" and
+                not user.bot
             )
-            message = await channel.send(embed=embed)
-            await message.add_reaction("💠")
 
-            def check(reaction, user):
-                return (
-                    reaction.message.id == message.id and
-                    str(reaction.emoji) == "💠" and
-                    not user.bot
-                )
+        try:
+            reaction, user = await self.bot.wait_for("reaction_add", timeout=10800.0, check=check)
+            data = supabase.table("reiatsu").select("id", "points").eq("user_id", str(user.id)).execute()
+            if data.data:
+                current = data.data[0]["points"]
+                supabase.table("reiatsu").update({"points": current + 1}).eq("user_id", str(user.id)).execute()
+            else:
+                supabase.table("reiatsu").insert({
+                    "user_id": str(user.id),
+                    "username": str(user.name),
+                    "points": 1
+                }).execute()
+            await channel.send(f"{user.mention} a absorbé le Reiatsu et gagné **+1** point !")
+        except asyncio.TimeoutError:
+            await channel.send("Le Reiatsu s'est dissipé dans l'air... personne ne l'a absorbé.")
 
-            try:
-                reaction, user = await self.bot.wait_for("reaction_add", timeout=10800.0, check=check)
-                data = supabase.table("reiatsu").select("id", "points").eq("user_id", str(user.id)).execute()
-                if data.data:
-                    current_points = data.data[0]["points"]
-                    supabase.table("reiatsu").update({"points": current_points + 1}).eq("user_id", str(user.id)).execute()
-                else:
-                    supabase.table("reiatsu").insert({
-                        "user_id": str(user.id),
-                        "username": str(user.name),
-                        "points": 1
-                    }).execute()
-                await channel.send(f"{user.mention} a absorbé le Reiatsu et gagné **+1** point !")
-            except asyncio.TimeoutError:
-                await channel.send("Le Reiatsu s'est dissipé dans l'air... personne ne l'a absorbé.")
+        # 🔄 Mise à jour Supabase : nouveau spawn + nouveau délai
+        new_delay = random.randint(1800, 5400)  # 30-90 min
+        supabase.table("reiatsu_config").update({
+            "last_spawn_at": now,
+            "delay_minutes": new_delay
+        }).eq("guild_id", guild_id).execute()
 
-        # 🔄 Prochain spawn dans 30 à 90 min
-        self.next_spawn_timestamp = time.time() + random.randint(1800, 5400)
-
-    def time_until_next_spawn(self):
-        if self.next_spawn_timestamp is None:
-            self.next_spawn_timestamp = time.time() + random.randint(1800, 5400)
-        return max(0, int(self.next_spawn_timestamp - time.time()))
 
 
 
@@ -446,18 +461,27 @@ unpausereiatsu.category = "Reiatsu"
 
 @bot.command(aliases=["tpsrts"], name="tempsreiatsu")
 async def tempsreiatsu(ctx):
-    if hasattr(bot, "reiatsu_spawner"):
-        seconds = bot.reiatsu_spawner.time_until_next_spawn()
-        if seconds is None:
-            await ctx.send("❔ Le prochain spawn de Reiatsu n'est pas encore programmé.")
-        elif seconds == 0:
-            await ctx.send("💠 Le Reiatsu peut apparaître à tout moment !")
-        else:
-            minutes = seconds // 60
-            secondes = seconds % 60
-            await ctx.send(f"⏳ Prochain spawn automatique dans **{minutes}m {secondes}s**.")
+    guild_id = str(ctx.guild.id)
+    config = supabase.table("reiatsu_config") \
+        .select("last_spawn_at", "delay_minutes") \
+        .eq("guild_id", guild_id).execute()
+
+    if not config.data:
+        await ctx.send("❌ Ce serveur n'a pas de config Reiatsu (`!setreiatsu`).")
+        return
+
+    conf = config.data[0]
+    last = conf.get("last_spawn_at") or 0
+    delay = conf.get("delay_minutes") or 1800
+
+    restant = max(0, (int(last) + int(delay)) - int(time.time()))
+    if restant == 0:
+        await ctx.send("💠 Le Reiatsu peut apparaître à tout moment !")
     else:
-        await ctx.send("❌ Le spawner Reiatsu n'est pas actif.")
+        minutes = restant // 60
+        secondes = restant % 60
+        await ctx.send(f"⏳ Prochain spawn automatique dans **{minutes}m {secondes}s**.")
+
 tempsreiatsu.category = "Reiatsu"
 
 
