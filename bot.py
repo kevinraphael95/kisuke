@@ -512,19 +512,31 @@ tempsreiatsu.category = "Reiatsu"
 # autospawn
 # ─────────────────────────────────────────────
 
+from discord.ext import commands
+from datetime import datetime, timedelta
+
 @bot.command()
 @commands.has_permissions(administrator=True)
 async def autospawn(ctx):
     guild_id = str(ctx.guild.id)
-    next_spawn_time = datetime.utcnow() + timedelta(minutes=1)
+    now = datetime.utcnow()
+    next_spawn = now + timedelta(minutes=1)
 
-    # Mets à jour Supabase avec le timestamp du prochain spawn
-    supabase.table("reiatsu_config").update({
-        "last_spawn_at": next_spawn_time.isoformat()
-    }).eq("guild_id", guild_id).execute()
+    try:
+        print(f"[AUTOSPAWN] Mise à jour pour {guild_id} - {next_spawn.isoformat()}")
 
-    await ctx.send(f"✅ Le spawn automatique commencera dans 1 minute.")
-autospawn.category = "Reiatsu"
+        response = supabase.table("reiatsu_config").update({
+            "last_spawn_at": next_spawn.isoformat()
+        }).eq("guild_id", guild_id).execute()
+
+        print(f"[AUTOSPAWN] Supabase réponse : {response}")
+        await ctx.send("✅ Le spawn automatique débutera dans 1 minute.")
+        
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        await ctx.send(f"❌ Une erreur est survenue : {e}")
+
 
 
 # ─────────────────────────────────────────────
