@@ -72,14 +72,16 @@ bot = commands.Bot(command_prefix=get_prefix, intents=intents, help_command=None
 
 @bot.event
 async def on_ready():
+    print(f"✅ Connecté en tant que {bot.user.name}")
     activity = discord.Activity(type=discord.ActivityType.watching, name="Bleach")
     await bot.change_presence(activity=activity)
-    print(f"✅ Connecté en tant que {bot.user.name}")
 
-    # Lancer le spawn automatique maintenant que la boucle tourne
     if not hasattr(bot, "reiatsu_spawner"):
         bot.reiatsu_spawner = ReiatsuSpawner(bot)
-        print("🔁 Spawn Reiatsu lancé.")
+
+    bot.reiatsu_spawner.resume()
+    print("🔁 Spawn Reiatsu actif.")
+
 
 
 
@@ -164,12 +166,11 @@ async def get_reiatsu_channel(bot, guild_id):
 class ReiatsuSpawner:
     def __init__(self, bot):
         self.bot = bot
-        self.spawn_loop.start()
+        self.spawn_loop = self.spawn_loop_body  # Référence vers la tâche
 
     @tasks.loop(seconds=60)
-    async def spawn_loop(self):
+    async def spawn_loop_body(self):
         await self.bot.wait_until_ready()
-
         now = int(time.time())
 
         for guild in self.bot.guilds:
@@ -181,17 +182,17 @@ class ReiatsuSpawner:
                 .eq("guild_id", guild_id).execute()
 
             if not config.data:
-                continue  # Aucun salon configuré pour ce serveur
+                continue
 
             conf = config.data[0]
             last_spawn_str = conf.get("last_spawn_at")
             last_spawn = parser.parse(last_spawn_str).timestamp() if last_spawn_str else 0
-            delay = conf.get("delay_minutes") or 1800  # par défaut : 30 min
+            delay = conf.get("delay_minutes") or 1800
 
             if now - int(last_spawn) < int(delay):
-                continue  # ⏳ Pas encore l’heure
+                continue  # ⏳ Pas encore le moment
 
-            # ✅ Spawn du Reiatsu
+            # ✅ Spawn
             channel = self.bot.get_channel(int(conf["channel_id"]))
             if not channel:
                 continue
@@ -227,12 +228,20 @@ class ReiatsuSpawner:
             except asyncio.TimeoutError:
                 await channel.send("Le Reiatsu s'est dissipé dans l'air... personne ne l'a absorbé.")
 
-            # 🔄 Mise à jour Supabase : nouveau spawn + nouveau délai (toujours exécuté)
-            new_delay = random.randint(1800, 5400)  # 30-90 min
+            # 🔄 Mise à jour Supabase
+            new_delay = random.randint(1800, 5400)
             supabase.table("reiatsu_config").update({
                 "last_spawn_at": datetime.utcnow().isoformat(),
                 "delay_minutes": new_delay
             }).eq("guild_id", guild_id).execute()
+
+    def pause(self):
+        if self.spawn_loop.is_running():
+            self.spawn_loop.cancel()
+
+    def resume(self):
+        if not self.spawn_loop.is_running():
+            self.spawn_loop.start()
 
 
 
