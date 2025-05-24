@@ -631,40 +631,44 @@ ping.category = "Général"
 @bot.command(aliases=["r"], name="react", help="Réagit au message ciblé avec un emoji animé, puis le retire après 3 minutes.")
 async def react(ctx, emoji_name: str):
     try:
-        await ctx.message.delete()
+        await ctx.message.delete()  # Supprime le message de commande
     except discord.Forbidden:
-        pass  # Silencieux si le bot ne peut pas supprimer
+        pass  # Ignorer si le bot n’a pas la permission
+    except discord.HTTPException:
+        pass  # Ignorer les erreurs de suppression
 
     name = emoji_name.strip(":").lower()
 
-    # Trouver l’emoji animé
+    # Recherche de l’emoji animé
     emoji = next((e for e in ctx.guild.emojis if e.animated and e.name.lower() == name), None)
     if not emoji:
-        return  # Emoji introuvable → ne rien faire
+        return  # Emoji introuvable
 
     target_message = None
 
+    # Si la commande est une réponse à un message
     if ctx.message.reference:
         try:
             target_message = await ctx.channel.fetch_message(ctx.message.reference.message_id)
         except discord.NotFound:
             return
     else:
-        async for msg in ctx.channel.history(limit=10):
-            if msg.id != ctx.message.id and not msg.author.bot:
+        # Sinon, chercher le dernier message humain avant la commande
+        async for msg in ctx.channel.history(limit=20, before=ctx.message.created_at):
+            if not msg.author.bot:
                 target_message = msg
                 break
 
     if not target_message:
-        return
+        return  # Aucun message ciblé
 
     try:
         await target_message.add_reaction(emoji)
-        await asyncio.sleep(180)  # 3 minutes
-        await target_message.remove_reaction(emoji, bot.user)
+        await asyncio.sleep(180)  # Attendre 3 minutes
+        await target_message.remove_reaction(emoji, ctx.guild.me)
     except:
-        pass  # Silencieux pour éviter erreurs visibles
-
+        pass  # Ignore les erreurs
+react.category = "Général"
 
 
 # 🗣️ Say 
@@ -1007,12 +1011,18 @@ dog.category = "Fun"
 
 @bot.command(aliases=["e"], name="emoji")
 async def emoji(ctx, *emoji_names):
+    try:
+        await ctx.message.delete()  # Supprime le message de commande
+    except discord.Forbidden:
+        pass  # Le bot n'a pas les permissions pour supprimer, ignore
+    except discord.HTTPException:
+        pass  # Une erreur s'est produite lors de la suppression, ignore
+
     if emoji_names:
         found = []
         not_found = []
 
         for raw_name in emoji_names:
-            # Nettoie les `:` autour du nom si présents
             name = raw_name.strip(":").lower()
             match = next((e for e in ctx.guild.emojis if e.name.lower() == name), None)
             if match:
@@ -1026,7 +1036,6 @@ async def emoji(ctx, *emoji_names):
         if not_found:
             await ctx.send("❌ Emoji(s) introuvable(s) : " + ", ".join(f"`{name}`" for name in not_found))
     else:
-        # Lister tous les emojis animés dans un embed
         animated_emojis = [str(e) for e in ctx.guild.emojis if e.animated]
         if not animated_emojis:
             await ctx.send("❌ Ce serveur n'a aucun emoji animé.")
