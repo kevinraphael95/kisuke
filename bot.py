@@ -227,14 +227,12 @@ class ReiatsuSpawner:
             except asyncio.TimeoutError:
                 await channel.send("Le Reiatsu s'est dissipé dans l'air... personne ne l'a absorbé.")
 
-
-            # 🔄 Mise à jour Supabase : nouveau spawn + nouveau délai
+            # 🔄 Mise à jour Supabase : nouveau spawn + nouveau délai (toujours exécuté)
             new_delay = random.randint(1800, 5400)  # 30-90 min
             supabase.table("reiatsu_config").update({
                 "last_spawn_at": datetime.utcnow().isoformat(),
                 "delay_minutes": new_delay
             }).eq("guild_id", guild_id).execute()
-
 
 
 
