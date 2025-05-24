@@ -25,9 +25,9 @@ from datetime import datetime
 # Modules internes
 from supabase_client import supabase  # Fichier Supabase perso
 
-# ─────────────────────────────────────────────
+# ─────────────────────────────────────────────────
 # 🔧 Initialisation de l'environnement
-# ─────────────────────────────────────────────
+# ─────────────────────────────────────────────────
 
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
 load_dotenv()
@@ -37,15 +37,10 @@ COMMAND_PREFIX = os.getenv("COMMAND_PREFIX", "!")
 INVITE_URL = os.getenv("INVITE_URL")
 app_id = os.getenv("DISCORD_APP_ID")
 
-# ID unique de cette instance — stockée dans un fichier pour la garder entre redémarrages
-INSTANCE_FILE = "instance_id.txt"
-if os.path.exists(INSTANCE_FILE):
-    with open(INSTANCE_FILE, "r") as f:
-        INSTANCE_ID = f.read().strip()
-else:
-    INSTANCE_ID = str(uuid.uuid4())
-    with open(INSTANCE_FILE, "w") as f:
-        f.write(INSTANCE_ID)
+# ID unique de cette instance — régénéré à chaque redémarrage
+INSTANCE_ID = str(uuid.uuid4())
+with open("instance_id.txt", "w") as f:
+    f.write(INSTANCE_ID)
 
 # Préfixe dynamique
 def get_prefix(bot, message):
@@ -67,9 +62,9 @@ with open("reponses.json", encoding="utf-8") as f:
 
 GIFS_FOLDER = "gifs"
 
-# ─────────────────────────────────────────────
+# ─────────────────────────────────────────────────
 # 🔔 Événement on_ready()
-# ─────────────────────────────────────────────
+# ─────────────────────────────────────────────────
 
 @bot.event
 async def on_ready():
@@ -77,13 +72,11 @@ async def on_ready():
     activity = discord.Activity(type=discord.ActivityType.watching, name="Bleach")
     await bot.change_presence(activity=activity)
 
-    now = datetime.utcnow().isoformat()
-
-    # 🧠 Prend le contrôle dès le démarrage (aucune condition, écrase direct)
+    # Écrase le verrou Supabase avec le nouvel INSTANCE_ID
     supabase.table("bot_lock").upsert({
         "id": "reiatsu_lock",
         "instance_id": INSTANCE_ID,
-        "updated_at": now
+        "updated_at": datetime.utcnow().isoformat()
     }).execute()
 
     bot.is_main_instance = True
@@ -95,19 +88,20 @@ async def on_ready():
     bot.reiatsu_spawner.resume()
     print("▶️ Spawn Reiatsu activé.")
 
-
-
-
-# ─────────────────────────────────────────────
+# ─────────────────────────────────────────────────
 # on message
-# ─────────────────────────────────────────────
+# ─────────────────────────────────────────────────
 
 @bot.event
 async def on_message(message):
-    await bot.wait_until_ready()  # ✅ S'assure que le bot est prêt
+    try:
+        with open("instance_id.txt", "r") as f:
+            current_id = f.read().strip()
+    except FileNotFoundError:
+        current_id = None
 
-    if not getattr(bot, "is_main_instance", False):
-        return  # Ignore si ce n’est pas l’instance principale
+    if INSTANCE_ID != current_id:
+        return  # Ancienne instance, ne répond pas
 
     if message.author.bot:
         return
@@ -154,8 +148,6 @@ async def on_message(message):
 
     # Exécuter les commandes
     await bot.process_commands(message)
-
-
 
 
 
