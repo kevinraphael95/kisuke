@@ -43,6 +43,7 @@ app_id = os.getenv("DISCORD_APP_ID")
 
 # ID unique de cette instance du bot
 INSTANCE_ID = str(uuid.uuid4())  # 🔒 Sert à éviter les doubles exécutions Render
+IS_MAIN_INSTANCE = False
 
 # Charger les réponses préconfigurées
 REPONSES_JSON_PATH = "reponses.json"
@@ -107,6 +108,8 @@ async def on_ready():
             "instance_id": INSTANCE_ID,
             "updated_at": now
         }).execute()
+        IS_MAIN_INSTANCE = True
+
         print(f"🔓 Verrou actif par cette instance ({INSTANCE_ID})")
 
         if not hasattr(bot, "reiatsu_spawner"):
@@ -126,8 +129,14 @@ async def on_ready():
 
 @bot.event
 async def on_message(message):
+    if not IS_MAIN_INSTANCE:
+        return  # Ignore si ce n’est pas l’instance principale
+
     if message.author.bot:
         return
+
+    await bot.process_commands(message)
+
 
     # Répondre à la mention du bot
     if bot.user in message.mentions and len(message.mentions) == 1 and message.content.strip().startswith(f"<@"):
