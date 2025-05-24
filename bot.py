@@ -18,6 +18,10 @@ from discord.ext import commands, tasks
 from discord.ui import View, Select, Button
 from discord import SelectOption, Interaction, Embed
 from dotenv import load_dotenv
+from dateutil import parser
+from datetime import datetime
+
+
 
 # Modules internes
 from supabase_client import supabase  # Fichier Supabase perso
@@ -180,7 +184,8 @@ class ReiatsuSpawner:
                 continue  # Aucun salon configuré pour ce serveur
 
             conf = config.data[0]
-            last_spawn = conf.get("last_spawn_at") or 0
+            last_spawn_str = conf.get("last_spawn_at")
+            last_spawn = parser.parse(last_spawn_str).timestamp() if last_spawn_str else 0
             delay = conf.get("delay_minutes") or 1800  # par défaut : 30 min
 
             if now - int(last_spawn) < int(delay):
@@ -222,10 +227,11 @@ class ReiatsuSpawner:
             except asyncio.TimeoutError:
                 await channel.send("Le Reiatsu s'est dissipé dans l'air... personne ne l'a absorbé.")
 
+
             # 🔄 Mise à jour Supabase : nouveau spawn + nouveau délai
             new_delay = random.randint(1800, 5400)  # 30-90 min
             supabase.table("reiatsu_config").update({
-                "last_spawn_at": now,
+                "last_spawn_at": datetime.utcnow().isoformat(),
                 "delay_minutes": new_delay
             }).eq("guild_id", guild_id).execute()
 
@@ -469,7 +475,8 @@ async def tempsreiatsu(ctx):
         return
 
     conf = config.data[0]
-    last = conf.get("last_spawn_at") or 0
+    last_spawn_str = conf.get("last_spawn_at")
+    last = parser.parse(last_spawn_str).timestamp() if last_spawn_str else 0
     delay = conf.get("delay_minutes") or 1800
 
     restant = max(0, (int(last) + int(delay)) - int(time.time()))
