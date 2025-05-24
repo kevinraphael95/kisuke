@@ -1560,15 +1560,23 @@ prefixe.category = "Admin"
 
 
 # ─────────────────────────────────────────────
-# en cas de cooldown
+# en cas d'erreur
 # ─────────────────────────────────────────────
 
 @bot.event
 async def on_command_error(ctx, error):
     if isinstance(error, commands.CommandOnCooldown):
         await ctx.send(f"🕒 Patiente un peu ! Réessaie dans {error.retry_after:.1f} secondes.")
+    elif isinstance(error, commands.CommandNotFound):
+        await ctx.send("❌ Cette commande n'existe pas.")
+    elif isinstance(error, commands.MissingRequiredArgument):
+        await ctx.send("⚠️ Il manque un argument à ta commande.")
+    elif isinstance(error, commands.MissingPermissions):
+        await ctx.send("🚫 Tu n’as pas la permission pour cette commande.")
     else:
-        raise error
+        await ctx.send("⚠️ Une erreur est survenue.")
+        raise error  # garde ceci pour continuer à voir les vraies erreurs si besoin
+
 
 
 # Debug infos
