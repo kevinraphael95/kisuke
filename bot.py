@@ -20,7 +20,8 @@ from discord.ui import View, Select, Button
 from discord import SelectOption, Interaction, Embed
 from dotenv import load_dotenv
 from dateutil import parser
-from datetime import datetime
+from datetime import datetime, timezone
+
 
 # Modules internes
 from supabase_client import supabase  # Fichier Supabase perso
@@ -71,7 +72,7 @@ async def on_ready():
     print(f"✅ Connecté en tant que {bot.user.name}")
     await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name="Bleach"))
 
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
     now_iso = now.isoformat()
 
     lock = supabase.table("bot_lock").select("*").eq("id", "reiatsu_lock").execute()
