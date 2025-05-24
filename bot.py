@@ -917,44 +917,33 @@ async def dog(ctx):
 dog.category = "Fun"
 
 
-# emojisapp
+# emoji
 # ─────────────────────────────────────────────
 
-@bot.command(name="emojisapp", help="Affiche les emojis ajoutés à l'application via le portail developer.")
-async def emojisapp(ctx):
-
-    headers = {
-        "Authorization": f"Bot {TOKEN}"
-    }
-
-    url = f"https://discord.com/api/v10/applications/{app_id}/assets"
-
-    async with aiohttp.ClientSession() as session:
-        async with session.get(url, headers=headers) as resp:
-            if resp.status != 200:
-                return await ctx.send("❌ Impossible de récupérer les emojis de l'application.")
-
-            data = await resp.json()
-
-            emojis = []
-            for asset in data:
-                if asset["type"] == 1:  # 1 = emoji
-                    emoji_name = asset["name"]
-                    emoji_id = asset["id"]
-                    emojis.append(f"<:{emoji_name}:{emoji_id}>")
-
-            if not emojis:
-                await ctx.send("ℹ️ Aucun emoji trouvé dans l'application.")
+@bot.command(aliases=["e"], name="emoji")
+async def send_emoji(ctx, emoji_name: str = None):
+    if emoji_name:
+        # Rechercher l'emoji correspondant
+        for emoji in ctx.guild.emojis:
+            if emoji.name.lower() == emoji_name.lower():
+                await ctx.send(str(emoji))
                 return
+        await ctx.send(f"❌ Emoji '{emoji_name}' introuvable.")
+    else:
+        # Lister tous les emojis animés dans un embed
+        animated_emojis = [str(e) for e in ctx.guild.emojis if e.animated]
+        if not animated_emojis:
+            await ctx.send("❌ Ce serveur n'a aucun emoji animé.")
+            return
 
-            description = "\n".join(emojis[:20])  # Discord limite à ~2000 caractères
-            embed = discord.Embed(
-                title="🧩 Emojis de l'application",
-                description=description,
-                color=discord.Color.orange()
-            )
-            await ctx.send(embed=embed)
-emojisapp.category = "Fun"
+        # Créer un embed
+        embed = discord.Embed(
+            title="🎞️ Emojis animés du serveur",
+            description=" ".join(animated_emojis),
+            color=discord.Color.purple()
+        )
+        await ctx.send(embed=embed)
+emoji.category = "Fun"
 
 
 
