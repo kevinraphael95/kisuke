@@ -1675,7 +1675,7 @@ prefixe.category = "Admin"
 
 @bot.event
 async def on_command_error(ctx, error):
-    if not IS_MAIN_INSTANCE:
+    if not getattr(bot, "is_main_instance", False):
         return  # Ignore les erreurs sur les instances secondaires
 
     if isinstance(error, commands.CommandOnCooldown):
