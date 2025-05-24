@@ -1676,19 +1676,16 @@ prefixe.category = "Admin"
 @bot.event
 async def on_command_error(ctx, error):
     if not getattr(bot, "is_main_instance", False):
-        return  # Ignore les erreurs sur les instances secondaires
+        return  # Ignore les erreurs si ce n’est pas l’instance principale
 
-    if isinstance(error, commands.CommandOnCooldown):
-        await ctx.send(f"🕒 Patiente un peu ! Réessaie dans {error.retry_after:.1f} secondes.")
-    elif isinstance(error, commands.CommandNotFound):
-        await ctx.send("❌ Cette commande n'existe pas.")
+    if isinstance(error, commands.MissingPermissions):
+        await ctx.send("❌ Tu n'as pas les permissions pour cette commande.")
     elif isinstance(error, commands.MissingRequiredArgument):
-        await ctx.send("⚠️ Il manque un argument à ta commande.")
-    elif isinstance(error, commands.MissingPermissions):
-        await ctx.send("🚫 Tu n’as pas la permission pour cette commande.")
+        await ctx.send("❌ Il manque un argument à ta commande.")
+    elif isinstance(error, commands.CommandNotFound):
+        return  # Ignore les fausses commandes
     else:
-        await ctx.send("⚠️ Une erreur est survenue.")
-        raise error
+        raise error  # Pour les autres, on laisse crash/log
 
 
 
