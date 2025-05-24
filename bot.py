@@ -72,11 +72,23 @@ async def on_ready():
     activity = discord.Activity(type=discord.ActivityType.watching, name="Bleach")
     await bot.change_presence(activity=activity)
 
-    # Écrase le verrou Supabase avec le nouvel INSTANCE_ID
+    now = datetime.utcnow().isoformat()
+
+    # 🔒 Vérifie le verrou actuel
+    lock = supabase.table("bot_lock").select("instance_id").eq("id", "reiatsu_lock").execute()
+
+    if lock.data:
+        locked_instance = lock.data[0]["instance_id"]
+        if locked_instance != INSTANCE_ID:
+            print(f"⛔ Cette instance ({INSTANCE_ID}) n'est pas autorisée (actuelle : {locked_instance}). Arrêt.")
+            import sys
+            sys.exit(1)  # 💥 TUE LE PROCESSUS immédiatement
+
+    # 🔐 Sinon, on écrase le verrou avec notre ID
     supabase.table("bot_lock").upsert({
         "id": "reiatsu_lock",
         "instance_id": INSTANCE_ID,
-        "updated_at": datetime.utcnow().isoformat()
+        "updated_at": now
     }).execute()
 
     bot.is_main_instance = True
