@@ -509,6 +509,44 @@ async def tempsreiatsu(ctx):
 tempsreiatsu.category = "Reiatsu"
 
 
+# autospawn
+# ─────────────────────────────────────────────
+
+@bot.command()
+@commands.has_permissions(administrator=True)
+async def autospawn(ctx, delay: int = 10):
+    guild_id = str(ctx.guild.id)
+
+    # Calcul du prochain spawn (maintenant + 1 min)
+    next_spawn_time = datetime.datetime.utcnow() + datetime.timedelta(minutes=1)
+
+    # Recherche d’une config existante
+    existing = supabase.table("reiatsu_config").select("*").eq("guild_id", guild_id).execute()
+
+    if existing.data:
+        # Mise à jour
+        supabase.table("reiatsu_config").update({
+            "last_spawn_at": next_spawn_time.isoformat(),
+            "delay_minutes": delay
+        }).eq("guild_id", guild_id).execute()
+    else:
+        # Insertion
+        supabase.table("reiatsu_config").insert({
+            "guild_id": guild_id,
+            "last_spawn_at": next_spawn_time.isoformat(),
+            "delay_minutes": delay
+        }).execute()
+
+    await ctx.send(f"✅ Le spawn automatique est activé.\nPremier spawn dans **1 minute**, puis toutes les **{delay} minutes**.")
+
+@autospawn.error
+async def autospawn_error(ctx, error):
+    if isinstance(error, commands.MissingPermissions):
+        await ctx.send("🚫 Seuls les administrateurs peuvent utiliser cette commande.")
+    else:
+        await ctx.send(f"❌ Une erreur est survenue : {str(error)}")
+autospawn.category = "Reiatsu"
+
 
 # ─────────────────────────────────────────────
 # général
