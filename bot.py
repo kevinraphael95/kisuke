@@ -1690,6 +1690,9 @@ prefixe.category = "Admin"
 
 @bot.event
 async def on_command_error(ctx, error):
+    if not IS_MAIN_INSTANCE:
+        return  # Ignore les erreurs sur les instances secondaires
+
     if isinstance(error, commands.CommandOnCooldown):
         await ctx.send(f"🕒 Patiente un peu ! Réessaie dans {error.retry_after:.1f} secondes.")
     elif isinstance(error, commands.CommandNotFound):
@@ -1700,7 +1703,8 @@ async def on_command_error(ctx, error):
         await ctx.send("🚫 Tu n’as pas la permission pour cette commande.")
     else:
         await ctx.send("⚠️ Une erreur est survenue.")
-        raise error  # garde ceci pour continuer à voir les vraies erreurs si besoin
+        raise error
+
 
 
 
