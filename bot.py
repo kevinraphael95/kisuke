@@ -160,15 +160,18 @@ async def get_reiatsu_channel(bot, guild_id):
 class ReiatsuSpawner:
     def __init__(self, bot):
         self.bot = bot
-        self.next_spawn_timestamp = time.time() + random.randint(1800, 5400)  # 30 à 90 min
+        self.next_spawn_timestamp = time.time() + random.randint(1800, 5400)  # 30 à 90 minutes
         self.spawn_loop.start()
 
-
-    @tasks.loop(minutes=1)
+    @tasks.loop(seconds=60)
     async def spawn_loop(self):
         await self.bot.wait_until_ready()
-        self.next_spawn_timestamp = time.time() + random.randint(1800, 5400)
 
+        now = time.time()
+        if now < self.next_spawn_timestamp:
+            return  # ❌ Pas encore l'heure
+
+        # ✅ C’est l’heure ! On fait spawn
         for guild in self.bot.guilds:
             channel = await get_reiatsu_channel(self.bot, guild.id)
             if not channel:
@@ -205,10 +208,14 @@ class ReiatsuSpawner:
             except asyncio.TimeoutError:
                 await channel.send("Le Reiatsu s'est dissipé dans l'air... personne ne l'a absorbé.")
 
+        # 🔄 Prochain spawn dans 30 à 90 min
+        self.next_spawn_timestamp = time.time() + random.randint(1800, 5400)
+
     def time_until_next_spawn(self):
         if self.next_spawn_timestamp is None:
-            self.next_spawn_timestamp = time.time() + random.randint(1800, 3600)
+            self.next_spawn_timestamp = time.time() + random.randint(1800, 5400)
         return max(0, int(self.next_spawn_timestamp - time.time()))
+
 
 
 
