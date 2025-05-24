@@ -1676,19 +1676,28 @@ prefixe.category = "Admin"
 # en cas d'erreur
 # ─────────────────────────────────────────────
 
+from discord.ext.commands import CommandOnCooldown
+
 @bot.event
 async def on_command_error(ctx, error):
     if not getattr(bot, "is_main_instance", False):
-        return  # Ignore les erreurs si ce n’est pas l’instance principale
+        return
+
+    # ✅ Affiche un message clair en cas de cooldown
+    if isinstance(error, CommandOnCooldown):
+        temps = round(error.retry_after, 1)
+        await ctx.send(f"🕒 Cette commande est en cooldown. Réessaie dans {temps} seconde(s).")
+        return
 
     if isinstance(error, commands.MissingPermissions):
         await ctx.send("❌ Tu n'as pas les permissions pour cette commande.")
     elif isinstance(error, commands.MissingRequiredArgument):
         await ctx.send("❌ Il manque un argument à ta commande.")
     elif isinstance(error, commands.CommandNotFound):
-        return  # Ignore les fausses commandes
+        return
     else:
-        raise error  # Pour les autres, on laisse crash/log
+        raise error
+
 
 
 
