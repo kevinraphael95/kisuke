@@ -146,8 +146,14 @@ async def on_message(message):
     if message.author.bot:
         return
 
+    contenu = message.content.lower()
+
     # Répondre à la mention du bot
-    if bot.user in message.mentions and len(message.mentions) == 1 and message.content.strip().startswith(f"<@"):
+    if (
+        bot.user in message.mentions
+        and len(message.mentions) == 1
+        and message.content.strip().startswith(f"<@")
+    ):
         prefix = get_prefix(bot, message)
 
         embed = discord.Embed(
@@ -162,8 +168,7 @@ async def on_message(message):
         await message.channel.send(embed=embed)
         return
 
-    # Réponse aux mots-clés (comme "bleach")
-    contenu = message.content.lower()
+    # Réponse aux mots-clés (comme "bleach", "bankai", etc.)
     for mot in REPONSES:
         if mot in contenu:
             textes = REPONSES[mot]
@@ -178,12 +183,13 @@ async def on_message(message):
                     file = discord.File(chemin, filename=gif_choisi)
                     await message.channel.send(content=texte, file=file)
                     break
-            # Si pas de GIF, juste envoyer le message
+            # Si pas de GIF, envoyer seulement le texte
             await message.channel.send(texte)
             break
 
-    # Laisser les commandes fonctionner
+    # Exécuter les commandes (si !commande ou préfixe)
     await bot.process_commands(message)
+
 
 
 
