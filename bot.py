@@ -22,8 +22,6 @@ from dotenv import load_dotenv
 from dateutil import parser
 from datetime import datetime
 
-
-
 # Modules internes
 from supabase_client import supabase  # Fichier Supabase perso
 
@@ -31,49 +29,46 @@ from supabase_client import supabase  # Fichier Supabase perso
 # 🔧 Initialisation de l'environnement
 # ─────────────────────────────────────────────
 
-# Répertoire de travail
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
-
-# Charger les variables d’environnement (.env)
 load_dotenv()
+
 TOKEN = os.getenv("DISCORD_TOKEN")
 COMMAND_PREFIX = os.getenv("COMMAND_PREFIX", "!")
 INVITE_URL = os.getenv("INVITE_URL")
 app_id = os.getenv("DISCORD_APP_ID")
 
-# ID unique de cette instance du bot
-INSTANCE_ID = str(uuid.uuid4())  # 🔒 Sert à éviter les doubles exécutions Render
+# ID unique de cette instance — stockée dans un fichier pour la garder entre redémarrages
+INSTANCE_FILE = "instance_id.txt"
+if os.path.exists(INSTANCE_FILE):
+    with open(INSTANCE_FILE, "r") as f:
+        INSTANCE_ID = f.read().strip()
+else:
+    INSTANCE_ID = str(uuid.uuid4())
+    with open(INSTANCE_FILE, "w") as f:
+        f.write(INSTANCE_ID)
 
-# Charger les réponses préconfigurées
-REPONSES_JSON_PATH = "reponses.json"
-with open(REPONSES_JSON_PATH, encoding="utf-8") as f:
-    REPONSES = json.load(f)
+# Préfixe dynamique
+def get_prefix(bot, message):
+    return COMMAND_PREFIX
 
-# Dossier pour les fichiers gifs
-GIFS_FOLDER = "gifs"
-
-# ─────────────────────────────────────────────
-# ⚙️ Configuration du bot
-# ─────────────────────────────────────────────
-
-# Intents (droits d'accès aux événements Discord)
+# Intents et création du bot
 intents = discord.Intents.default()
 intents.message_content = True
 intents.reactions = True
 intents.guilds = True
 intents.members = True
 
-# Préfixe dynamique
-def get_prefix(bot, message):
-    return COMMAND_PREFIX
-
-# Création du bot
 bot = commands.Bot(command_prefix=get_prefix, intents=intents, help_command=None)
-bot.is_main_instance = False  # ✅ Ajoute cette ligne
+bot.is_main_instance = False  # Important pour éviter les doubles réponses
 
+# Charger les réponses préconfigurées
+with open("reponses.json", encoding="utf-8") as f:
+    REPONSES = json.load(f)
+
+GIFS_FOLDER = "gifs"
 
 # ─────────────────────────────────────────────
-# 🔔 Événements du bot
+# 🔔 Événement on_ready()
 # ─────────────────────────────────────────────
 
 @bot.event
@@ -82,7 +77,6 @@ async def on_ready():
     activity = discord.Activity(type=discord.ActivityType.watching, name="Bleach")
     await bot.change_presence(activity=activity)
 
-    # Vérifie ou prend le verrou
     now = datetime.utcnow().isoformat()
     lock = supabase.table("bot_lock").select("*").eq("id", "reiatsu_lock").execute()
 
@@ -95,17 +89,14 @@ async def on_ready():
         updated_at = parser.parse(existing["updated_at"]).timestamp()
         age = time.time() - updated_at
 
-        # Si vieux verrou (ex: instance morte), on le reprend
-        if age > 60:  # ⚠️ ici 60 secondes (tu peux mettre 30 ou 300)
+        if existing.get("instance_id") == INSTANCE_ID:
+            should_start = True
+        elif age > 60:
             should_start = True
         else:
-            # Même instance ? → on continue
-            if existing.get("instance_id") == INSTANCE_ID:
-                should_start = True
-            else:
-                print("⛔ Une autre instance est active. Ce bot reste passif.")
-                bot.is_main_instance = False
-                return
+            print("⛔ Une autre instance est active. Ce bot reste passif.")
+            bot.is_main_instance = False
+            return
 
     if should_start:
         supabase.table("bot_lock").upsert({
@@ -119,7 +110,6 @@ async def on_ready():
 
         if not hasattr(bot, "reiatsu_spawner"):
             bot.reiatsu_spawner = ReiatsuSpawner(bot)
-
         bot.reiatsu_spawner.resume()
         print("▶️ Spawn Reiatsu activé.")
 
