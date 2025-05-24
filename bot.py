@@ -582,6 +582,52 @@ async def ping(ctx):
 ping.category = "Général"
 
 
+# react
+# ─────────────────────────────────────────────
+
+@bot.command(aliases=["r"], name="react", help="Réagit au message répondu (ou précédent) avec un emoji animé, puis retire la réaction après 3 minutes.")
+async def react(ctx, emoji_name: str):
+    name = emoji_name.strip(":").lower()
+
+    # Trouver l'emoji animé correspondant
+    emoji = next((e for e in ctx.guild.emojis if e.animated and e.name.lower() == name), None)
+
+    if not emoji:
+        await ctx.send(f"❌ Emoji animé '{emoji_name}' introuvable.")
+        return
+
+    # Déterminer la cible : réponse ou message précédent
+    target_message = None
+
+    if ctx.message.reference:  # Si la commande répond à un message
+        try:
+            target_message = await ctx.channel.fetch_message(ctx.message.reference.message_id)
+        except discord.NotFound:
+            await ctx.send("❌ Le message référencé est introuvable.")
+            return
+    else:  # Sinon on prend le dernier message avant la commande
+        messages = await ctx.channel.history(limit=10).flatten()
+        for msg in messages:
+            if msg.id != ctx.message.id:
+                target_message = msg
+                break
+
+    if not target_message:
+        await ctx.send("❌ Aucun message valide trouvé pour réagir.")
+        return
+
+    try:
+        await target_message.add_reaction(emoji)
+        await ctx.send(f"✅ Réaction {str(emoji)} ajoutée. Elle sera retirée dans 3 minutes.")
+        await asyncio.sleep(180)
+        await target_message.remove_reaction(emoji, bot.user)
+    except discord.Forbidden:
+        await ctx.send("❌ Je n'ai pas la permission d'ajouter ou retirer des réactions.")
+    except discord.HTTPException:
+        await ctx.send("⚠️ Une erreur est survenue lors de la gestion des réactions.")
+react.category = "Général"
+
+
 # 🗣️ Say 
 # ─────────────────────────────────────────────
 
