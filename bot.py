@@ -514,37 +514,16 @@ tempsreiatsu.category = "Reiatsu"
 
 @bot.command()
 @commands.has_permissions(administrator=True)
-async def autospawn(ctx, delay: int = 10):
+async def autospawn(ctx):
     guild_id = str(ctx.guild.id)
+    next_spawn_time = datetime.utcnow() + timedelta(minutes=1)
 
-    # Calcul du prochain spawn (maintenant + 1 min)
-    next_spawn_time = datetime.datetime.utcnow() + datetime.timedelta(minutes=1)
+    # Mets à jour Supabase avec le timestamp du prochain spawn
+    supabase.table("reiatsu_config").update({
+        "last_spawn_at": next_spawn_time.isoformat()
+    }).eq("guild_id", guild_id).execute()
 
-    # Recherche d’une config existante
-    existing = supabase.table("reiatsu_config").select("*").eq("guild_id", guild_id).execute()
-
-    if existing.data:
-        # Mise à jour
-        supabase.table("reiatsu_config").update({
-            "last_spawn_at": next_spawn_time.isoformat(),
-            "delay_minutes": delay
-        }).eq("guild_id", guild_id).execute()
-    else:
-        # Insertion
-        supabase.table("reiatsu_config").insert({
-            "guild_id": guild_id,
-            "last_spawn_at": next_spawn_time.isoformat(),
-            "delay_minutes": delay
-        }).execute()
-
-    await ctx.send(f"✅ Le spawn automatique est activé.\nPremier spawn dans **1 minute**, puis toutes les **{delay} minutes**.")
-
-@autospawn.error
-async def autospawn_error(ctx, error):
-    if isinstance(error, commands.MissingPermissions):
-        await ctx.send("🚫 Seuls les administrateurs peuvent utiliser cette commande.")
-    else:
-        await ctx.send(f"❌ Une erreur est survenue : {str(error)}")
+    await ctx.send(f"✅ Le spawn automatique commencera dans 1 minute.")
 autospawn.category = "Reiatsu"
 
 
