@@ -9,7 +9,7 @@ class TuPrefCommand(commands.Cog):
         self.bot = bot
 
     @commands.command(name="tupref", help="Choisis ton personnage préféré entre deux options.")
-    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
+    @commands.cooldown(rate=1, per=3600, type=commands.BucketType.user)
     async def tupref(self, ctx):
         try:
             with open("data/bleach_personnages.json", "r", encoding="utf-8") as f:
