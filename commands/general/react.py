@@ -7,7 +7,7 @@ class ReactCommand(commands.Cog):
         self.bot = bot
 
     @commands.command(name="react", aliases=["r"], help="Réagit à un message avec un emoji animé, puis le retire après 3 minutes.")
-    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)  # 🕒 Cooldown de 5s par utilisateur
+    @commands.cooldown(rate=1, per=3, type=commands.BucketType.user)  # 🕒 Cooldown de 3s par utilisateur
     async def react(self, ctx, emoji_name: str):
         try:
             await ctx.message.delete()
