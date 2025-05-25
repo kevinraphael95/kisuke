@@ -8,10 +8,9 @@ class BMojiCommand(commands.Cog):
         self.bot = bot
 
     @commands.command(name="bmoji", help="Devine quel personnage Bleach se cache derrière cet emoji.")
-    @commands.cooldown(rate=1, per=3, type=commands.BucketType.user)  # 🕒 Cooldown utilisateur 3s
+    @commands.cooldown(rate=1, per=3, type=commands.BucketType.user)  # ⏱️ Cooldown 3s
     async def bmoji(self, ctx):
         try:
-            # 📄 Lecture du fichier JSON contenant les emojis et noms
             with open("data/bleach_emojis.json", "r", encoding="utf-8") as f:
                 personnages = json.load(f)
 
@@ -31,13 +30,12 @@ class BMojiCommand(commands.Cog):
             await ctx.send(f"{emoji_selection} → ||{nom}||")
 
         except FileNotFoundError:
-            await ctx.send("❌ Fichier `bleach_emojis.json` introuvable dans le dossier `data/`.")
+            await ctx.send("❌ Fichier `bleach_emojis.json` introuvable dans `data/`.")
         except Exception as e:
             await ctx.send(f"⚠️ Erreur inattendue : {e}")
 
     def cog_load(self):
-        self.bmoji.category = "Fun"  # ✅ Catégorie pour !help
+        self.bmoji.category = "Fun"
 
-# Chargement automatique
 async def setup(bot):
     await bot.add_cog(BMojiCommand(bot))
