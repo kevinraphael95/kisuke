@@ -6,11 +6,8 @@ class ReiatsuChannelCommand(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command(
-        name="reiatsuchannel",
-        aliases=["rtschannel"],
-        help="Affiche le salon configuré pour le spawn de Reiatsu. (Admin uniquement)"
-    )
+    @commands.command(name="reiatsuchannel", aliases=["rtschannel"], help="Affiche le salon configuré pour le spawn de Reiatsu. (Admin uniquement)")
+    @commands.cooldown(rate=1, per=3, type=commands.BucketType.user)  # 🕒 Cooldown 3s
     @commands.has_permissions(administrator=True)
     async def reiatsuchannel(self, ctx):
         guild_id = str(ctx.guild.id)
