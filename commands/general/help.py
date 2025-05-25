@@ -1,6 +1,6 @@
 import discord
 from discord.ext import commands
-from bot import get_prefix  # on importe uniquement la fonction
+from bot import get_prefix  # uniquement la fonction
 
 class HelpCommand(commands.Cog):
     def __init__(self, bot):
@@ -52,12 +52,10 @@ class HelpCommand(commands.Cog):
                 embed.set_footer(text="Paramètres entre < > = obligatoires | [ ] = optionnels")
                 await ctx.send(embed=embed)
 
-    # ✅ Assure la catégorie (pour affichage structuré)
-    @help_command.before_invoke
-    async def before_help(self, ctx):
-        self.help_command.category = "Général"
+    # Ajoute la catégorie directement après définition
+    help_command.category = "Général"
 
-# 🔁 Extension async pour chargement
+# Chargement auto
 async def setup(bot):
     await bot.add_cog(HelpCommand(bot))
     print("✅ Commande help chargée")
