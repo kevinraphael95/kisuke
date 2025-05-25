@@ -7,6 +7,7 @@ class ReiatsuCommand(commands.Cog):
         self.bot = bot
 
     @commands.command(name="reiatsu", aliases=["rts"], help="Affiche le score de Reiatsu d'un membre (ou soi-même).")
+    @commands.cooldown(rate=1, per=3, type=commands.BucketType.user)  # 🕒 Cooldown 3s
     async def reiatsu(self, ctx, member: discord.Member = None):
         user = member or ctx.author
         data = supabase.table("reiatsu").select("points").eq("user_id", str(user.id)).execute()
