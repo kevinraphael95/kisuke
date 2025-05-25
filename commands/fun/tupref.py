@@ -16,10 +16,12 @@ class TuPrefCommand(commands.Cog):
                 persos = json.load(f)
 
             p1, p2 = random.sample(persos, 2)
+            nom1 = p1["nom"]
+            nom2 = p2["nom"]
 
             embed = discord.Embed(
                 title="Tu préfères qui ? 🤔",
-                description=f"⚔️ {p1} **ou** 🛡️ {p2}",
+                description=f"⚔️ {nom1} **ou** 🛡️ {nom2}",
                 color=discord.Color.orange()
             )
             message = await ctx.send(embed=embed)
@@ -39,10 +41,10 @@ class TuPrefCommand(commands.Cog):
                 await ctx.send("⏰ Temps écoulé.")
                 return
 
-            selected = p1 if str(reaction.emoji) == "⚔️" else p2
+            selected = nom1 if str(reaction.emoji) == "⚔️" else nom2
 
             # Vérifie si le perso existe déjà dans la DB
-            data = supabase.table("perso_votes").select("*").eq("nom", selected).execute()
+            data = supabase.table("perso_votes").select("votes").eq("nom", selected).execute()
             if data.data:
                 votes = data.data[0]["votes"] + 1
                 supabase.table("perso_votes").update({"votes": votes}).eq("nom", selected).execute()
