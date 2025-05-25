@@ -1,5 +1,3 @@
-# 📁 commands/reiatsu/spawner.py
-
 import asyncio
 import random
 import time
@@ -8,7 +6,6 @@ from dateutil import parser
 
 import discord
 from discord.ext import commands, tasks
-
 from supabase_client import supabase
 
 class ReiatsuSpawner(commands.Cog):
@@ -25,22 +22,25 @@ class ReiatsuSpawner(commands.Cog):
         await self.bot.wait_until_ready()
 
         if not getattr(self.bot, "is_main_instance", False):
-            return
+            return  # Gère le spawn depuis une seule instance
 
         now = int(time.time())
 
         configs = supabase.table("reiatsu_config") \
-            .select("guild_id", "channel_id", "last_spawn_at", "delay_minutes") \
+            .select("guild_id", "channel_id", "last_spawn_at", "delay_minutes", "en_attente") \
             .execute()
 
         for conf in configs.data:
             guild_id = conf["guild_id"]
             channel_id = conf.get("channel_id")
-            if not channel_id:
+            en_attente = conf.get("en_attente", False)
+            delay = conf.get("delay_minutes") or 1800
+
+            if not channel_id or en_attente:
                 continue
 
             last_spawn_str = conf.get("last_spawn_at")
-            delay = conf.get("delay_minutes") or 1800
+            should_spawn = False
 
             if not last_spawn_str:
                 should_spawn = True
@@ -55,13 +55,16 @@ class ReiatsuSpawner(commands.Cog):
             if not channel:
                 continue
 
+            # 🔒 Marque comme en attente
+            supabase.table("reiatsu_config").update({"en_attente": True}).eq("guild_id", guild_id).execute()
+
             embed = discord.Embed(
                 title="💠 Un Reiatsu sauvage apparaît !",
                 description="Cliquez sur la réaction 💠 pour l'absorber.",
                 color=discord.Color.purple()
             )
             message = await channel.send(embed=embed)
-            await message.add_reaction("\U0001f4a0")
+            await message.add_reaction("💠")
 
             def check(reaction, user):
                 return (
@@ -89,10 +92,12 @@ class ReiatsuSpawner(commands.Cog):
             except asyncio.TimeoutError:
                 await channel.send("Le Reiatsu s'est dissipé dans l'air... personne ne l'a absorbé.")
 
+            # 🔄 Nouveau délai et fin du lock
             new_delay = random.randint(1800, 5400)
             supabase.table("reiatsu_config").update({
                 "last_spawn_at": datetime.utcnow().isoformat(),
-                "delay_minutes": new_delay
+                "delay_minutes": new_delay,
+                "en_attente": False
             }).eq("guild_id", guild_id).execute()
 
 async def setup(bot):
