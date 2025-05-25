@@ -8,9 +8,9 @@ class FunFactCommand(commands.Cog):
         self.bot = bot
 
     @commands.command(name="funfact", help="Donne un funfact sur Bleach écrit par ChatGPT.")
+    @commands.cooldown(rate=1, per=3, type=commands.BucketType.user)  # ⏱️ Cooldown 3s
     async def funfact(self, ctx):
         try:
-            # Lecture depuis data/funfacts_bleach.json
             with open("data/funfacts_bleach.json", "r", encoding="utf-8") as f:
                 facts = json.load(f)
 
@@ -26,9 +26,9 @@ class FunFactCommand(commands.Cog):
         except Exception as e:
             await ctx.send(f"⚠️ Une erreur est survenue : {e}")
 
-# Chargement du cog et ajout de la catégorie
+    def cog_load(self):
+        self.funfact.category = "Fun"  # ✅ Catégorie assignée proprement
+
+# Chargement automatique du cog
 async def setup(bot):
-    cog = FunFactCommand(bot)
-    for command in cog.get_commands():
-        command.category = "Fun"
-    await bot.add_cog(cog)
+    await bot.add_cog(FunFactCommand(bot))
