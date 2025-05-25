@@ -11,25 +11,58 @@ class RPG(commands.Cog):
             self.scenario = json.load(f)
 
     @commands.command(name="rpg", help="Débute ou continue ton histoire de Shinigami à Karakura.")
-    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)  # cooldown de 5 sec
+    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def rpg(self, ctx):
         user_id = str(ctx.author.id)
 
-        # Récupère l'étape sauvegardée
-        data = supabase.table("rpg_save").select("etape").eq("user_id", user_id).execute()
-        etape = data.data[0]["etape"] if data.data else "start"
+        # Cherche une sauvegarde existante
+        data = supabase.table("rpg_save").select("*").eq("user_id", user_id).execute()
+        save = data.data[0] if data.data else None
+        etape = save["etape"] if save else "start"
+        character_name = save["character_name"] if save and "character_name" in save else None
 
-        await self.jouer_etape(ctx, etape)
+        # Si pas encore de nom, demander au joueur
+        if etape == "start" and not character_name:
+            prompt = await ctx.send(f"{ctx.author.mention}, comment veux-tu appeler ton personnage Shinigami ? (Réponds à **ce message** dans les 5 minutes)")
 
-    async def jouer_etape(self, ctx, etape_id):
+            def check(m):
+                return (
+                    m.author == ctx.author and
+                    m.reference and m.reference.message_id == prompt.id
+                )
+
+            try:
+                msg = await self.bot.wait_for("message", timeout=300.0, check=check)
+                character_name = msg.content.strip()
+
+                # Créer la sauvegarde
+                supabase.table("rpg_save").upsert({
+                    "user_id": user_id,
+                    "username": ctx.author.name,
+                    "etape": "start",
+                    "character_name": character_name
+                }, on_conflict=["user_id"]).execute()
+
+                await ctx.send(f"✨ Ton personnage s'appelle **{character_name}**. Bonne aventure !")
+            except asyncio.TimeoutError:
+                await ctx.send("⏰ Tu n'as pas répondu à temps. Relance la commande `!rpg` pour recommencer.")
+                return
+
+        # Lancer l’étape
+        await self.jouer_etape(ctx, etape, character_name)
+
+    async def jouer_etape(self, ctx, etape_id, character_name):
         etape = self.scenario.get(etape_id)
         if not etape:
             await ctx.send("❌ Erreur : cette étape du scénario est introuvable.")
             return
 
+        # Remplacement du nom dans le texte
+        texte = etape["texte"].replace("{nom}", character_name or ctx.author.display_name)
+
         embed = discord.Embed(
             title="🗺️ RPG Bleach - Brigade de Karakura",
-            description=etape["texte"],
+            description=texte,
             color=discord.Color.dark_purple()
         )
 
@@ -43,31 +76,27 @@ class RPG(commands.Cog):
             await message.add_reaction(emoji)
 
         def check(reaction, user):
-            return (
-                user == ctx.author and
-                reaction.message.id == message.id and
-                str(reaction.emoji) in emojis
-            )
+            return user == ctx.author and reaction.message.id == message.id and str(reaction.emoji) in emojis
 
         try:
-            reaction, _ = await self.bot.wait_for("reaction_add", timeout=60.0, check=check)
+            reaction, _ = await self.bot.wait_for("reaction_add", timeout=300.0, check=check)  # ⏳ 5 min
         except asyncio.TimeoutError:
             await ctx.send("⏰ Temps écoulé. Ton aventure reprendra plus tard.")
             return
 
-        # Trouver l'étape suivante
         for choix in etape["choix"]:
             if choix["emoji"] == str(reaction.emoji):
                 next_etape = choix["suivant"]
 
-                # Sauvegarder progression
+                # Mise à jour de la sauvegarde
                 supabase.table("rpg_save").upsert({
                     "user_id": str(ctx.author.id),
-                    "username": str(ctx.author.name),
-                    "etape": next_etape
-                }).execute()
+                    "username": ctx.author.name,
+                    "etape": next_etape,
+                    "character_name": character_name
+                }, on_conflict=["user_id"]).execute()
 
-                await self.jouer_etape(ctx, next_etape)
+                await self.jouer_etape(ctx, next_etape, character_name)
                 return
 
 # Chargement automatique
