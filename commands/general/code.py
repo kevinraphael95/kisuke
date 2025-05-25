@@ -11,6 +11,10 @@ class CodeCommand(commands.Cog):
     async def code(self, ctx):
         await ctx.send("🔗 Code source du bot : https://github.com/kevinraphael95/bleach-discord-bot-test")
 
+    # 🛠️ Ajout de la catégorie une fois le Cog chargé
+    def cog_load(self):
+        self.code.category = "Général"
+
 # Chargement automatique par le bot
 async def setup(bot):
     await bot.add_cog(CodeCommand(bot))
