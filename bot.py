@@ -113,6 +113,7 @@ async def on_ready():
 # ──────────────────────────────────────────────────────────────
 @bot.event
 async def on_message(message):
+    # Vérifie si c’est bien l’instance principale
     lock = supabase.table("bot_lock").select("instance_id").eq("id", "reiatsu_lock").execute()
     if lock.data and lock.data[0]["instance_id"] != INSTANCE_ID:
         return
@@ -122,6 +123,7 @@ async def on_message(message):
 
     contenu = message.content.lower()
 
+    # Réaction auto via mot-clé
     for mot in REPONSES:
         if mot in contenu:
             texte = random.choice(REPONSES[mot])
@@ -135,7 +137,30 @@ async def on_message(message):
             await message.channel.send(texte)
             return
 
+    # ✅ Nouveau bloc pour réponse si bot est mentionné
+    if (
+        bot.user in message.mentions
+        and len(message.mentions) == 1
+        and message.content.strip().startswith(f"<@{bot.user.id}")
+    ):
+        prefix = get_prefix(bot, message)
+
+        embed = discord.Embed(
+            title="Bleach Bot",
+            description="Bonjour, je suis un bot basé sur l'univers de **Bleach** !\n"
+                        f"Mon préfixe est : `{prefix}`\n\n"
+                        f"📜 Tape `{prefix}help` pour voir toutes les commandes disponibles.",
+            color=discord.Color.orange()
+        )
+        if bot.user.avatar:
+            embed.set_thumbnail(url=bot.user.avatar.url)
+        embed.set_footer(text="Zangetsu veille sur toi.")
+        await message.channel.send(embed=embed)
+        return
+
+    # Exécution des commandes classiques
     await bot.process_commands(message)
+
 
 # ──────────────────────────────────────────────────────────────
 # 🚀 Lancement
