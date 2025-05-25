@@ -3,15 +3,15 @@ import json
 import asyncio
 from discord.ext import commands
 
-class RPGBleach(commands.Cog):
+class rpg(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         with open("data/rpg_bleach.json", "r", encoding="utf-8") as f:
             self.scenario = json.load(f)
 
-    @commands.command(name="rpgbleach", help="Débute une histoire interactive en tant que Shinigami de Karakura.")
+    @commands.command(name="rpg", help="Débute une histoire interactive en tant que Shinigami de Karakura.")
     @commands.cooldown(rate=1, per=300, type=commands.BucketType.user)  # 5 min cooldown
-    async def rpgbleach(self, ctx):
+    async def rpg(self, ctx):
         await self.jouer_etape(ctx, "start")
 
     async def jouer_etape(self, ctx, etape_id):
@@ -49,7 +49,7 @@ class RPGBleach(commands.Cog):
 
 # Chargement automatique
 async def setup(bot):
-    cog = RPGBleach(bot)
+    cog = rpg(bot)
     for command in cog.get_commands():
         command.category = "Fun"
     await bot.add_cog(cog)
