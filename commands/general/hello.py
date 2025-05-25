@@ -28,6 +28,9 @@ class HelloCommand(commands.Cog):
         except json.JSONDecodeError:
             await ctx.send("❌ Erreur de lecture du fichier `hello_messages.json`.")
 
+    def cog_load(self):
+        self.hello.category = "Général"  # ✅ Ajout de la catégorie ici
+
 # Chargement automatique
 async def setup(bot):
     await bot.add_cog(HelloCommand(bot))
