@@ -7,10 +7,7 @@ class RecommandeCommand(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command(
-        name="recommande",
-        help="commande + solo ou multi. Le bot te recommande un jeu avec année et genre."
-    )
+    @commands.command(name="recommande", help="commande + solo ou multi. Le bot te recommande un jeu avec année et genre.")
     @commands.cooldown(rate=1, per=3, type=commands.BucketType.user)  # ⏱️ Cooldown utilisateur 3s
     async def recommande(self, ctx, type_jeu: str = None):
         if type_jeu is None:
