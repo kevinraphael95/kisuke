@@ -8,9 +8,10 @@ class SfmCommand(commands.Cog):
         self.bot = bot
 
     @commands.command(name="sfm", help="Combat entre Shinigami, Quincy et Hollow !")
+    @commands.cooldown(rate=1, per=3, type=commands.BucketType.user)  # ⏱️ Cooldown 3s
     async def sfm(self, ctx, adversaire: discord.Member = None):
         joueur1 = ctx.author
-        joueur2 = adversaire or self.bot.user  # Si aucun adversaire : bot
+        joueur2 = adversaire or self.bot.user
 
         emojis = {
             "shinigami": "🗡️",
@@ -67,7 +68,6 @@ class SfmCommand(commands.Cog):
 
             choix_j2 = next(race for race, emoji in emojis.items() if emoji == str(reaction2.emoji))
 
-        # Résultat
         if choix_j1 == choix_j2:
             result = "⚖️ Égalité parfaite entre deux âmes puissantes !"
         elif forces[choix_j1] == choix_j2:
@@ -81,7 +81,7 @@ class SfmCommand(commands.Cog):
             f"{result}"
         )
 
-# Chargement auto du Cog
+# Chargement auto
 async def setup(bot):
     cog = SfmCommand(bot)
     for command in cog.get_commands():
