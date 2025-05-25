@@ -6,6 +6,9 @@ class HelpCommand(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
+        # ✅ On définit la catégorie ici pour la rendre accessible plus tôt
+        self.help_command.category = "Général"
+
     @commands.command(name="help", help="Affiche la liste des commandes ou les infos sur une commande spécifique.")
     async def help_command(self, ctx, commande: str = None):
         prefix = get_prefix(self.bot, ctx.message)
@@ -52,10 +55,7 @@ class HelpCommand(commands.Cog):
                 embed.set_footer(text="Paramètres entre < > = obligatoires | [ ] = optionnels")
                 await ctx.send(embed=embed)
 
-    # Ajoute la catégorie directement après définition
-    help_command.category = "Général"
-
-# Chargement auto
+# ✅ Chargement de l'extension
 async def setup(bot):
     await bot.add_cog(HelpCommand(bot))
     print("✅ Commande help chargée")
