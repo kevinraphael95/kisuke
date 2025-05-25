@@ -6,7 +6,7 @@ class UnsetReiatsuCommand(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command(name="unsetreiatsu", aliases=["unsetrts"], help="Supprime le salon configuré pour le spawn de Reiatsu. (Admin uniquement)"0
+    @commands.command(name="unsetreiatsu", aliases=["unsetrts"], help="Supprime le salon configuré pour le spawn de Reiatsu. (Admin uniquement)"
     @commands.cooldown(rate=1, per=3, type=commands.BucketType.user)  # 🕒 Cooldown 3s)
     @commands.has_permissions(administrator=True)
     async def unsetreiatsu(self, ctx):
