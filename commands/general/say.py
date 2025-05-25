@@ -6,7 +6,7 @@ class SayCommand(commands.Cog):
         self.bot = bot
 
     @commands.command(help="Fait répéter un message par le bot et supprime le message d'origine.")
-    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)  # ⏱️ Cooldown de 5s
+    @commands.cooldown(rate=1, per=3, type=commands.BucketType.user)  # ⏱️ Cooldown de 3s
     async def say(self, ctx, *, message: str):
         try:
             # 🧽 Supprime le message d’origine
