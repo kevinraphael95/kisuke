@@ -6,11 +6,7 @@ class Leaderboard(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command(
-        name="leaderboard",
-        aliases=["toprts", "topreiatsu", "leadb"],
-        help="Affiche le classement Reiatsu."
-    )
+    @commands.command(name="leaderboard", aliases=["toprts", "topreiatsu", "leadb"], help="Affiche le classement Reiatsu.")
     @commands.cooldown(rate=1, per=3, type=commands.BucketType.user)  # ⏱️ Cooldown 3s par utilisateur
     async def leaderboard(self, ctx, limit: int = 10):
         """Affiche le classement des membres avec le plus de points de Reiatsu."""
