@@ -161,6 +161,29 @@ async def on_message(message):
     # Exécution des commandes classiques
     await bot.process_commands(message)
 
+# ──────────────────────────────────────────────────────────────
+# ❗ Gestion des erreurs de commandes
+# ──────────────────────────────────────────────────────────────
+@bot.event
+async def on_command_error(ctx, error):
+    if isinstance(error, commands.CommandOnCooldown):
+        retry = round(error.retry_after, 1)
+        await ctx.send(f"⏳ Cette commande est en cooldown. Réessaie dans `{retry}` secondes.")
+    
+    elif isinstance(error, commands.MissingPermissions):
+        await ctx.send("❌ Tu n'as pas les permissions pour cette commande.")
+    
+    elif isinstance(error, commands.MissingRequiredArgument):
+        await ctx.send("⚠️ Il manque un argument à cette commande.")
+    
+    elif isinstance(error, commands.CommandNotFound):
+        return  # ignore les commandes non reconnues
+
+    else:
+        # 🔧 En dev : utile pour voir les autres erreurs
+        raise error
+
+
 
 # ──────────────────────────────────────────────────────────────
 # 🚀 Lancement
