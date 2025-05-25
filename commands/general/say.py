@@ -21,6 +21,9 @@ class SayCommand(commands.Cog):
         # 💬 Envoie le message à la place de l'utilisateur
         await ctx.send(message)
 
+    def cog_load(self):
+        self.say.category = "Général"  # ✅ Catégorie ajoutée pour la commande !help
+
 # Chargement du module
 async def setup(bot):
     await bot.add_cog(SayCommand(bot))
