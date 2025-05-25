@@ -7,7 +7,11 @@ class PartiCommand(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command(name="parti", help="Génère un nom de parti politique aléatoire.")
+    @commands.command(
+        name="parti",
+        help="Génère un nom de parti politique aléatoire."
+    )
+    @commands.cooldown(rate=1, per=3, type=commands.BucketType.user)  # ⏱️ Cooldown 3s
     async def parti(self, ctx):
         try:
             with open("data/partis_data.json", "r", encoding="utf-8") as f:
@@ -29,9 +33,9 @@ class PartiCommand(commands.Cog):
         except Exception as e:
             await ctx.send(f"⚠️ Une erreur est survenue : {e}")
 
-# Chargement automatique du module
+    def cog_load(self):
+        self.parti.category = "Fun"  # ✅ Catégorie utilisée par la commande `help`
+
+# Chargement automatique
 async def setup(bot):
-    cog = PartiCommand(bot)
-    for command in cog.get_commands():
-        command.category = "Fun"
-    await bot.add_cog(cog)
+    await bot.add_cog(PartiCommand(bot))
