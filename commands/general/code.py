@@ -7,7 +7,7 @@ class CodeCommand(commands.Cog):
         self.bot = bot
 
     @commands.command(name="code", help="Affiche le lien du code du bot sur GitHub.")
-    @commands.cooldown(rate=1, per=10, type=commands.BucketType.user)  # 🕒 Cooldown utilisateur de 10s
+    @commands.cooldown(rate=1, per=3, type=commands.BucketType.user)  # 🕒 Cooldown utilisateur de 3s
     async def code(self, ctx):
         await ctx.send("🔗 Code source du bot : https://github.com/kevinraphael95/bleach-discord-bot-test")
 
