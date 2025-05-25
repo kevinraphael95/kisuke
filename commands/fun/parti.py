@@ -7,10 +7,7 @@ class PartiCommand(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command(
-        name="parti",
-        help="Génère un nom de parti politique aléatoire."
-    )
+    @commands.command(name="parti", help="Génère un nom de parti politique aléatoire.")
     @commands.cooldown(rate=1, per=3, type=commands.BucketType.user)  # ⏱️ Cooldown 3s
     async def parti(self, ctx):
         try:
