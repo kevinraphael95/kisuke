@@ -36,7 +36,7 @@ class InfoCommand(commands.Cog):
 
         embed.add_field(
             name="🧘 Nouvelles commandes",
-            value="- tupref\ntopperso",
+            value="- tupref\n- topperso",
             inline=False
         )
 
