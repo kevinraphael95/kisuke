@@ -11,6 +11,7 @@ class VersusCommand(commands.Cog):
         self.bot = bot
 
     @commands.command(name="versus", help="Combat interactif entre deux joueurs avec des personnages Bleach.")
+    @commands.cooldown(rate=1, per=3, type=commands.BucketType.user)  # ⏱️ Cooldown utilisateur 3s
     async def versus(self, ctx):
         try:
             with open("data/bleach_personnages.json", "r", encoding="utf-8") as f:
