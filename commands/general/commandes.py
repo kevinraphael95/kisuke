@@ -8,6 +8,7 @@ class CommandesCommand(commands.Cog):
         self.bot = bot
 
     @commands.command(name="commandes", help="Affiche toutes les commandes disponibles, classées par catégorie.")
+    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)  # 🕒 Cooldown 5s
     async def commandes(self, ctx: Context):
         prefix = get_prefix(self.bot, ctx.message)
 
