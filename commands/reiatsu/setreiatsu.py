@@ -6,11 +6,8 @@ class SetReiatsuCommand(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command(
-        name="setreiatsu",
-        aliases=["setrts"],
-        help="Définit le salon actuel comme le salon Reiatsu. (Admin uniquement)"
-    )
+    @commands.command(name="setreiatsu", aliases=["setrts"], help="Définit le salon actuel comme le salon Reiatsu. (Admin uniquement)")
+    @commands.cooldown(rate=1, per=3, type=commands.BucketType.user)  # 🕒 Cooldown 3s
     @commands.has_permissions(administrator=True)
     async def setreiatsu(self, ctx):
         channel_id = ctx.channel.id
