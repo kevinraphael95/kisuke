@@ -28,8 +28,7 @@ class InfoCommand(commands.Cog):
 
         embed.add_field(
             name="🧘 Commandes Reiatsu",
-            value="Les **commandes Reiatsu** ont été **supprimées temporairement**.\n"
-                  "Elles seront **réintégrées si possible** prochainement. Si j'y arrive.",
+            value="Les **commandes Reiatsu** seront **réintégrées si possible** prochainement. Si j'y arrive.",
             inline=False
         )
 
