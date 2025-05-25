@@ -11,7 +11,7 @@ class RPG(commands.Cog):
             self.scenario = json.load(f)
 
     @commands.command(name="rpg", help="Débute ou continue ton histoire de Shinigami à Karakura.")
-    @commands.cooldown(rate=1, per=300, type=commands.BucketType.user)  # cooldown de 5 min
+    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)  # cooldown de 5 sec
     async def rpg(self, ctx):
         user_id = str(ctx.author.id)
 
