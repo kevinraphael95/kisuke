@@ -8,6 +8,7 @@ class PhraseCommand(commands.Cog):
         self.bot = bot
 
     @commands.command(name="phrase", help="Génère une phrase aléatoire avec accords (via JSON).")
+    @commands.cooldown(rate=1, per=3, type=commands.BucketType.user)  # ⏱️ Cooldown 3s
     async def phrase(self, ctx):
         try:
             with open("data/phrases_listes.json", "r", encoding="utf-8") as f:
@@ -26,16 +27,8 @@ class PhraseCommand(commands.Cog):
             adverbe = random.choice(data["adverbes"])
 
             # Détermination de l’article pour le sujet
-            if sujet[0].lower() in "aeiou":
-                article_sujet = "L'"
-            else:
-                article_sujet = "Le " if genre_sujet == "m" else "La "
-
-            # Détermination de l’article pour le complément
-            if complement[0].lower() in "aeiou":
-                article_complement = "l'"
-            else:
-                article_complement = "le " if genre_complement == "m" else "la "
+            article_sujet = "L'" if sujet[0].lower() in "aeiou" else ("Le " if genre_sujet == "m" else "La ")
+            article_complement = "l'" if complement[0].lower() in "aeiou" else ("le " if genre_complement == "m" else "la ")
 
             phrase_complete = f"{article_sujet}{sujet} {verbe} {article_complement}{complement} {adverbe}."
             await ctx.send(phrase_complete)
