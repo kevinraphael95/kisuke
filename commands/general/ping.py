@@ -16,6 +16,9 @@ class PingCommand(commands.Cog):
         )
         await ctx.send(embed=embed)
 
+    def cog_load(self):
+        self.ping.category = "Général"  # ✅ Définit la catégorie visible dans !help
+
 # Chargement automatique du module
 async def setup(bot):
     await bot.add_cog(PingCommand(bot))
