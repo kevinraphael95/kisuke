@@ -7,7 +7,11 @@ class HollowifyCommand(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command(name="hollowify", help="Transforme un utilisateur en Hollow avec une description stylée.")
+    @commands.command(
+        name="hollowify",
+        help="Transforme un utilisateur en Hollow avec une description stylée."
+    )
+    @commands.cooldown(rate=1, per=3, type=commands.BucketType.user)  # ⏱️ Cooldown 3s
     async def hollowify(self, ctx, member: discord.Member = None):
         member = member or ctx.author
 
@@ -35,9 +39,9 @@ class HollowifyCommand(commands.Cog):
         except Exception as e:
             await ctx.send(f"❌ Une erreur est survenue : {e}")
 
-# Chargement du cog et ajout de la catégorie
+    def cog_load(self):
+        self.hollowify.category = "Fun"  # ✅ Catégorie pour affichage help
+
+# Chargement du cog
 async def setup(bot):
-    cog = HollowifyCommand(bot)
-    for command in cog.get_commands():
-        command.category = "Fun"
-    await bot.add_cog(cog)
+    await bot.add_cog(HollowifyCommand(bot))
