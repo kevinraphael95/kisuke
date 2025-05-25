@@ -11,6 +11,7 @@ class ChiffreCommand(commands.Cog):
         self.bot = bot
 
     @commands.command(name="chiffre", help="Devine un nombre entre 1 et 100.")
+    @commands.cooldown(rate=1, per=3, type=commands.BucketType.user)  # 🕒 Cooldown 3s
     async def chiffre(self, ctx):
         if ctx.channel.id in active_games:
             await ctx.send("⚠️ Un jeu est déjà en cours dans ce salon. Utilisez `!cancel` pour l'annuler.")
