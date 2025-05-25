@@ -6,6 +6,7 @@ class InfoCommand(commands.Cog):
         self.bot = bot
 
     @commands.command(name="info", help="Affiche des informations sur l'état du bot.")
+    @commands.cooldown(rate=1, per=3, type=commands.BucketType.user)  # 🕒 Cooldown 3s
     async def info(self, ctx):
         embed = discord.Embed(
             title="📊 État du bot",
