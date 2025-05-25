@@ -6,8 +6,12 @@ class ReactCommand(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command(name="react", aliases=["r"], help="Réagit à un message avec un emoji animé, puis le retire après 3 minutes.")
-    @commands.cooldown(rate=1, per=3, type=commands.BucketType.user)  # 🕒 Cooldown de 3s par utilisateur
+    @commands.command(
+        name="react",
+        aliases=["r"],
+        help="Réagit à un message avec un emoji animé, puis le retire après 3 minutes."
+    )
+    @commands.cooldown(rate=1, per=3, type=commands.BucketType.user)  # 🕒 Cooldown de 3s
     async def react(self, ctx, emoji_name: str):
         try:
             await ctx.message.delete()
@@ -50,6 +54,9 @@ class ReactCommand(commands.Cog):
             print(f"🔁 Réaction {emoji} retirée du message {target_message.id}")
         except Exception as e:
             print(f"⚠️ Erreur de réaction : {e}")
+
+    def cog_load(self):
+        self.react.category = "Général"  # ✅ Ajoute la commande dans la catégorie Générale
 
 # Chargement automatique du module
 async def setup(bot):
