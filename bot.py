@@ -11,6 +11,7 @@ import json
 import uuid
 import random
 from datetime import datetime, timezone
+import asyncio  # ✅ Nécessaire pour lancer le bot de manière asynchrone
 
 # ──────────────────────────────────────────────────────────────
 # 📦 Modules tiers
@@ -71,7 +72,7 @@ GIFS_FOLDER = "gifs"
 # ──────────────────────────────────────────────────────────────
 # 🔌 Chargement dynamique des commandes depuis /commands/*
 # ──────────────────────────────────────────────────────────────
-def load_commands():
+async def load_commands():
     for category in os.listdir("commands"):
         cat_path = os.path.join("commands", category)
         if os.path.isdir(cat_path):
@@ -79,7 +80,7 @@ def load_commands():
                 if filename.endswith(".py"):
                     path = f"commands.{category}.{filename[:-3]}"
                     try:
-                        bot.load_extension(path)
+                        await bot.load_extension(path)  # ✅ async / await
                         print(f"✅ Loaded {path}")
                     except Exception as e:
                         print(f"❌ Failed to load {path}: {e}")
@@ -112,7 +113,6 @@ async def on_ready():
 # ──────────────────────────────────────────────────────────────
 @bot.event
 async def on_message(message):
-    # Vérifie si c’est bien l’instance autorisée
     lock = supabase.table("bot_lock").select("instance_id").eq("id", "reiatsu_lock").execute()
     if lock.data and lock.data[0]["instance_id"] != INSTANCE_ID:
         return
@@ -122,7 +122,6 @@ async def on_message(message):
 
     contenu = message.content.lower()
 
-    # Réactions automatiques via mots-clés (depuis reponses.json)
     for mot in REPONSES:
         if mot in contenu:
             texte = random.choice(REPONSES[mot])
@@ -143,5 +142,9 @@ async def on_message(message):
 # ──────────────────────────────────────────────────────────────
 if __name__ == "__main__":
     keep_alive()
-    load_commands()
-    bot.run(TOKEN)
+
+    async def start():
+        await load_commands()
+        await bot.start(TOKEN)
+
+    asyncio.run(start())
