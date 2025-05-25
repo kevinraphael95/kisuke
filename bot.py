@@ -108,6 +108,11 @@ async def on_ready():
     bot.is_main_instance = True
     print(f"✅ Instance principale active : {INSTANCE_ID}")
 
+    # ⬇️ Ajout du spawner
+    await bot.load_extension("commands.reiatsu.spawner")
+    print("✅ Spawner Reiatsu chargé.")
+
+
 # ──────────────────────────────────────────────────────────────
 # 📩 Message reçu : réagir aux mots-clés et lancer les commandes
 # ──────────────────────────────────────────────────────────────
