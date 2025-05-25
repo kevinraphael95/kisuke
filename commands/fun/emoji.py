@@ -6,6 +6,7 @@ class EmojiCommand(commands.Cog):
         self.bot = bot
 
     @commands.command(name="emoji", aliases=["e"], help="Affiche un ou plusieurs emojis du serveur.")
+    @commands.cooldown(rate=1, per=3, type=commands.BucketType.user)  # ⏱️ Cooldown utilisateur 3s
     async def emoji(self, ctx, *emoji_names):
         try:
             await ctx.message.delete()  # Supprime la commande
