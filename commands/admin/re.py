@@ -18,11 +18,9 @@ class RedemarrageCommand(commands.Cog):
         # Envoie l'embed de redémarrage
         embed = discord.Embed(
             title="🔃 Redémarrage",
-            description="Le bot va redémarrer sous peu. Merci de patienter...",
+            description="Le bot va redémarrer sous peu.",
             color=discord.Color.red()
         )
-        embed.set_footer(text="Bleach Bot - Préparation au redémarrage")
-        await ctx.send(embed=embed)
 
 # Chargement automatique
 async def setup(bot):
