@@ -6,7 +6,11 @@ class PersoCommand(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command(name="perso", help="Découvre quel personnage de Bleach tu es (toujours le même pour toi).")
+    @commands.command(
+        name="perso",
+        help="Découvre quel personnage de Bleach tu es (toujours le même pour toi)."
+    )
+    @commands.cooldown(rate=1, per=3, type=commands.BucketType.user)  # ⏱️ Cooldown 3 sec
     async def perso(self, ctx):
         try:
             with open("data/bleach_characters.json", "r", encoding="utf-8") as f:
