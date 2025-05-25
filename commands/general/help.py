@@ -52,6 +52,8 @@ async def help_command(ctx, commande: str = None):
 
 help_command.category = "Général"
 
-# N'oublie pas d'ajouter ce setup obligatoire pour les extensions
-def setup(bot):
+# Chargement automatique du module (async obligatoire)
+async def setup(bot):
     bot.add_command(help_command)
+    print("✅ Commande help chargée")
+
