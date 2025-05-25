@@ -26,9 +26,17 @@ class InfoCommand(commands.Cog):
             inline=False
         )
 
+
         embed.add_field(
-            name="🧘 Nouvellement ajouté",
-            value="Le spawn auto de reiatsu est de retout, normalement. Les commandes tupref et topperso.",
+            name="💠 Reiatsu",
+            value="Le spawn auto de reiatsu est de retour, normalement.",
+            inline=False
+        )
+
+
+        embed.add_field(
+            name="🧘 Nouvelles commandes",
+            value="- tupref\ntopperso",
             inline=False
         )
 
