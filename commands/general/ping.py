@@ -6,7 +6,7 @@ class PingCommand(commands.Cog):
         self.bot = bot
 
     @commands.command(name="ping", aliases=["test"], help="Répond avec la latence du bot.")
-    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)  # ⏱️ Cooldown de 5s par utilisateur
+    @commands.cooldown(rate=1, per=3, type=commands.BucketType.user)  # ⏱️ Cooldown de 3s par utilisateur
     async def ping(self, ctx):
         latence = round(self.bot.latency * 1000)  # Convertit en ms
         embed = discord.Embed(
