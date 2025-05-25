@@ -35,8 +35,10 @@ class InfoCommand(commands.Cog):
         embed.set_footer(text="Dernière mise à jour : Mai 2025")
         await ctx.send(embed=embed)
 
-# ✅ Définir la catégorie au bon moment
-info.category = "Général"
+    # ✅ Attribue la catégorie au bon moment
+    @info.before_invoke
+    async def before_info(self, ctx):
+        self.info.category = "Général"
 
 # 🔁 Chargement automatique
 async def setup(bot):
