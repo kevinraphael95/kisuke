@@ -15,20 +15,19 @@ class InfoCommand(commands.Cog):
 
         embed.add_field(
             name="🔧 Réorganisation",
-            value="Le **code du bot** a été complètement **réorganisé**. Toutes les commandes ne sont plus dans un seul fichier bot.py",
+            value="Le **code du bot** a été complètement **réorganisé**. Toutes les commandes ne sont plus dans un seul fichier `bot.py`.",
             inline=False
         )
 
-        
         embed.add_field(
-            name="🔧 La commande help",
+            name="📘 Commande help",
             value="La **commande help** sera réparée quand elle sera réparée.",
             inline=False
         )
 
         embed.add_field(
             name="🧘 Commandes Reiatsu",
-            value="Les **commandes Reiatsu** ont été **supprimées** temporairement.\n"
+            value="Les **commandes Reiatsu** ont été **supprimées temporairement**.\n"
                   "Elles seront **réintégrées si possible** prochainement. Si j'y arrive.",
             inline=False
         )
@@ -36,10 +35,9 @@ class InfoCommand(commands.Cog):
         embed.set_footer(text="Dernière mise à jour : Mai 2025")
         await ctx.send(embed=embed)
 
-    @info.before_invoke
-    async def before_info(self, ctx):
-        self.info.category = "Général"
+# ✅ Définir la catégorie au bon moment
+info.category = "Général"
 
-# Chargement automatique
+# 🔁 Chargement automatique
 async def setup(bot):
     await bot.add_cog(InfoCommand(bot))
