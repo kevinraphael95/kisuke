@@ -26,17 +26,21 @@ class InfoCommand(commands.Cog):
             inline=False
         )
 
-
         embed.add_field(
             name="💠 Reiatsu",
             value="Le spawn auto de reiatsu est de retour, normalement.",
             inline=False
         )
 
-
         embed.add_field(
             name="🧘 Nouvelles commandes",
             value="- tupref\n- topperso",
+            inline=False
+        )
+
+        embed.add_field(
+            name="🕹️ RPG",
+            value="Une nouvelle commande RPG, comme c'est énigmatique.",
             inline=False
         )
 
