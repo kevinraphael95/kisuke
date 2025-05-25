@@ -1,80 +1,75 @@
 import discord
 from discord.ext import commands
 from discord.ext.commands import Context
-from discord.ui import View, Select, select
 from bot import get_prefix
-
-class CommandesView(View):
-    def __init__(self, bot, prefix):
-        super().__init__(timeout=60)
-        self.bot = bot
-        self.prefix = prefix
-
-        self.categories = {
-            "Général": [],
-            "Fun": [],
-            "Reiatsu": [],
-            "Admin": [],
-            "Autres": []
-        }
-
-        for cmd in bot.commands:
-            if cmd.hidden:
-                continue
-            cat = getattr(cmd, "category", "Autres")
-            self.categories.setdefault(cat, []).append(cmd)
-
-        for cmds in self.categories.values():
-            cmds.sort(key=lambda c: c.name)
-
-        options = [
-            discord.SelectOption(label=cat, description=f"{len(cmds)} commande(s)", value=cat)
-            for cat, cmds in self.categories.items() if cmds
-        ]
-
-        self.add_item(
-            Select(
-                placeholder="Choisis une catégorie de commandes...",
-                options=options,
-                min_values=1,
-                max_values=1,
-                custom_id="select_commandes"
-            )
-        )
-
-    @select(custom_id="select_commandes")
-    async def select_callback(self, interaction: discord.Interaction, select: Select):
-        cat = select.values[0]
-        cmds = self.categories[cat]
-
-        embed = discord.Embed(
-            title=f"📂 Commandes : {cat}",
-            color=discord.Color.blurple()
-        )
-        for cmd in cmds:
-            embed.add_field(
-                name=f"`{self.prefix}{cmd.name}`",
-                value=cmd.help or "Pas de description.",
-                inline=False
-            )
-
-        embed.set_footer(text=f"Utilise {self.prefix}help <commande> pour plus d'infos.")
-        await interaction.response.edit_message(embed=embed, view=self)
 
 class CommandesCommand(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command(name="commandes", help="Affiche les commandes classées par catégorie via un menu interactif.")
+    @commands.command(name="commandes", help="Affiche toutes les commandes disponibles, classées par catégorie.")
     async def commandes(self, ctx: Context):
         prefix = get_prefix(self.bot, ctx.message)
-        view = CommandesView(self.bot, prefix)
-        await ctx.send("📜 Choisis une catégorie pour voir les commandes disponibles :", view=view)
+
+        # Regrouper les commandes par catégorie
+        categories = {}
+        for cmd in self.bot.commands:
+            if cmd.hidden:
+                continue
+            cat = getattr(cmd, "category", "Autres")
+            categories.setdefault(cat, []).append(cmd)
+
+        # Générer un embed par catégorie
+        embeds = []
+        for cat, cmds in sorted(categories.items()):
+            cmds.sort(key=lambda c: c.name)
+            description = "\n".join(f"`{prefix}{cmd.name}` : {cmd.help or 'Pas de description.'}" for cmd in cmds)
+
+            embed = discord.Embed(
+                title=f"📂 Catégorie : {cat}",
+                description=description,
+                color=discord.Color.blue()
+            )
+            embed.set_footer(text="Utilise !help <commande> pour plus de détails.")
+            embeds.append(embed)
+
+        # Afficher le premier embed
+        message = await ctx.send(embed=embeds[0])
+        if len(embeds) <= 1:
+            return
+
+        # Ajouter les réactions de navigation
+        await message.add_reaction("⬅️")
+        await message.add_reaction("➡️")
+
+        current_page = 0
+
+        def check(reaction, user):
+            return (
+                user == ctx.author
+                and str(reaction.emoji) in ["⬅️", "➡️"]
+                and reaction.message.id == message.id
+            )
+
+        while True:
+            try:
+                reaction, user = await self.bot.wait_for("reaction_add", timeout=60.0, check=check)
+
+                if str(reaction.emoji) == "➡️":
+                    current_page = (current_page + 1) % len(embeds)
+                elif str(reaction.emoji) == "⬅️":
+                    current_page = (current_page - 1) % len(embeds)
+
+                await message.edit(embed=embeds[current_page])
+                await message.remove_reaction(reaction, user)
+
+            except Exception:
+                break  # Timeout ou erreur : arrêter la pagination
 
     @commandes.before_invoke
     async def set_category(self, ctx):
         self.commandes.category = "Général"
 
-# Chargement du cog
+# Chargement de l'extension
 async def setup(bot):
     await bot.add_cog(CommandesCommand(bot))
