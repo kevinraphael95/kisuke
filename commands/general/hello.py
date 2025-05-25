@@ -9,7 +9,7 @@ class HelloCommand(commands.Cog):
         self.bot = bot
 
     @commands.command(name="hello", help="Affiche un message de bienvenue aléatoire.")
-    @commands.cooldown(rate=1, per=10, type=commands.BucketType.user)  # ⏱️ Cooldown utilisateur 10s
+    @commands.cooldown(rate=1, per=3, type=commands.BucketType.user)  # ⏱️ Cooldown utilisateur 3s
     async def hello(self, ctx):
         try:
             # Lecture depuis le dossier data/
