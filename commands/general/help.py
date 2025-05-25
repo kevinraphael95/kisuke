@@ -10,6 +10,7 @@ class HelpCommand(commands.Cog):
         self.help_command.category = "Général"
 
     @commands.command(name="help", help="Affiche la liste des commandes ou les infos sur une commande spécifique.")
+    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)  # 🕒 Cooldown 5s
     async def help_command(self, ctx, commande: str = None):
         prefix = get_prefix(self.bot, ctx.message)
 
