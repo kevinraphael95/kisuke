@@ -1,0 +1,17 @@
+{
+  "start": {
+    "texte": "🧍‍♂️ Tu es un nouveau Shinigami envoyé par la Soul Society dans la brigade de Karakura. Une alerte Hollow vient de retentir. Que fais-tu ?",
+    "choix": [
+      { "emoji": "🗡️", "texte": "Partir immédiatement en mission.", "suivant": "mission1" },
+      { "emoji": "📞", "texte": "Appeler le capitaine pour plus d’infos.", "suivant": "appel1" }
+    ]
+  },
+  "mission1": {
+    "texte": "🗡️ Tu cours dans les rues de Karakura. Tu ressens une pression spirituelle. Que fais-tu ?",
+    "choix": [
+      { "emoji": "🔍", "texte": "Scanner les environs.", "suivant": "scan1" },
+      { "emoji": "🏃", "texte": "Suivre ton instinct.", "suivant": "instinct1" }
+    ]
+  }
+  // ...
+}
