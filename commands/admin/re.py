@@ -21,6 +21,7 @@ class RedemarrageCommand(commands.Cog):
             description="Le bot va redémarrer sous peu.",
             color=discord.Color.red()
         )
+        await ctx.send(embed=embed)  # ⬅️ ligne manquante
 
 # Chargement automatique
 async def setup(bot):
