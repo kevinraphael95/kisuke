@@ -25,30 +25,26 @@ class RPG(commands.Cog):
             await self.jouer_etape(ctx, etape, character_name, mission)
             return
 
-        # 🎬 Intro
-        embed = discord.Embed(
-            title="🔰 RPG Bleach - Division Z",
-            description=(
-                "🌆 **Karakura Town** est devenue un épicentre d’activités spirituelles instables. "
-                "La Soul Society y a établi un commissariat secret : la **Division Z**.\n\n"
-                "Tu es un nouveau Shinigami de cette brigade. Avant de commencer, choisis ton nom et ta mission."
-            ),
-            color=discord.Color.teal()
-        )
-        embed.add_field(name="✏️ Choisir un nom", value="Clique sur ✏️ pour définir le nom de ton personnage.", inline=False)
-
-        emojis = ["✏️"]
+        # 🧭 Intro via JSON
+        intro = self.scenario.get("intro", {})
+        intro_texte = intro.get("texte", "Bienvenue dans la Division Z.")
         missions = self.scenario.get("missions", {})
         mission_keys = list(missions.keys())
 
-        if mission_keys:
-            emojis += ["1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣"]
-            for i, key in enumerate(mission_keys):
-                m = missions[key]
-                embed.add_field(name=f"{emojis[i + 1]} {m['titre']}", value=m["description"], inline=False)
+        emojis = ["✏️"] + ["1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣"][:len(mission_keys)]
+
+        embed = discord.Embed(
+            title="🔰 RPG Bleach - Division Z",
+            description=intro_texte,
+            color=discord.Color.teal()
+        )
+        embed.add_field(name="✏️ Choisir un nom", value="Clique sur ✏️ pour définir le nom de ton personnage.", inline=False)
+        for i, key in enumerate(mission_keys):
+            m = missions[key]
+            embed.add_field(name=f"{emojis[i + 1]} {m['titre']}", value=m["description"], inline=False)
 
         menu_msg = await ctx.send(embed=embed)
-        for emoji in emojis[:len(mission_keys) + 1]:
+        for emoji in emojis:
             await menu_msg.add_reaction(emoji)
 
         temp_name = character_name or None
@@ -64,8 +60,7 @@ class RPG(commands.Cog):
                 return
 
             if str(reaction.emoji) == "✏️":
-                await ctx.send("📛 Réponds à **ce message** avec ton nom dans les 5 minutes.")
-                name_prompt = await ctx.send("Quel sera le nom de ton personnage ? (réponds à ce message)")
+                name_prompt = await ctx.send("📛 Réponds à **ce message** avec ton nom de personnage (5 minutes).")
 
                 def check_name(m):
                     return m.author == ctx.author and m.reference and m.reference.message_id == name_prompt.id
@@ -143,7 +138,7 @@ class RPG(commands.Cog):
                 await self.jouer_etape(ctx, next_etape, character_name, mission_id)
                 return
 
-# Chargement automatique
+# Chargement
 async def setup(bot):
     cog = RPG(bot)
     for command in cog.get_commands():
