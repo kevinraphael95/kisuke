@@ -1,5 +1,6 @@
 import discord
 import asyncio
+from datetime import datetime
 from discord.ext import commands
 from supabase_client import supabase
 
@@ -13,7 +14,6 @@ class SpawnReiatsuCommand(commands.Cog):
     async def spawnreiatsu(self, ctx):
         guild_id = str(ctx.guild.id)
 
-        # 🔁 Recherche du salon Reiatsu directement ici
         config = supabase.table("reiatsu_config").select("channel_id").eq("guild_id", guild_id).execute()
         if not config.data:
             await ctx.send("❌ Aucun salon Reiatsu n’a été configuré. Utilise `!setreiatsu`.")
@@ -33,6 +33,13 @@ class SpawnReiatsuCommand(commands.Cog):
         )
         message = await channel.send(embed=embed)
         await message.add_reaction("💠")
+
+        # 🔐 Sauvegarder le message ID pour d'autres commandes (ex: !tpsrts)
+        supabase.table("reiatsu_config").update({
+            "en_attente": True,
+            "spawn_message_id": str(message.id),
+            "last_spawn_at": datetime.utcnow().isoformat()
+        }).eq("guild_id", guild_id).execute()
 
         def check(reaction, user):
             return (
@@ -59,6 +66,12 @@ class SpawnReiatsuCommand(commands.Cog):
 
         except asyncio.TimeoutError:
             await channel.send("Le Reiatsu s'est dissipé dans l'air... personne ne l'a absorbé.")
+
+        # 🧹 Nettoyage de l’état après absorption ou timeout
+        supabase.table("reiatsu_config").update({
+            "en_attente": False,
+            "spawn_message_id": None
+        }).eq("guild_id", guild_id).execute()
 
     @spawnreiatsu.before_invoke
     async def set_category(self, ctx):
