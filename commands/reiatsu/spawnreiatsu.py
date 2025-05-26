@@ -8,13 +8,17 @@ class SpawnReiatsuCommand(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-
-    @commands.command(name="spawnreiatsu", aliases=["spawnrts"], help="Force le spawn d’un Reiatsu dans le salon configuré. (Admin uniquement)")
+    @commands.command(
+        name="spawnreiatsu",
+        aliases=["spawnrts"],
+        help="Force le spawn d’un Reiatsu dans le salon configuré. (Admin uniquement)"
+    )
     @commands.has_permissions(administrator=True)
-    @commands.cooldown(rate=1, per=3, type=commands.BucketType.user)  # 3s cooldown
+    @commands.cooldown(rate=1, per=3, type=commands.BucketType.user)
     async def spawnreiatsu(self, ctx):
         guild_id = str(ctx.guild.id)
 
+        # 📦 Cherche la config du salon
         config = supabase.table("reiatsu_config").select("channel_id").eq("guild_id", guild_id).execute()
         if not config.data:
             await ctx.send("❌ Aucun salon Reiatsu n’a été configuré. Utilise `!setreiatsu`.")
@@ -24,9 +28,10 @@ class SpawnReiatsuCommand(commands.Cog):
         channel = self.bot.get_channel(channel_id)
 
         if not channel:
-            await ctx.send("⚠️ Le salon configuré n'existe plus ou n'est pas accessible.")
+            await ctx.send("⚠️ Le salon configuré est introuvable.")
             return
 
+        # 💠 Envoi du message de spawn
         embed = discord.Embed(
             title="💠 Un Reiatsu sauvage apparaît !",
             description="Cliquez sur la réaction 💠 pour l'absorber.",
@@ -35,7 +40,7 @@ class SpawnReiatsuCommand(commands.Cog):
         message = await channel.send(embed=embed)
         await message.add_reaction("💠")
 
-        # 🔐 Sauvegarder le message ID pour d'autres commandes (ex: !tpsrts)
+        # 🔐 Enregistre l’état dans la DB
         supabase.table("reiatsu_config").update({
             "en_attente": True,
             "spawn_message_id": str(message.id),
@@ -44,21 +49,23 @@ class SpawnReiatsuCommand(commands.Cog):
 
         def check(reaction, user):
             return (
-                reaction.message.id == message.id and
-                str(reaction.emoji) == "💠" and
-                not user.bot
+                reaction.message.id == message.id
+                and str(reaction.emoji) == "💠"
+                and not user.bot
             )
 
         try:
             reaction, user = await self.bot.wait_for("reaction_add", timeout=10800.0, check=check)
 
-            data = supabase.table("reiatsu").select("id", "points").eq("user_id", str(user.id)).execute()
+            user_id = str(user.id)
+            data = supabase.table("reiatsu").select("points").eq("user_id", user_id).execute()
+
             if data.data:
                 current = data.data[0]["points"]
-                supabase.table("reiatsu").update({"points": current + 1}).eq("user_id", str(user.id)).execute()
+                supabase.table("reiatsu").update({"points": current + 1}).eq("user_id", user_id).execute()
             else:
                 supabase.table("reiatsu").insert({
-                    "user_id": str(user.id),
+                    "user_id": user_id,
                     "username": user.name,
                     "points": 1
                 }).execute()
@@ -66,18 +73,17 @@ class SpawnReiatsuCommand(commands.Cog):
             await channel.send(f"{user.mention} a absorbé le Reiatsu et gagné **+1** point !")
 
         except asyncio.TimeoutError:
-            await channel.send("Le Reiatsu s'est dissipé dans l'air... personne ne l'a absorbé.")
+            await channel.send("⏳ Le Reiatsu s’est dissipé dans l’air... personne ne l’a absorbé.")
 
-        # 🧹 Nettoyage de l’état après absorption ou timeout
+        # 🔄 Déverrouille le spawn
         supabase.table("reiatsu_config").update({
             "en_attente": False,
             "spawn_message_id": None
         }).eq("guild_id", guild_id).execute()
 
-
-# ✅ Chargement automatique avec catégorie définie dès le setup
+# ✅ Chargement automatique avec catégorie
 async def setup(bot):
-    cog = spawnreiatsu(bot)
+    cog = SpawnReiatsuCommand(bot)  # ✅ Classe correctement instanciée
     for command in cog.get_commands():
         command.category = "Reiatsu"
     await bot.add_cog(cog)
