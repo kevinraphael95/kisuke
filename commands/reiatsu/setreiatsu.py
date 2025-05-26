@@ -1,26 +1,41 @@
 import discord
 from discord.ext import commands
 from supabase_client import supabase
+from datetime import datetime
+import random
 
 class SetReiatsuCommand(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
     @commands.command(name="setreiatsu", aliases=["setrts"], help="Définit le salon actuel comme le salon Reiatsu. (Admin uniquement)")
-    @commands.cooldown(rate=1, per=3, type=commands.BucketType.user)  # 🕒 Cooldown 3s
+    @commands.cooldown(rate=1, per=3, type=commands.BucketType.user)
     @commands.has_permissions(administrator=True)
     async def setreiatsu(self, ctx):
         channel_id = ctx.channel.id
-        guild_id = ctx.guild.id
+        guild_id = str(ctx.guild.id)
+        now_iso = datetime.utcnow().isoformat()
 
-        # Vérifie si une config existe déjà
-        data = supabase.table("reiatsu_config").select("id").eq("guild_id", str(guild_id)).execute()
+        # Délai initial entre 30 et 90 minutes
+        delay = random.randint(1800, 5400)
+
+        data = supabase.table("reiatsu_config").select("id").eq("guild_id", guild_id).execute()
         if data.data:
-            supabase.table("reiatsu_config").update({"channel_id": str(channel_id)}).eq("guild_id", str(guild_id)).execute()
+            # Mise à jour config existante
+            supabase.table("reiatsu_config").update({
+                "channel_id": str(channel_id),
+                "last_spawn_at": now_iso,
+                "delay_minutes": delay,
+                "en_attente": False
+            }).eq("guild_id", guild_id).execute()
         else:
+            # Nouvelle config
             supabase.table("reiatsu_config").insert({
-                "guild_id": str(guild_id),
-                "channel_id": str(channel_id)
+                "guild_id": guild_id,
+                "channel_id": str(channel_id),
+                "last_spawn_at": now_iso,
+                "delay_minutes": delay,
+                "en_attente": False
             }).execute()
 
         await ctx.send(f"💠 Le salon actuel ({ctx.channel.mention}) est maintenant le salon Reiatsu.")
