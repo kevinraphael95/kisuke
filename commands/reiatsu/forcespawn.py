@@ -31,5 +31,5 @@ class ForceSpawnCommand(commands.Cog):
 async def setup(bot):
     cog = ForceSpawnCommand(bot)
     for command in cog.get_commands():
-        command.category = "Admin"
+        command.category = "Reiatsu"
     await bot.add_cog(cog)
