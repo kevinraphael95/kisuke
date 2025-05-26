@@ -4,13 +4,9 @@ from discord.ext import commands
 class InfoCommand(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        
-        # ✅ On définit la catégorie ici pour la rendre accessible plus tôt
-        self.help_command.category = "Général"
-
 
     @commands.command(name="info", help="Affiche des informations sur l'état du bot.")
-    @commands.cooldown(rate=1, per=3, type=commands.BucketType.user)  # 🕒 Cooldown 3s
+    @commands.cooldown(rate=1, per=3, type=commands.BucketType.user)
     async def info(self, ctx):
         embed = discord.Embed(
             title="📊 État du bot",
@@ -53,4 +49,7 @@ class InfoCommand(commands.Cog):
 
 # 🔁 Chargement automatique
 async def setup(bot):
-    await bot.add_cog(InfoCommand(bot))
+    cog = InfoCommand(bot)
+    for command in cog.get_commands():
+        command.category = "Général"
+    await bot.add_cog(cog)
