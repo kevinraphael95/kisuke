@@ -6,9 +6,6 @@ class Leaderboard(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-     # ✅ On définit la catégorie ici pour la rendre accessible plus tôt
-     self.help_command.category = "Reiatsu"
-
     @commands.command(name="leaderboard", aliases=["toprts", "topreiatsu", "leadb"], help="Affiche le classement Reiatsu.")
     @commands.cooldown(rate=1, per=3, type=commands.BucketType.user)  # ⏱️ Cooldown 3s par utilisateur
     async def leaderboard(self, ctx, limit: int = 10):
@@ -38,6 +35,10 @@ class Leaderboard(commands.Cog):
 
 
 
-# Chargement auto
+# Chargement automatique
 async def setup(bot):
-    await bot.add_cog(Leaderboard(bot))
+    cog = Leaderboard(bot)
+    for command in cog.get_commands():
+        command.category = "Reiatsu"
+    await bot.add_cog(cog)
+
