@@ -1,6 +1,6 @@
 import discord
 from discord.ext import commands
-from bot import get_prefix
+from bot import get_prefix  # ta fonction de préfixe dynamique
 
 class HelpCommand(commands.Cog):
     def __init__(self, bot):
@@ -8,7 +8,7 @@ class HelpCommand(commands.Cog):
 
     @commands.command(name="help", help="Affiche la liste des commandes ou les infos sur une commande spécifique.")
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
-    async def help_command(self, ctx, commande: str = None):
+    async def afficher_aide(self, ctx, commande: str = None):  # ✅ NOM CHANGÉ ICI
         prefix = get_prefix(self.bot, ctx.message)
 
         if commande is None:
@@ -35,7 +35,7 @@ class HelpCommand(commands.Cog):
                     liste = "\n".join(f"`{prefix}{cmd.name}` : {cmd.help or 'Pas de description.'}" for cmd in cmds)
                     embed.add_field(name=f"📂 {cat}", value=liste, inline=False)
 
-            embed.set_footer(text=f"Utilise {prefix}help <commande> pour plus de détails.")
+            embed.set_footer(text=f"Utilise `{prefix}help <commande>` pour plus de détails.")
             await ctx.send(embed=embed)
 
         else:
@@ -53,7 +53,7 @@ class HelpCommand(commands.Cog):
                 embed.set_footer(text="Paramètres entre < > = obligatoires | [ ] = optionnels")
                 await ctx.send(embed=embed)
 
-# ✅ Setup corrigé avec la catégorie
+# ✅ Chargement automatique
 async def setup(bot):
     cog = HelpCommand(bot)
     for command in cog.get_commands():
