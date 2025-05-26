@@ -8,6 +8,10 @@ class SpawnReiatsuCommand(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
+     # ✅ On définit la catégorie ici pour la rendre accessible plus tôt
+     self.help_command.category = "Général"
+
+
     @commands.command(name="spawnreiatsu", aliases=["spawnrts"], help="Force le spawn d’un Reiatsu dans le salon configuré. (Admin uniquement)")
     @commands.has_permissions(administrator=True)
     @commands.cooldown(rate=1, per=3, type=commands.BucketType.user)  # 3s cooldown
@@ -73,9 +77,6 @@ class SpawnReiatsuCommand(commands.Cog):
             "spawn_message_id": None
         }).eq("guild_id", guild_id).execute()
 
-    @spawnreiatsu.before_invoke
-    async def set_category(self, ctx):
-        self.spawnreiatsu.category = "Reiatsu"
 
 # 🔁 Chargement automatique
 async def setup(bot):
