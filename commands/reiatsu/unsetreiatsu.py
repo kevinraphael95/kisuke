@@ -11,7 +11,7 @@ class UnsetReiatsuCommand(commands.Cog):
         aliases=["unsetrts"],
         help="Supprime le salon configuré pour le spawn de Reiatsu. (Admin uniquement)"
     )
-    @commands.cooldown(rate=1, per=3, type=commands.BucketType.user)  # ⏱️ Cooldown 3s
+    @commands.cooldown(rate=1, per=3, type=commands.BucketType.user)
     @commands.has_permissions(administrator=True)
     async def unsetreiatsu(self, ctx):
         guild_id = str(ctx.guild.id)
@@ -23,14 +23,9 @@ class UnsetReiatsuCommand(commands.Cog):
         else:
             await ctx.send("❌ Aucun salon Reiatsu n'était configuré pour ce serveur.")
 
-
-# ✅ Chargement automatique avec catégorie définie dès le setup
+# ✅ Chargement automatique avec catégorie
 async def setup(bot):
-    cog = unsetreiatsu(bot)
+    cog = UnsetReiatsuCommand(bot)
     for command in cog.get_commands():
         command.category = "Reiatsu"
     await bot.add_cog(cog)
-
-# Chargement automatique du module
-async def setup(bot):
-    await bot.add_cog(UnsetReiatsuCommand(bot))
