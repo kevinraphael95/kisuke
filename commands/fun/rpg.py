@@ -10,84 +10,107 @@ class RPG(commands.Cog):
         with open("data/rpg_bleach.json", "r", encoding="utf-8") as f:
             self.scenario = json.load(f)
 
-    @commands.command(name="rpg", help="Débute ou continue ton histoire de Shinigami à Karakura.")
+    @commands.command(name="rpg", help="Commence ton aventure dans la Division Z à Karakura.")
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def rpg(self, ctx):
         user_id = str(ctx.author.id)
-        save = supabase.table("rpg_save").select("*").eq("user_id", user_id).execute().data
-        save = save[0] if save else None
 
-        # Demander nom du perso si non défini
-        if not save or not save.get("character_name"):
-            prompt = await ctx.send(f"{ctx.author.mention}, comment veux-tu appeler ton personnage Shinigami ? (Réponds à **ce message** dans les 5 minutes)")
+        # Vérifie s’il y a une sauvegarde
+        data = supabase.table("rpg_save").select("*").eq("user_id", user_id).execute()
+        save = data.data[0] if data.data else None
+        etape = save["etape"] if save else None
+        character_name = save["character_name"] if save else None
+        mission = save["mission"] if save else None
 
-            def check(m):
-                return m.author == ctx.author and m.reference and m.reference.message_id == prompt.id
+        if etape and character_name and mission:
+            await self.jouer_etape(ctx, etape, character_name, mission)
+            return
 
+        # 🎬 Intro
+        embed = discord.Embed(
+            title="🔰 RPG Bleach - Division Z",
+            description=(
+                "🌆 **Karakura Town** est devenue un épicentre d’activités spirituelles instables. "
+                "La Soul Society y a établi un commissariat secret : la **Division Z**.\n\n"
+                "Tu es un nouveau Shinigami de cette brigade. Avant de commencer, choisis ton nom et ta mission."
+            ),
+            color=discord.Color.teal()
+        )
+        embed.add_field(name="✏️ Choisir un nom", value="Clique sur ✏️ pour définir le nom de ton personnage.", inline=False)
+
+        missions = self.scenario.get("missions", {})
+        if not missions:
+            await ctx.send("❌ Aucune mission disponible.")
+            return
+
+        emojis = ["✏️", "1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣"]
+        mission_keys = list(missions.keys())
+        for i, key in enumerate(mission_keys):
+            m = missions[key]
+            embed.add_field(name=f"{emojis[i + 1]} {m['titre']}", value=m["description"], inline=False)
+
+        menu_msg = await ctx.send(embed=embed)
+        for emoji in emojis[:len(mission_keys) + 1]:
+            await menu_msg.add_reaction(emoji)
+
+        # Nom temporaire
+        temp_name = character_name or None
+
+        def check_react(reaction, user):
+            return user == ctx.author and reaction.message.id == menu_msg.id and str(reaction.emoji) in emojis
+
+        while True:
             try:
-                msg = await self.bot.wait_for("message", timeout=300.0, check=check)
+                reaction, _ = await self.bot.wait_for("reaction_add", timeout=300, check=check_react)
             except asyncio.TimeoutError:
-                await ctx.send("⏰ Tu n'as pas répondu à temps. Relance la commande `!rpg`.")
+                await ctx.send("⏰ Tu n’as pas réagi à temps.")
                 return
 
-            character_name = msg.content.strip()
-            # Choix d'une mission
-            missions = self.scenario.get("missions", {})
-            if not missions:
-                await ctx.send("❌ Aucune mission disponible.")
-                return
+            if str(reaction.emoji) == "✏️":
+                await ctx.send("📛 Réponds à **ce message** avec ton nom dans les 5 minutes.")
+                name_prompt = await ctx.send("Quel sera le nom de ton personnage ? (réponds à ce message)")
 
-            embed = discord.Embed(title="📜 Missions disponibles", description="Choisis une mission en réagissant :", color=discord.Color.teal())
-            emoji_list = ["1️⃣", "2️⃣", "3️⃣", "4️⃣"]
-            mission_map = {}
+                def check_name(m):
+                    return m.author == ctx.author and m.reference and m.reference.message_id == name_prompt.id
 
-            for i, (key, mission) in enumerate(missions.items()):
-                emoji = emoji_list[i]
-                embed.add_field(name=f"{emoji} {mission['titre']}", value=mission['description'], inline=False)
-                mission_map[emoji] = key
+                try:
+                    msg = await self.bot.wait_for("message", timeout=300.0, check=check_name)
+                    temp_name = msg.content.strip()
+                    await ctx.send(f"✅ Ton nom est enregistré : **{temp_name}**")
+                except asyncio.TimeoutError:
+                    await ctx.send("⏰ Temps écoulé pour le nom.")
+                continue  # continue le choix de mission
 
-            mission_msg = await ctx.send(embed=embed)
-            for emoji in mission_map:
-                await mission_msg.add_reaction(emoji)
+            # Sinon, il s'agit du choix de mission
+            if not temp_name:
+                await ctx.send("❗ Choisis ton nom avec ✏️ avant de commencer une mission.")
+                continue
 
-            def mission_check(reaction, user):
-                return user == ctx.author and reaction.message.id == mission_msg.id and str(reaction.emoji) in mission_map
+            index = emojis.index(str(reaction.emoji)) - 1
+            mission_id = mission_keys[index]
+            start_etape = missions[mission_id]["start"]
 
-            try:
-                reaction, _ = await self.bot.wait_for("reaction_add", timeout=300.0, check=mission_check)
-            except asyncio.TimeoutError:
-                await ctx.send("⏰ Temps écoulé. Relance `!rpg`.")
-                return
-
-            mission_id = mission_map[str(reaction.emoji)]
-            etape = self.scenario["missions"][mission_id]["start"]
-
+            # Sauvegarde
             supabase.table("rpg_save").upsert({
                 "user_id": user_id,
                 "username": ctx.author.name,
-                "character_name": character_name,
-                "etape": etape,
-                "mission_id": mission_id
+                "character_name": temp_name,
+                "mission": mission_id,
+                "etape": start_etape
             }, on_conflict=["user_id"]).execute()
 
-            await ctx.send(f"🎖️ Mission choisie : **{self.scenario['missions'][mission_id]['titre']}**")
-        else:
-            etape = save["etape"]
-            character_name = save["character_name"]
-            mission_id = save.get("mission_id")
+            await self.jouer_etape(ctx, start_etape, temp_name, mission_id)
+            return
 
-        await self.jouer_etape(ctx, etape, character_name)
-
-    async def jouer_etape(self, ctx, etape_id, character_name):
+    async def jouer_etape(self, ctx, etape_id, character_name, mission_id):
         etape = self.scenario.get(etape_id)
         if not etape:
-            await ctx.send("❌ Erreur : cette étape du scénario est introuvable.")
+            await ctx.send("❌ Étape du scénario introuvable.")
             return
 
         texte = etape["texte"].replace("{nom}", character_name)
-
         embed = discord.Embed(
-            title="🗺️ RPG Bleach - Brigade de Karakura",
+            title=f"🧭 Mission : {self.scenario['missions'][mission_id]['titre']}",
             description=texte,
             color=discord.Color.dark_purple()
         )
@@ -101,29 +124,31 @@ class RPG(commands.Cog):
         for emoji in emojis:
             await message.add_reaction(emoji)
 
-        def check(reaction, user):
+        def check_choice(reaction, user):
             return user == ctx.author and reaction.message.id == message.id and str(reaction.emoji) in emojis
 
         try:
-            reaction, _ = await self.bot.wait_for("reaction_add", timeout=300.0, check=check)
+            reaction, _ = await self.bot.wait_for("reaction_add", timeout=300.0, check=check_choice)
         except asyncio.TimeoutError:
-            await ctx.send("⏰ Temps écoulé. Ton aventure reprendra plus tard.")
+            await ctx.send("⏰ Tu n’as pas réagi à temps.")
             return
 
         for choix in etape["choix"]:
             if choix["emoji"] == str(reaction.emoji):
                 next_etape = choix["suivant"]
+
                 supabase.table("rpg_save").upsert({
                     "user_id": str(ctx.author.id),
                     "username": ctx.author.name,
-                    "etape": next_etape,
-                    "character_name": character_name
+                    "character_name": character_name,
+                    "mission": mission_id,
+                    "etape": next_etape
                 }, on_conflict=["user_id"]).execute()
 
-                await self.jouer_etape(ctx, next_etape, character_name)
+                await self.jouer_etape(ctx, next_etape, character_name, mission_id)
                 return
 
-# Chargement automatique
+# Chargement
 async def setup(bot):
     cog = RPG(bot)
     for command in cog.get_commands():
