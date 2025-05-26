@@ -21,7 +21,7 @@ class TempsReiatsuCommand(commands.Cog):
 
         conf = data.data[0]
 
-        # 🟣 Si un Reiatsu est déjà en attente
+        # 💠 Un Reiatsu est déjà apparu
         if conf.get("en_attente"):
             spawn_msg_id = conf.get("spawn_message_id")
             channel_id = conf.get("channel_id")
@@ -37,7 +37,7 @@ class TempsReiatsuCommand(commands.Cog):
                 await ctx.send("💠 Un Reiatsu est **déjà apparu** et attend d’être absorbé.")
             return
 
-        # ⏳ Sinon, calcule le temps restant
+        # ⏳ Calcul du temps restant
         delay = conf.get("delay_minutes", 1800)
         last_spawn_str = conf.get("last_spawn_at")
 
@@ -56,10 +56,9 @@ class TempsReiatsuCommand(commands.Cog):
             seconds = seconds_left % 60
             await ctx.send(f"⏳ Le prochain Reiatsu apparaîtra dans **{minutes}m {seconds}s**.")
 
-
-# ✅ Chargement automatique avec catégorie définie dès le setup
+# ✅ Chargement automatique avec catégorie
 async def setup(bot):
-    cog = tempsreiatsu(bot)
+    cog = TempsReiatsuCommand(bot)
     for command in cog.get_commands():
         command.category = "Reiatsu"
     await bot.add_cog(cog)
