@@ -9,14 +9,14 @@ class ShipCommand(commands.Cog):
         self.bot = bot
 
     @commands.command(name="ship", help="Fait un couple entre deux persos de Bleach avec compatibilité.")
-    @commands.cooldown(rate=1, per=3, type=commands.BucketType.user)  # ⏱️ Cooldown utilisateur de 3 secondes
+    @commands.cooldown(rate=1, per=3, type=commands.BucketType.user)
     async def ship(self, ctx):
         try:
             with open("data/bleach_personnages.json", "r", encoding="utf-8") as f:
                 persos = json.load(f)
 
             if len(persos) < 2:
-                await ctx.send("❌ Il faut au moins deux personnages dans `bleach_personnages.json`.")
+                await ctx.send("❌ Il faut au moins deux personnages.")
                 return
 
             p1, p2 = random.sample(persos, 2)
@@ -25,20 +25,31 @@ class ShipCommand(commands.Cog):
             hash_bytes = hashlib.md5(clef.encode()).digest()
             score = int.from_bytes(hash_bytes, 'big') % 101
 
-            # 💕 Ajustements selon genre et race
-            genre_diff = p1.get("genre") != p2.get("genre")
+            # 💖 Bonus/malus selon le genre
+            if p1.get("genre") != p2.get("genre"):
+                score += 5
+
+            # ⚔️ Malus si aucune race en commun
             races_p1 = set(p1.get("races", []))
             races_p2 = set(p2.get("races", []))
-            races_communes = races_p1 & races_p2
+            if not races_p1 & races_p2:
+                score -= 10
 
-            if genre_diff:
-                score += 5  # ❤️ Bonus de diversité
-            if not races_communes:
-                score -= 10  # ⚔️ Malus d’incompatibilité culturelle
+            # 📊 Analyse des stats
+            stats1 = list(p1["stats"].values())
+            stats2 = list(p2["stats"].values())
+            avg1 = sum(stats1) / len(stats1)
+            avg2 = sum(stats2) / len(stats2)
+            diff = abs(avg1 - avg2)
 
-            score = max(0, min(score, 100))  # 🔒 Clamp
+            if diff <= 2:
+                score += 5  # 💪 Alchimie statique
+            elif diff >= 6:
+                score -= 10  # 😵 Trop différents
 
-            # 💬 Résultat
+            score = max(0, min(score, 100))  # Clamp entre 0 et 100
+
+            # 🎭 Réactions selon score
             if score >= 90:
                 reaction = "âmes sœurs ! 💞"
             elif score >= 70:
