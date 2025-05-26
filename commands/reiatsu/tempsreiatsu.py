@@ -9,6 +9,9 @@ class TempsReiatsuCommand(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
+     # ✅ On définit la catégorie ici pour la rendre accessible plus tôt
+     self.help_command.category = "Reiatsu"
+
     @commands.command(name="tempsreiatsu", aliases=["tpsrts"], help="Affiche le temps restant avant le prochain Reiatsu.")
     @commands.cooldown(rate=1, per=3, type=commands.BucketType.user)
     async def tempsreiatsu(self, ctx):
@@ -56,9 +59,6 @@ class TempsReiatsuCommand(commands.Cog):
             seconds = seconds_left % 60
             await ctx.send(f"⏳ Le prochain Reiatsu apparaîtra dans **{minutes}m {seconds}s**.")
 
-    @tempsreiatsu.before_invoke
-    async def set_category(self, ctx):
-        self.tempsreiatsu.category = "Reiatsu"
 
 # 📦 Chargement automatique
 async def setup(bot):
