@@ -15,7 +15,6 @@ class RPG(commands.Cog):
     async def rpg(self, ctx):
         user_id = str(ctx.author.id)
 
-        # Vérifie s’il y a une sauvegarde
         data = supabase.table("rpg_save").select("*").eq("user_id", user_id).execute()
         save = data.data[0] if data.data else None
         etape = save["etape"] if save else None
@@ -38,22 +37,20 @@ class RPG(commands.Cog):
         )
         embed.add_field(name="✏️ Choisir un nom", value="Clique sur ✏️ pour définir le nom de ton personnage.", inline=False)
 
+        emojis = ["✏️"]
         missions = self.scenario.get("missions", {})
-        if not missions:
-            await ctx.send("❌ Aucune mission disponible.")
-            return
-
-        emojis = ["✏️", "1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣"]
         mission_keys = list(missions.keys())
-        for i, key in enumerate(mission_keys):
-            m = missions[key]
-            embed.add_field(name=f"{emojis[i + 1]} {m['titre']}", value=m["description"], inline=False)
+
+        if mission_keys:
+            emojis += ["1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣"]
+            for i, key in enumerate(mission_keys):
+                m = missions[key]
+                embed.add_field(name=f"{emojis[i + 1]} {m['titre']}", value=m["description"], inline=False)
 
         menu_msg = await ctx.send(embed=embed)
         for emoji in emojis[:len(mission_keys) + 1]:
             await menu_msg.add_reaction(emoji)
 
-        # Nom temporaire
         temp_name = character_name or None
 
         def check_react(reaction, user):
@@ -79,9 +76,8 @@ class RPG(commands.Cog):
                     await ctx.send(f"✅ Ton nom est enregistré : **{temp_name}**")
                 except asyncio.TimeoutError:
                     await ctx.send("⏰ Temps écoulé pour le nom.")
-                continue  # continue le choix de mission
+                continue
 
-            # Sinon, il s'agit du choix de mission
             if not temp_name:
                 await ctx.send("❗ Choisis ton nom avec ✏️ avant de commencer une mission.")
                 continue
@@ -90,7 +86,6 @@ class RPG(commands.Cog):
             mission_id = mission_keys[index]
             start_etape = missions[mission_id]["start"]
 
-            # Sauvegarde
             supabase.table("rpg_save").upsert({
                 "user_id": user_id,
                 "username": ctx.author.name,
@@ -148,7 +143,7 @@ class RPG(commands.Cog):
                 await self.jouer_etape(ctx, next_etape, character_name, mission_id)
                 return
 
-# Chargement
+# Chargement automatique
 async def setup(bot):
     cog = RPG(bot)
     for command in cog.get_commands():
