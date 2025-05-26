@@ -1,48 +1,25 @@
-import discord
-from discord.ext import commands
-from supabase_client import supabase
-from dateutil import parser
-import time
+@commands.command(name="tempsreiatsu", aliases = ["tpsreiatsu"], help="Affiche le temps restant avant le prochain Reiatsu.")
+@commands.cooldown(rate=1, per=3, type=commands.BucketType.user)
+async def tempsreiatsu(self, ctx):
+    guild_id = str(ctx.guild.id)
+    data = supabase.table("reiatsu_config").select("*").eq("guild_id", guild_id).execute()
 
-class TempsReiatsuCommand(commands.Cog):
-    def __init__(self, bot):
-        self.bot = bot
+    if not data.data:
+        await ctx.send("❌ Ce serveur n’a pas de salon Reiatsu configuré.")
+        return
 
-    @commands.command(name="tempsreiatsu", aliases=["tpsrts"], help="Affiche le temps restant avant le prochain spawn de Reiatsu.")
-    @commands.cooldown(rate=1, per=3, type=commands.BucketType.user)
-    async def tempsreiatsu(self, ctx):
-        guild_id = str(ctx.guild.id)
-
-        # 🔎 Récupération de la config serveur
-        config = supabase.table("reiatsu_config") \
-            .select("last_spawn_at", "delay_minutes", "en_attente") \
-            .eq("guild_id", guild_id).execute()
-
-        if not config.data:
-            await ctx.send("❌ Ce serveur n'a pas de configuration Reiatsu. Utilise `!setreiatsu` d’abord.")
-            return
-
-        conf = config.data[0]
-        last_spawn_str = conf.get("last_spawn_at")
-        delay = conf.get("delay_minutes") or 1800
-        en_attente = conf.get("en_attente", False)
-
-        now_ts = int(time.time())
-        last_spawn_ts = parser.parse(last_spawn_str).timestamp() if last_spawn_str else 0
-        time_remaining = max(0, (last_spawn_ts + delay) - now_ts)
-
-        if en_attente:
-            await ctx.send("💠 Un Reiatsu est **déjà apparu** et attend d’être absorbé.")
-        elif time_remaining <= 0:
-            await ctx.send("🔄 Le Reiatsu peut **apparaître à tout moment**.")
+    conf = data.data[0]
+    if conf.get("en_attente"):
+        spawn_msg_id = conf.get("spawn_message_id")
+        if spawn_msg_id:
+            try:
+                channel = ctx.guild.get_channel(int(conf["channel_id"]))
+                spawn_msg = await channel.fetch_message(int(spawn_msg_id))
+                await ctx.send(f"💠 Un Reiatsu est **déjà apparu** !", reference=spawn_msg)
+            except:
+                await ctx.send("💠 Un Reiatsu est **déjà apparu**, mais impossible de retrouver le message.")
         else:
-            minutes = time_remaining // 60
-            seconds = time_remaining % 60
-            await ctx.send(f"⏳ Prochain spawn possible dans **{minutes}m {seconds}s**.")
+            await ctx.send("💠 Un Reiatsu est **déjà apparu** et attend d’être absorbé.")
+        return
 
-# 📦 Chargement automatique
-async def setup(bot):
-    cog = TempsReiatsuCommand(bot)
-    for command in cog.get_commands():
-        command.category = "Reiatsu"
-    await bot.add_cog(cog)
+    # ... suite avec délai sinon ...
