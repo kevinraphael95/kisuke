@@ -1,16 +1,13 @@
 import discord
 from discord.ext import commands
-from bot import get_prefix  # uniquement la fonction
+from bot import get_prefix
 
 class HelpCommand(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-        # ✅ On définit la catégorie ici pour la rendre accessible plus tôt
-        self.help_command.category = "Général"
-
     @commands.command(name="help", help="Affiche la liste des commandes ou les infos sur une commande spécifique.")
-    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)  # 🕒 Cooldown 5s
+    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def help_command(self, ctx, commande: str = None):
         prefix = get_prefix(self.bot, ctx.message)
 
@@ -56,7 +53,9 @@ class HelpCommand(commands.Cog):
                 embed.set_footer(text="Paramètres entre < > = obligatoires | [ ] = optionnels")
                 await ctx.send(embed=embed)
 
-# ✅ Chargement de l'extension
+# ✅ Setup corrigé avec la catégorie
 async def setup(bot):
-    await bot.add_cog(HelpCommand(bot))
-    print("✅ Commande help chargée")
+    cog = HelpCommand(bot)
+    for command in cog.get_commands():
+        command.category = "Général"
+    await bot.add_cog(cog)
