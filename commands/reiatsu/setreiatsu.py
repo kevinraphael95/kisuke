@@ -8,9 +8,6 @@ class SetReiatsuCommand(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-   # ✅ On définit la catégorie ici pour la rendre accessible plus tôt
-   self.help_command.category = "Reiatsu"
-
     @commands.command(name="setreiatsu", aliases=["setrts"], help="Définit le salon actuel comme le salon Reiatsu. (Admin uniquement)")
     @commands.cooldown(rate=1, per=3, type=commands.BucketType.user)
     @commands.has_permissions(administrator=True)
@@ -43,7 +40,9 @@ class SetReiatsuCommand(commands.Cog):
 
         await ctx.send(f"💠 Le salon actuel ({ctx.channel.mention}) est maintenant le salon Reiatsu.")
 
-
-# Chargement automatique
+# ✅ Chargement automatique avec catégorie définie dès le setup
 async def setup(bot):
-    await bot.add_cog(SetReiatsuCommand(bot))
+    cog = setreiatsu(bot)
+    for command in cog.get_commands():
+        command.category = "Reiatsu"
+    await bot.add_cog(cog)
