@@ -8,7 +8,11 @@ class SetReiatsuCommand(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command(name="setreiatsu", aliases=["setrts"], help="Définit le salon actuel comme le salon Reiatsu. (Admin uniquement)")
+    @commands.command(
+        name="setreiatsu",
+        aliases=["setrts"],
+        help="Définit le salon actuel comme le salon Reiatsu. (Admin uniquement)"
+    )
     @commands.cooldown(rate=1, per=3, type=commands.BucketType.user)
     @commands.has_permissions(administrator=True)
     async def setreiatsu(self, ctx):
@@ -21,28 +25,28 @@ class SetReiatsuCommand(commands.Cog):
 
         data = supabase.table("reiatsu_config").select("id").eq("guild_id", guild_id).execute()
         if data.data:
-            # Mise à jour config existante
             supabase.table("reiatsu_config").update({
                 "channel_id": str(channel_id),
                 "last_spawn_at": now_iso,
                 "delay_minutes": delay,
-                "en_attente": False
+                "en_attente": False,
+                "spawn_message_id": None
             }).eq("guild_id", guild_id).execute()
         else:
-            # Nouvelle config
             supabase.table("reiatsu_config").insert({
                 "guild_id": guild_id,
                 "channel_id": str(channel_id),
                 "last_spawn_at": now_iso,
                 "delay_minutes": delay,
-                "en_attente": False
+                "en_attente": False,
+                "spawn_message_id": None
             }).execute()
 
         await ctx.send(f"💠 Le salon actuel ({ctx.channel.mention}) est maintenant le salon Reiatsu.")
 
-# ✅ Chargement automatique avec catégorie définie dès le setup
+# ✅ Chargement automatique
 async def setup(bot):
-    cog = setreiatsu(bot)
+    cog = SetReiatsuCommand(bot)  # 🛠️ Correction ici
     for command in cog.get_commands():
         command.category = "Reiatsu"
     await bot.add_cog(cog)
