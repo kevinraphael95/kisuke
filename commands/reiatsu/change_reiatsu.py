@@ -32,5 +32,5 @@ class SetReiatsuPoints(commands.Cog):
 async def setup(bot):
     cog = SetReiatsuPoints(bot)
     for command in cog.get_commands():
-        command.category = "Admin"
+        command.category = "Reiatsu"
     await bot.add_cog(cog)
