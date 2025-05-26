@@ -9,7 +9,7 @@ class SpawnReiatsuCommand(commands.Cog):
         self.bot = bot
 
      # ✅ On définit la catégorie ici pour la rendre accessible plus tôt
-     self.help_command.category = "Général"
+     self.help_command.category = "Reiatsu"
 
 
     @commands.command(name="spawnreiatsu", aliases=["spawnrts"], help="Force le spawn d’un Reiatsu dans le salon configuré. (Admin uniquement)")
