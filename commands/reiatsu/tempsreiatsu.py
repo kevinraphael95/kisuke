@@ -9,7 +9,7 @@ class TempsReiatsuCommand(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command(name="tempsreiatsu", aliases=["tpsreiatsu"], help="Affiche le temps restant avant le prochain Reiatsu.")
+    @commands.command(name="tempsreiatsu", aliases=["tpsrts"], help="Affiche le temps restant avant le prochain Reiatsu.")
     @commands.cooldown(rate=1, per=3, type=commands.BucketType.user)
     async def tempsreiatsu(self, ctx):
         guild_id = str(ctx.guild.id)
