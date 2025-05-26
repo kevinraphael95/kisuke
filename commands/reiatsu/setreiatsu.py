@@ -8,6 +8,9 @@ class SetReiatsuCommand(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
+   # ✅ On définit la catégorie ici pour la rendre accessible plus tôt
+   self.help_command.category = "Reiatsu"
+
     @commands.command(name="setreiatsu", aliases=["setrts"], help="Définit le salon actuel comme le salon Reiatsu. (Admin uniquement)")
     @commands.cooldown(rate=1, per=3, type=commands.BucketType.user)
     @commands.has_permissions(administrator=True)
@@ -40,9 +43,6 @@ class SetReiatsuCommand(commands.Cog):
 
         await ctx.send(f"💠 Le salon actuel ({ctx.channel.mention}) est maintenant le salon Reiatsu.")
 
-    @setreiatsu.before_invoke
-    async def set_category(self, ctx):
-        self.setreiatsu.category = "Reiatsu"
 
 # Chargement automatique
 async def setup(bot):
