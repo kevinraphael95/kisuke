@@ -38,7 +38,16 @@
         "effet": "Oblitération",
         "type": "ultime"
       }
-    ]
+    ],
+    "races": [
+      "humain",
+      "shinigami",
+      "vizard",
+      "hollow",
+      "fullbringer",
+      "être transcendant"
+    ],
+    "genre": "homme"
   },
   {
     "nom": "Rukia Kuchiki",
@@ -79,7 +88,11 @@
         "effet": "Congélation totale",
         "type": "ultime"
       }
-    ]
+    ],
+    "races": [
+      "shinigami"
+    ],
+    "genre": "femme"
   },
   {
     "nom": "Renji Abarai",
@@ -120,7 +133,11 @@
         "effet": "Fureur bestiale",
         "type": "ultime"
       }
-    ]
+    ],
+    "races": [
+      "shinigami"
+    ],
+    "genre": "homme"
   },
   {
     "nom": "Byakuya Kuchiki",
@@ -161,7 +178,11 @@
         "effet": "Mille pétales destructeurs",
         "type": "ultime"
       }
-    ]
+    ],
+    "races": [
+      "shinigami"
+    ],
+    "genre": "homme"
   },
   {
     "nom": "Tōshirō Hitsugaya",
@@ -202,7 +223,11 @@
         "effet": "Tempête glaciale",
         "type": "ultime"
       }
-    ]
+    ],
+    "races": [
+      "shinigami"
+    ],
+    "genre": "homme"
   },
   {
     "nom": "Kenpachi Zaraki",
@@ -243,7 +268,11 @@
         "effet": "Puissance déchaînée",
         "type": "ultime"
       }
-    ]
+    ],
+    "races": [
+      "shinigami"
+    ],
+    "genre": "homme"
   },
   {
     "nom": "Mayuri Kurotsuchi",
@@ -284,7 +313,11 @@
         "effet": "Empoisonnement total",
         "type": "ultime"
       }
-    ]
+    ],
+    "races": [
+      "shinigami"
+    ],
+    "genre": "homme"
   },
   {
     "nom": "Sōsuke Aizen",
@@ -325,7 +358,12 @@
         "effet": "Transcendance divine",
         "type": "ultime"
       }
-    ]
+    ],
+    "races": [
+      "shinigami",
+      "être transcendant"
+    ],
+    "genre": "homme"
   },
   {
     "nom": "Uryū Ishida",
@@ -366,7 +404,12 @@
         "effet": "Explosion Quincy",
         "type": "ultime"
       }
-    ]
+    ],
+    "races": [
+      "quincy",
+      "humain"
+    ],
+    "genre": "homme"
   },
   {
     "nom": "Yoruichi Shihouin",
@@ -407,7 +450,11 @@
         "effet": "Assaut divin",
         "type": "ultime"
       }
-    ]
+    ],
+    "races": [
+      "shinigami"
+    ],
+    "genre": "femme"
   },
   {
     "nom": "Kisuke Urahara",
@@ -448,7 +495,11 @@
         "effet": "Désintégration totale",
         "type": "ultime"
       }
-    ]
+    ],
+    "races": [
+      "shinigami"
+    ],
+    "genre": "homme"
   },
   {
     "nom": "Shinji Hirako",
@@ -489,7 +540,12 @@
         "effet": "Chaos absolu",
         "type": "ultime"
       }
-    ]
+    ],
+    "races": [
+      "shinigami",
+      "vizard"
+    ],
+    "genre": "homme"
   },
   {
     "nom": "Grimmjow Jaegerjaquez",
@@ -530,7 +586,12 @@
         "effet": "Démolition totale",
         "type": "ultime"
       }
-    ]
+    ],
+    "races": [
+      "arrancar",
+      "hollow"
+    ],
+    "genre": "homme"
   },
   {
     "nom": "Ulquiorra Cifer",
@@ -571,7 +632,12 @@
         "effet": "Anéantissement",
         "type": "ultime"
       }
-    ]
+    ],
+    "races": [
+      "arrancar",
+      "hollow"
+    ],
+    "genre": "homme"
   },
   {
     "nom": "Nelliel Tu Odelschwanck",
@@ -612,7 +678,12 @@
         "effet": "Puissance pure",
         "type": "ultime"
       }
-    ]
+    ],
+    "races": [
+      "arrancar",
+      "hollow"
+    ],
+    "genre": "femme"
   },
   {
     "nom": "Tia Harribel",
@@ -653,7 +724,11 @@
         "effet": "Tsunami tranchant",
         "type": "ultime"
       }
-    ]
+    ],
+    "races": [
+      "shinigami"
+    ],
+    "genre": "homme"
   },
   {
     "nom": "Coyote Starrk",
@@ -694,7 +769,11 @@
         "effet": "Déluge force",
         "type": "ultime"
       }
-    ]
+    ],
+    "races": [
+      "shinigami"
+    ],
+    "genre": "homme"
   },
   {
     "nom": "Baraggan Louisenbairn",
@@ -735,7 +814,11 @@
         "effet": "Dissolution temporelle",
         "type": "ultime"
       }
-    ]
+    ],
+    "races": [
+      "shinigami"
+    ],
+    "genre": "homme"
   },
   {
     "nom": "Nnoitra Gilga",
@@ -776,7 +859,11 @@
         "effet": "Dualité destructrice",
         "type": "ultime"
       }
-    ]
+    ],
+    "races": [
+      "shinigami"
+    ],
+    "genre": "homme"
   },
   {
     "nom": "Szayelaporro Granz",
@@ -817,7 +904,11 @@
         "effet": "Démembrement génétique",
         "type": "ultime"
       }
-    ]
+    ],
+    "races": [
+      "shinigami"
+    ],
+    "genre": "homme"
   },
   {
     "nom": "Shunsui Kyōraku",
@@ -858,7 +949,11 @@
         "effet": "Tragédie partagée",
         "type": "ultime"
       }
-    ]
+    ],
+    "races": [
+      "shinigami"
+    ],
+    "genre": "homme"
   },
   {
     "nom": "Jūshirō Ukitake",
@@ -899,7 +994,11 @@
         "effet": "Partage vital",
         "type": "ultime"
       }
-    ]
+    ],
+    "races": [
+      "shinigami"
+    ],
+    "genre": "homme"
   },
   {
     "nom": "Shinji Hirako",
@@ -940,7 +1039,12 @@
         "effet": "Chaos complet",
         "type": "ultime"
       }
-    ]
+    ],
+    "races": [
+      "shinigami",
+      "vizard"
+    ],
+    "genre": "homme"
   },
   {
     "nom": "Kisuke Urahara",
@@ -981,7 +1085,11 @@
         "effet": "Reconstruction totale",
         "type": "ultime"
       }
-    ]
+    ],
+    "races": [
+      "shinigami"
+    ],
+    "genre": "homme"
   },
   {
     "nom": "Yamamoto Genryūsai",
@@ -1022,7 +1130,11 @@
         "effet": "Apocalypse en feu",
         "type": "ultime"
       }
-    ]
+    ],
+    "races": [
+      "shinigami"
+    ],
+    "genre": "homme"
   },
   {
     "nom": "Rangiku Matsumoto",
@@ -1063,7 +1175,11 @@
         "effet": "Cendres infernales",
         "type": "ultime"
       }
-    ]
+    ],
+    "races": [
+      "shinigami"
+    ],
+    "genre": "homme"
   },
   {
     "nom": "Ikkaku Madarame",
@@ -1104,7 +1220,11 @@
         "effet": "Rage martiale",
         "type": "ultime"
       }
-    ]
+    ],
+    "races": [
+      "shinigami"
+    ],
+    "genre": "homme"
   },
   {
     "nom": "Yumichika Ayasegawa",
@@ -1145,7 +1265,11 @@
         "effet": "Annihilation élégante",
         "type": "ultime"
       }
-    ]
+    ],
+    "races": [
+      "shinigami"
+    ],
+    "genre": "homme"
   },
   {
     "nom": "Izuru Kira",
@@ -1186,7 +1310,11 @@
         "effet": "Écrasement final",
         "type": "ultime"
       }
-    ]
+    ],
+    "races": [
+      "shinigami"
+    ],
+    "genre": "homme"
   },
   {
     "nom": "Hisagi Shūhei",
@@ -1227,9 +1355,13 @@
         "effet": "Tourbillon mortel",
         "type": "ultime"
       }
-    ]
+    ],
+    "races": [
+      "shinigami"
+    ],
+    "genre": "homme"
   },
-    {
+  {
     "nom": "Kensei Muguruma",
     "stats": {
       "attaque": 17,
@@ -1268,7 +1400,11 @@
         "effet": "Explosion à bout portant",
         "type": "ultime"
       }
-    ]
+    ],
+    "races": [
+      "shinigami"
+    ],
+    "genre": "homme"
   },
   {
     "nom": "Rōjūrō Ōtoribashi",
@@ -1309,7 +1445,11 @@
         "effet": "Concert de lames",
         "type": "ultime"
       }
-    ]
+    ],
+    "races": [
+      "shinigami"
+    ],
+    "genre": "homme"
   },
   {
     "nom": "Sajin Komamura",
@@ -1350,7 +1490,11 @@
         "effet": "Jugement du colosse",
         "type": "ultime"
       }
-    ]
+    ],
+    "races": [
+      "shinigami"
+    ],
+    "genre": "homme"
   },
   {
     "nom": "Lisa Yadōmaru",
@@ -1391,7 +1535,11 @@
         "effet": "Onde dévastatrice",
         "type": "ultime"
       }
-    ]
+    ],
+    "races": [
+      "shinigami"
+    ],
+    "genre": "homme"
   },
   {
     "nom": "Hiyori Sarugaki",
@@ -1432,7 +1580,11 @@
         "effet": "Impact bestial",
         "type": "ultime"
       }
-    ]
+    ],
+    "races": [
+      "shinigami"
+    ],
+    "genre": "homme"
   },
   {
     "nom": "Mashiro Kuna",
@@ -1473,7 +1625,11 @@
         "effet": "Explosion arc-en-ciel",
         "type": "ultime"
       }
-    ]
+    ],
+    "races": [
+      "shinigami"
+    ],
+    "genre": "homme"
   },
   {
     "nom": "Ikomikidomoe",
@@ -1514,7 +1670,11 @@
         "effet": "Cataclysme incarné",
         "type": "ultime"
       }
-    ]
+    ],
+    "races": [
+      "shinigami"
+    ],
+    "genre": "homme"
   },
   {
     "nom": "Tenjirō Kirinji",
@@ -1555,7 +1715,11 @@
         "effet": "Guérison totale",
         "type": "ultime"
       }
-    ]
+    ],
+    "races": [
+      "shinigami"
+    ],
+    "genre": "homme"
   },
   {
     "nom": "Senjumaru Shutara",
@@ -1596,7 +1760,11 @@
         "effet": "Confinement impérial",
         "type": "ultime"
       }
-    ]
+    ],
+    "races": [
+      "shinigami"
+    ],
+    "genre": "homme"
   },
   {
     "nom": "Ōetsu Nimaiya",
@@ -1637,7 +1805,11 @@
         "effet": "Découpe absolue",
         "type": "ultime"
       }
-    ]
+    ],
+    "races": [
+      "shinigami"
+    ],
+    "genre": "homme"
   },
   {
     "nom": "Ichibē Hyōsube",
@@ -1678,7 +1850,11 @@
         "effet": "Nom effacé du monde",
         "type": "ultime"
       }
-    ]
+    ],
+    "races": [
+      "shinigami"
+    ],
+    "genre": "homme"
   },
   {
     "nom": "Kirio Hikifune",
@@ -1719,7 +1895,11 @@
         "effet": "Explosion nutritionnelle",
         "type": "ultime"
       }
-    ]
+    ],
+    "races": [
+      "shinigami"
+    ],
+    "genre": "homme"
   },
   {
     "nom": "Kaname Tōsen",
@@ -1760,7 +1940,11 @@
         "effet": "Silence absolu",
         "type": "ultime"
       }
-    ]
+    ],
+    "races": [
+      "shinigami"
+    ],
+    "genre": "homme"
   },
   {
     "nom": "Ichimaru Gin",
@@ -1801,7 +1985,10 @@
         "effet": "Perforation extrême",
         "type": "ultime"
       }
-    ]
+    ],
+    "races": [
+      "shinigami"
+    ],
+    "genre": "homme"
   }
 ]
-
