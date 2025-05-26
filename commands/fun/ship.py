@@ -25,6 +25,20 @@ class ShipCommand(commands.Cog):
             hash_bytes = hashlib.md5(clef.encode()).digest()
             score = int.from_bytes(hash_bytes, 'big') % 101
 
+            # 💕 Ajustements selon genre et race
+            genre_diff = p1.get("genre") != p2.get("genre")
+            races_p1 = set(p1.get("races", []))
+            races_p2 = set(p2.get("races", []))
+            races_communes = races_p1 & races_p2
+
+            if genre_diff:
+                score += 5  # ❤️ Bonus de diversité
+            if not races_communes:
+                score -= 10  # ⚔️ Malus d’incompatibilité culturelle
+
+            score = max(0, min(score, 100))  # 🔒 Clamp
+
+            # 💬 Résultat
             if score >= 90:
                 reaction = "âmes sœurs ! 💞"
             elif score >= 70:
