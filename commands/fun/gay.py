@@ -7,57 +7,88 @@ class GayCommand(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command(name="gay", help="✨ Révèle ton niveau de flamboyance avec panache.")
+    @commands.command(name="gay", help="Analyse ton taux de gaytitude (ou celui de quelqu’un d’autre). Résultat fixe et fun.")
     @commands.cooldown(rate=1, per=3, type=commands.BucketType.user)
     async def gay(self, ctx, member: discord.Member = None):
         member = member or ctx.author
         user_id = str(member.id).encode()
 
-        # Compatibilité stable par utilisateur
+        # Score déterministe basé sur hash
         hash_val = hashlib.md5(user_id).digest()
-        pourcentage = int.from_bytes(hash_val, 'big') % 101
+        score = int.from_bytes(hash_val, 'big') % 101
 
-        # Réactions excentriques selon le palier
-        paliers = [
-            (90, 101, "🌈✨ Ultra Fabulous ✨🌈", [
-                "Tu rayonnes plus fort que le Bankai d’un capitaine 🪩",
-                "Ton aura gay est détectable depuis la Soul Society !",
-                "Lady Gaga t’appelle ‘sempai’ 💃"
-            ], 0xff69b4),
-            (70, 89, "💖 Très Audacieux.se 💖", [
-                "Un mélange de charme et de chaos 😘",
-                "T’as probablement un éventail sur toi en ce moment.",
-                "T’as vu *Yoruichi* et dit : oui. Juste oui."
-            ], 0xff77ff),
-            (50, 69, "😏 Fluidité maîtrisée 😏", [
-                "Tu vis dans l’ambiguïté artistique 🎨",
-                "Tu préfères les zanpakutō à double tranchant...",
-                "Tu dis 'no homo', mais ton reiatsu dit 'full homo'."
-            ], 0xaa66ff),
-            (30, 49, "🤨 En questionnement existentiel 🤨", [
-                "Tu t’es demandé une fois si *Renji* portait vraiment un pantalon.",
-                "Tu regardes les scènes de combat... pour le *subtext*.",
-                "Tu marches droit mais penches un peu, t’sais."
-            ], 0x8888ff),
-            (0, 29, "🧍‍♂️ Très... très hétéro 🧍‍♂️", [
-                "Tu confonds *Drag Race* avec *Course de rue* 🏎️",
-                "Ton style c’est ‘camouflage émotionnel’.",
-                "Tu t’égares ici... mais on t’accueille quand même 😌"
-            ], 0x5555ff),
+        niveaux = [
+            {
+                "min": 90,
+                "emoji": "🌈",
+                "titre": "Légende arc-en-ciel",
+                "couleur": discord.Color.magenta(),
+                "descriptions": [
+                    "Ton existence même est un dégradé de couleurs.",
+                    "Tu fais des playlists plus gays que RuPaul en finale.",
+                    "On t’a vu danser sur Dua Lipa un mardi à 8h."
+                ]
+            },
+            {
+                "min": 70,
+                "emoji": "💖",
+                "titre": "Icône en liberté",
+                "couleur": discord.Color.pink(),
+                "descriptions": [
+                    "Ton eyeliner est plus stable que ta sexualité.",
+                    "Tu es l’ambiance d’une soirée sans même parler.",
+                    "Les gens t’appellent juste pour décorer leur feed."
+                ]
+            },
+            {
+                "min": 50,
+                "emoji": "😏",
+                "titre": "Phase expérimentale",
+                "couleur": discord.Color.blurple(),
+                "descriptions": [
+                    "Tu dis ‘no homo’ mais ton historique Chrome parle.",
+                    "T'as liké un reel un peu trop expressif hier.",
+                    "Tu joues à ‘et si ?’ dans ta tête depuis 2017."
+                ]
+            },
+            {
+                "min": 30,
+                "emoji": "🤨",
+                "titre": "Ambiance suspecte",
+                "couleur": discord.Color.gold(),
+                "descriptions": [
+                    "Personne ne te croit hétéro sauf toi.",
+                    "Tu regardes Mamma Mia seul, souvent.",
+                    "Ton parfum s'appelle ‘curiosité florale’."
+                ]
+            },
+            {
+                "min": 0,
+                "emoji": "🧍",
+                "titre": "Droit dans ses bottes",
+                "couleur": discord.Color.dark_gray(),
+                "descriptions": [
+                    "Tu penses que Pride c’est un détergent.",
+                    "Tes emojis sont toujours 🧱 ou 🛠️.",
+                    "Ton plat préféré, c’est ‘protéine + riz’."
+                ]
+            }
         ]
 
-        for min_val, max_val, titre, messages, color in paliers:
-            if min_val <= pourcentage <= max_val:
-                desc = random.choice(messages)
-                embed = discord.Embed(
-                    title=f"🎭 {titre}",
-                    description=f"**{member.display_name}** est gay à **{pourcentage}%**",
-                    color=color
-                )
-                embed.add_field(name="💬 Diagnostic Reiatsu", value=desc, inline=False)
-                embed.set_footer(text="Test certifié par Mayuri et sa fashion team 👘")
-                await ctx.send(embed=embed)
-                return
+        niveau = next(n for n in niveaux if score >= n["min"])
+        commentaire = random.choice(niveau["descriptions"])
+
+        embed = discord.Embed(
+            title="🌈 Gayomètre 3000",
+            description=f"{niveau['emoji']} **{niveau['titre']}**",
+            color=niveau["couleur"]
+        )
+        embed.add_field(name="👤 Candidat", value=member.mention, inline=True)
+        embed.add_field(name="📊 Taux de gaytitude", value=f"**{score}%**", inline=True)
+        embed.add_field(name="💬 Analyse", value=commentaire, inline=False)
+        embed.set_footer(text="Test semi-scientifique. Ne pas utiliser pour se marier en mairie.")
+
+        await ctx.send(embed=embed)
 
 # Chargement automatique
 async def setup(bot):
