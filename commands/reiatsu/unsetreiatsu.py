@@ -6,9 +6,6 @@ class UnsetReiatsuCommand(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    # ✅ On définit la catégorie ici pour la rendre accessible plus tôt
-    self.help_command.category = "Reiatsu"
-
     @commands.command(
         name="unsetreiatsu",
         aliases=["unsetrts"],
@@ -27,6 +24,12 @@ class UnsetReiatsuCommand(commands.Cog):
             await ctx.send("❌ Aucun salon Reiatsu n'était configuré pour ce serveur.")
 
 
+# ✅ Chargement automatique avec catégorie définie dès le setup
+async def setup(bot):
+    cog = unsetreiatsu(bot)
+    for command in cog.get_commands():
+        command.category = "Reiatsu"
+    await bot.add_cog(cog)
 
 # Chargement automatique du module
 async def setup(bot):
