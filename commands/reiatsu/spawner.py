@@ -21,14 +21,16 @@ class ReiatsuSpawner(commands.Cog):
     async def spawn_loop(self):
         await self.bot.wait_until_ready()
 
+        # ❌ Ne pas exécuter sur les instances secondaires
         if not getattr(self.bot, "is_main_instance", False):
-            return  # Gère le spawn depuis une seule instance
+            return
 
         now = int(time.time())
 
-        configs = supabase.table("reiatsu_config") \
-            .select("guild_id", "channel_id", "last_spawn_at", "delay_minutes", "en_attente") \
-            .execute()
+        # 🔁 Récupération des configurations serveur
+        configs = supabase.table("reiatsu_config").select(
+            "guild_id", "channel_id", "last_spawn_at", "delay_minutes", "en_attente"
+        ).execute()
 
         for conf in configs.data:
             guild_id = conf["guild_id"]
@@ -40,22 +42,20 @@ class ReiatsuSpawner(commands.Cog):
                 continue
 
             last_spawn_str = conf.get("last_spawn_at")
-            should_spawn = False
-
-            if not last_spawn_str:
-                should_spawn = True
-            else:
-                last_spawn = parser.parse(last_spawn_str).timestamp()
-                should_spawn = now - int(last_spawn) >= int(delay)
+            should_spawn = (
+                not last_spawn_str or
+                now - int(parser.parse(last_spawn_str).timestamp()) >= int(delay)
+            )
 
             if not should_spawn:
                 continue
 
+            # 🛰️ Récupère le salon configuré
             channel = self.bot.get_channel(int(channel_id))
             if not channel:
                 continue
 
-            # 🔒 Marque comme en attente
+            # 🟣 Marque qu’un reiatsu est en attente
             supabase.table("reiatsu_config").update({"en_attente": True}).eq("guild_id", guild_id).execute()
 
             embed = discord.Embed(
@@ -63,6 +63,7 @@ class ReiatsuSpawner(commands.Cog):
                 description="Cliquez sur la réaction 💠 pour l'absorber.",
                 color=discord.Color.purple()
             )
+
             message = await channel.send(embed=embed)
             await message.add_reaction("💠")
 
@@ -76,13 +77,15 @@ class ReiatsuSpawner(commands.Cog):
             try:
                 reaction, user = await self.bot.wait_for("reaction_add", timeout=10800.0, check=check)
 
-                data = supabase.table("reiatsu").select("id", "points").eq("user_id", str(user.id)).execute()
+                user_id = str(user.id)
+                data = supabase.table("reiatsu").select("points").eq("user_id", user_id).execute()
+
                 if data.data:
-                    current = data.data[0]["points"]
-                    supabase.table("reiatsu").update({"points": current + 1}).eq("user_id", str(user.id)).execute()
+                    points = data.data[0]["points"] + 1
+                    supabase.table("reiatsu").update({"points": points}).eq("user_id", user_id).execute()
                 else:
                     supabase.table("reiatsu").insert({
-                        "user_id": str(user.id),
+                        "user_id": user_id,
                         "username": str(user.name),
                         "points": 1
                     }).execute()
@@ -90,9 +93,9 @@ class ReiatsuSpawner(commands.Cog):
                 await channel.send(f"{user.mention} a absorbé le Reiatsu et gagné **+1** point !")
 
             except asyncio.TimeoutError:
-                await channel.send("Le Reiatsu s'est dissipé dans l'air... personne ne l'a absorbé.")
+                await channel.send("⏳ Le Reiatsu s'est dissipé dans l'air... personne ne l'a absorbé.")
 
-            # 🔄 Nouveau délai et fin du lock
+            # 🕒 Mise à jour du délai et libération du verrou
             new_delay = random.randint(1800, 5400)
             supabase.table("reiatsu_config").update({
                 "last_spawn_at": datetime.utcnow().isoformat(),
@@ -100,5 +103,6 @@ class ReiatsuSpawner(commands.Cog):
                 "en_attente": False
             }).eq("guild_id", guild_id).execute()
 
+# 📦 Chargement automatique du cog
 async def setup(bot):
     await bot.add_cog(ReiatsuSpawner(bot))
