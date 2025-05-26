@@ -1,16 +1,12 @@
 {
-  "start": {
-    "texte": "🧍‍♂️ Tu es un nouveau Shinigami envoyé par la Soul Society dans la brigade de Karakura. Une alerte Hollow vient de retentir. Que fais-tu ?",
-    "choix": [
-      { "emoji": "🗡️", "texte": "Partir immédiatement en mission.", "suivant": "mission1" },
-      { "emoji": "📞", "texte": "Appeler le capitaine pour plus d’infos.", "suivant": "appel1" }
-    ]
+  "intro": {
+    "texte": "🌆 **Karakura Town** est devenue un épicentre d’activités spirituelles instables. La Soul Society y a établi un commissariat secret : la **Division Z**.\n\nTu es un nouveau Shinigami de cette brigade. Avant de commencer, choisis ton nom et ta mission."
   },
-  "mission1": {
-    "texte": "🗡️ Tu cours dans les rues de Karakura. Tu ressens une pression spirituelle. Que fais-tu ?",
-    "choix": [
-      { "emoji": "🔍", "texte": "Scanner les environs.", "suivant": "scan1" },
-      { "emoji": "🏃", "texte": "Suivre ton instinct.", "suivant": "instinct1" }
-    ]
+  "missions": {
+    "enquete1": {
+      "titre": "Meurtres spirituels",
+      "description": "Une série d'âmes détruites mystérieusement. Est-ce l'œuvre d'un Hollow ?",
+      "start": "enquete1_start"
+    }
   }
 }
