@@ -1,44 +1,39 @@
 import discord
 from discord.ext import commands
-from bot import get_prefix  # ta fonction perso pour le préfixe
+from bot import get_prefix
 
 class HelpCommand(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command(name="help", help="Affiche la liste des commandes ou les infos sur une commande spécifique.")
+    @commands.command(name="aide", help="Affiche la liste des commandes ou les infos sur une commande spécifique.")
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
-    async def afficher_aide(self, ctx, commande: str = None):  # ✅ nom différent ici
+    async def aide(self, ctx, commande: str = None):
         prefix = get_prefix(self.bot, ctx.message)
 
         if commande is None:
-            categories = {
-                "Général": [],
-                "Fun": [],
-                "Reiatsu": [],
-                "Admin": [],
-                "Autres": []
-            }
+            # On crée les catégories
+            categories = {}
 
             for cmd in self.bot.commands:
                 if cmd.hidden:
                     continue
-                cat = getattr(cmd, "category", "Autres")
-                categories.setdefault(cat, []).append(cmd)
 
-            embed = discord.Embed(
-                title="📜 Commandes disponibles",
-                description=f"Utilise `{prefix}help <commande>` pour plus d'infos.",
-                color=discord.Color.blue()
-            )
+                cat = getattr(cmd, "category", "Autres")
+                if cat not in categories:
+                    categories[cat] = []
+                categories[cat].append(cmd)
+
+            embed = discord.Embed(title="📜 Commandes par catégorie", color=discord.Color.blue())
 
             for cat, cmds in categories.items():
-                if cmds:
-                    cmds.sort(key=lambda c: c.name)
-                    liste = "\n".join(f"`{prefix}{cmd.name}` : {cmd.help or 'Pas de description.'}" for cmd in cmds)
-                    embed.add_field(name=f"📂 {cat}", value=liste, inline=False)
+                cmds.sort(key=lambda c: c.name)
+                value = "\n".join(f"`{prefix}{c.name}` : {c.help or 'Pas de description.'}" for c in cmds)
+                embed.add_field(name=f"📂 {cat}", value=value, inline=False)
 
+            embed.set_footer(text=f"Utilise {prefix}aide <commande> pour plus de détails.")
             await ctx.send(embed=embed)
+
         else:
             cmd = self.bot.get_command(commande)
             if cmd is None:
@@ -46,7 +41,7 @@ class HelpCommand(commands.Cog):
                 return
 
             embed = discord.Embed(
-                title=f"ℹ️ Aide pour `{prefix}{cmd.name}`",
+                title=f"Aide pour `{prefix}{cmd.name}`",
                 color=discord.Color.green()
             )
             embed.add_field(name="Description", value=cmd.help or "Pas de description.", inline=False)
@@ -55,7 +50,7 @@ class HelpCommand(commands.Cog):
             embed.set_footer(text="Paramètres entre < > = obligatoires | [ ] = optionnels")
             await ctx.send(embed=embed)
 
-# ✅ Setup du cog avec catégorie
+# Setup automatique
 async def setup(bot):
     cog = HelpCommand(bot)
     for command in cog.get_commands():
