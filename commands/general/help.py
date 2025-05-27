@@ -12,7 +12,7 @@ class HelpCommand(commands.Cog):
         prefix = get_prefix(self.bot, ctx.message)
 
         if commande is None:
-            categories = {}
+            categories = {"Admin", "Autres", "Fun", "Reiatsu"}
 
             for cmd in self.bot.commands:
                 if cmd.hidden:
