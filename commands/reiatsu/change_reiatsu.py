@@ -6,10 +6,10 @@ class SetReiatsuPoints(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command(name="change_reiatsu", aliases = ["changerts"], help="(Admin) Modifie le score Reiatsu d'un membre.")
+    @commands.command(name="changereiatsu", aliases = ["changerts"], help="(Admin) Modifie le score Reiatsu d'un membre.")
     @commands.has_permissions(administrator=True)
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
-    async def change_reiatsu(self, ctx, member: discord.Member, points: int):
+    async def changereiatsu(self, ctx, member: discord.Member, points: int):
         if points < 0:
             await ctx.send("❌ Le score doit être positif.")
             return
