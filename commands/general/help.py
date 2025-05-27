@@ -6,32 +6,28 @@ class HelpCommand(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command(name="aide", help="Affiche la liste des commandes ou les infos sur une commande spécifique.")
+    @commands.command(name="help", help="Affiche la liste des commandes ou les infos sur une commande spécifique.")
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
-    async def aide(self, ctx, commande: str = None):
+    async def help_func(self, ctx, commande: str = None):
         prefix = get_prefix(self.bot, ctx.message)
 
         if commande is None:
-            # On crée les catégories
             categories = {}
 
             for cmd in self.bot.commands:
                 if cmd.hidden:
                     continue
-
                 cat = getattr(cmd, "category", "Autres")
-                if cat not in categories:
-                    categories[cat] = []
-                categories[cat].append(cmd)
+                categories.setdefault(cat, []).append(cmd)
 
             embed = discord.Embed(title="📜 Commandes par catégorie", color=discord.Color.blue())
 
             for cat, cmds in categories.items():
                 cmds.sort(key=lambda c: c.name)
-                value = "\n".join(f"`{prefix}{c.name}` : {c.help or 'Pas de description.'}" for c in cmds)
-                embed.add_field(name=f"📂 {cat}", value=value, inline=False)
+                description = "\n".join(f"`{prefix}{c.name}` : {c.help or 'Pas de description.'}" for c in cmds)
+                embed.add_field(name=f"📂 {cat}", value=description, inline=False)
 
-            embed.set_footer(text=f"Utilise {prefix}aide <commande> pour plus de détails.")
+            embed.set_footer(text=f"Utilise {prefix}help <commande> pour plus de détails.")
             await ctx.send(embed=embed)
 
         else:
@@ -50,9 +46,10 @@ class HelpCommand(commands.Cog):
             embed.set_footer(text="Paramètres entre < > = obligatoires | [ ] = optionnels")
             await ctx.send(embed=embed)
 
-# Setup automatique
+# Chargement
 async def setup(bot):
     cog = HelpCommand(bot)
     for command in cog.get_commands():
-        command.category = "Général"
+        if not hasattr(command, "category"):
+            command.category = "Général"
     await bot.add_cog(cog)
