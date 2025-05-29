@@ -1,12 +1,6 @@
 # ──────────────────────────────────────────────────────────────
 # 📁 FICHIER : commands/fun/chiffre.py
 # ──────────────────────────────────────────────────────────────
-# 🧾 COMMANDE : !chiffre / !cancel
-# 📂 CATÉGORIE : Fun
-# 🎯 OBJET : Jeu de devinette d’un nombre entre 1 et 100
-# 👥 UN SEUL JEU PAR SALON À LA FOIS
-# 🕒 TEMPS LIMITE : 1h
-# ──────────────────────────────────────────────────────────────
 
 import asyncio
 import random
