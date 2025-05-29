@@ -1,10 +1,5 @@
 # ──────────────────────────────────────────────────────────────
-# 📁 FICHIER : commands/general/ping.py
-# ──────────────────────────────────────────────────────────────
-# 🧾 COMMANDE : !ping / !test
-# 📚 FONCTION : Affiche la latence du bot
-# 📂 CATÉGORIE : Général
-# 🕒 COOLDOWN : 3 secondes par utilisateur
+# 📁 PING
 # ──────────────────────────────────────────────────────────────
 
 import discord
