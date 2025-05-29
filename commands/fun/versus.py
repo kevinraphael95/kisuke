@@ -2,6 +2,9 @@
 # ⚔️ COMMANDE "VERSUS" — DUEL DE PERSONNAGES BLEACH EN INTERACTIF
 # ─────────────────────────────────────────────────────────────
 
+# ──────────────────────────────────────────────────────────────
+# 📦 IMPORTS
+# ──────────────────────────────────────────────────────────────
 import discord
 from discord.ext import commands
 from discord import SelectOption, Interaction
