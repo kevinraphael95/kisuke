@@ -2,6 +2,9 @@
 # ♻️ RPG RESET - SUPPRESSION DE LA SAUVEGARDE D'UN JOUEUR
 # ────────────────────────────────────────────────────────────────
 
+# ──────────────────────────────────────────────────────────────
+# 📦 IMPORTS
+# ──────────────────────────────────────────────────────────────
 import discord
 from discord.ext import commands
 from supabase_client import supabase
