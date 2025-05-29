@@ -2,6 +2,9 @@
 # 📁 REIATSU - TEMPS RESTANT AVANT LE PROCHAIN SPAWN
 # ──────────────────────────────────────────────────────────────
 
+# ──────────────────────────────────────────────────────────────
+# 📦 IMPORTS
+# ──────────────────────────────────────────────────────────────
 import discord
 import time
 from datetime import datetime
