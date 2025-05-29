@@ -1,36 +1,80 @@
-import os
-import json
-import random
-import discord
-from discord.ext import commands
+# ──────────────────────────────────────────────────────────────
+# 📁 FICHIER : commands/general/hello.py
+# ──────────────────────────────────────────────────────────────
+# 🧾 COMMANDE : !hello
+# 🙋 UTILITÉ : Envoie un message de bienvenue aléatoire
+# 📂 CATÉGORIE : Général
+# 🕒 COOLDOWN : 3 secondes par utilisateur
+# 🗃️ SOURCE : Fichier JSON dans /data/
+# ──────────────────────────────────────────────────────────────
 
+# ──────────────────────────────────────────────────────────────
+# 📦 IMPORTS
+# ──────────────────────────────────────────────────────────────
+import os                      # Gestion des chemins si besoin
+import json                    # Lecture de fichiers JSON
+import random                  # Choix aléatoire
+import discord                 # API Discord
+from discord.ext import commands  # Fonctions et outils de commandes
+
+# ──────────────────────────────────────────────────────────────
+# ⚙️ CLASSE DU COG : HelloCommand
+# ──────────────────────────────────────────────────────────────
 class HelloCommand(commands.Cog):
-    def __init__(self, bot):
+    def __init__(self, bot: commands.Bot):
+        """
+        Initialise le cog avec le bot en paramètre.
+        """
         self.bot = bot
 
-    @commands.command(name="hello", help="Affiche un message de bienvenue aléatoire.")
-    @commands.cooldown(rate=1, per=3, type=commands.BucketType.user)  # ⏱️ Cooldown utilisateur 3s
-    async def hello(self, ctx):
+    # ──────────────────────────────────────────────────────────
+    # 💬 COMMANDE !hello
+    # ──────────────────────────────────────────────────────────
+    @commands.command(
+        name="hello",
+        help="Affiche un message de bienvenue aléatoire."
+    )
+    @commands.cooldown(rate=1, per=3, type=commands.BucketType.user)
+    async def hello(self, ctx: commands.Context):
+        """
+        Envoie un message choisi aléatoirement depuis un fichier JSON.
+        Si le fichier est manquant ou invalide, un message par défaut est envoyé.
+        """
         try:
-            # Lecture depuis le dossier data/
+            # 📁 CHEMIN VERS LE FICHIER DE DONNÉES
             with open("data/hello_messages.json", "r", encoding="utf-8") as f:
                 data = json.load(f)
-                messages = data.get("messages", [])
-            
-            # Choix aléatoire d’un message ou fallback
+                messages = data.get("messages", [])  # 🔍 Extraction de la clé "messages"
+
+            # 🎲 ENVOI D’UN MESSAGE ALÉATOIRE
             if messages:
                 await ctx.send(random.choice(messages))
             else:
                 await ctx.send("👋 Hello, je suis en ligne (mais sans message personnalisé) !")
 
+        # 🚨 ERREURS GÉRÉES AVEC PRÉCISION
         except FileNotFoundError:
-            await ctx.send("❌ Fichier `hello_messages.json` introuvable dans le dossier `data/`.")
+            await ctx.send("❌ Le fichier `hello_messages.json` est introuvable dans le dossier `data/`.")
         except json.JSONDecodeError:
-            await ctx.send("❌ Erreur de lecture du fichier `hello_messages.json`.")
+            await ctx.send("❌ Erreur de syntaxe dans `hello_messages.json` (JSON malformé).")
 
+    # ──────────────────────────────────────────────────────────
+    # 🏷️ ATTRIBUTION MANUELLE DE LA CATÉGORIE
+    # ──────────────────────────────────────────────────────────
     def cog_load(self):
-        self.hello.category = "Général"  # ✅ Ajout de la catégorie ici
+        """
+        Fonction spéciale appelée automatiquement à l’ajout du cog.
+        On s’en sert ici pour attribuer dynamiquement une catégorie.
+        """
+        self.hello.category = "Général"
 
-# Chargement automatique
-async def setup(bot):
+# ──────────────────────────────────────────────────────────────
+# 🔌 SETUP DU COG
+# ──────────────────────────────────────────────────────────────
+async def setup(bot: commands.Bot):
+    """
+    Fonction de setup utilisée par Discord.py pour charger ce module.
+    Elle ajoute le cog au bot.
+    """
     await bot.add_cog(HelloCommand(bot))
+    print("✅ Cog chargé : HelloCommand (catégorie = Général)")
