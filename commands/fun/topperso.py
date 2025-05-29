@@ -2,6 +2,9 @@
 # 🏆 TOP PERSOS - CLASSEMENT DES PERSONNAGES PRÉFÉRÉS
 # ────────────────────────────────────────────────────────────────
 
+# ──────────────────────────────────────────────────────────────
+# 📦 IMPORTS
+# ──────────────────────────────────────────────────────────────
 import discord
 from discord.ext import commands
 from supabase_client import supabase
