@@ -2,6 +2,9 @@
 # 📁 REIATSU - SUPPRESSION DU SALON CONFIGURÉ
 # ──────────────────────────────────────────────────────────────
 
+# ──────────────────────────────────────────────────────────────
+# 📦 IMPORTS
+# ──────────────────────────────────────────────────────────────
 import discord
 from discord.ext import commands
 from supabase_client import supabase
