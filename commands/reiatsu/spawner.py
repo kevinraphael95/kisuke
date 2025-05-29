@@ -1,3 +1,7 @@
+# ──────────────────────────────────────────────────────────────
+# 📁 REIATSU - GESTION DU SPAWN
+# ──────────────────────────────────────────────────────────────
+
 import discord
 import random
 import time
@@ -7,21 +11,31 @@ from dateutil import parser
 from discord.ext import commands, tasks
 from supabase_client import supabase
 
+# ──────────────────────────────────────────────────────────────
+# 🔧 COG : ReiatsuSpawner
+# ──────────────────────────────────────────────────────────────
 class ReiatsuSpawner(commands.Cog):
-    def __init__(self, bot):
+    def __init__(self, bot: commands.Bot):
         self.bot = bot
-        self.spawn_loop.start()
+        self.spawn_loop.start()  # 🔁 Lancement automatique de la boucle
 
     def cog_unload(self):
-        self.spawn_loop.cancel()
+        self.spawn_loop.cancel()  # 🛑 Arrêt de la boucle à l’unload
 
+    # ──────────────────────────────────────────────────────────
+    # ⏲️ TÂCHE : spawn_loop — toutes les 60 secondes
+    # ──────────────────────────────────────────────────────────
     @tasks.loop(seconds=60)
     async def spawn_loop(self):
         await self.bot.wait_until_ready()
+
+        # 🔒 Ne fait tourner la tâche que sur l'instance principale
         if not getattr(self.bot, "is_main_instance", True):
             return
 
         now = int(time.time())
+
+        # 📦 Récupère la config des serveurs
         configs = supabase.table("reiatsu_config").select("*").execute()
 
         for conf in configs.data:
@@ -34,7 +48,9 @@ class ReiatsuSpawner(commands.Cog):
                 continue
 
             last_spawn_str = conf.get("last_spawn_at")
-            should_spawn = not last_spawn_str or (now - int(parser.parse(last_spawn_str).timestamp()) >= delay)
+            should_spawn = not last_spawn_str or (
+                now - int(parser.parse(last_spawn_str).timestamp()) >= delay
+            )
 
             if not should_spawn:
                 continue
@@ -43,6 +59,7 @@ class ReiatsuSpawner(commands.Cog):
             if not channel:
                 continue
 
+            # ✨ Envoie du message de spawn
             embed = discord.Embed(
                 title="💠 Un Reiatsu sauvage apparaît !",
                 description="Cliquez sur la réaction 💠 pour l'absorber.",
@@ -51,15 +68,18 @@ class ReiatsuSpawner(commands.Cog):
             message = await channel.send(embed=embed)
             await message.add_reaction("💠")
 
-            # Sauvegarde
+            # 💾 Mise à jour de l'état
             supabase.table("reiatsu_config").update({
                 "en_attente": True,
                 "last_spawn_at": datetime.utcnow().isoformat(),
                 "spawn_message_id": str(message.id)
             }).eq("guild_id", guild_id).execute()
 
+    # ──────────────────────────────────────────────────────────
+    # 🎯 ÉVÉNEMENT : Réaction au spawn
+    # ──────────────────────────────────────────────────────────
     @commands.Cog.listener()
-    async def on_raw_reaction_add(self, payload):
+    async def on_raw_reaction_add(self, payload: discord.RawReactionActionEvent):
         if str(payload.emoji) != "💠" or payload.user_id == self.bot.user.id:
             return
 
@@ -78,9 +98,10 @@ class ReiatsuSpawner(commands.Cog):
         if not channel or not user:
             return
 
-        # Ajoute le point
+        # ➕ Ajoute 1 point au joueur
         user_id = str(user.id)
         reiatsu = supabase.table("reiatsu").select("points").eq("user_id", user_id).execute()
+
         if reiatsu.data:
             points = reiatsu.data[0]["points"] + 1
             supabase.table("reiatsu").update({"points": points}).eq("user_id", user_id).execute()
@@ -91,9 +112,9 @@ class ReiatsuSpawner(commands.Cog):
                 "points": 1
             }).execute()
 
-        await channel.send(f"{user.mention} a absorbé le Reiatsu et gagné **+1** point !")
+        await channel.send(f"💠 {user.mention} a absorbé le Reiatsu et gagné **+1** point !")
 
-        # Réinitialise l’état
+        # 🔄 Réinitialisation de l’état de spawn
         new_delay = random.randint(1800, 5400)
         supabase.table("reiatsu_config").update({
             "en_attente": False,
@@ -101,6 +122,9 @@ class ReiatsuSpawner(commands.Cog):
             "delay_minutes": new_delay
         }).eq("guild_id", guild_id).execute()
 
-# Chargement
-async def setup(bot):
+# ──────────────────────────────────────────────────────────────
+# 🔌 SETUP AUTOMATIQUE DU COG
+# ──────────────────────────────────────────────────────────────
+async def setup(bot: commands.Bot):
     await bot.add_cog(ReiatsuSpawner(bot))
+    print("✅ Cog chargé : ReiatsuSpawner (Spawn + Réactions)")
