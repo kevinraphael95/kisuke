@@ -1,27 +1,42 @@
+# ────────────────────────────────────────────────────────────────
+#        🌈 COMMANDE DISCORD - TAUX DE GAYTITUDE        
+# ────────────────────────────────────────────────────────────────
+
 import discord
 from discord.ext import commands
 import hashlib
 import random
 
+# ────────────────────────────────────────────────────────────────═
+# 📦 Classe principale de la commande "gay"
+# ────────────────────────────────────────────────────────────────═
 class GayCommand(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command(name="gay", help="Calcule ton taux de gaytitude fixe et fun. 👬")
+    # ───────────────────────────────────────────────
+    # 🌈 Commande !gay : calcule un score fun fixe
+    # Cooldown : 1 fois toutes les 3 secondes par utilisateur
+    # ───────────────────────────────────────────────
+    @commands.command(
+        name="gay",
+        help="🌈 Calcule ton taux de gaytitude fixe et fun."
+    )
     @commands.cooldown(rate=1, per=3, type=commands.BucketType.user)
     async def gay(self, ctx, member: discord.Member = None):
         member = member or ctx.author
-        user_id = str(member.id).encode()
 
-        # Score fixe basé sur le hash
+        # 🔒 Score fixe basé sur le hash de l’ID utilisateur
+        user_id = str(member.id).encode()
         hash_val = hashlib.md5(user_id).digest()
         score = int.from_bytes(hash_val, 'big') % 101
 
-        # Définir la barre de progression visuelle
+        # 📊 Barre de progression visuelle
         filled = "█" * (score // 10)
         empty = "░" * (10 - (score // 10))
         bar = f"`{filled}{empty}`"
 
+        # 📚 Définition des niveaux
         niveaux = [
             {
                 "min": 90,
@@ -80,24 +95,32 @@ class GayCommand(commands.Cog):
             }
         ]
 
+        # 🎯 Sélection du bon niveau et commentaire
         niveau = next(n for n in niveaux if score >= n["min"])
         commentaire = random.choice(niveau["descriptions"])
 
+        # 🖼️ Création de l'embed
         embed = discord.Embed(
             title=f"{niveau['emoji']} {niveau['titre']}",
             description=commentaire,
             color=niveau["couleur"]
         )
-        embed.set_author(name=f"Taux de gaytitude de {member.display_name}", icon_url=member.avatar.url if member.avatar else None)
+        embed.set_author(
+            name=f"Taux de gaytitude de {member.display_name}",
+            icon_url=member.avatar.url if member.avatar else None
+        )
         embed.add_field(name="📊 Pourcentage", value=f"**{score}%**", inline=True)
         embed.add_field(name="📈 Niveau", value=bar, inline=False)
         embed.set_footer(text="✨ C’est scientifique. Enfin presque.")
 
+        # 📤 Envoi de l'embed dans le salon
         await ctx.send(embed=embed)
 
-# Chargement auto
+# ────────────────────────────────────────────────────────────────═
+# 🔌 Fonction de setup pour charger le Cog
+# ────────────────────────────────────────────────────────────────═
 async def setup(bot):
     cog = GayCommand(bot)
     for command in cog.get_commands():
-        command.category = "Fun"
+        command.category = "Fun"  # 📁 Classement dans la catégorie "Fun"
     await bot.add_cog(cog)
