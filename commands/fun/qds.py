@@ -63,9 +63,13 @@ class QDS(commands.Cog):
     async def qds(self, ctx):
         """Lance un quizz QCM multijoueur sur Dark Souls (5 questions)"""
         guild_id = ctx.guild.id
+        await ctx.send(
+    "🧠 **Ceci est un quizz sur Dark Souls !**\n"
+    "Répondez aux 5 questions à choix multiples en cliquant sur les réactions correspondantes. "
+    "Le joueur avec le plus de bonnes réponses remporte la partie. Bonne chance !"
+)
 
-        if self.check_already_played(guild_id):
-            return await ctx.send("⏳ Une session a déjà eu lieu aujourd'hui sur ce serveur. Reviens demain !")
+
 
         data = load_questions()
         questions = (
