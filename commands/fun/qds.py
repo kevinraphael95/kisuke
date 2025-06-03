@@ -15,6 +15,8 @@ import os
 import random
 import datetime
 from supabase import create_client
+import asyncio
+
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 📂 Chargement des questions depuis le fichier JSON
@@ -49,25 +51,69 @@ class QDS(commands.Cog):
         response = supabase.table("qds_scores").select("date").eq("server_id", str(guild_id)).eq("date", today).execute()
         return len(response.data) > 0
 
+
+
     def save_score(self, guild_id, user_id, username, score):
-        today = datetime.datetime.utcnow().date().isoformat()
-        supabase.table("qds_scores").insert({
-            "server_id": str(guild_id),
-            "user_id": str(user_id),
-            "username": username,
-            "score": score,
-            "date": today
-        }).execute()
+        response = supabase.table("qds_scores") \
+            .select("score") \
+            .eq("server_id", str(guild_id)) \
+            .eq("user_id", str(user_id)) \
+            .execute()
+    
+        if response.data:
+            current_score = response.data[0]["score"]
+            new_score = current_score + score
+            supabase.table("qds_scores") \
+                .update({"score": new_score, "username": username}) \
+                .eq("server_id", str(guild_id)) \
+                .eq("user_id", str(user_id)) \
+                .execute()
+        else:
+            supabase.table("qds_scores").insert({
+                "server_id": str(guild_id),
+                "user_id": str(user_id),
+                "username": username,
+                "score": score
+            }).execute()
+
+
+
+
+
+
+
+    
 
     @commands.command(name="qds", aliases=["quizzdarksouls"])
     async def qds(self, ctx):
         """Lance un quizz QCM multijoueur sur Dark Souls (5 questions)"""
         guild_id = ctx.guild.id
-        await ctx.send(
-    "🧠 **Ceci est un quizz sur Dark Souls !**\n"
-    "Répondez aux 5 questions à choix multiples en cliquant sur les réactions correspondantes. "
-    "Le joueur avec le plus de bonnes réponses remporte la partie. Bonne chance !"
-)
+
+        intro_msg = await ctx.send(
+            "🧠 **Ceci est un quizz sur Dark Souls !**\n"
+            "Cliquez sur 🇯 pour rejoindre le quizz. Il faut au moins 2 joueurs.\n"
+            "Répondez aux 5 questions à choix multiples en cliquant sur les réactions correspondantes."
+        )
+        await intro_msg.add_reaction("🇯")
+
+        def join_check(reaction, user):
+            return (
+                reaction.message.id == intro_msg.id and
+                str(reaction.emoji) == "🇯" and
+                not user.bot
+        )
+
+        players = set()
+        try:
+            while len(players) < 2:
+                reaction, user = await ctx.bot.wait_for("reaction_add", timeout=60.0, check=join_check)
+                players.add(user.id)
+        except asyncio.TimeoutError:
+            return await ctx.send("⏳ Temps écoulé : il fallait au moins 2 joueurs pour commencer.")
+
+        players_mentions = ", ".join(f"<@{pid}>" for pid in players)
+        await ctx.send(f"✅ Joueurs prêts : {players_mentions}. Début du quizz !")
+
 
 
 
