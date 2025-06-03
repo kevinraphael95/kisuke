@@ -1,35 +1,45 @@
-# ────────────────────────────────────────────────────────────────
-# COMBAT
-# ────────────────────────────────────────────────────────────────
+# ────────────────────────────────────────────────────────────────────────────────
+# 📌 combat.py — Commande interactive !combat
+# Objectif : Simule un combat entre 2 personnages de Bleach avec stats, énergie et effets.
+# Catégorie : Fun
+# Accès : Public
+# ────────────────────────────────────────────────────────────────────────────────
 
-# ──────────────────────────────────────────────────────────────
-# 📦 IMPORTS
-# ──────────────────────────────────────────────────────────────
+# ────────────────────────────────────────────────────────────────────────────────
+# 📦 Imports nécessaires
+# ────────────────────────────────────────────────────────────────────────────────
 import discord
 from discord.ext import commands
 import random
 import json
+import os
 
+# ────────────────────────────────────────────────────────────────────────────────
+# 🧠 Cog principal
+# ────────────────────────────────────────────────────────────────────────────────
 class CombatCommand(commands.Cog):
-    def __init__(self, bot):
+    """
+    Commande !combat — Simule un combat entre 2 personnages de Bleach avec stats, énergie et effets.
+    """
+
+    def __init__(self, bot: commands.Bot):
         self.bot = bot
 
-    # ────────────────────────────────────────────────────────────
-    # ⚔️ COMMANDE PRINCIPALE : !combat
-    # ────────────────────────────────────────────────────────────
     @commands.command(
         name="combat",
-        help="Simule un combat entre 2 personnages de Bleach avec stats, énergie et effets."
+        help="Simule un combat entre 2 personnages de Bleach avec stats, énergie et effets.",
+        description="Lance un combat automatisé sur 5 tours entre 2 personnages tirés au hasard."
     )
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
-    async def combat(self, ctx):
+    async def combat(self, ctx: commands.Context):
+        """Commande principale simulant un combat."""
 
-        # 🧾 Fonction d'affichage d'un état simple
-        def format_etat_ligne(p):
+        def format_etat_ligne(p: dict) -> str:
+            """Formate une ligne d'état du personnage."""
             coeur = f"❤️ {max(p['vie'], 0)} PV"
             batterie = f"🔋 {p['energie']} énergie"
             if p["status"] == "gel":
-                statut = f"❄️ Gelé ({p['status_duree']} tour)"
+                statut = f"❄️ Gelé ({p['status_duree']} tour{'s' if p['status_duree'] > 1 else ''})"
             elif p["status"] == "confusion":
                 statut = f"💫 Confus ({p['status_duree']} tours)"
             elif p["status"] == "poison":
@@ -39,15 +49,16 @@ class CombatCommand(commands.Cog):
             return f"{p['nom']} — {coeur} | {batterie} | {statut}"
 
         try:
-            # 📥 Chargement des personnages
-            with open("data/bleach_personnages.json", "r", encoding="utf-8") as f:
+            # Chargement des personnages
+            data_path = os.path.join("data", "bleach_personnages.json")
+            with open(data_path, "r", encoding="utf-8") as f:
                 personnages = json.load(f)
 
             if len(personnages) < 2:
                 await ctx.send("❌ Pas assez de personnages dans le fichier.")
                 return
 
-            # 🎭 Sélection de 2 personnages au hasard
+            # Sélection de 2 personnages aléatoires
             p1, p2 = random.sample(personnages, 2)
             for p in (p1, p2):
                 p["energie"] = 100
@@ -55,16 +66,16 @@ class CombatCommand(commands.Cog):
                 p["status"] = None
                 p["status_duree"] = 0
                 for atk in p["attaques"]:
-                    atk["utilisé"] = False  # Pour empêcher l'ulti en boucle
+                    atk["utilisé"] = False  # Empêche utilisation multiple d'ulti
 
-            # 🏁 Initiative selon mobilité
+            # Initiative selon mobilité + hasard
             p1_init = p1["stats"]["mobilité"] + random.randint(0, 10)
             p2_init = p2["stats"]["mobilité"] + random.randint(0, 10)
             tour_order = [p1, p2] if p1_init >= p2_init else [p2, p1]
 
             log = f"⚔️ **Combat entre {p1['nom']} et {p2['nom']} !**\n\n"
 
-            # 🔁 5 Tours maximum
+            # 5 tours maximum
             for tour in range(1, 6):
                 log += f"__🔁 Tour {tour}__\n\n"
                 log += f"{format_etat_ligne(p1)}\n{format_etat_ligne(p2)}\n\n"
@@ -75,7 +86,7 @@ class CombatCommand(commands.Cog):
                     if attaquant["vie"] <= 0 or defenseur["vie"] <= 0:
                         continue
 
-                    # ❄️ Statut Gèle
+                    # Gestion des statuts
                     if attaquant["status"] == "gel":
                         log += f"❄️ {attaquant['nom']} est gelé et ne peut pas agir.\n\n"
                         attaquant["status_duree"] -= 1
@@ -83,7 +94,6 @@ class CombatCommand(commands.Cog):
                             attaquant["status"] = None
                         continue
 
-                    # 💫 Statut Confusion
                     if attaquant["status"] == "confusion":
                         if random.random() < 0.4:
                             log += f"💫 {attaquant['nom']} est confus et se blesse (10 PV) !\n\n"
@@ -93,7 +103,6 @@ class CombatCommand(commands.Cog):
                                 attaquant["status"] = None
                             continue
 
-                    # ☠️ Statut Poison
                     if attaquant["status"] == "poison":
                         log += f"☠️ {attaquant['nom']} perd 5 PV à cause du poison.\n"
                         attaquant["vie"] -= 5
@@ -101,7 +110,7 @@ class CombatCommand(commands.Cog):
                         if attaquant["status_duree"] <= 0:
                             attaquant["status"] = None
 
-                    # 🎯 Choix d'une attaque possible
+                    # Choix d'une attaque possible
                     possibles = [
                         a for a in attaquant["attaques"]
                         if a["cout"] <= attaquant["energie"] and (a["type"] != "ultime" or not a["utilisé"])
@@ -114,7 +123,7 @@ class CombatCommand(commands.Cog):
                     if attaque["type"] == "ultime":
                         attaque["utilisé"] = True
 
-                    # 🌀 Tentative d'esquive
+                    # Tentative d'esquive
                     esquive_chance = min(defenseur["stats"]["mobilité"] / 40 + random.uniform(0, 0.2), 0.5)
                     tentative_esquive = random.random()
                     cout_esquive = 50 if attaque["type"] == "ultime" else 10
@@ -136,7 +145,7 @@ class CombatCommand(commands.Cog):
                         else:
                             log += f"⚡ {defenseur['nom']} voulait esquiver mais manque d'énergie !\n"
 
-                    # 💥 Calcul des dégâts
+                    # Calcul des dégâts
                     base = attaque["degats"]
                     bonus = (
                         attaquant["stats"]["attaque"]
@@ -146,7 +155,7 @@ class CombatCommand(commands.Cog):
                     )
                     total = base + max(0, bonus)
 
-                    # 🎯 Critique ?
+                    # Critique
                     if random.random() < min(0.1 + attaquant["stats"]["force"] / 50, 0.4):
                         total = int(total * 1.5)
                         log += "💥 Coup critique !\n"
@@ -160,7 +169,7 @@ class CombatCommand(commands.Cog):
                         f"➡️ {defenseur['nom']} perd {total} PV\n"
                     )
 
-                    # 🧪 Application des effets
+                    # Application des effets
                     effet = attaque["effet"].lower()
                     if effet in ["gel", "paralysie"]:
                         defenseur["status"] = "gel"
@@ -182,7 +191,7 @@ class CombatCommand(commands.Cog):
 
                     log += "\n"
 
-            # 🏁 Fin des 5 tours : gagnant par PV restant
+            # Fin des 5 tours : gagnant par PV restant
             gagnant = p1 if p1["vie"] > p2["vie"] else p2
             log += f"__🧾 Résumé final__\n{format_etat_ligne(p1)}\n{format_etat_ligne(p2)}\n\n"
             log += f"🏁 **Fin du combat.**\n🏆 **{gagnant['nom']} l'emporte par avantage de vie !**"
@@ -193,8 +202,11 @@ class CombatCommand(commands.Cog):
         except Exception as e:
             await ctx.send(f"⚠️ Une erreur est survenue : {e}")
 
-# 🔌 Chargement du cog
-async def setup(bot):
+
+# ────────────────────────────────────────────────────────────────────────────────
+# 🔌 Setup du Cog
+# ────────────────────────────────────────────────────────────────────────────────
+async def setup(bot: commands.Bot):
     cog = CombatCommand(bot)
     for command in cog.get_commands():
         command.category = "Fun"
