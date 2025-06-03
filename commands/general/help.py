@@ -19,7 +19,7 @@ import math
 # ────────────────────────────────────────────────────────────────────────────────
 class HelpCategoryView(View):
     def __init__(self, bot, categories, prefix):
-        super().__init__(timeout=120)
+        super().__init__(timeout=None)  # Pas de timeout
         self.bot = bot
         self.categories = categories
         self.prefix = prefix
@@ -43,7 +43,8 @@ class HelpCategorySelect(Select):
             self.parent_view.bot,
             selected_cat,
             commands_in_cat,
-            self.parent_view.prefix
+            self.parent_view.prefix,
+            self.parent_view  # Pour réafficher le sélecteur ensuite
         )
 
         await interaction.response.edit_message(
@@ -56,19 +57,21 @@ class HelpCategorySelect(Select):
 # 🎛️ UI — Pagination des commandes dans une catégorie
 # ────────────────────────────────────────────────────────────────────────────────
 class HelpPaginatorView(View):
-    def __init__(self, bot, category, commands_list, prefix):
-        super().__init__(timeout=120)
+    def __init__(self, bot, category, commands_list, prefix, parent_view):
+        super().__init__(timeout=None)  # Pas de timeout
         self.bot = bot
         self.category = category
         self.commands = commands_list
         self.prefix = prefix
+        self.parent_view = parent_view
         self.page = 0
         self.per_page = 10
         self.total_pages = math.ceil(len(self.commands) / self.per_page)
 
         if self.total_pages > 1:
-            self.add_item(Button(label="◀️", style=discord.ButtonStyle.primary, custom_id="prev"))
-            self.add_item(Button(label="▶️", style=discord.ButtonStyle.primary, custom_id="next"))
+            self.add_item(PrevButton(self))
+            self.add_item(NextButton(self))
+        self.add_item(HelpCategorySelect(self.parent_view))  # Pour permettre le changement de catégorie
 
     def create_embed(self):
         embed = discord.Embed(
@@ -86,17 +89,25 @@ class HelpPaginatorView(View):
         embed.set_footer(text=f"Utilise {self.prefix}help <commande> pour plus de détails.")
         return embed
 
-    @discord.ui.button(label="◀️", style=discord.ButtonStyle.primary)
-    async def prev_page(self, interaction: discord.Interaction, button: Button):
-        if self.page > 0:
-            self.page -= 1
-            await interaction.response.edit_message(embed=self.create_embed(), view=self)
+class PrevButton(Button):
+    def __init__(self, paginator):
+        super().__init__(label="◀️", style=discord.ButtonStyle.primary)
+        self.paginator = paginator
 
-    @discord.ui.button(label="▶️", style=discord.ButtonStyle.primary)
-    async def next_page(self, interaction: discord.Interaction, button: Button):
-        if self.page < self.total_pages - 1:
-            self.page += 1
-            await interaction.response.edit_message(embed=self.create_embed(), view=self)
+    async def callback(self, interaction: discord.Interaction):
+        if self.paginator.page > 0:
+            self.paginator.page -= 1
+            await interaction.response.edit_message(embed=self.paginator.create_embed(), view=self.paginator)
+
+class NextButton(Button):
+    def __init__(self, paginator):
+        super().__init__(label="▶️", style=discord.ButtonStyle.primary)
+        self.paginator = paginator
+
+    async def callback(self, interaction: discord.Interaction):
+        if self.paginator.page < self.paginator.total_pages - 1:
+            self.paginator.page += 1
+            await interaction.response.edit_message(embed=self.paginator.create_embed(), view=self.paginator)
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🧠 Cog principal
