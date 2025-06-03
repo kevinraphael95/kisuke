@@ -1,6 +1,6 @@
 # ────────────────────────────────────────────────────────────────────────────────
 # 📌 funfact_bleach.py — Commande interactive !funfact
-# Objectif : Donne un fun fact sur Bleach écrit par ChatGPT
+# Objectif : Donne un fun fact sur Bleach
 # Catégorie : 🧠 Fun
 # Accès : Public
 # ────────────────────────────────────────────────────────────────────────────────
@@ -29,7 +29,7 @@ def load_data():
 # ────────────────────────────────────────────────────────────────────────────────
 class FunFactCommand(commands.Cog):
     """
-    Commande !funfact — Donne un fun fact sur Bleach écrit par ChatGPT.
+    Commande !funfact — Donne un fun fact sur Bleach.
     """
 
     def __init__(self, bot: commands.Bot):
@@ -37,7 +37,7 @@ class FunFactCommand(commands.Cog):
 
     @commands.command(
         name="funfact",
-        help="🧠 Donne un fun fact sur Bleach écrit par ChatGPT.",
+        help="🧠 Donne un fun fact sur Bleach.",
         description="Affiche un fait intéressant aléatoire tiré d'un fichier JSON."
     )
     @commands.cooldown(rate=1, per=3, type=commands.BucketType.user)
