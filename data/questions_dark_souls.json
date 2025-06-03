@@ -1,0 +1,313 @@
+{
+  "facile": [
+    {
+      "question": "Quel est le nom du personnage principal dans Dark Souls?",
+      "choices": ["A. Le Seigneur des Cendres", "B. Le Chosen Undead", "C. Le Chevalier Noir", "D. Le Pendu"],
+      "answer": "B"
+    },
+    {
+      "question": "Quelle est la première zone visitée dans Dark Souls?",
+      "choices": ["A. Firelink Shrine", "B. Undead Burg", "C. Anor Londo", "D. Blighttown"],
+      "answer": "A"
+    },
+    {
+      "question": "Quel est l'arme de base au début du jeu?",
+      "choices": ["A. Épée longue", "B. Dague", "C. Hache", "D. Arc"],
+      "answer": "A"
+    },
+    {
+      "question": "Quel est le nom de la monnaie utilisée dans Dark Souls?",
+      "choices": ["A. Souls", "B. Gold Coins", "C. Estus", "D. Titanite"],
+      "answer": "A"
+    },
+    {
+      "question": "Comment s'appelle le feu guérisseur dans Dark Souls?",
+      "choices": ["A. Feu sacré", "B. Feu d'Estus", "C. Feu d'âme", "D. Feu de camp"],
+      "answer": "B"
+    },
+    {
+      "question": "Quel est le nom du boss dragon dans le jeu?",
+      "choices": ["A. Seath l'Écaille Blanche", "B. Kalameet", "C. Gough", "D. Nito"],
+      "answer": "A"
+    },
+    {
+      "question": "Comment s'appelle le PNJ forgeron à Firelink Shrine?",
+      "choices": ["A. Andre", "B. Oswald", "C. Logan", "D. Hawkwood"],
+      "answer": "A"
+    },
+    {
+      "question": "Quel est le nom du chevalier noir qui aide dans la zone de Sen’s Fortress?",
+      "choices": ["A. Solaire", "B. Lautrec", "C. Oscar", "D. Kirk"],
+      "answer": "D"
+    },
+    {
+      "question": "Quel est le nom du fameux soleil emblématique?",
+      "choices": ["A. Soleil Radieux", "B. Solaire d’Astora", "C. Soleil Noir", "D. Soleil de Lothric"],
+      "answer": "B"
+    },
+    {
+      "question": "Quel est l’effet de la potion d'Estus?",
+      "choices": ["A. Restaure la vie", "B. Restaure la magie", "C. Restaure la stamina", "D. Donne un buff temporaire"],
+      "answer": "A"
+    },
+    {
+      "question": "Quel est le nom de la cloche dans Undead Parish?",
+      "choices": ["A. Cloche de la Lune", "B. Grande Cloche", "C. Cloche du Destin", "D. Cloche d’Astora"],
+      "answer": "B"
+    },
+    {
+      "question": "Qui est le Seigneur des Cendres que le joueur doit remplacer?",
+      "choices": ["A. Gwyn", "B. Nito", "C. Seath", "D. Gwyndolin"],
+      "answer": "A"
+    },
+    {
+      "question": "Que signifie le terme 'hollow'?",
+      "choices": ["A. Mort sans espoir", "B. Mort avec âme", "C. Mort temporaire", "D. Mort héroïque"],
+      "answer": "A"
+    },
+    {
+      "question": "Comment peut-on ressusciter après la mort?",
+      "choices": ["A. Utiliser un ange", "B. Retourner au feu de camp", "C. Utiliser un sort", "D. Utiliser une pierre"],
+      "answer": "B"
+    },
+    {
+      "question": "Quel est le nom du boss dans la Cathédrale de l'Aile d'Or?",
+      "choices": ["A. Dragon de Fer", "B. Dragon Rouge", "C. Golem de Fer", "D. Dragon Ancien"],
+      "answer": "A"
+    },
+    {
+      "question": "Quel objet est utilisé pour améliorer les armes?",
+      "choices": ["A. Titanite", "B. Ember", "C. Gemme magique", "D. Cristal"],
+      "answer": "A"
+    },
+    {
+      "question": "Quel est le nom du PNJ qui vend des miracles?",
+      "choices": ["A. Rhea", "B. Laurentius", "C. Oswald", "D. Petrus"],
+      "answer": "D"
+    },
+    {
+      "question": "Quel est le nom de la zone de la forêt sombre?",
+      "choices": ["A. Darkroot Basin", "B. Darkroot Garden", "C. Forest of Fallen Giants", "D. Black Forest"],
+      "answer": "B"
+    },
+    {
+      "question": "Quel est le nom de la magie offensive principale?",
+      "choices": ["A. Pyromancie", "B. Sorcellerie", "C. Miracles", "D. Nécromancie"],
+      "answer": "B"
+    },
+    {
+      "question": "Quel est le nom du boss final du jeu?",
+      "choices": ["A. Gwyn", "B. Nito", "C. Seath", "D. Le Pendu"],
+      "answer": "A"
+    }
+  ],
+  "moyen": [
+    {
+      "question": "Combien de fois peut-on améliorer une arme avec la titanite normale?",
+      "choices": ["A. 5 fois", "B. 10 fois", "C. 15 fois", "D. 20 fois"],
+      "answer": "B"
+    },
+    {
+      "question": "Quel est le nom de la sorcière qui donne la magie au début?",
+      "choices": ["A. Quelana", "B. Griggs", "C. Logan", "D. Laurentius"],
+      "answer": "B"
+    },
+    {
+      "question": "Quel est le nom du boss dans la zone de Blighttown?",
+      "choices": ["A. Quelaag", "B. Ceaseless Discharge", "C. Chaos Witch", "D. Priscilla"],
+      "answer": "A"
+    },
+    {
+      "question": "Comment s’appelle le PNJ qui propose un duel dans la zone des Catacombes?",
+      "choices": ["A. Tarkus", "B. Kirk", "C. Ingward", "D. Patches"],
+      "answer": "B"
+    },
+    {
+      "question": "Quel est le nom de la zone secrète accessible après la Porte de la Lune?",
+      "choices": ["A. Oolacile", "B. Darkroot Garden", "C. New Londo", "D. Ash Lake"],
+      "answer": "A"
+    },
+    {
+      "question": "Quel est l'effet de l’anneau de Havel?",
+      "choices": ["A. Augmente la défense", "B. Augmente le poids d’équipement", "C. Restaure la stamina", "D. Augmente les dégâts"],
+      "answer": "B"
+    },
+    {
+      "question": "Quel est le nom du boss dans les Catacombes?",
+      "choices": ["A. Pinwheel", "B. Gravelord Nito", "C. Ceaseless Discharge", "D. Crossbreed Priscilla"],
+      "answer": "A"
+    },
+    {
+      "question": "Quel est le nom de l’anneau qui augmente la magie?",
+      "choices": ["A. Bellowing Dragoncrest", "B. Ring of Favor", "C. Chloranthy", "D. Flynn's Ring"],
+      "answer": "A"
+    },
+    {
+      "question": "Combien de feux de camp y a-t-il dans Firelink Shrine?",
+      "choices": ["A. 1", "B. 2", "C. 3", "D. 4"],
+      "answer": "A"
+    },
+    {
+      "question": "Quel est le nom du PNJ qui aide pour la quête de Solaire?",
+      "choices": ["A. Siegmeyer", "B. Lautrec", "C. Rickert", "D. Patches"],
+      "answer": "A"
+    },
+    {
+      "question": "Comment s’appelle la zone infestée de poison?",
+      "choices": ["A. Blighttown", "B. Lost Izalith", "C. Sen’s Fortress", "D. Anor Londo"],
+      "answer": "A"
+    },
+    {
+      "question": "Quel est le nom de la zone où se trouve le boss Gaping Dragon?",
+      "choices": ["A. Undead Parish", "B. The Depths", "C. Darkroot Basin", "D. New Londo"],
+      "answer": "B"
+    },
+    {
+      "question": "Quel est le nom de l’arme de Solaire?",
+      "choices": ["A. Épée droite", "B. Épée de soleil", "C. Épée longue", "D. Épée du chevalier noir"],
+      "answer": "C"
+    },
+    {
+      "question": "Quel est le nom de la pierre pour améliorer les armes magiques?",
+      "choices": ["A. Titanite magique", "B. Titanite normale", "C. Titanite de feu", "D. Titanite cristalline"],
+      "answer": "A"
+    },
+    {
+      "question": "Comment s’appelle la zone avec les chevaliers d’Anor Londo?",
+      "choices": ["A. Anor Londo", "B. Painted World", "C. Firelink Shrine", "D. Sen’s Fortress"],
+      "answer": "A"
+    },
+    {
+      "question": "Quel est le nom du boss dans la Painted World of Ariamis?",
+      "choices": ["A. Crossbreed Priscilla", "B. Pinwheel", "C. Nito", "D. Ceaseless Discharge"],
+      "answer": "A"
+    },
+    {
+      "question": "Quel est le nom de l’anneau qui augmente la stamina?",
+      "choices": ["A. Chloranthy Ring", "B. Havel's Ring", "C. Ring of Favor", "D. Flynn’s Ring"],
+      "answer": "A"
+    },
+    {
+      "question": "Quel est le nom du chevalier noir dans Sen’s Fortress?",
+      "choices": ["A. Kirk", "B. Artorias", "C. Siegmeyer", "D. Lautrec"],
+      "answer": "A"
+    },
+    {
+      "question": "Quel est le nom du PNJ qui vend les pyromancies?",
+      "choices": ["A. Laurentius", "B. Quelana", "C. Logan", "D. Rhea"],
+      "answer": "A"
+    },
+    {
+      "question": "Quel est le nom de la créature invisible dans New Londo?",
+      "choices": ["A. Four kings", "B. Ghosts", "C. Phantoms", "D. Darkwraiths"],
+      "answer": "B"
+    }
+  ],
+  "difficile": [
+    {
+      "question": "Quel est le nom du chevalier légendaire mortellement corrompu?",
+      "choices": ["A. Artorias", "B. Ornstein", "C. Gough", "D. Smough"],
+      "answer": "A"
+    },
+    {
+      "question": "Combien de fragments d’âme sont nécessaires pour une âme de démon?",
+      "choices": ["A. 5", "B. 10", "C. 15", "D. 20"],
+      "answer": "B"
+    },
+    {
+      "question": "Quel est le nom de la zone secrète accessible après avoir battu les Four Kings?",
+      "choices": ["A. Oolacile", "B. Ash Lake", "C. New Londo Ruins", "D. Kiln of the First Flame"],
+      "answer": "B"
+    },
+    {
+      "question": "Quel est le nom du boss gardien du Kiln of the First Flame?",
+      "choices": ["A. Gwyn", "B. Nito", "C. Seath", "D. Bed of Chaos"],
+      "answer": "A"
+    },
+    {
+      "question": "Quel anneau augmente les dégâts lorsque la vie est faible?",
+      "choices": ["A. Ring of Favor", "B. Flynn's Ring", "C. Chloranthy Ring", "D. Havel's Ring"],
+      "answer": "B"
+    },
+    {
+      "question": "Quel est le nom du dragon noir que l’on combat dans Darkroot Basin?",
+      "choices": ["A. Kalameet", "B. Gough", "C. Seath", "D. Nito"],
+      "answer": "A"
+    },
+    {
+      "question": "Quel est le nom du PNJ qui trahit le joueur à Anor Londo?",
+      "choices": ["A. Lautrec", "B. Solaire", "C. Rickert", "D. Patches"],
+      "answer": "A"
+    },
+    {
+      "question": "Quel est le nom du sort qui permet de faire apparaître un bouclier magique?",
+      "choices": ["A. Magic Shield", "B. Great Magic Barrier", "C. Soul Shield", "D. Iron Flesh"],
+      "answer": "B"
+    },
+    {
+      "question": "Combien de sorts de pyromancie sont disponibles dans le jeu de base?",
+      "choices": ["A. 10", "B. 15", "C. 20", "D. 25"],
+      "answer": "A"
+    },
+    {
+      "question": "Quel est le nom de la clé nécessaire pour accéder à New Londo?",
+      "choices": ["A. Key to the Seal", "B. Master Key", "C. Key to the Depths", "D. Key of the City"],
+      "answer": "A"
+    },
+    {
+      "question": "Quel est le nom du PNJ muet que l'on trouve à Firelink Shrine?",
+      "choices": ["A. Patches", "B. Oswald", "C. Hawkwood", "D. Eingyi"],
+      "answer": "B"
+    },
+    {
+      "question": "Quel est le nom de la quête permettant de sauver Solaire?",
+      "choices": ["A. Sunlight Warrior", "B. Sunlight Mission", "C. Solaire's Rescue", "D. Solaire's Redemption"],
+      "answer": "D"
+    },
+    {
+      "question": "Quel est le nom de la zone où se trouve le boss Nito?",
+      "choices": ["A. Catacombs", "B. Tomb of the Giants", "C. New Londo", "D. Painted World"],
+      "answer": "B"
+    },
+    {
+      "question": "Quel est le nom de la relique qui réduit la magie dans Anor Londo?",
+      "choices": ["A. Darkmoon Talisman", "B. Ring of Fog", "C. Magic Barrier", "D. Veil"],
+      "answer": "B"
+    },
+    {
+      "question": "Quel est le nom de la zone cachée derrière un mur illusoire dans Painted World?",
+      "choices": ["A. Ariamis", "B. Oolacile", "C. Crystal Cave", "D. Darkroot Basin"],
+      "answer": "A"
+    },
+    {
+      "question": "Quel est le nom de la technique permettant de se téléporter à un feu de camp?",
+      "choices": ["A. Warp", "B. Homeward Bone", "C. Fast Travel", "D. Teleportation"],
+      "answer": "B"
+    },
+    {
+      "question": "Quel est le nom de la magie qui soigne?",
+      "choices": ["A. Heal", "B. Replenish", "C. Miracle", "D. Cure"],
+      "answer": "A"
+    },
+    {
+      "question": "Quel est le nom du boss avec une hache géante et un marteau à Anor Londo?",
+      "choices": ["A. Ornstein", "B. Smough", "C. Artorias", "D. Gough"],
+      "answer": "B"
+    },
+    {
+      "question": "Quel est le nom du sort qui augmente la vitesse de recharge de magie?",
+      "choices": ["A. Crystal Magic Weapon", "B. Cast Light", "C. Power Within", "D. Great Magic Shield"],
+      "answer": "C"
+    },
+    {
+      "question": "Quel est le nom de l’objet permettant de conserver l’âme après la mort?",
+      "choices": ["A. Ring of Sacrifice", "B. Pendant of Keep", "C. Soul Vessel", "D. Ember"],
+      "answer": "C"
+    },
+    {
+      "question": "Quel est le nom du boss que l’on doit battre pour obtenir la clé de la prison?",
+      "choices": ["A. Taurus Demon", "B. Capra Demon", "C. Bell Gargoyles", "D. Ceaseless Discharge"],
+      "answer": "B"
+    }
+  ]
+}
