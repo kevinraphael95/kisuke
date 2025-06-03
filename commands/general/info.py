@@ -39,15 +39,10 @@ class InfoCommand(commands.Cog):
             inline=False
         )
 
-        embed.add_field(
-            name="📘 Commande help",
-            value="La **commande help** sera réparée quand elle sera réparée.",
-            inline=False
-        )
 
         embed.add_field(
-            name="💠 Reiatsu",
-            value="Le spawn auto de reiatsu est **de retour**… normalement 👀",
+            name="📝 TO DO LIST",
+            value="- ???"\n"- ???",
             inline=False
         )
 
@@ -57,13 +52,9 @@ class InfoCommand(commands.Cog):
             inline=False
         )
 
-        embed.add_field(
-            name="🕹️ RPG",
-            value="Une nouvelle commande RPG a été ajoutée... mystérieusement.",
-            inline=False
-        )
+        
 
-        embed.set_footer(text="📅 Dernière mise à jour : Mai 2025")
+        embed.set_footer(text="🤓🤓🤓🤓")
         await ctx.send(embed=embed)
 
     # ──────────────────────────────────────────────────────────
