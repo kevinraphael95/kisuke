@@ -1,38 +1,41 @@
-# ────────────────────────────────────────────────────────────────
-#        😄 COMMANDE DISCORD - EMOJIS DU SERVEUR        
-# ────────────────────────────────────────────────────────────────
+# ────────────────────────────────────────────────────────────────────────────────
+# 📌 emoji_command.py — Commande interactive !emoji / !e
+# Objectif : Afficher un ou plusieurs emojis du serveur via une commande
+# Catégorie : 🎉 Fun
+# Accès : Public
+# ────────────────────────────────────────────────────────────────────────────────
 
-# ──────────────────────────────────────────────────────────────
-# 📦 IMPORTS
-# ──────────────────────────────────────────────────────────────
+# ────────────────────────────────────────────────────────────────────────────────
+# 📦 Imports nécessaires
+# ────────────────────────────────────────────────────────────────────────────────
 import discord
 from discord.ext import commands
 
-# ────────────────────────────────────────────────────────────────═
-# 📦 Classe principale de la commande "emoji"
-# ────────────────────────────────────────────────────────────────═
+# ────────────────────────────────────────────────────────────────────────────────
+# 🎛️ Cog principal
+# ────────────────────────────────────────────────────────────────────────────────
 class EmojiCommand(commands.Cog):
-    def __init__(self, bot):
+    """
+    Commande !emoji / !e — Affiche un ou plusieurs emojis du serveur.
+    """
+
+    def __init__(self, bot: commands.Bot):
         self.bot = bot
 
-    # ───────────────────────────────────────────────
-    # 😎 Commande !emoji ou !e : affiche des emojis
-    # Cooldown : 1 fois toutes les 3 secondes par utilisateur
-    # ───────────────────────────────────────────────
     @commands.command(
         name="emoji",
         aliases=["e"],
-        help="😄 Affiche un ou plusieurs emojis du serveur."
+        help="😄 Affiche un ou plusieurs emojis du serveur.",
+        description="Affiche les emojis demandés ou tous les emojis animés du serveur si aucun argument."
     )
     @commands.cooldown(rate=1, per=3, type=commands.BucketType.user)
-    async def emoji(self, ctx, *emoji_names):
-        # 🧹 Tentative de suppression du message de commande
+    async def emoji(self, ctx: commands.Context, *emoji_names):
+        """Affiche les emojis du serveur en fonction des arguments fournis."""
         try:
             await ctx.message.delete()
         except (discord.Forbidden, discord.HTTPException):
-            pass  # ❌ Ignore les erreurs si non autorisé
+            pass  # Ignore si pas d'autorisation
 
-        # 🔎 Si des noms d'emojis sont fournis
         if emoji_names:
             found = []
             not_found = []
@@ -45,46 +48,43 @@ class EmojiCommand(commands.Cog):
                 else:
                     not_found.append(raw_name)
 
-            # ✅ Affiche les emojis trouvés
             if found:
                 await ctx.send(" ".join(found))
 
-            # ❌ Affiche les noms non trouvés
             if not_found:
                 await ctx.send("❌ Emoji(s) introuvable(s) : " + ", ".join(f"`{name}`" for name in not_found))
 
-        # 📋 Si aucun nom fourni, affiche tous les emojis animés
         else:
             animated_emojis = [str(e) for e in ctx.guild.emojis if e.animated]
             if not animated_emojis:
                 await ctx.send("❌ Ce serveur n'a aucun emoji animé.")
                 return
 
-            # 🧾 Envoi par lots (Discord limite les embeds à 4096 caractères)
             description = ""
             for emoji in animated_emojis:
                 if len(description) + len(emoji) + 1 > 4096:
-                    await ctx.send(embed=discord.Embed(
+                    embed = discord.Embed(
                         title="🎞️ Emojis animés du serveur",
                         description=description,
                         color=discord.Color.purple()
-                    ))
+                    )
+                    await ctx.send(embed=embed)
                     description = ""
                 description += emoji + " "
 
-            # 📨 Envoi du dernier lot
             if description:
-                await ctx.send(embed=discord.Embed(
+                embed = discord.Embed(
                     title="🎞️ Emojis animés du serveur",
                     description=description,
                     color=discord.Color.purple()
-                ))
+                )
+                await ctx.send(embed=embed)
 
-# ────────────────────────────────────────────────────────────────═
-# 🔌 Fonction de setup pour charger le Cog
-# ────────────────────────────────────────────────────────────────═
-async def setup(bot):
+# ────────────────────────────────────────────────────────────────────────────────
+# 🔌 Setup du Cog
+# ────────────────────────────────────────────────────────────────────────────────
+async def setup(bot: commands.Bot):
     cog = EmojiCommand(bot)
     for command in cog.get_commands():
-        command.category = "Fun"  # 📁 Classement dans la catégorie "Fun"
+        command.category = "Fun"
     await bot.add_cog(cog)
