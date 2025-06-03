@@ -1,7 +1,7 @@
 # ────────────────────────────────────────────────────────────────────────────────
 # 📌 qds.py — Commande interactive !qds / !quizzdarksouls
 # Objectif : QCM multijoueur sur Dark Souls, 5 questions par session quotidienne
-# Catégorie : 🧠 VAACT
+# Catégorie : 🧠 Fun
 # Accès : Public
 # ────────────────────────────────────────────────────────────────────────────────
 
@@ -140,5 +140,5 @@ async def setup(bot: commands.Bot):
     cog = QDS(bot)
     for command in cog.get_commands():
         if not hasattr(command, "category"):
-            command.category = "VAACT"
+            command.category = "Fun"
     await bot.add_cog(cog)
