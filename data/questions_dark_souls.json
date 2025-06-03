@@ -2,12 +2,12 @@
   "facile": [
     {
       "question": "Quel est le nom du premier boss dans Dark Souls ?",
-      "options": ["Asile Démoniaque", "Gargouille", "Taurus Démon", "Ceaseless Discharge"],
+      "options": ["Le démon de l'Asile", "Gargouille", "Taurus Démon", "Ceaseless Discharge"],
       "answer": "Asile Démoniaque"
     },
     {
       "question": "Quelle est la monnaie utilisée dans Dark Souls ?",
-      "options": ["Âmes", "Or", "Fragments", "Souffles"],
+      "options": ["LesÂmes", "L'Or", "Les Fragments", "Les Souffles"],
       "answer": "Âmes"
     },
     {
@@ -27,7 +27,7 @@
     },
     {
       "question": "Quel est le nom du forgeron principal dans le premier Dark Souls ?",
-      "options": ["Andre", "Rickert", "Giant Blacksmith", "Vamos"],
+      "options": ["Andre", "Rickert", "Le forgeron géant", "Vamos"],
       "answer": "Andre"
     },
     {
