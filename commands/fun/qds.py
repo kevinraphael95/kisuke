@@ -138,9 +138,18 @@ class QDS(commands.Cog):
             )
             options = q['options']
             emojis = ["🇦", "🇧", "🇨", "🇩"]
+
+            description = q['question'] + "\n\n"
             for em, opt in zip(emojis, options):
-                embed.add_field(name=em, value=opt, inline=False)
+                description += f"{em} {opt}\n"
+
+            embed = discord.Embed(
+                title=f"❓ Question {i+1}/5",
+                description=description,
+                color=discord.Color.dark_gold()
+            )
             embed.set_footer(text="Répondez en réagissant avec 🇦, 🇧, 🇨 ou 🇩 (30s)")
+
 
             msg = await ctx.send(embed=embed)
             for em in emojis:
