@@ -10,9 +10,9 @@ from discord.ext import commands
 from supabase_client import supabase
 
 # ──────────────────────────────────────────────────────────────
-# 🔧 COG : SetReiatsuPoints
+# 🔧 COG : ReiatsuChange
 # ──────────────────────────────────────────────────────────────
-class SetReiatsuPoints(commands.Cog):
+class ReiatsuChange(commands.Cog):
     def __init__(self, bot):
         self.bot = bot  # 🔌 Stockage de l’instance du bot
 
@@ -85,5 +85,5 @@ class SetReiatsuPoints(commands.Cog):
 # 🔌 SETUP POUR CHARGEMENT AUTOMATIQUE DU COG
 # ──────────────────────────────────────────────────────────────
 async def setup(bot: commands.Bot):
-    await bot.add_cog(SetReiatsuPoints(bot))
-    print("✅ Cog chargé : SetReiatsuPoints (catégorie = Reiatsu)")
+    await bot.add_cog(ReiatsuChange(bot))
+    print("✅ Cog chargé : ReiatsuChange (catégorie = Reiatsu)")
