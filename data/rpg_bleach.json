@@ -16,7 +16,6 @@
       {"emoji": "🚪", "texte": "Entrer directement dans le parc", "suivant": "etape_005"}
     ]
   },
-
   "etape_002": {
     "texte": "Tu repères une trace spirituelle suspecte près d’un arbre. Tu décides de...",
     "choix": [
@@ -24,7 +23,6 @@
       {"emoji": "🤫", "texte": "Te cacher pour observer", "suivant": "etape_006"}
     ]
   },
-
   "combat_hollow_1": {
     "texte": "🦴 Un Hollow surgit de l’arbre ! Prépare-toi à le combattre.",
     "combat": {
@@ -36,7 +34,6 @@
       "echec": "etape_008"
     }
   },
-
   "etape_005": {
     "texte": "Tu entres dans le parc. Une atmosphère glaciale t’envahit.",
     "choix": [
@@ -44,7 +41,6 @@
       {"emoji": "🌲", "texte": "Explorer la forêt", "suivant": "etape_009"}
     ]
   },
-
   "etape_006": {
     "texte": "En te cachant, tu entends deux Hollows discuter... étrange. Tu peux...",
     "choix": [
@@ -52,7 +48,6 @@
       {"emoji": "👂", "texte": "Continuer d’écouter", "suivant": "etape_011"}
     ]
   },
-
   "combat_hollow_2": {
     "texte": "💥 Tu lances une attaque surprise sur les deux Hollows !",
     "combat": {
@@ -64,7 +59,26 @@
       "echec": "etape_013"
     }
   },
-
+  "etape_007": {
+    "texte": "Le chemin est calme... trop calme. Tu entends un bruissement derrière toi.",
+    "choix": [
+      {"emoji": "🔁", "texte": "Te retourner rapidement", "suivant": "etape_014"},
+      {"emoji": "🏃", "texte": "Accélérer le pas", "suivant": "etape_016"}
+    ]
+  },
+  "etape_008": {
+    "texte": "Tu es blessé par le Hollow et obligé de battre en retraite. Tu retrouves un peu de ton énergie.",
+    "choix": [
+      {"emoji": "🔄", "texte": "Retourner au parc", "suivant": "etape_005"}
+    ]
+  },
+  "etape_009": {
+    "texte": "Dans la forêt, tu tombes sur une ancienne cachette. Une aura étrange émane du sol.",
+    "choix": [
+      {"emoji": "📦", "texte": "Fouiller la cachette", "suivant": "etape_017"},
+      {"emoji": "📴", "texte": "Ignorer et repartir", "suivant": "etape_005"}
+    ]
+  },
   "etape_010": {
     "texte": "✅ Tu as vaincu le Hollow ! Plus loin, un cri attire ton attention.",
     "choix": [
@@ -72,7 +86,57 @@
       {"emoji": "🔄", "texte": "Retourner au point de départ", "suivant": "etape_001"}
     ]
   },
-
+  "etape_011": {
+    "texte": "Tu entends qu’un Arrancar supervise les Hollows. C’est plus grave que prévu.",
+    "choix": [
+      {"emoji": "📞", "texte": "Alerter la Soul Society", "suivant": "etape_018"},
+      {"emoji": "🤫", "texte": "Les suivre discrètement", "suivant": "etape_019"}
+    ]
+  },
+  "etape_013": {
+    "texte": "Tu as été vaincu par les Hollows. Tu es secouru in extremis par un autre shinigami.",
+    "choix": [
+      {"emoji": "🌀", "texte": "Retourner à la base", "suivant": "etape_fin_neutre"}
+    ]
+  },
+  "etape_014": {
+    "texte": "Tu surprends un Hollow en train de t’observer. Il s’enfuit !",
+    "choix": [
+      {"emoji": "🏹", "texte": "Le pourchasser", "suivant": "etape_020"},
+      {"emoji": "🎯", "texte": "Le marquer discrètement", "suivant": "etape_018"}
+    ]
+  },
+  "etape_015": {
+    "texte": "Tu as neutralisé les deux Hollows. Tu remarques une fissure spirituelle au sol.",
+    "choix": [
+      {"emoji": "📡", "texte": "L’examiner de plus près", "suivant": "etape_020"}
+    ]
+  },
+  "etape_016": {
+    "texte": "Tu tombes nez-à-nez avec un Hollow mineur. Il te regarde et s’enfuit.",
+    "choix": [
+      {"emoji": "🔎", "texte": "Le suivre discrètement", "suivant": "etape_019"}
+    ]
+  },
+  "etape_017": {
+    "texte": "Tu trouves un artefact caché. Il pulse d’énergie sombre.",
+    "choix": [
+      {"emoji": "⚠️", "texte": "Le prendre", "suivant": "etape_021"},
+      {"emoji": "🧪", "texte": "Le sceller", "suivant": "etape_018"}
+    ]
+  },
+  "etape_018": {
+    "texte": "La Soul Society te félicite pour ton rapport. Des renforts sont envoyés.",
+    "choix": [
+      {"emoji": "⏭️", "texte": "Attendre les renforts", "suivant": "etape_022"}
+    ]
+  },
+  "etape_019": {
+    "texte": "Tu découvres l’ouverture d’un portail vers le Hueco Mundo. L’ennemi se renforce.",
+    "choix": [
+      {"emoji": "🚪", "texte": "Entrer avant qu’il se referme", "suivant": "etape_050"}
+    ]
+  },
   "etape_020": {
     "texte": "Tu arrives devant une fissure dans le sol... un portail vers le Hueco Mundo ! Tu peux...",
     "choix": [
@@ -80,7 +144,12 @@
       {"emoji": "📞", "texte": "Prévenir les renforts", "suivant": "etape_022"}
     ]
   },
-
+  "etape_021": {
+    "texte": "L’artefact t’empoisonne spirituellement. Tu perds connaissance.",
+    "choix": [
+      {"emoji": "💤", "texte": "Te réveiller à l’hôpital", "suivant": "etape_fin_neutre"}
+    ]
+  },
   "etape_050": {
     "texte": "Dans le Hueco Mundo, un puissant Arrancar t’attend.",
     "combat": {
@@ -92,24 +161,20 @@
       "echec": "etape_fin_echec"
     }
   },
-
   "etape_022": {
     "texte": "Les renforts arrivent trop tard. Le Hollow s’est échappé... mais tu as survécu.",
     "choix": [
       {"emoji": "🕵️", "texte": "Rédiger ton rapport", "suivant": "etape_fin_neutre"}
     ]
   },
-
   "etape_fin_heroique": {
     "texte": "🏆 Tu as vaincu l’Arrancar et refermé la faille. Karakura est sauve. Tu es un héros de la Division Z !",
     "choix": []
   },
-
   "etape_fin_echec": {
     "texte": "💀 L’Arrancar était trop fort... tu t’évanouis alors que Karakura est envahie.",
     "choix": []
   },
-
   "etape_fin_neutre": {
     "texte": "📝 Tu as évité le pire, mais un danger plus grand semble venir. Prépare-toi...",
     "choix": []
