@@ -45,20 +45,26 @@ class RPGBleach(commands.Cog):
     async def rpg(self, ctx: commands.Context):
         user_id = str(ctx.author.id)
 
-        data = supabase.table("rpg_save").select("*").eq("user_id", user_id).execute()
+        print(f"[DEBUG] Récupération de la sauvegarde Supabase pour user_id={user_id}")
+        data = await supabase.table("rpg_save").select("*").eq("user_id", user_id).execute()
+        print(f"[DEBUG] Réponse Supabase SELECT: {data}")
         save = data.data[0] if data.data else None
         etape = save["etape"] if save else None
         character_name = save["character_name"] if save else None
         mission = save["mission"] if save else None
 
+        # 🔁 Reprendre la partie si déjà commencée
         if etape and character_name and mission:
+            print(f"[DEBUG] Partie trouvée, reprise étape={etape}, nom={character_name}, mission={mission}")
             await self.jouer_etape(ctx, etape, character_name, mission)
             return
 
+        # 🧭 Introduction et choix
         intro = self.scenario.get("intro", {})
         intro_texte = intro.get("texte", "Bienvenue dans la Division Z.")
         missions = self.scenario.get("missions", {})
         mission_keys = list(missions.keys())
+
         emojis = ["✏️"] + ["1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣"][:len(mission_keys)]
 
         embed = discord.Embed(title="🔰 RPG Bleach - Division Z", description=intro_texte, color=discord.Color.teal())
@@ -79,12 +85,15 @@ class RPGBleach(commands.Cog):
         while True:
             try:
                 reaction, _ = await self.bot.wait_for("reaction_add", timeout=300, check=check_react)
+                print(f"[DEBUG] Réaction reçue: {reaction.emoji} de {ctx.author}")
             except asyncio.TimeoutError:
                 await ctx.send("⏰ Tu n’as pas réagi à temps.")
+                print("[DEBUG] Timeout sur la réaction")
                 return
 
             if str(reaction.emoji) == "✏️":
                 name_prompt = await ctx.send("📛 Réponds à **ce message** avec le nom de ton personnage (5 minutes).")
+                print("[DEBUG] Demande du nom envoyée")
 
                 def check_name(m):
                     return m.author == ctx.author and m.reference and m.reference.message_id == name_prompt.id
@@ -93,35 +102,30 @@ class RPGBleach(commands.Cog):
                     msg = await self.bot.wait_for("message", timeout=300.0, check=check_name)
                     temp_name = msg.content.strip()
                     await ctx.send(f"✅ Ton nom est enregistré : **{temp_name}**")
-
-                    # Sauvegarde immédiate du nom même sans mission
-                    supabase.table("rpg_save").upsert({
-                        "user_id": user_id,
-                        "username": ctx.author.name,
-                        "character_name": temp_name,
-                        "mission": mission or None,
-                        "etape": etape or None
-                    }, on_conflict=["user_id"]).execute()
-
+                    print(f"[DEBUG] Nom reçu: {temp_name}")
                 except asyncio.TimeoutError:
                     await ctx.send("⏰ Temps écoulé pour le nom.")
+                    print("[DEBUG] Timeout sur la saisie du nom")
                 continue
 
             if not temp_name:
                 await ctx.send("❗ Choisis ton nom avec ✏️ avant de commencer une mission.")
+                print("[DEBUG] Tentative de début de mission sans nom défini")
                 continue
 
             index = emojis.index(str(reaction.emoji)) - 1
             mission_id = mission_keys[index]
             start_etape = missions[mission_id]["start"]
 
-            supabase.table("rpg_save").upsert({
+            print(f"[DEBUG] Sauvegarde de la partie user_id={user_id}, mission={mission_id}, étape={start_etape}, nom={temp_name}")
+            response = await supabase.table("rpg_save").upsert({
                 "user_id": user_id,
                 "username": ctx.author.name,
                 "character_name": temp_name,
                 "mission": mission_id,
                 "etape": start_etape
             }, on_conflict=["user_id"]).execute()
+            print(f"[DEBUG] Réponse Supabase UPSERT: {response}")
 
             await self.jouer_etape(ctx, start_etape, temp_name, mission_id)
             return
@@ -130,6 +134,7 @@ class RPGBleach(commands.Cog):
         etape = self.scenario.get(etape_id)
         if not etape:
             await ctx.send("❌ Étape du scénario introuvable.")
+            print(f"[DEBUG] Étape introuvable: {etape_id}")
             return
 
         texte = etape["texte"].replace("{nom}", character_name)
@@ -153,21 +158,24 @@ class RPGBleach(commands.Cog):
 
         try:
             reaction, _ = await self.bot.wait_for("reaction_add", timeout=300.0, check=check_choice)
+            print(f"[DEBUG] Choix reçu: {reaction.emoji} de {ctx.author}")
         except asyncio.TimeoutError:
             await ctx.send("⏰ Tu n’as pas réagi à temps.")
+            print("[DEBUG] Timeout sur choix de l'étape")
             return
 
         for choix in etape["choix"]:
             if choix["emoji"] == str(reaction.emoji):
                 next_etape = choix["suivant"]
-
-                supabase.table("rpg_save").upsert({
+                print(f"[DEBUG] Sauvegarde étape suivante user_id={ctx.author.id}, étape={next_etape}")
+                response = await supabase.table("rpg_save").upsert({
                     "user_id": str(ctx.author.id),
                     "username": ctx.author.name,
                     "character_name": character_name,
                     "mission": mission_id,
                     "etape": next_etape
                 }, on_conflict=["user_id"]).execute()
+                print(f"[DEBUG] Réponse Supabase UPSERT étape suivante: {response}")
 
                 await self.jouer_etape(ctx, next_etape, character_name, mission_id)
                 return
@@ -179,5 +187,5 @@ async def setup(bot: commands.Bot):
     cog = RPGBleach(bot)
     for command in cog.get_commands():
         if not hasattr(command, "category"):
-            command.category = "Fun"
+            command.category = "VAACT"
     await bot.add_cog(cog)
