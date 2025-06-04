@@ -92,8 +92,7 @@ class RPGBleach(commands.Cog):
                 try:
                     msg = await self.bot.wait_for("message", timeout=300.0, check=check_name)
                     temp_name = msg.content.strip()
-                    await ctx.send(f"✅ Ton nom est enregistré : **{temp_name}**") # 🌀 Redémarrer la boucle pour forcer un nouvel affichage propre 
-                    return await self.rpg(ctx)
+                    await ctx.send(f"✅ Ton nom est enregistré : **{temp_name}**")
                 except asyncio.TimeoutError:
                     await ctx.send("⏰ Temps écoulé pour le nom.")
                 continue
