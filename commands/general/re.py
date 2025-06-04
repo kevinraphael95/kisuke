@@ -49,5 +49,5 @@ class RedemarrageCommand(commands.Cog):
 async def setup(bot: commands.Bot):
     cog = RedemarrageCommand(bot)
     for command in cog.get_commands():
-        command.category = "Admin"
+        command.category = "Général"
     await bot.add_cog(cog)
