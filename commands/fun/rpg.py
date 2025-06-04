@@ -13,7 +13,7 @@ from discord.ext import commands
 import asyncio
 import json
 import os
-from supabase_client import supabase
+from supabase_client import supabase  # Attention : adapter selon ta config supabase
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 📂 Chargement du scénario RPG
