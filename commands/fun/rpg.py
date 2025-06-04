@@ -1,6 +1,6 @@
 # ────────────────────────────────────────────────────────────────────────────────
-# 📌 rpg_bleach.py — Commande interactive !rpg inspirée de Bleach avec sauvegarde
-# Objectif : Lancer une aventure RPG interactive avec choix et sauvegarde Supabase
+# 📌 rpg_bleach.py — Commande interactive !rpg
+# Objectif : Commencer et jouer un RPG textuel inspiré de Bleach avec sauvegarde Supabase
 # Catégorie : VAACT
 # Accès : Public
 # ────────────────────────────────────────────────────────────────────────────────
@@ -13,10 +13,10 @@ from discord.ext import commands
 import asyncio
 import json
 import os
-from supabase_client import supabase  # bien vérifier l'import selon ta config
+from supabase_client import supabase
 
 # ────────────────────────────────────────────────────────────────────────────────
-# 📂 Chargement des données JSON du scénario
+# 📂 Chargement du scénario RPG
 # ────────────────────────────────────────────────────────────────────────────────
 SCENARIO_PATH = os.path.join("data", "rpg_bleach.json")
 
@@ -25,7 +25,7 @@ def load_scenario():
         return json.load(f)
 
 # ────────────────────────────────────────────────────────────────────────────────
-# 🧠 Cog principal RPGBleach avec la commande !rpg
+# 🧠 Cog principal RPG
 # ────────────────────────────────────────────────────────────────────────────────
 class RPGBleach(commands.Cog):
     """
@@ -45,8 +45,8 @@ class RPGBleach(commands.Cog):
     async def rpg(self, ctx: commands.Context):
         user_id = str(ctx.author.id)
 
-        # 🔎 Récupération de la sauvegarde Supabase (await)
-        data = await supabase.table("rpg_save").select("*").eq("user_id", user_id).execute()
+        # 🔎 Récupération de la sauvegarde Supabase
+        data = supabase.table("rpg_save").select("*").eq("user_id", user_id).execute()
         save = data.data[0] if data.data else None
         etape = save["etape"] if save else None
         character_name = save["character_name"] if save else None
@@ -57,7 +57,7 @@ class RPGBleach(commands.Cog):
             await self.jouer_etape(ctx, etape, character_name, mission)
             return
 
-        # 🧭 Introduction et choix de mission
+        # 🧭 Introduction et choix
         intro = self.scenario.get("intro", {})
         intro_texte = intro.get("texte", "Bienvenue dans la Division Z.")
         missions = self.scenario.get("missions", {})
@@ -109,8 +109,7 @@ class RPGBleach(commands.Cog):
             mission_id = mission_keys[index]
             start_etape = missions[mission_id]["start"]
 
-            # 🔄 Sauvegarde initiale avec upsert
-            await supabase.table("rpg_save").upsert({
+            supabase.table("rpg_save").upsert({
                 "user_id": user_id,
                 "username": ctx.author.name,
                 "character_name": temp_name,
@@ -156,7 +155,7 @@ class RPGBleach(commands.Cog):
             if choix["emoji"] == str(reaction.emoji):
                 next_etape = choix["suivant"]
 
-                await supabase.table("rpg_save").upsert({
+                supabase.table("rpg_save").upsert({
                     "user_id": str(ctx.author.id),
                     "username": ctx.author.name,
                     "character_name": character_name,
@@ -174,5 +173,5 @@ async def setup(bot: commands.Bot):
     cog = RPGBleach(bot)
     for command in cog.get_commands():
         if not hasattr(command, "category"):
-            command.category = "Fun"
+            command.category = "VAACT"
     await bot.add_cog(cog)
