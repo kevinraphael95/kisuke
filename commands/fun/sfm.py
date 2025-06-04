@@ -24,7 +24,7 @@ class SfmCommand(commands.Cog):
     # ──────────────────────────────────────────────────────
     @commands.command(
         name="sfm",
-        help="⚔️ Combat entre Shinigami, Quincy et Hollow !"
+        help="⚔️ Shifumi mais avec Shinigami, Quincy et Hollow !"
     )
     @commands.cooldown(rate=1, per=3, type=commands.BucketType.user)
     async def sfm(self, ctx, adversaire: discord.Member = None):
@@ -47,7 +47,8 @@ class SfmCommand(commands.Cog):
 
         # 🔸 Étape 1 : Choix du joueur 1
         message = await ctx.send(
-            f"**{joueur1.mention}**, choisis ta race spirituelle :\n"
+            f"🗡️ ➡️ 🎯 ➡️ 💀 ➡️ 🗡️\➡n"
+            f"**{joueur1.mention}**, choisis :\n"
             f"🗡️ Shinigami — 🎯 Quincy — 💀 Hollow"
         )
         for emoji in emojis.values():
