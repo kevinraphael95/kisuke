@@ -17,16 +17,16 @@ class SetReiatsuPoints(commands.Cog):
         self.bot = bot  # 🔌 Stockage de l’instance du bot
 
     # ──────────────────────────────────────────────────────────
-    # 🛠️ COMMANDE : !changereiatsu @membre <points>
+    # 🛠️ COMMANDE : !reiatsuchange @membre <points>
     # ──────────────────────────────────────────────────────────
     @commands.command(
-        name="changereiatsu",
-        aliases=["changerts"],
+        name="reiatsuchange",
+        aliases=["rtschange"],
         help="(Admin) Modifie le score Reiatsu d’un membre."
     )
     @commands.has_permissions(administrator=True)  # 🔐 Réservé aux admins
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)  # 🧊 Cooldown de 5 secondes
-    async def changereiatsu(self, ctx, member: discord.Member, points: int):
+    async def reiatsuchange(self, ctx, member: discord.Member, points: int):
         # 🔎 Vérifie que le score est positif
         if points < 0:
             await ctx.send("❌ Le score Reiatsu doit être un nombre **positif**.")
@@ -79,7 +79,7 @@ class SetReiatsuPoints(commands.Cog):
 
     # 🏷️ Catégorisation pour le système de help personnalisé
     def cog_load(self):
-        self.changereiatsu.category = "Reiatsu"
+        self.reiatsuchange.category = "Reiatsu"
 
 # ──────────────────────────────────────────────────────────────
 # 🔌 SETUP POUR CHARGEMENT AUTOMATIQUE DU COG
