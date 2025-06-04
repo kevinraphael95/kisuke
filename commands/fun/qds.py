@@ -176,7 +176,7 @@ class QDS(commands.Cog):
 
         await ctx.send("📊 Résultats du quizz :\n" + "\n".join(lines))
 
-    @commands.command(name="classementqds")
+    @commands.command(name="qdstop")
     async def classement_qds(self, ctx):
         """Affiche le classement local QDS (Dark Souls)"""
         response = supabase.table("qds_scores").select("username", "score").eq("server_id", str(ctx.guild.id)).execute()
