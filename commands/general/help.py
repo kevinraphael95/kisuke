@@ -1,7 +1,7 @@
 # ────────────────────────────────────────────────────────────────────────────────
 # 📌 help.py — Commande interactive !help
-# Objectif : Afficher dynamiquement l’aide des commandes avec menu et pagination
-# Catégorie : 📚 Général
+# Objectif : Afficher dynamiquement l’aide des commandes avec menu déroulant par catégorie et pagination
+# Catégorie : Général
 # Accès : Public
 # ────────────────────────────────────────────────────────────────────────────────
 
@@ -11,11 +11,11 @@
 import discord
 from discord.ext import commands
 from discord.ui import View, Select, Button
-from bot import get_prefix  # 🔧 Fonction utilitaire pour le préfixe
 import math
+import os
 
 # ────────────────────────────────────────────────────────────────────────────────
-# 🎛️ UI — Sélecteur de catégorie
+# 🎛️ UI — Menu déroulant de sélection de catégorie
 # ────────────────────────────────────────────────────────────────────────────────
 class HelpCategoryView(View):
     def __init__(self, bot, categories, prefix):
@@ -44,7 +44,7 @@ class HelpCategorySelect(Select):
             selected_cat,
             commands_in_cat,
             self.parent_view.prefix,
-            self.parent_view  # Pour réafficher le sélecteur ensuite
+            self.parent_view  # Pour pouvoir revenir au menu catégories
         )
 
         await interaction.response.edit_message(
@@ -58,7 +58,7 @@ class HelpCategorySelect(Select):
 # ────────────────────────────────────────────────────────────────────────────────
 class HelpPaginatorView(View):
     def __init__(self, bot, category, commands_list, prefix, parent_view):
-        super().__init__(timeout=None)  # Pas de timeout
+        super().__init__(timeout=None)
         self.bot = bot
         self.category = category
         self.commands = commands_list
@@ -71,7 +71,9 @@ class HelpPaginatorView(View):
         if self.total_pages > 1:
             self.add_item(PrevButton(self))
             self.add_item(NextButton(self))
-        self.add_item(HelpCategorySelect(self.parent_view))  # Pour permettre le changement de catégorie
+
+        # On remet le menu déroulant pour changer de catégorie
+        self.add_item(HelpCategorySelect(self.parent_view))
 
     def create_embed(self):
         embed = discord.Embed(
@@ -110,47 +112,48 @@ class NextButton(Button):
             await interaction.response.edit_message(embed=self.paginator.create_embed(), view=self.paginator)
 
 # ────────────────────────────────────────────────────────────────────────────────
-# 🧠 Cog principal
+# 🧠 Cog principal — Help
 # ────────────────────────────────────────────────────────────────────────────────
-class HelpCommand(commands.Cog):
+class Help(commands.Cog):
     """
-    Commande !help — Affiche les commandes du bot, classées par catégories.
+    📚 Commande !help : système d’aide contextuelle avec menu déroulant
     """
 
-    def __init__(self, bot):
+    def __init__(self, bot: commands.Bot):
         self.bot = bot
 
     @commands.command(
         name="help",
-        aliases=["h"],
-        help="Affiche la liste des commandes ou les infos sur une commande spécifique.",
-        description="Utilise !help <commande> pour obtenir l’aide détaillée d’une commande."
+        aliases=["aide", "h"],
+        help="Affiche la liste des commandes ou les infos d’une commande spécifique.",
+        description=(
+            "📌 Utilisation : `!help` ou `!help <commande>`\n"
+            "- Sans argument : liste complète des commandes avec menu déroulant\n"
+            "- Avec un nom : détails complets de la commande"
+        )
     )
-    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
+    @commands.cooldown(rate=1, per=3, type=commands.BucketType.user)
     async def help_func(self, ctx: commands.Context, commande: str = None):
-        prefix = get_prefix(self.bot, ctx.message)
+        prefix = os.getenv("COMMAND_PREFIX", "!")
 
-        # 🔍 Aide spécifique
         if commande:
             cmd = self.bot.get_command(commande)
-            if cmd is None:
-                await ctx.send(f"❌ La commande `{commande}` n'existe pas.")
+            if not cmd:
+                await ctx.send(f"❌ La commande `{commande}` n’existe pas.")
                 return
 
             embed = discord.Embed(
-                title=f"ℹ️ Aide pour `{prefix}{cmd.name}`",
-                color=discord.Color.green()
+                title=f"ℹ️ Aide pour : `{prefix}{cmd.name}`",
+                color=discord.Color.blue()
             )
-            embed.add_field(name="📄 Description", value=cmd.help or "Pas de description.", inline=False)
+            embed.add_field(name="📝 Description", value=cmd.help or "Pas de description disponible.", inline=False)
             if cmd.aliases:
-                aliases = ", ".join(f"`{a}`" for a in cmd.aliases)
-                embed.add_field(name="🔁 Alias", value=aliases, inline=False)
-
-            embed.set_footer(text="📌 Syntaxe : <obligatoire> [optionnel]")
+                embed.add_field(name="🔁 Alias", value=", ".join(f"`{a}`" for a in cmd.aliases), inline=False)
+            embed.set_footer(text="📌 <obligatoire> — [optionnel]")
             await ctx.send(embed=embed)
             return
 
-        # 📜 Liste des commandes groupées par catégorie
+        # Sans argument, affichage interactif par catégories
         categories = {}
         for cmd in self.bot.commands:
             if cmd.hidden:
@@ -161,16 +164,12 @@ class HelpCommand(commands.Cog):
         view = HelpCategoryView(self.bot, categories, prefix)
         await ctx.send("📌 Sélectionne une catégorie pour voir ses commandes :", view=view)
 
-    def cog_load(self):
-        self.help_func.category = "Général"
-
 # ────────────────────────────────────────────────────────────────────────────────
 # 🔌 Setup du Cog
 # ────────────────────────────────────────────────────────────────────────────────
 async def setup(bot: commands.Bot):
-    cog = HelpCommand(bot)
+    cog = Help(bot)
     for command in cog.get_commands():
         if not hasattr(command, "category"):
             command.category = "Général"
     await bot.add_cog(cog)
-    print("✅ Cog chargé : HelpCommand (catégorie = Général)")
