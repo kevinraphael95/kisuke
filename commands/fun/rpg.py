@@ -93,6 +93,16 @@ class RPGBleach(commands.Cog):
                     msg = await self.bot.wait_for("message", timeout=300.0, check=check_name)
                     temp_name = msg.content.strip()
                     await ctx.send(f"✅ Ton nom est enregistré : **{temp_name}**")
+
+                    # Sauvegarde immédiate du nom même sans mission
+                    supabase.table("rpg_save").upsert({
+                        "user_id": user_id,
+                        "username": ctx.author.name,
+                        "character_name": temp_name,
+                        "mission": mission or None,
+                        "etape": etape or None
+                    }, on_conflict=["user_id"]).execute()
+
                 except asyncio.TimeoutError:
                     await ctx.send("⏰ Temps écoulé pour le nom.")
                 continue
@@ -169,5 +179,5 @@ async def setup(bot: commands.Bot):
     cog = RPGBleach(bot)
     for command in cog.get_commands():
         if not hasattr(command, "category"):
-            command.category = "VAACT"
+            command.category = "Fun"
     await bot.add_cog(cog)
