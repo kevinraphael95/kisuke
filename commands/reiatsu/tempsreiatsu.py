@@ -13,22 +13,22 @@ from discord.ext import commands
 from supabase_client import supabase
 
 # ──────────────────────────────────────────────────────────────
-# 🔧 COG : TempsReiatsuCommand
+# 🔧 COG : reiatsutempsCommand
 # ──────────────────────────────────────────────────────────────
-class TempsReiatsuCommand(commands.Cog):
+class reiatsutempsCommand(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
 
     # ──────────────────────────────────────────────────────────
-    # ⏳ COMMANDE : tempsreiatsu
+    # ⏳ COMMANDE : reiatsutemps
     # ──────────────────────────────────────────────────────────
     @commands.command(
-        name="tempsreiatsu",
-        aliases=["tpsrts"],
+        name="reiatsutemps",
+        aliases=["rtstps", "rtst"],
         help="Affiche le temps restant avant le prochain Reiatsu."
     )
     @commands.cooldown(rate=1, per=3, type=commands.BucketType.user)
-    async def tempsreiatsu(self, ctx: commands.Context):
+    async def reiatsutemps(self, ctx: commands.Context):
         guild_id = str(ctx.guild.id)
 
         # 📦 Récupère les données de configuration
@@ -80,8 +80,8 @@ class TempsReiatsuCommand(commands.Cog):
 # 🔌 SETUP AUTOMATIQUE DU COG
 # ──────────────────────────────────────────────────────────────
 async def setup(bot: commands.Bot):
-    cog = TempsReiatsuCommand(bot)
+    cog = reiatsutempsCommand(bot)
     for command in cog.get_commands():
         command.category = "Reiatsu"
     await bot.add_cog(cog)
-    print("✅ Cog chargé : TempsReiatsuCommand (Temps restant)")
+    print("✅ Cog chargé : reiatsutempsCommand (Temps restant)")
