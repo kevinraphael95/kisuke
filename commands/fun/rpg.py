@@ -45,24 +45,20 @@ class RPGBleach(commands.Cog):
     async def rpg(self, ctx: commands.Context):
         user_id = str(ctx.author.id)
 
-        # 🔎 Récupération de la sauvegarde Supabase
         data = supabase.table("rpg_save").select("*").eq("user_id", user_id).execute()
         save = data.data[0] if data.data else None
         etape = save["etape"] if save else None
         character_name = save["character_name"] if save else None
         mission = save["mission"] if save else None
 
-        # 🔁 Reprendre la partie si déjà commencée
         if etape and character_name and mission:
             await self.jouer_etape(ctx, etape, character_name, mission)
             return
 
-        # 🧭 Introduction et choix
         intro = self.scenario.get("intro", {})
         intro_texte = intro.get("texte", "Bienvenue dans la Division Z.")
         missions = self.scenario.get("missions", {})
         mission_keys = list(missions.keys())
-
         emojis = ["✏️"] + ["1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣"][:len(mission_keys)]
 
         embed = discord.Embed(title="🔰 RPG Bleach - Division Z", description=intro_texte, color=discord.Color.teal())
