@@ -13,7 +13,7 @@ from discord.ext import commands
 import asyncio
 import json
 import os
-from supabase_client import supabase  # Attention : adapter selon ta config supabase
+from supabase_client import supabase  # Adapter selon ta config supabase
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 📂 Chargement du scénario RPG
@@ -49,17 +49,12 @@ class RPGBleach(commands.Cog):
         data = supabase.table("rpg_save").select("*").eq("user_id", user_id).execute()
         print(f"[DEBUG] Réponse Supabase SELECT: {data}")
         save = data.data[0] if data.data else None
-        etape = save["etape"] if save else None
-        character_name = save["character_name"] if save else None
-        mission = save["mission"] if save else None
 
-        # 🔁 Reprendre la partie si déjà commencée
-        if etape and character_name and mission:
-            print(f"[DEBUG] Partie trouvée, reprise étape={etape}, nom={character_name}, mission={mission}")
-            await self.jouer_etape(ctx, etape, character_name, mission)
-            return
+        # Si sauvegarde existante, on récupère infos
+        saved_etape = save["etape"] if save else None
+        saved_character_name = save["character_name"] if save else None
+        saved_mission = save["mission"] if save else None
 
-        # 🧭 Introduction et choix
         intro = self.scenario.get("intro", {})
         intro_texte = intro.get("texte", "Bienvenue dans la Division Z.")
         missions = self.scenario.get("missions", {})
@@ -77,7 +72,7 @@ class RPGBleach(commands.Cog):
         for emoji in emojis:
             await menu_msg.add_reaction(emoji)
 
-        temp_name = character_name or None
+        temp_name = saved_character_name or None
 
         def check_react(reaction, user):
             return user == ctx.author and reaction.message.id == menu_msg.id and str(reaction.emoji) in emojis
@@ -113,21 +108,29 @@ class RPGBleach(commands.Cog):
                 print("[DEBUG] Tentative de début de mission sans nom défini")
                 continue
 
+            # Récupère la mission choisie
             index = emojis.index(str(reaction.emoji)) - 1
             mission_id = mission_keys[index]
-            start_etape = missions[mission_id]["start"]
 
-            print(f"[DEBUG] Sauvegarde de la partie user_id={user_id}, mission={mission_id}, étape={start_etape}, nom={temp_name}")
+            # Si mission + nom = sauvegarde existante, reprendre étape sauvegardée, sinon début mission
+            if save and saved_mission == mission_id and saved_character_name == temp_name:
+                etape = saved_etape
+                print(f"[DEBUG] Reprise sauvegarde mission {mission_id} étape {etape} pour {temp_name}")
+            else:
+                etape = missions[mission_id]["start"]
+                print(f"[DEBUG] Nouvelle partie mission {mission_id} au début étape {etape} pour {temp_name}")
+
+            # Mise à jour sauvegarde (insert ou update)
             response = supabase.table("rpg_save").upsert({
                 "user_id": user_id,
                 "username": ctx.author.name,
                 "character_name": temp_name,
                 "mission": mission_id,
-                "etape": start_etape
+                "etape": etape
             }, on_conflict=["user_id"]).execute()
             print(f"[DEBUG] Réponse Supabase UPSERT: {response}")
 
-            await self.jouer_etape(ctx, start_etape, temp_name, mission_id)
+            await self.jouer_etape(ctx, etape, temp_name, mission_id)
             return
 
     async def jouer_etape(self, ctx: commands.Context, etape_id: str, character_name: str, mission_id: str):
