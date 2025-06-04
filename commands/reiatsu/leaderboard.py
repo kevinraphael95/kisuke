@@ -1,5 +1,5 @@
 # ──────────────────────────────────────────────────────────────
-# 📁 REIATSU LEADERBOARD
+# 📁 REIATSU reiatsuscore
 # ──────────────────────────────────────────────────────────────
 
 # ──────────────────────────────────────────────────────────────
@@ -10,22 +10,22 @@ from discord.ext import commands
 from supabase_client import supabase
 
 # ──────────────────────────────────────────────────────────────
-# 🔧 COG : Leaderboard
+# 🔧 COG : reiatsuscore
 # ──────────────────────────────────────────────────────────────
-class Leaderboard(commands.Cog):
+class reiatsuscore(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot  # 🔌 Référence au bot
 
     # ──────────────────────────────────────────────────────────
-    # 📊 COMMANDE : !leaderboard [limit]
+    # 📊 COMMANDE : !reiatsuscore [limit]
     # ──────────────────────────────────────────────────────────
     @commands.command(
-        name="leaderboard",
-        aliases=["toprts", "topreiatsu", "leadb"],
+        name="reiatsuscore",
+        aliases=["rtstop"],
         help="📊 Affiche le classement des membres avec le plus de points Reiatsu."
     )
     @commands.cooldown(rate=1, per=3, type=commands.BucketType.user)  # 🧊 Cooldown : 3s/user
-    async def leaderboard(self, ctx: commands.Context, limit: int = 10):
+    async def reiatsuscore(self, ctx: commands.Context, limit: int = 10):
         # 🔎 Validation des bornes
         if limit < 1 or limit > 50:
             await ctx.send("❌ Le nombre d’entrées doit être entre **1** et **50**.")
@@ -63,11 +63,11 @@ class Leaderboard(commands.Cog):
 
     # 🏷️ Attribution de la catégorie
     def cog_load(self):
-        self.leaderboard.category = "Reiatsu"
+        self.reiatsuscore.category = "Reiatsu"
 
 # ──────────────────────────────────────────────────────────────
 # 🔌 SETUP POUR CHARGEMENT AUTOMATIQUE DU COG
 # ──────────────────────────────────────────────────────────────
 async def setup(bot: commands.Bot):
-    await bot.add_cog(Leaderboard(bot))
-    print("✅ Cog chargé : Leaderboard (catégorie = Reiatsu)")
+    await bot.add_cog(reiatsuscore(bot))
+    print("✅ Cog chargé : reiatsuscore (catégorie = Reiatsu)")
