@@ -122,6 +122,7 @@ class HelpCommand(commands.Cog):
 
     @commands.command(
         name="help",
+        aliases=["h"],
         help="Affiche la liste des commandes ou les infos sur une commande spécifique.",
         description="Utilise !help <commande> pour obtenir l’aide détaillée d’une commande."
     )
