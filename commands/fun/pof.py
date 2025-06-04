@@ -21,6 +21,7 @@ class PofCommand(commands.Cog):
     # ───────────────────────────────────────────────
     @commands.command(
         name="pof",
+        aliases=["pileouface"],
         help="🪙 Lance une pièce : pile ou face."
     )
     @commands.cooldown(rate=1, per=3, type=commands.BucketType.user)
