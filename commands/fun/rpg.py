@@ -46,7 +46,7 @@ class RPGBleach(commands.Cog):
         user_id = str(ctx.author.id)
 
         print(f"[DEBUG] Récupération de la sauvegarde Supabase pour user_id={user_id}")
-        data = await supabase.table("rpg_save").select("*").eq("user_id", user_id).execute()
+        data = supabase.table("rpg_save").select("*").eq("user_id", user_id).execute()
         print(f"[DEBUG] Réponse Supabase SELECT: {data}")
         save = data.data[0] if data.data else None
         etape = save["etape"] if save else None
@@ -118,7 +118,7 @@ class RPGBleach(commands.Cog):
             start_etape = missions[mission_id]["start"]
 
             print(f"[DEBUG] Sauvegarde de la partie user_id={user_id}, mission={mission_id}, étape={start_etape}, nom={temp_name}")
-            response = await supabase.table("rpg_save").upsert({
+            response = supabase.table("rpg_save").upsert({
                 "user_id": user_id,
                 "username": ctx.author.name,
                 "character_name": temp_name,
@@ -168,7 +168,7 @@ class RPGBleach(commands.Cog):
             if choix["emoji"] == str(reaction.emoji):
                 next_etape = choix["suivant"]
                 print(f"[DEBUG] Sauvegarde étape suivante user_id={ctx.author.id}, étape={next_etape}")
-                response = await supabase.table("rpg_save").upsert({
+                response = supabase.table("rpg_save").upsert({
                     "user_id": str(ctx.author.id),
                     "username": ctx.author.name,
                     "character_name": character_name,
