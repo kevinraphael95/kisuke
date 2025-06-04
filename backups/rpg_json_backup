@@ -1,0 +1,117 @@
+{
+  "intro": {
+    "texte": "Bienvenue dans la Division Z. Choisis ta mission pour protéger Karakura."
+  },
+  "missions": {
+    "mission1": {
+      "titre": "Menace dans le parc",
+      "description": "Des disparitions sont signalées autour du parc de Karakura. Va enquêter.",
+      "start": "etape_001"
+    }
+  },
+  "etape_001": {
+    "texte": "Tu arrives au parc. L’ambiance est étrange, le ciel est couvert.\nQue fais-tu ?",
+    "choix": [
+      {"emoji": "👀", "texte": "Observer les alentours", "suivant": "etape_002"},
+      {"emoji": "🚪", "texte": "Entrer directement dans le parc", "suivant": "etape_005"}
+    ]
+  },
+
+  "etape_002": {
+    "texte": "Tu repères une trace spirituelle suspecte près d’un arbre. Tu décides de...",
+    "choix": [
+      {"emoji": "🔍", "texte": "L’analyser", "suivant": "combat_hollow_1"},
+      {"emoji": "🤫", "texte": "Te cacher pour observer", "suivant": "etape_006"}
+    ]
+  },
+
+  "combat_hollow_1": {
+    "texte": "🦴 Un Hollow surgit de l’arbre ! Prépare-toi à le combattre.",
+    "combat": {
+      "type": "hollow",
+      "nom": "Hollow de niveau 1",
+      "pv": 3,
+      "degats": [1, 2],
+      "reussite": "etape_010",
+      "echec": "etape_008"
+    }
+  },
+
+  "etape_005": {
+    "texte": "Tu entres dans le parc. Une atmosphère glaciale t’envahit.",
+    "choix": [
+      {"emoji": "🛤️", "texte": "Prendre le chemin principal", "suivant": "etape_007"},
+      {"emoji": "🌲", "texte": "Explorer la forêt", "suivant": "etape_009"}
+    ]
+  },
+
+  "etape_006": {
+    "texte": "En te cachant, tu entends deux Hollows discuter... étrange. Tu peux...",
+    "choix": [
+      {"emoji": "🗡️", "texte": "Les attaquer par surprise", "suivant": "combat_hollow_2"},
+      {"emoji": "👂", "texte": "Continuer d’écouter", "suivant": "etape_011"}
+    ]
+  },
+
+  "combat_hollow_2": {
+    "texte": "💥 Tu lances une attaque surprise sur les deux Hollows !",
+    "combat": {
+      "type": "hollow",
+      "nom": "Duo de Hollows",
+      "pv": 4,
+      "degats": [1, 3],
+      "reussite": "etape_015",
+      "echec": "etape_013"
+    }
+  },
+
+  "etape_010": {
+    "texte": "✅ Tu as vaincu le Hollow ! Plus loin, un cri attire ton attention.",
+    "choix": [
+      {"emoji": "🏃", "texte": "Aller vers le cri", "suivant": "etape_020"},
+      {"emoji": "🔄", "texte": "Retourner au point de départ", "suivant": "etape_001"}
+    ]
+  },
+
+  "etape_020": {
+    "texte": "Tu arrives devant une fissure dans le sol... un portail vers le Hueco Mundo ! Tu peux...",
+    "choix": [
+      {"emoji": "🚪", "texte": "Entrer", "suivant": "etape_050"},
+      {"emoji": "📞", "texte": "Prévenir les renforts", "suivant": "etape_022"}
+    ]
+  },
+
+  "etape_050": {
+    "texte": "Dans le Hueco Mundo, un puissant Arrancar t’attend.",
+    "combat": {
+      "type": "boss",
+      "nom": "Arrancar Masqué",
+      "pv": 6,
+      "degats": [2, 4],
+      "reussite": "etape_fin_heroique",
+      "echec": "etape_fin_echec"
+    }
+  },
+
+  "etape_022": {
+    "texte": "Les renforts arrivent trop tard. Le Hollow s’est échappé... mais tu as survécu.",
+    "choix": [
+      {"emoji": "🕵️", "texte": "Rédiger ton rapport", "suivant": "etape_fin_neutre"}
+    ]
+  },
+
+  "etape_fin_heroique": {
+    "texte": "🏆 Tu as vaincu l’Arrancar et refermé la faille. Karakura est sauve. Tu es un héros de la Division Z !",
+    "choix": []
+  },
+
+  "etape_fin_echec": {
+    "texte": "💀 L’Arrancar était trop fort... tu t’évanouis alors que Karakura est envahie.",
+    "choix": []
+  },
+
+  "etape_fin_neutre": {
+    "texte": "📝 Tu as évité le pire, mais un danger plus grand semble venir. Prépare-toi...",
+    "choix": []
+  }
+}
