@@ -19,7 +19,7 @@ class ResetPersoCommand(commands.Cog):
     # 🧊 Cooldown : 3s par admin
     # ──────────────────────────────────────────────────────
     @commands.command(
-        name="resetperso",
+        name="tuprefreset",
         help="(Admin) Réinitialise tous les votes des personnages."
     )
     @commands.has_permissions(administrator=True)
