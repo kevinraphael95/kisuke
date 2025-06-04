@@ -18,7 +18,8 @@ class TopPersoCommand(commands.Cog):
     # Affiche les personnages les plus populaires selon les votes
     # ────────────────────────────────────────────────
     @commands.command(
-        name="topperso",
+        name="tupreftop",
+        aliases=["toptupref"],
         help="📊 Affiche les personnages les plus aimés par les votes de la communauté."
     )
     async def topperso(self, ctx, limit: int = 10):
