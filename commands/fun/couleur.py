@@ -55,10 +55,6 @@ class CouleurCommand(commands.Cog):
         )
 
         embed.set_image(url=image_url)
-        embed.set_footer(
-            text="💡 Utilise !couleur pour découvrir une autre teinte magique.",
-            icon_url="https://cdn-icons-png.flaticon.com/512/616/616408.png"
-        )
         embed.timestamp = ctx.message.created_at
 
         await ctx.send(embed=embed)
