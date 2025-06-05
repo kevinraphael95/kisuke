@@ -102,7 +102,7 @@ class ShipCommand(commands.Cog):
 
             # 🖼️ Embed final
             embed = discord.Embed(
-                title="💘 Test de compatibilité entre **{p1['nom']}** et **{p2['nom']}**. 💘",
+                title="💘 Test de compatibilité 💘",
                 color=color
             )
             embed.add_field(name="👩‍❤️‍👨 Couple", value=f"**{p1['nom']}** ❤️ **{p2['nom']}**", inline=False)
