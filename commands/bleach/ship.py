@@ -87,18 +87,6 @@ class ShipCommand(commands.Cog):
                 await loading_msg.edit(content=f"Analyse en cours... {emoji}")
             await asyncio.sleep(1.5)
 
-            # 📝 Résumé poétique
-            lieux = [
-                "dans un champ de fleurs gelées", "sous la pleine lune à Karakura",
-                "dans la brume du Seireitei", "au cœur du Hueco Mundo",
-                "au bord d’une rivière spirituelle", "dans un dojo désert"
-            ]
-            actions = [
-                "leurs réiatsus s’effleurent", "le destin les rapproche",
-                "un silence pesant s’installe", "leurs regards se croisent",
-                "leurs âmes vibrent à l’unisson", "le chaos du combat les unit"
-            ]
-            resume = f"*{p1['nom']} rencontre {p2['nom']} {random.choice(lieux)}... {random.choice(actions)}.*"
 
             # 🎨 Couleur de l’embed selon score
             if score >= 90:
@@ -114,8 +102,7 @@ class ShipCommand(commands.Cog):
 
             # 🖼️ Embed final
             embed = discord.Embed(
-                title="💘 Compatibilité spirituelle Bleach 💘",
-                description=resume,
+                title="💘 Test de compatibilité entre **{p1['nom']}** et **{p2['nom']}**. 💘",
                 color=color
             )
             embed.add_field(name="👩‍❤️‍👨 Couple", value=f"**{p1['nom']}** ❤️ **{p2['nom']}**", inline=False)
