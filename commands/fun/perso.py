@@ -22,7 +22,7 @@ class PersoCommand(commands.Cog):
     # ───────────────────────────────────────────────
     @commands.command(
         name="perso",
-        help="🧬 Découvre quel personnage de Bleach tu es (choix fixe selon toi)."
+        help="🧬 Découvre quel personnage de Bleach tu es."
     )
     @commands.cooldown(rate=1, per=3, type=commands.BucketType.user)  # ⏱️ Cooldown 3s
     async def perso(self, ctx):
