@@ -199,5 +199,5 @@ async def setup(bot: commands.Bot):
     cog = QDS(bot)
     for command in cog.get_commands():
         if not hasattr(command, "category"):
-            command.category = "Fun"
+            command.category = "Test"
     await bot.add_cog(cog)
