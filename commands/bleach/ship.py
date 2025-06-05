@@ -141,5 +141,5 @@ class ShipCommand(commands.Cog):
 async def setup(bot):
     cog = ShipCommand(bot)
     for command in cog.get_commands():
-        command.category = "Fun"
+        command.category = "Bleach"
     await bot.add_cog(cog)
