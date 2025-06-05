@@ -20,6 +20,7 @@ class TuPrefCommand(commands.Cog):
 
     @commands.command(
         name="tupref",
+        aliases=["tp"],
         help="🤔 Choisis ton personnage préféré entre deux propositions aléatoires."
     )
     @commands.cooldown(rate=1, per=3600, type=commands.BucketType.user)
@@ -90,6 +91,7 @@ class TopPersoCommand(commands.Cog):
 
     @commands.command(
         name="tupreftop",
+        aliases=["tpt"],
         aliases=["toptupref"],
         help="📊 Affiche les personnages les plus aimés par les votes de la communauté."
     )
@@ -138,6 +140,7 @@ class ResetPersoCommand(commands.Cog):
 
     @commands.command(
         name="tuprefreset",
+        aliases=["tpr"],
         help="(Admin) Réinitialise tous les votes des personnages."
     )
     @commands.has_permissions(administrator=True)
