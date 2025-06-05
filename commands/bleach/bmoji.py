@@ -81,4 +81,5 @@ async def setup(bot: commands.Bot):
     for command in cog.get_commands():
         command.category = "Bleach"
     await bot.add_cog(cog)
-    print("✅ Cog chargé : CombatCommand (catégorie = Bleach)")
+    print("✅ Cog chargé : BMojiCommand (catégorie = Bleach)")
+
