@@ -49,7 +49,7 @@ class SfmCommand(commands.Cog):
         embed_intro = discord.Embed(
             title="Shifumi mais version Bleach",
             description=(
-                "🗡️ Shinigami bat 🎯 Quincy — 💀 Hollow\n"
+                "🗡️ Shinigami bat 🎯 Quincy\n"
                 "🎯 Quincy bat 💀 Hollow\n"
                 "💀 Hollow bat 🗡️ Shinigami\n\n"
                 "Réagissez avec l’emoji correspondant à votre choix."
