@@ -28,8 +28,8 @@ def load_characters():
 # ────────────────────────────────────────────────────────────────────────────────
 class PersoCommand(commands.Cog):
     """
-    Commande !perso — Découvre quel personnage de Bleach tu es.
-    Le résultat est fixe selon ton ID Discord.
+    Commande !perso — Découvre quel personnage de Bleach tu es ou un autre utilisateur.
+    Le résultat est fixe selon l'ID Discord.
     """
 
     def __init__(self, bot: commands.Bot):
@@ -37,12 +37,14 @@ class PersoCommand(commands.Cog):
 
     @commands.command(
         name="perso",
-        help="🧬 Découvre quel personnage de Bleach tu es.",
-        description="Choix déterministe en fonction de ton identifiant Discord."
+        help="🧬 Découvre quel personnage de Bleach tu es (ou un autre membre).",
+        description="Choix déterministe en fonction de l'identifiant Discord."
     )
     @commands.cooldown(rate=1, per=3, type=commands.BucketType.user)  # ⏱️ Anti-spam
-    async def perso(self, ctx: commands.Context):
-        """Retourne un personnage de Bleach déterminé par l'utilisateur."""
+    async def perso(self, ctx: commands.Context, membre: discord.Member = None):
+        """
+        Retourne un personnage de Bleach déterminé par l'utilisateur ou un autre membre mentionné.
+        """
         try:
             characters = load_characters()
 
@@ -50,14 +52,20 @@ class PersoCommand(commands.Cog):
                 await ctx.send("❌ Le fichier des personnages est vide ou mal formaté.")
                 return
 
-            user_id = ctx.author.id
+            cible = membre or ctx.author
+            user_id = cible.id
             index = (user_id * 31 + 17) % len(characters)
             personnage = characters[index]
 
-            await ctx.send(
-                f"🌌 {ctx.author.mention}, tu es **{personnage}** !\n"
-                f"(C'est ta destinée dans le monde de Bleach 🔥)"
-            )
+            if cible == ctx.author:
+                await ctx.send(
+                    f"🌌 {ctx.author.mention}, tu es **{personnage}** !\n"
+                    f"(C'est ta destinée dans le monde de Bleach 🔥)"
+                )
+            else:
+                await ctx.send(
+                    f"🌌 {ctx.author.mention}, **{cible.display_name}** est **{personnage}** dans Bleach ! 💫"
+                )
 
         except FileNotFoundError:
             await ctx.send("❌ Fichier `bleach_characters.json` introuvable.")
