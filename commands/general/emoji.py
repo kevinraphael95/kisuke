@@ -86,5 +86,5 @@ class EmojiCommand(commands.Cog):
 async def setup(bot: commands.Bot):
     cog = EmojiCommand(bot)
     for command in cog.get_commands():
-        command.category = "Fun"
+        command.category = "Général"
     await bot.add_cog(cog)
