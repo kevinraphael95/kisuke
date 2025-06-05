@@ -77,16 +77,14 @@ class CombatCommand(commands.Cog):
 
             embed = discord.Embed(
                 title=f"⚔️ Combat : {p1['nom']} VS {p2['nom']}",
-                description="Début du combat automatisé sur 5 tours",
                 color=discord.Color.purple()
             )
 
             logs_par_tour = []
 
             for tour in range(1, 6):
-                texte_tour = f"__**Tour {tour}**__\n"
-                texte_tour += f"{format_etat_ligne(p1)}\n{format_etat_ligne(p2)}\n\n"
-
+                texte_tour = f"{format_etat_ligne(p1)}\n{format_etat_ligne(p2)}\n\n"
+                
                 for attaquant in tour_order:
                     defenseur = p1 if attaquant == p2 else p2
                     if attaquant["vie"] <= 0 or defenseur["vie"] <= 0:
@@ -196,12 +194,17 @@ class CombatCommand(commands.Cog):
             for i, log_tour in enumerate(logs_par_tour, 1):
                 embed.add_field(name=f"Tour {i}", value=log_tour, inline=False)
 
+            # 🔚 Résultat final du combat
             if p1["vie"] > p2["vie"]:
-                embed.set_footer(text=f"⏳ 5 tours écoulés, victoire de {p1['nom']} !")
+                resultat = f"🏁 **Victoire aux points de {p1['nom']} !** ({p1['vie']} PV restants contre {p2['vie']} PV)"
             elif p2["vie"] > p1["vie"]:
-                embed.set_footer(text=f"⏳ 5 tours écoulés, victoire de {p2['nom']} !")
+                resultat = f"🏁 **Victoire aux points de {p2['nom']} !** ({p2['vie']} PV restants contre {p1['vie']} PV)"
             else:
-                embed.set_footer(text="⏳ 5 tours écoulés, égalité !")
+                resultat = "🤝 **Égalité parfaite après 5 tours !**"
+
+            embed.add_field(name="🎯 Résultat final", value=resultat, inline=False)
+            embed.set_footer(text="⚔️ Combat terminé après 5 tours")
+
 
             await ctx.send(embed=embed)
 
