@@ -56,7 +56,12 @@ class BMojiCommand(commands.Cog):
                 return
 
             emoji_selection = random.choice(emojis)
-            await ctx.send(f"{emoji_selection} → ||{nom}||")
+            embed = discord.Embed(     
+                title="🧩 Défi : sauras-tu retrouver à quel personnage de Bleach ces emojis font référence ?",     
+                description=f"{emoji_selection} → ||{nom}||",     
+                color=discord.Color.orange() ) 
+            embed.set_footer(text="Bleach Emoji Challenge") 
+            await ctx.send(embed=embed)
 
         except FileNotFoundError:
             await ctx.send("❌ Fichier `bleach_emojis.json` introuvable dans `data/`.")
