@@ -1,7 +1,7 @@
 # ────────────────────────────────────────────────────────────────────────────────
 # 📌 combat.py — Commande interactive !combat
 # Objectif : Simule un combat entre 2 personnages de Bleach avec stats, énergie et effets.
-# Catégorie : Fun
+# Catégorie : Bleach
 # Accès : Public
 # ────────────────────────────────────────────────────────────────────────────────
 
@@ -13,6 +13,16 @@ from discord.ext import commands
 import random
 import json
 import os
+
+# ────────────────────────────────────────────────────────────────────────────────
+# 📂 Chargement des données JSON (personnages Bleach)
+# ────────────────────────────────────────────────────────────────────────────────
+DATA_JSON_PATH = os.path.join("data", "bleach_personnages.json")
+
+def load_personnages():
+    """Charge les personnages depuis le fichier JSON."""
+    with open(DATA_JSON_PATH, "r", encoding="utf-8") as f:
+        return json.load(f)
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🧠 Cog principal
@@ -49,16 +59,11 @@ class CombatCommand(commands.Cog):
             return f"{p['nom']} — {coeur} | {batterie} | {statut}"
 
         try:
-            # Chargement des personnages
-            data_path = os.path.join("data", "bleach_personnages.json")
-            with open(data_path, "r", encoding="utf-8") as f:
-                personnages = json.load(f)
-
+            personnages = load_personnages()
             if len(personnages) < 2:
                 await ctx.send("❌ Pas assez de personnages dans le fichier.")
                 return
 
-            # Sélection de 2 personnages aléatoires
             p1, p2 = random.sample(personnages, 2)
             for p in (p1, p2):
                 p["energie"] = 100
@@ -185,22 +190,29 @@ class CombatCommand(commands.Cog):
                         log += f"☠️ {defenseur['nom']} est empoisonné !\n"
 
                     if defenseur["vie"] <= 0:
-                        log += f"\n🏆 **{attaquant['nom']} remporte le combat par KO !**"
+                        log += f"\n🏆 **{attaquant['nom']} remporte le combat !**"
                         await ctx.send(log)
                         return
 
-                    log += "\n"
+                log += "\n"
 
-            # Fin des 5 tours : gagnant par PV restant
-            gagnant = p1 if p1["vie"] > p2["vie"] else p2
-            log += f"__🧾 Résumé final__\n{format_etat_ligne(p1)}\n{format_etat_ligne(p2)}\n\n"
-            log += f"🏁 **Fin du combat.**\n🏆 **{gagnant['nom']} l'emporte par avantage de vie !**"
+            # Fin du combat après 5 tours
+            if p1["vie"] > p2["vie"]:
+                vainqueur = p1["nom"]
+            elif p2["vie"] > p1["vie"]:
+                vainqueur = p2["nom"]
+            else:
+                vainqueur = None
+
+            if vainqueur:
+                log += f"⏳ 5 tours écoulés, victoire de **{vainqueur}** !"
+            else:
+                log += "⏳ 5 tours écoulés, égalité !"
+
             await ctx.send(log)
 
-        except FileNotFoundError:
-            await ctx.send("❌ Fichier `bleach_personnages.json` introuvable.")
         except Exception as e:
-            await ctx.send(f"⚠️ Une erreur est survenue : {e}")
+            await ctx.send(f"❌ Une erreur est survenue : `{e}`")
 
 
 # ────────────────────────────────────────────────────────────────────────────────
