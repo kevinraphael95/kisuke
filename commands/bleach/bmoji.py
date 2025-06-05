@@ -78,6 +78,6 @@ async def setup(bot: commands.Bot):
     cog = BMojiCommand(bot)
     for command in cog.get_commands():
         if not hasattr(command, "category"):
-            command.category = "Fun"
+            command.category = "Bleach"
     await bot.add_cog(cog)
-    print("✅ Cog chargé : BMojiCommand (catégorie = Fun)")
+    print("✅ Cog chargé : BMojiCommand (catégorie = Bleach)")
