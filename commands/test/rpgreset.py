@@ -49,5 +49,5 @@ class RPGReset(commands.Cog):
 async def setup(bot):
     cog = RPGReset(bot)
     for command in cog.get_commands():
-        command.category = "Fun"
+        command.category = "Test"
     await bot.add_cog(cog)
