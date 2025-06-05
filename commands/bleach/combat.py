@@ -182,7 +182,12 @@ class CombatCommand(commands.Cog):
 
                     if defenseur["vie"] <= 0:
                         texte_tour += f"\n🏆 **{attaquant['nom']} remporte le combat !**"
-                        embed.add_field(name=f"Fin du combat (tour {tour})", value=texte_tour, inline=False)
+                        logs_par_tour.append(texte_tour)
+
+                        for i, log_tour in enumerate(logs_par_tour, 1):
+                            embed.add_field(name=f"Tour {i}", value=log_tour, inline=False)
+
+                        embed.set_footer(text=f"🏁 Combat terminé au tour {tour}")
                         await ctx.send(embed=embed)
                         return
 
