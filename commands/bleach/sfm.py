@@ -47,7 +47,7 @@ class SfmCommand(commands.Cog):
 
         # 🔸 Étape 1 : Choix du joueur 1
         message = await ctx.send(
-            f"🗡️ ➡️ 🎯 ➡️ 💀 ➡️ 🗡️\➡n"
+            f"🗡️ ➡ 🎯 ➡ 💀 ➡ 🗡️\n"
             f"**{joueur1.mention}**, choisis :\n"
             f"🗡️ Shinigami — 🎯 Quincy — 💀 Hollow"
         )
