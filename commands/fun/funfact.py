@@ -10,9 +10,10 @@
 # ────────────────────────────────────────────────────────────────────────────────
 import discord
 from discord.ext import commands
+from discord.ui import View, Select
 import json
-import random
 import os
+import random
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 📂 Chargement des données JSON
@@ -25,9 +26,23 @@ def load_data():
         return json.load(f)
 
 # ────────────────────────────────────────────────────────────────────────────────
+# 🎛️ UI — Vue avec bouton pour un fun fact aléatoire
+# ────────────────────────────────────────────────────────────────────────────────
+class FunFactView(View):
+    """Vue contenant un bouton pour afficher un autre fun fact."""
+    def __init__(self, facts):
+        super().__init__(timeout=60)
+        self.facts = facts
+
+    @discord.ui.button(label="🔁 Autre fun fact", style=discord.ButtonStyle.blurple)
+    async def new_fact_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        fact = random.choice(self.facts)
+        await interaction.response.edit_message(content=f"🧠 **Fun Fact Bleach :** {fact}", view=self)
+
+# ────────────────────────────────────────────────────────────────────────────────
 # 🧠 Cog principal
 # ────────────────────────────────────────────────────────────────────────────────
-class FunFactCommand(commands.Cog):
+class FunFactBleach(commands.Cog):
     """
     Commande !funfact — Donne un fun fact sur Bleach.
     """
@@ -42,7 +57,7 @@ class FunFactCommand(commands.Cog):
     )
     @commands.cooldown(rate=1, per=3, type=commands.BucketType.user)
     async def funfact(self, ctx: commands.Context):
-        """Commande principale qui envoie un fun fact aléatoire."""
+        """Commande principale qui envoie un fun fact aléatoire avec un bouton pour en voir d'autres."""
         try:
             facts = load_data()
             if not facts:
@@ -50,7 +65,8 @@ class FunFactCommand(commands.Cog):
                 return
 
             fact = random.choice(facts)
-            await ctx.send(f"🧠 **Fun Fact Bleach :** {fact}")
+            view = FunFactView(facts)
+            await ctx.send(f"🧠 **Fun Fact Bleach :** {fact}", view=view)
 
         except FileNotFoundError:
             await ctx.send("❌ Fichier `funfacts_bleach.json` introuvable.")
@@ -64,4 +80,8 @@ class FunFactCommand(commands.Cog):
 # 🔌 Setup du Cog
 # ────────────────────────────────────────────────────────────────────────────────
 async def setup(bot: commands.Bot):
-    await bot.add_cog(FunFactCommand(bot))
+    cog = FunFactBleach(bot)
+    for command in cog.get_commands():
+        if not hasattr(command, "category"):
+            command.category = "Fun"
+    await bot.add_cog(cog)
