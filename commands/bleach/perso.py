@@ -64,5 +64,5 @@ class PersoCommand(commands.Cog):
 async def setup(bot):
     cog = PersoCommand(bot)
     for command in cog.get_commands():
-        command.category = "Fun"
+        command.category = "Bleach"
     await bot.add_cog(cog)
