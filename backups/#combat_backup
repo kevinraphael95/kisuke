@@ -27,7 +27,7 @@ class CombatCommand(commands.Cog):
 
     @commands.command(
         name="combat",
-        help="Simule un combat entre 2 personnages de Bleach avec stats, énergie et effets.",
+        help="Simule un combat entre 2 personnages de Bleach.",
         description="Lance un combat automatisé sur 5 tours entre 2 personnages tirés au hasard."
     )
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
