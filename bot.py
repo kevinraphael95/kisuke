@@ -113,33 +113,6 @@ async def on_ready():
     print("✅ Spawner Reiatsu chargé.")
 
 
-
-# ──────────────────────────────────────────────────────────────
-# 🧩 Vue interactive pour les boutons Help & Info
-# ──────────────────────────────────────────────────────────────
-class MentionBotView(discord.ui.View):
-    def __init__(self, prefix: str):
-        super().__init__(timeout=None)
-        self.prefix = prefix
-
-    @discord.ui.button(label="📜 Help", style=discord.ButtonStyle.primary)
-    async def help_button(self, interaction: discord.Interaction, button: discord.ui.Button):
-        await interaction.response.defer()
-        ctx = await bot.get_context(interaction.message)
-        ctx.prefix = self.prefix
-        ctx.command = bot.get_command("help")
-        await bot.invoke(ctx)
-
-    @discord.ui.button(label="ℹ️ Info", style=discord.ButtonStyle.secondary)
-    async def info_button(self, interaction: discord.Interaction, button: discord.ui.Button):
-        await interaction.response.defer()
-        ctx = await bot.get_context(interaction.message)
-        ctx.prefix = self.prefix
-        ctx.command = bot.get_command("info")
-        await bot.invoke(ctx)
-
-
-
 # ──────────────────────────────────────────────────────────────
 # 📩 Message reçu : réagir aux mots-clés et lancer les commandes
 # ──────────────────────────────────────────────────────────────
@@ -170,7 +143,7 @@ async def on_message(message):
             return
 
     # ✅ Nouveau bloc pour réponse si bot est mentionné
-            if (
+    if (
         bot.user in message.mentions
         and len(message.mentions) == 1
         and message.content.strip().startswith(f"<@{bot.user.id}")
@@ -183,18 +156,14 @@ async def on_message(message):
                         f"Mon préfixe est : `{prefix}`\n\n"
                         f"📜 Tape `{prefix}help` pour voir toutes les commandes disponibles. (cassé)\n"
                         f"🛠️ Tape `{prefix}commandes` pour voir les commandes. (meh)\n"
-                        f"ℹ️ Tape `{prefix}info` pour avoir plus d'infos sur l'état du bot.",
+                        f"ℹ️ Tape `{prefix}info` pour avoir plus d'infos sur l''état du bot.",
             color=discord.Color.orange()
         )
         if bot.user.avatar:
             embed.set_thumbnail(url=bot.user.avatar.url)
         embed.set_footer(text="Zangetsu veille sur toi.")
-
-        view = MentionBotView(prefix)
-        await message.channel.send(embed=embed, view=view)
+        await message.channel.send(embed=embed)
         return
-
-
 
     # Exécution des commandes classiques
     await bot.process_commands(message)
