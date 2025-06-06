@@ -189,7 +189,7 @@ class CombatCommand(commands.Cog):
                         await ctx.send(embed=embed)
                         return
 
-                logs_par_tour.append(texte_tour + "\n") 
+                logs_par_tour.append(f"\n🌀─────── Tour {tour} ───────🌀\n{texte_tour}\n🌀────────────────────────────🌀\n")
 
             for i, log_tour in enumerate(logs_par_tour, 1):
                 embed.add_field(name=f"Tour {i}", value=log_tour, inline=False)
