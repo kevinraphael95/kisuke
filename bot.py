@@ -154,19 +154,44 @@ async def on_message(message):
             title="Bleach Bot",
             description="Bonjour, je suis un bot basé sur l'univers de **Bleach** !\n"
                         f"Mon préfixe est : `{prefix}`\n\n"
-                        f"📜 Tape `{prefix}help` pour voir toutes les commandes disponibles. (cassé)\n"
-                        f"🛠️ Tape `{prefix}commandes` pour voir les commandes. (meh)\n"
-                        f"ℹ️ Tape `{prefix}info` pour avoir plus d'infos sur l''état du bot.",
+                        f"📜 Clique sur **Help** pour voir toutes les commandes.\n"
+                        f"ℹ️ Clique sur **Info** pour avoir plus d'infos sur l'état du bot.",
             color=discord.Color.orange()
         )
         if bot.user.avatar:
             embed.set_thumbnail(url=bot.user.avatar.url)
         embed.set_footer(text="Zangetsu veille sur toi.")
-        await message.channel.send(embed=embed)
+
+        class MentionView(View):
+            def __init__(self):
+                super().__init__(timeout=60)
+
+                self.add_item(Button(label="Help", style=discord.ButtonStyle.primary, custom_id="mention_help"))
+                self.add_item(Button(label="Info", style=discord.ButtonStyle.secondary, custom_id="mention_info"))
+
+        await message.channel.send(embed=embed, view=MentionView())
         return
 
     # Exécution des commandes classiques
     await bot.process_commands(message)
+
+@bot.event
+async def on_interaction(interaction: discord.Interaction):
+    if not interaction.data:
+        return
+
+    custom_id = interaction.data.get("custom_id")
+
+    if custom_id == "mention_help":
+        ctx = await bot.get_context(interaction.message)
+        await bot.invoke(await bot.get_command("help").callback(ctx))
+        await interaction.response.defer()
+
+    elif custom_id == "mention_info":
+        ctx = await bot.get_context(interaction.message)
+        await bot.invoke(await bot.get_command("info").callback(ctx))
+        await interaction.response.defer()
+
 
 # ──────────────────────────────────────────────────────────────
 # ❗ Gestion des erreurs de commandes
