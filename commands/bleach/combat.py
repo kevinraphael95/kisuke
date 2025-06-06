@@ -77,7 +77,7 @@ class CombatCommand(commands.Cog):
 
             # 5 tours maximum
             for tour in range(1, 6):
-                log += f"**🌀─────── Tour {tour} ───────🌀**\n\n"
+                log += f"**🌀─────── Tour {tour} ───────🌀**\n"
                 log += f"{format_etat_ligne(p1)}\n{format_etat_ligne(p2)}\n\n"
 
                 for attaquant in tour_order:
