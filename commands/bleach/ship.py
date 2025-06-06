@@ -80,7 +80,7 @@ class ShipCommand(commands.Cog):
                 reaction = "aucune chance... ils sont de mondes opposés 💔"
 
             # 🎬 Animation avec emojis
-            barre = ["⏳", "📡", "🔮", "💞"]
+            barre = ["⏳", "💞"]
             loading_msg = await ctx.send("Analyse en cours... " + barre[0])
             for emoji in barre[1:]:
                 await asyncio.sleep(1)
