@@ -1,6 +1,6 @@
 # ────────────────────────────────────────────────────────────────────────────────
 # 📌 combat.py — Commande interactive !combat
-# Objectif : Simule un combat entre 2 personnages de Bleach avec stats, énergie et effets
+# Objectif : Simuler un combat automatisé entre deux personnages de Bleach
 # Catégorie : Bleach
 # Accès : Public
 # ────────────────────────────────────────────────────────────────────────────────
@@ -15,7 +15,7 @@ import json
 import os
 
 # ────────────────────────────────────────────────────────────────────────────────
-# 📂 Chargement des données JSON
+# 📂 Chargement des données JSON (personnages Bleach)
 # ────────────────────────────────────────────────────────────────────────────────
 DATA_JSON_PATH = os.path.join("data", "bleach_personnages.json")
 
@@ -24,11 +24,8 @@ def load_personnages():
     with open(DATA_JSON_PATH, "r", encoding="utf-8") as f:
         return json.load(f)
 
-# ────────────────────────────────────────────────────────────────────────────────
-# 🧠 Fonction utilitaire — Format de l’état du personnage
-# ────────────────────────────────────────────────────────────────────────────────
 def format_etat_ligne(p: dict) -> str:
-    """Formate une ligne d'état du personnage."""
+    """Formate la ligne d'état d'un personnage pour affichage."""
     coeur = f"❤️ {max(p['vie'], 0)} PV"
     batterie = f"🔋 {p['energie']} énergie"
     if p["status"] == "gel":
@@ -42,11 +39,11 @@ def format_etat_ligne(p: dict) -> str:
     return f"{p['nom']} — {coeur} | {batterie} | {statut}"
 
 # ────────────────────────────────────────────────────────────────────────────────
-# 🧩 Cog principal — CombatCommand
+# 🧠 Cog principal : CombatCommand
 # ────────────────────────────────────────────────────────────────────────────────
 class CombatCommand(commands.Cog):
     """
-    Commande !combat — Simule un combat entre 2 personnages de Bleach avec stats, énergie et effets.
+    Commande !combat — Simule un combat automatisé sur 5 tours entre 2 personnages Bleach
     """
 
     def __init__(self, bot: commands.Bot):
@@ -65,12 +62,21 @@ class CombatCommand(commands.Cog):
                 await ctx.send("❌ Pas assez de personnages dans le fichier.")
                 return
 
+            # Choix aléatoire de 2 personnages
             p1, p2 = random.sample(personnages, 2)
+
+            # Initialisation des stats temporaires du combat
             for p in (p1, p2):
-                p.update({"energie": 100, "vie": 100, "status": None, "status_duree": 0})
+                p.update({
+                    "energie": 100,
+                    "vie": 100,
+                    "status": None,
+                    "status_duree": 0,
+                })
                 for atk in p["attaques"]:
                     atk["utilisé"] = False
 
+            # Détermination de l'initiative du premier tour
             p1_init = p1["stats"]["mobilité"] + random.randint(0, 10)
             p2_init = p2["stats"]["mobilité"] + random.randint(0, 10)
             tour_order = [p1, p2] if p1_init >= p2_init else [p2, p1]
@@ -82,6 +88,7 @@ class CombatCommand(commands.Cog):
 
             logs_par_tour = []
 
+            # Boucle sur 5 tours max
             for tour in range(1, 6):
                 texte_tour = f"🌀─────── Tour {tour} ───────🌀\n\n"
                 texte_tour += f"{format_etat_ligne(p1)}\n{format_etat_ligne(p2)}\n\n"
@@ -91,7 +98,7 @@ class CombatCommand(commands.Cog):
                     if attaquant["vie"] <= 0 or defenseur["vie"] <= 0:
                         continue
 
-                    # Gestion du gel
+                    # Effets de statut avant action
                     if attaquant["status"] == "gel":
                         texte_tour += f"❄️ **{attaquant['nom']}** est gelé et ne peut pas agir.\n\n"
                         attaquant["status_duree"] -= 1
@@ -99,7 +106,6 @@ class CombatCommand(commands.Cog):
                             attaquant["status"] = None
                         continue
 
-                    # Gestion confusion
                     if attaquant["status"] == "confusion":
                         if random.random() < 0.4:
                             texte_tour += f"💫 **{attaquant['nom']}** est confus et se blesse (10 PV) !\n\n"
@@ -109,7 +115,6 @@ class CombatCommand(commands.Cog):
                                 attaquant["status"] = None
                             continue
 
-                    # Gestion poison
                     if attaquant["status"] == "poison":
                         texte_tour += f"☠️ **{attaquant['nom']}** perd 5 PV à cause du poison.\n"
                         attaquant["vie"] -= 5
@@ -117,6 +122,7 @@ class CombatCommand(commands.Cog):
                         if attaquant["status_duree"] <= 0:
                             attaquant["status"] = None
 
+                    # Choix des attaques possibles
                     possibles = [
                         a for a in attaquant["attaques"]
                         if a["cout"] <= attaquant["energie"] and (a["type"] != "ultime" or not a["utilisé"])
@@ -129,6 +135,7 @@ class CombatCommand(commands.Cog):
                     if attaque["type"] == "ultime":
                         attaque["utilisé"] = True
 
+                    # Calcul chance esquive
                     esquive_chance = min(defenseur["stats"]["mobilité"] / 40 + random.uniform(0, 0.2), 0.5)
                     tentative_esquive = random.random()
                     cout_esquive = 50 if attaque["type"] == "ultime" else 10
@@ -136,18 +143,20 @@ class CombatCommand(commands.Cog):
                     if tentative_esquive < esquive_chance and defenseur["energie"] >= cout_esquive:
                         defenseur["energie"] -= cout_esquive
                         texte_tour += f"💨 **{defenseur['nom']}** esquive **{attaque['nom']}** ! (-{cout_esquive} énergie)\n"
+                        # Chance contre-attaque
                         if random.random() < 0.2:
                             contre = 10 + defenseur["stats"]["attaque"] // 2
                             attaquant["vie"] -= contre
                             texte_tour += f"🔁 Contre-attaque ! **{attaquant['nom']}** subit {contre} dégâts !\n"
                             if attaquant["vie"] <= 0:
                                 texte_tour += f"\n🏆 **{defenseur['nom']} gagne par contre-attaque !**"
-                                embed.add_field(name=f"Fin du combat (tour {tour})", value=texte_tour, inline=False)
+                                embed.add_field(name=f"Tour {tour}", value=texte_tour, inline=False)
                                 await ctx.send(embed=embed)
                                 return
                         texte_tour += "\n"
                         continue
 
+                    # Calcul dégâts
                     base = attaque["degats"]
                     bonus = (
                         attaquant["stats"]["attaque"] + attaquant["stats"]["force"]
@@ -155,6 +164,7 @@ class CombatCommand(commands.Cog):
                     )
                     total = base + max(0, bonus)
 
+                    # Critique possible
                     if random.random() < min(0.1 + attaquant["stats"]["force"] / 50, 0.4):
                         total = int(total * 1.5)
                         texte_tour += "💥 Coup critique !\n"
@@ -168,6 +178,7 @@ class CombatCommand(commands.Cog):
                         f"➡️ {defenseur['nom']} perd {total} PV\n"
                     )
 
+                    # Application effets d’attaque
                     effet = attaque["effet"].lower()
                     if effet in ["gel", "paralysie"]:
                         defenseur["status"] = "gel"
@@ -176,46 +187,47 @@ class CombatCommand(commands.Cog):
                     elif effet in ["confusion", "illusion"]:
                         defenseur["status"] = "confusion"
                         defenseur["status_duree"] = 2
-                        texte_tour += f"💫 **{defenseur['nom']}** est confus 2 tours !\n"
-                    elif effet in ["poison", "corrosion"]:
+                        texte_tour += f"💫 **{defenseur['nom']}** est confus !\n"
+                    elif effet in ["poison"]:
                         defenseur["status"] = "poison"
                         defenseur["status_duree"] = 3
                         texte_tour += f"☠️ **{defenseur['nom']}** est empoisonné !\n"
 
                     if defenseur["vie"] <= 0:
-                        texte_tour += f"\n🏆 **{attaquant['nom']} remporte le combat !**"
-
-                        logs_par_tour.append(texte_tour)
-                        for i, log_tour in enumerate(logs_par_tour, 1):
-                            embed.add_field(name=f"Tour {i}", value=log_tour, inline=False)
-
-                        embed.set_footer(text=f"🏁 Combat terminé au tour {tour}")
+                        texte_tour += f"\n🏆 **{attaquant['nom']} remporte le combat au tour {tour} !**"
+                        embed.add_field(name=f"Tour {tour}", value=texte_tour, inline=False)
                         await ctx.send(embed=embed)
                         return
 
-                # Fin des actions du tour => on ajoute le log complet du tour
+                    texte_tour += "\n"
+
                 logs_par_tour.append(texte_tour)
 
-            # Tous les tours terminés sans KO
-            for i, log_tour in enumerate(logs_par_tour, 1):
-                embed.add_field(name=f"Tour {i}", value=log_tour, inline=False)
+                # Réduction durée statut fin de tour
+                for p in (p1, p2):
+                    if p["status_duree"] > 0:
+                        p["status_duree"] -= 1
+                        if p["status_duree"] == 0:
+                            p["status"] = None
 
-            # 🔚 Résultat final du combat
+            # Si combat pas fini après 5 tours
             if p1["vie"] > p2["vie"]:
-                resultat = f"🏁 **Victoire aux points de {p1['nom']} !** ({p1['vie']} PV restants contre {p2['vie']} PV)"
+                gagnant = p1["nom"]
             elif p2["vie"] > p1["vie"]:
-                resultat = f"🏁 **Victoire aux points de {p2['nom']} !** ({p2['vie']} PV restants contre {p1['vie']} PV)"
+                gagnant = p2["nom"]
             else:
-                resultat = "🤝 **Égalité parfaite après 5 tours !**"
+                gagnant = "Égalité"
 
-            embed.add_field(name="🎯 Résultat final", value=resultat, inline=False)
-            embed.set_footer(text="⚔️ Combat terminé après 5 tours")
+            for tlog in logs_par_tour:
+                embed.add_field(name="Tour", value=tlog, inline=False)
+
+            embed.set_footer(text=f"Fin du combat — Vainqueur : {gagnant}")
 
             await ctx.send(embed=embed)
 
         except Exception as e:
-            await ctx.send(f"❌ Une erreur est survenue : {e}")
-            raise e
+            await ctx.send(f"⚠️ Une erreur est survenue : {e}")
+
 
 
 # ────────────────────────────────────────────────────────────────────────────────
