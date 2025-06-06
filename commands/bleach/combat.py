@@ -120,24 +120,6 @@ class CombatCommand(commands.Cog):
                         continue
 
                     attaque = random.choice(possibles)
-                    if attaque["type"] == "ultime":
-                        attaque["utilisé"] = True
-
-                    # Tentative d'esquive
-                    esquive_chance = min(defenseur["stats"]["mobilité"] / 40 + random.uniform(0, 0.2), 0.5)
-                    tentative_esquive = random.random()
-                    cout_esquive = 50 if attaque["type"] == "ultime" else 10
-
-                    if tentative_esquive < esquive_chance:
-                        if defenseur["energie"] >= cout_esquive:
-                            defenseur["energie"] -= cout_esquive
-                            log += f"💨 **{defenseur['nom']}** esquive **{attaque['nom']}** ! (-{cout_esquive} énergie)\n"
-                            if random.random() < 0.2:
-                                contre = 10 + defenseur["stats"]["attaque"] // 2
-                                attaquant["vie"] -= contre
-                                log += f"🔁 Contre-attaque ! {attaquant['nom']} subit {contre} dégâts !\n"
-                                if attaquant["vie"] <= 0:
-                                    log += f"\n🏆 **{defenseur['nom']} gagne par contre-attaque !**"
                                     await ctx.send(log)
                                     return
                             log += "\n"
@@ -165,6 +147,7 @@ class CombatCommand(commands.Cog):
 
                     log += (
                         f"💥 **{attaquant['nom']}** utilise **{attaque['nom']}** "
+                        f"(coût : {attaque['cout']}, dégâts : {base}+bonus)\n"
                         f"➡️ {defenseur['nom']} perd {total} PV\n"
                     )
 
