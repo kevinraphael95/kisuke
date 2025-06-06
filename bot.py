@@ -162,30 +162,8 @@ async def on_message(message):
         if bot.user.avatar:
             embed.set_thumbnail(url=bot.user.avatar.url)
         embed.set_footer(text="Zangetsu veille sur toi.")
-        
-        # 🎛️ Vue avec boutons Help et Info
-        class MentionView(discord.ui.View):
-            def __init__(self, prefix):
-                super().__init__(timeout=60)
-                self.prefix = prefix
-
-            @discord.ui.button(label="📜 Help", style=discord.ButtonStyle.primary)
-            async def help_button(self, interaction: discord.Interaction, button: discord.ui.Button):
-                await interaction.response.send_message(
-                    f"Tape `{self.prefix}help` pour voir toutes les commandes disponibles.", ephemeral=True
-                )
-
-            @discord.ui.button(label="ℹ️ Info", style=discord.ButtonStyle.secondary)
-            async def info_button(self, interaction: discord.Interaction, button: discord.ui.Button):
-                await interaction.response.send_message(
-                    f"Tape `{self.prefix}info` pour avoir plus d'infos sur le bot.", ephemeral=True
-                )
-
-        # Ajoute la vue aux boutons
-        view = MentionView(prefix)
-        await message.channel.send(embed=embed, view=view)
+        await message.channel.send(embed=embed)
         return
-
 
     # Exécution des commandes classiques
     await bot.process_commands(message)
