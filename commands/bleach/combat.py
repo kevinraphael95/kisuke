@@ -27,7 +27,7 @@ class CombatCommand(commands.Cog):
 
     @commands.command(
         name="combat",
-        help="Simule un combat entre 2 personnages de Bleach avec stats, énergie et effets.",
+        help="Simule un combat entre 2 personnages de Bleach.",
         description="Lance un combat automatisé sur 5 tours entre 2 personnages tirés au hasard."
     )
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
@@ -131,7 +131,7 @@ class CombatCommand(commands.Cog):
                     if tentative_esquive < esquive_chance:
                         if defenseur["energie"] >= cout_esquive:
                             defenseur["energie"] -= cout_esquive
-                            log += f"💨 **{defenseur['nom']}** esquive **{attaque['nom']}** ! (-{cout_esquive} énergie)\n"
+                            log += f"💨 **{defenseur['nom']}** esquive **{attaque['nom']}** !\n"
                             if random.random() < 0.2:
                                 contre = 10 + defenseur["stats"]["attaque"] // 2
                                 attaquant["vie"] -= contre
@@ -164,8 +164,7 @@ class CombatCommand(commands.Cog):
                     attaquant["energie"] -= attaque["cout"]
 
                     log += (
-                        f"💥 **{attaquant['nom']}** utilise **{attaque['nom']}** "
-                        f"(coût : {attaque['cout']}, dégâts : {base}+bonus)\n"
+                        f"💥 **{attaquant['nom']}** utilise **{attaque['nom']}**\n"
                         f"➡️ {defenseur['nom']} perd {total} PV\n"
                     )
 
