@@ -83,7 +83,9 @@ class CombatCommand(commands.Cog):
             logs_par_tour = []
 
             for tour in range(1, 6):
-                texte_tour = f"{format_etat_ligne(p1)}\n{format_etat_ligne(p2)}\n\n"
+                texte_tour = f"🌀─────── Tour {tour} ───────🌀\n\n"
+                texte_tour += f"{format_etat_ligne(p1)}\n{format_etat_ligne(p2)}\n\n"
+
                 
                 for attaquant in tour_order:
                     defenseur = p1 if attaquant == p2 else p2
@@ -189,7 +191,8 @@ class CombatCommand(commands.Cog):
                         await ctx.send(embed=embed)
                         return
 
-                logs_par_tour.append(f"\n🌀─────── Tour {tour} ───────🌀\n{texte_tour}\n🌀────────────────────────────🌀\n")
+                logs_par_tour.append(texte_tour)
+
 
             for i, log_tour in enumerate(logs_par_tour, 1):
                 embed.add_field(name=f"Tour {i}", value=log_tour, inline=False)
