@@ -165,7 +165,6 @@ class CombatCommand(commands.Cog):
 
                     log += (
                         f"💥 **{attaquant['nom']}** utilise **{attaque['nom']}** "
-                        f"(coût : {attaque['cout']}, dégâts : {base}+bonus)\n"
                         f"➡️ {defenseur['nom']} perd {total} PV\n"
                     )
 
