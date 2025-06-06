@@ -36,8 +36,8 @@ class CombatCommand(commands.Cog):
 
         def format_etat_ligne(p: dict) -> str:
             """Formate une ligne d'état du personnage."""
-            coeur = f"❤️ {max(p['vie'], 0)} PV"
-            batterie = f"🔋 {p['energie']} énergie"
+            coeur = f"❤️ {max(p['vie'], 0)}"
+            batterie = f"🔋 {p['energie']}"
             if p["status"] == "gel":
                 statut = f"❄️ Gelé ({p['status_duree']} tour{'s' if p['status_duree'] > 1 else ''})"
             elif p["status"] == "confusion":
@@ -45,7 +45,7 @@ class CombatCommand(commands.Cog):
             elif p["status"] == "poison":
                 statut = f"☠️ Empoisonné ({p['status_duree']} tours)"
             else:
-                statut = "✅ Aucun effet"
+                statut = "Aucun effet"
             return f"{p['nom']} — {coeur} | {batterie} | {statut}"
 
         try:
