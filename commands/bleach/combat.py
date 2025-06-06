@@ -34,9 +34,9 @@ def format_etat_ligne(p: dict) -> str:
     if p["status"] == "gel":
         statut = f"❄️ Gelé ({p['status_duree']} tour{'s' if p['status_duree'] > 1 else ''})"
     elif p["status"] == "confusion":
-        statut = f"💫 Confus ({p['status_duree']} tours)"
+        statut = f"💫 Confus ({p['status_duree']} tour{'s' if p['status_duree'] > 1 else ''})"
     elif p["status"] == "poison":
-        statut = f"☠️ Empoisonné ({p['status_duree']} tours)"
+        statut = f"☠️ Empoisonné ({p['status_duree']} tour{'s' if p['status_duree'] > 1 else ''})"
     else:
         statut = "✅ Aucun effet"
     return f"{p['nom']} — {coeur} | {batterie} | {statut}"
@@ -86,12 +86,12 @@ class CombatCommand(commands.Cog):
                 texte_tour = f"🌀─────── Tour {tour} ───────🌀\n\n"
                 texte_tour += f"{format_etat_ligne(p1)}\n{format_etat_ligne(p2)}\n\n"
 
-                
                 for attaquant in tour_order:
                     defenseur = p1 if attaquant == p2 else p2
                     if attaquant["vie"] <= 0 or defenseur["vie"] <= 0:
                         continue
 
+                    # Gestion du gel
                     if attaquant["status"] == "gel":
                         texte_tour += f"❄️ **{attaquant['nom']}** est gelé et ne peut pas agir.\n\n"
                         attaquant["status_duree"] -= 1
@@ -99,6 +99,7 @@ class CombatCommand(commands.Cog):
                             attaquant["status"] = None
                         continue
 
+                    # Gestion confusion
                     if attaquant["status"] == "confusion":
                         if random.random() < 0.4:
                             texte_tour += f"💫 **{attaquant['nom']}** est confus et se blesse (10 PV) !\n\n"
@@ -108,6 +109,7 @@ class CombatCommand(commands.Cog):
                                 attaquant["status"] = None
                             continue
 
+                    # Gestion poison
                     if attaquant["status"] == "poison":
                         texte_tour += f"☠️ **{attaquant['nom']}** perd 5 PV à cause du poison.\n"
                         attaquant["vie"] -= 5
@@ -182,8 +184,8 @@ class CombatCommand(commands.Cog):
 
                     if defenseur["vie"] <= 0:
                         texte_tour += f"\n🏆 **{attaquant['nom']} remporte le combat !**"
-                        logs_par_tour.append(texte_tour)
 
+                        logs_par_tour.append(texte_tour)
                         for i, log_tour in enumerate(logs_par_tour, 1):
                             embed.add_field(name=f"Tour {i}", value=log_tour, inline=False)
 
@@ -191,9 +193,10 @@ class CombatCommand(commands.Cog):
                         await ctx.send(embed=embed)
                         return
 
+                # Fin des actions du tour => on ajoute le log complet du tour
                 logs_par_tour.append(texte_tour)
 
-
+            # Tous les tours terminés sans KO
             for i, log_tour in enumerate(logs_par_tour, 1):
                 embed.add_field(name=f"Tour {i}", value=log_tour, inline=False)
 
@@ -208,11 +211,12 @@ class CombatCommand(commands.Cog):
             embed.add_field(name="🎯 Résultat final", value=resultat, inline=False)
             embed.set_footer(text="⚔️ Combat terminé après 5 tours")
 
-
             await ctx.send(embed=embed)
 
         except Exception as e:
-            await ctx.send(f"❌ Une erreur est survenue : `{e}`")
+            await ctx.send(f"❌ Une erreur est survenue : {e}")
+            raise e
+
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🚀 Setup de la commande
