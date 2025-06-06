@@ -113,6 +113,33 @@ async def on_ready():
     print("✅ Spawner Reiatsu chargé.")
 
 
+
+# ──────────────────────────────────────────────────────────────
+# 🧩 Vue interactive pour les boutons Help & Info
+# ──────────────────────────────────────────────────────────────
+class MentionBotView(discord.ui.View):
+    def __init__(self, prefix: str):
+        super().__init__(timeout=None)
+        self.prefix = prefix
+
+    @discord.ui.button(label="📜 Help", style=discord.ButtonStyle.primary)
+    async def help_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await interaction.response.defer()
+        ctx = await bot.get_context(interaction.message)
+        ctx.prefix = self.prefix
+        ctx.command = bot.get_command("help")
+        await bot.invoke(ctx)
+
+    @discord.ui.button(label="ℹ️ Info", style=discord.ButtonStyle.secondary)
+    async def info_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await interaction.response.defer()
+        ctx = await bot.get_context(interaction.message)
+        ctx.prefix = self.prefix
+        ctx.command = bot.get_command("info")
+        await bot.invoke(ctx)
+
+
+
 # ──────────────────────────────────────────────────────────────
 # 📩 Message reçu : réagir aux mots-clés et lancer les commandes
 # ──────────────────────────────────────────────────────────────
@@ -143,7 +170,7 @@ async def on_message(message):
             return
 
     # ✅ Nouveau bloc pour réponse si bot est mentionné
-        if (
+            if (
         bot.user in message.mentions
         and len(message.mentions) == 1
         and message.content.strip().startswith(f"<@{bot.user.id}")
@@ -166,6 +193,7 @@ async def on_message(message):
         view = MentionBotView(prefix)
         await message.channel.send(embed=embed, view=view)
         return
+
 
 
     # Exécution des commandes classiques
