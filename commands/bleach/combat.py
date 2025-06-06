@@ -91,7 +91,7 @@ class CombatCommand(commands.Cog):
                         continue
 
                     if attaquant["status"] == "gel":
-                        texte_tour += f"❄️ {attaquant['nom']} est gelé et ne peut pas agir.\n\n"
+                        texte_tour += f"❄️ **{attaquant['nom']}** est gelé et ne peut pas agir.\n\n"
                         attaquant["status_duree"] -= 1
                         if attaquant["status_duree"] <= 0:
                             attaquant["status"] = None
@@ -99,7 +99,7 @@ class CombatCommand(commands.Cog):
 
                     if attaquant["status"] == "confusion":
                         if random.random() < 0.4:
-                            texte_tour += f"💫 {attaquant['nom']} est confus et se blesse (10 PV) !\n\n"
+                            texte_tour += f"💫 **{attaquant['nom']}** est confus et se blesse (10 PV) !\n\n"
                             attaquant["vie"] -= 10
                             attaquant["status_duree"] -= 1
                             if attaquant["status_duree"] <= 0:
@@ -107,7 +107,7 @@ class CombatCommand(commands.Cog):
                             continue
 
                     if attaquant["status"] == "poison":
-                        texte_tour += f"☠️ {attaquant['nom']} perd 5 PV à cause du poison.\n"
+                        texte_tour += f"☠️ **{attaquant['nom']}** perd 5 PV à cause du poison.\n"
                         attaquant["vie"] -= 5
                         attaquant["status_duree"] -= 1
                         if attaquant["status_duree"] <= 0:
@@ -118,7 +118,7 @@ class CombatCommand(commands.Cog):
                         if a["cout"] <= attaquant["energie"] and (a["type"] != "ultime" or not a["utilisé"])
                     ]
                     if not possibles:
-                        texte_tour += f"💤 {attaquant['nom']} est à court d'énergie.\n\n"
+                        texte_tour += f"💤 **{attaquant['nom']}** est à court d'énergie.\n\n"
                         continue
 
                     attaque = random.choice(possibles)
@@ -131,11 +131,11 @@ class CombatCommand(commands.Cog):
 
                     if tentative_esquive < esquive_chance and defenseur["energie"] >= cout_esquive:
                         defenseur["energie"] -= cout_esquive
-                        texte_tour += f"💨 {defenseur['nom']} esquive **{attaque['nom']}** ! (-{cout_esquive} énergie)\n"
+                        texte_tour += f"💨 **{defenseur['nom']}** esquive **{attaque['nom']}** ! (-{cout_esquive} énergie)\n"
                         if random.random() < 0.2:
                             contre = 10 + defenseur["stats"]["attaque"] // 2
                             attaquant["vie"] -= contre
-                            texte_tour += f"🔁 Contre-attaque ! {attaquant['nom']} subit {contre} dégâts !\n"
+                            texte_tour += f"🔁 Contre-attaque ! **{attaquant['nom']}** subit {contre} dégâts !\n"
                             if attaquant["vie"] <= 0:
                                 texte_tour += f"\n🏆 **{defenseur['nom']} gagne par contre-attaque !**"
                                 embed.add_field(name=f"Fin du combat (tour {tour})", value=texte_tour, inline=False)
@@ -159,7 +159,7 @@ class CombatCommand(commands.Cog):
                     attaquant["energie"] -= attaque["cout"]
 
                     texte_tour += (
-                        f"💥 {attaquant['nom']} utilise **{attaque['nom']}** "
+                        f"💥 **{attaquant['nom']}** utilise **{attaque['nom']}** "
                         f"(coût : {attaque['cout']}, dégâts : {base}+bonus)\n"
                         f"➡️ {defenseur['nom']} perd {total} PV\n"
                     )
@@ -168,15 +168,15 @@ class CombatCommand(commands.Cog):
                     if effet in ["gel", "paralysie"]:
                         defenseur["status"] = "gel"
                         defenseur["status_duree"] = 1
-                        texte_tour += f"❄️ {defenseur['nom']} est gelé !\n"
+                        texte_tour += f"❄️ **{defenseur['nom']}** est gelé !\n"
                     elif effet in ["confusion", "illusion"]:
                         defenseur["status"] = "confusion"
                         defenseur["status_duree"] = 2
-                        texte_tour += f"💫 {defenseur['nom']} est confus 2 tours !\n"
+                        texte_tour += f"💫 **{defenseur['nom']}** est confus 2 tours !\n"
                     elif effet in ["poison", "corrosion"]:
                         defenseur["status"] = "poison"
                         defenseur["status_duree"] = 3
-                        texte_tour += f"☠️ {defenseur['nom']} est empoisonné !\n"
+                        texte_tour += f"☠️ **{defenseur['nom']}** est empoisonné !\n"
 
                     if defenseur["vie"] <= 0:
                         texte_tour += f"\n🏆 **{attaquant['nom']} remporte le combat !**"
