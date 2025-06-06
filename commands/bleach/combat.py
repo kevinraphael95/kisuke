@@ -83,7 +83,6 @@ class CombatCommand(commands.Cog):
             logs_par_tour = []
 
             for tour in range(1, 6):
-                texte_tour = f"🌀─────── Tour {tour} ───────🌀\n\n"
                 texte_tour += f"{format_etat_ligne(p1)}\n{format_etat_ligne(p2)}\n\n"
 
                 
@@ -195,7 +194,8 @@ class CombatCommand(commands.Cog):
 
 
             for i, log_tour in enumerate(logs_par_tour, 1):
-                embed.add_field(name=f"Tour {i}", value=log_tour, inline=False)
+                embed.add_field(name="\u200b", value=f"🌀─────── Tour {i} ───────🌀\n\n{log_tour}", inline=False)
+
 
             # 🔚 Résultat final du combat
             if p1["vie"] > p2["vie"]:
