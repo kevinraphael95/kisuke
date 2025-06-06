@@ -39,7 +39,7 @@ def format_etat_ligne(p: dict) -> str:
         statut = f"☠️ Empoisonné ({p['status_duree']} tours)"
     else:
         statut = "✅ Aucun effet"
-    return f"**{p['nom']}** — {coeur} | {batterie} | {statut}"
+    return f"{p['nom']} — {coeur} | {batterie} | {statut}"
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🧩 Cog principal — CombatCommand
