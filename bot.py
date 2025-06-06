@@ -143,7 +143,7 @@ async def on_message(message):
             return
 
     # ✅ Nouveau bloc pour réponse si bot est mentionné
-    if (
+        if (
         bot.user in message.mentions
         and len(message.mentions) == 1
         and message.content.strip().startswith(f"<@{bot.user.id}")
@@ -156,14 +156,17 @@ async def on_message(message):
                         f"Mon préfixe est : `{prefix}`\n\n"
                         f"📜 Tape `{prefix}help` pour voir toutes les commandes disponibles. (cassé)\n"
                         f"🛠️ Tape `{prefix}commandes` pour voir les commandes. (meh)\n"
-                        f"ℹ️ Tape `{prefix}info` pour avoir plus d'infos sur l''état du bot.",
+                        f"ℹ️ Tape `{prefix}info` pour avoir plus d'infos sur l'état du bot.",
             color=discord.Color.orange()
         )
         if bot.user.avatar:
             embed.set_thumbnail(url=bot.user.avatar.url)
         embed.set_footer(text="Zangetsu veille sur toi.")
-        await message.channel.send(embed=embed)
+
+        view = MentionBotView(prefix)
+        await message.channel.send(embed=embed, view=view)
         return
+
 
     # Exécution des commandes classiques
     await bot.process_commands(message)
