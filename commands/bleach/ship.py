@@ -108,7 +108,6 @@ class ShipCommand(commands.Cog):
             embed.add_field(name="👩‍❤️‍👨 Couple", value=f"**{p1['nom']}** ❤️ **{p2['nom']}**", inline=False)
             embed.add_field(name="🔢 Taux d’affinité", value=f"`{score}%`", inline=True)
             embed.add_field(name="💬 Verdict", value=f"*{reaction}*", inline=False)
-            embed.set_footer(text="✨ L’amour transcende les mondes spirituels ✨")
 
             if "image" in p1:
                 embed.set_thumbnail(url=p1["image"])
