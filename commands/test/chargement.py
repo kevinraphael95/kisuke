@@ -41,7 +41,7 @@ class Chargement(commands.Cog):
             bar_length = 25
             filled_length = int((percent / 100) * bar_length)
             bar = filled_char * filled_length + empty_char * (bar_length - filled_length)
-            return f"[{bar}] {percent}%"
+            return f"|{bar}| {percent}%"
         else:
             current_blocks = int((progress / 100) * total)
             bar = filled_char * current_blocks + empty_char * (total - current_blocks)
