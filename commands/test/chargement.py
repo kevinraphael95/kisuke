@@ -48,49 +48,43 @@ class Chargement(commands.Cog):
             return f"|{bar}| {int(progress)}%"
 
     @commands.command(
-        name="chargement",
-        aliases=["load"],
-        help="Affiche une barre de chargement stylisée.",
-        description="Simule un chargement avec une barre animée (styles : 1 à 4)."
-    )
-    async def chargement(self, ctx: commands.Context, style: int = 1, temps_str: str = None):
-        """
-        Commande principale qui simule une barre de chargement stylisée.
-        L'utilisateur peut choisir un style avec !chargement <style>.
-        """
-        try:
-            await ctx.message.delete()  # 🔴 Supprime le message de commande
-        except discord.Forbidden:
-            pass  # Si le bot ne peut pas supprimer
+    name="chargement",
+    aliases=["load"],
+    help="Affiche une barre de chargement stylisée.",
+    description="Simule un chargement avec une barre animée (styles : 1 à 4)."
+)
+async def chargement(self, ctx: commands.Context, style: int = 1, temps_total: float = 8.0):
+    """
+    Commande principale qui simule une barre de chargement stylisée.
+    L'utilisateur peut choisir un style et une durée en secondes.
+    Usage : !chargement <style> <durée_en_secondes>
+    Exemple : !chargement 2 5
+    """
+    try:
+        await ctx.message.delete()  # Supprime le message de commande
+    except discord.Forbidden:
+        pass
 
-        style = max(1, min(style, 4))  # 🔒 Sécurise le style (entre 1 et 4)
-        # Durée totale du chargement (par défaut : 8 secondes)
-        temps_total = 8.0
-        if temps_str and temps_str.startswith("*"):
-            try:
-                temps_total = max(1.0, float(temps_str[1:]))  # minimum 1 seconde
-            except ValueError:
-                pass  # ignore les valeurs invalides
+    style = max(1, min(style, 4))  # sécurise le style (entre 1 et 4)
+    temps_total = max(1.0, temps_total)  # minimum 1 seconde
 
-        
-        message = await ctx.send(f"🔄 Chargement en cours...\n{self.make_bar(0, 20, style)}")
+    message = await ctx.send(f"🔄 Chargement en cours...\n{self.make_bar(0, 20, style)}")
 
+    if style == 1:
+        progress = 0
+        while progress < 100:
+            step = random.randint(1, 5)
+            progress = min(progress + step, 100)
+            await message.edit(content=f"🔄 Chargement en cours...\n{self.make_bar(progress, 20, style)}")
+            await asyncio.sleep(temps_total / (100 / step))  # avance en proportion
+    else:
+        total_steps = 20
+        progress = 0
+        while progress < total_steps:
+            progress += 1
+            await message.edit(content=f"🔄 Chargement en cours...\n{self.make_bar((progress / total_steps) * 100, total_steps, style)}")
+            await asyncio.sleep(temps_total / total_steps)
 
-        if style == 1:
-            progress = 0
-            while progress < 100:
-                step = random.randint(1, 5)
-                progress = min(progress + step, 100)
-                await message.edit(content=f"🔄 Chargement en cours...\n{self.make_bar(progress, 20, style)}")
-                await asyncio.sleep(temps_total / (100 / step))  # avance en proportion
-            
-        else:
-            total_steps = 20
-            progress = 0
-            while progress < total_steps:
-                progress += 1
-                await message.edit(content=f"🔄 Chargement en cours...\n{self.make_bar((progress / total_steps) * 100, total_steps, style)}")
-                await asyncio.sleep(temps_total / total_steps)
 
 
 # ────────────────────────────────────────────────────────────────────────────────
