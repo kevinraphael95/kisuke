@@ -14,6 +14,7 @@ import json
 import os
 from collections import Counter
 import asyncio
+import random  # <-- Ajouté pour tirage aléatoire
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 📂 Chargement des données JSON
@@ -44,35 +45,42 @@ class Division(commands.Cog):
         """Commande principale QCM de division."""
         try:
             data = load_division_data()
-            questions = data["questions"]
+            all_questions = data["questions"]
             divisions = data["divisions"]
             personality_counter = Counter()
+
+            # Tirer 10 questions aléatoires parmi la liste complète
+            questions = random.sample(all_questions, k=10)
 
             def get_emoji(index):
                 return ["🇦", "🇧", "🇨", "🇩"][index]
 
-            # Prépare la première question
             q_index = 0
-            q = questions[q_index]
-            desc = ""
-            emojis = []
-            for i, (answer, traits) in enumerate(q["answers"].items()):
-                emoji = get_emoji(i)
-                desc += f"{emoji} {answer}\n"
-                emojis.append((emoji, answer, traits))
-
-            embed = discord.Embed(
-                title="🧠 Test de division",
-                description=f"**{q['question']}**\n\n{desc}",
-                color=discord.Color.orange()
-            )
-            message = await ctx.send(embed=embed)
-
-            # Ajoute les réactions pour la première question
-            for emoji, _, _ in emojis:
-                await message.add_reaction(emoji)
-
             while q_index < len(questions):
+                q = questions[q_index]
+                desc = ""
+                emojis = []
+                for i, (answer, traits) in enumerate(q["answers"].items()):
+                    emoji = get_emoji(i)
+                    desc += f"{emoji} {answer}\n"
+                    emojis.append((emoji, answer, traits))
+
+                embed = discord.Embed(
+                    title="🧠 Test de division",
+                    description=f"**{q['question']}**\n\n{desc}",
+                    color=discord.Color.orange()
+                )
+
+                if q_index == 0:
+                    # Envoi initial du message avec la première question
+                    message = await ctx.send(embed=embed)
+                else:
+                    # Edition du message pour les questions suivantes
+                    await message.edit(embed=embed)
+
+                for emoji, _, _ in emojis:
+                    await message.add_reaction(emoji)
+
                 def check(reaction, user):
                     return (
                         user == ctx.author
@@ -89,34 +97,13 @@ class Division(commands.Cog):
                     await ctx.send("⏱️ Temps écoulé. Test annulé.")
                     return
 
-                # Enlever les réactions pour préparer la prochaine question
+                # Nettoyer les réactions pour la prochaine question
                 try:
                     await message.clear_reactions()
                 except discord.Forbidden:
-                    pass  # Si pas de permission, on ignore
+                    pass
 
                 q_index += 1
-                if q_index == len(questions):
-                    break  # Fin des questions
-
-                # Préparer la question suivante
-                q = questions[q_index]
-                desc = ""
-                emojis = []
-                for i, (answer, traits) in enumerate(q["answers"].items()):
-                    emoji = get_emoji(i)
-                    desc += f"{emoji} {answer}\n"
-                    emojis.append((emoji, answer, traits))
-
-                embed = discord.Embed(
-                    title="🧠 Test de division",
-                    description=f"**{q['question']}**\n\n{desc}",
-                    color=discord.Color.orange()
-                )
-                await message.edit(embed=embed)
-
-                for emoji, _, _ in emojis:
-                    await message.add_reaction(emoji)
 
             # Calculer la division correspondante
             division_scores = {
@@ -135,8 +122,6 @@ class Division(commands.Cog):
         except Exception as e:
             print(f"[ERREUR division] {e}")
             await ctx.send("❌ Une erreur est survenue lors du test.")
-
-
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🔌 Setup du Cog
