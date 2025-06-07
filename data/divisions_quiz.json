@@ -62,101 +62,101 @@
     },
 
 
+     {
+      "question": "Comment prends-tu une décision importante ?",
+      "answers": {
+        "En écoutant mon instinct et mon cœur.": ["compassion", "dévouement"],
+        "En analysant tous les détails minutieusement.": ["intelligence", "analyse"],
+        "En consultant les autres et cherchant un consensus.": ["leadership", "justice"],
+        "En évaluant rapidement les risques et opportunités.": ["prudence", "adaptabilité"]
+      }
+    },
+    {
+      "question": "Quelle est ta plus grande peur ?",
+      "answers": {
+        "Perdre la confiance de mes proches.": ["fidélité", "loyauté"],
+        "Être considéré comme faible ou inutile.": ["fierté", "honneur"],
+        "Ne pas réussir à protéger ceux que j’aime.": ["courage", "résilience"],
+        "Être enfermé dans des règles sans pouvoir créer.": ["folie", "invention"]
+      }
+    },
+    {
+      "question": "Comment réagis-tu face à une situation inattendue ?",
+      "answers": {
+        "Je reste calme et j’adapte ma stratégie.": ["calme", "adaptabilité"],
+        "Je trouve une manière créative de résoudre le problème.": ["curiosité", "invention"],
+        "Je demande conseil à quelqu’un de confiance.": ["loyauté", "discipline"],
+        "Je prends les choses en main avec détermination.": ["détermination", "bravoure"]
+      }
+    },
+    {
+      "question": "Quelle est ta motivation principale dans la vie ?",
+      "answers": {
+        "Aider les autres et apporter la paix.": ["altruisme", "pacifisme"],
+        "Devenir le meilleur et montrer ma valeur.": ["fierté", "combat"],
+        "Explorer et apprendre sans cesse de nouvelles choses.": ["curiosité", "folie"],
+        "Maintenir l’ordre et la justice.": ["discipline", "justice"]
+      }
+    },
+    {
+      "question": "Quel est ton style de travail préféré ?",
+      "answers": {
+        "Travailler en équipe et coordonner les efforts.": ["leadership", "efficacité"],
+        "Travailler seul, dans le calme et la concentration.": ["sagesse", "analyse"],
+        "Improviser et faire preuve de créativité.": ["improvisation", "détente"],
+        "Agir rapidement et avec détermination.": ["bravoure", "combat"]
+      }
+    },
+    {
+      "question": "Quelle est ta réaction face à l’échec ?",
+      "answers": {
+        "J’analyse mes erreurs pour mieux rebondir.": ["analyse", "intelligence"],
+        "Je persévère avec encore plus de courage.": ["courage", "résilience"],
+        "Je cherche du soutien auprès de mes proches.": ["dévouement", "altruisme"],
+        "Je prends du recul pour changer d’approche.": ["adaptabilité", "prudence"]
+      }
+    },
+    {
+      "question": "Quelle qualité admires-tu le plus chez les autres ?",
+      "answers": {
+        "La sagesse et la réflexion profonde.": ["sagesse", "discipline"],
+        "La capacité à faire rire et détendre l’atmosphère.": ["humour", "détente"],
+        "Le courage et la force face à l’adversité.": ["bravoure", "combat"],
+        "La loyauté et la fidélité sans faille.": ["fidélité", "loyauté"]
+      }
+    },
+    {
+      "question": "Quelle phrase te décrit le mieux ?",
+      "answers": {
+        "« Agir avec honneur est ma priorité. »": ["honneur", "rigueur"],
+        "« Je préfère la paix à la confrontation. »": ["pacifisme", "empathie"],
+        "« L’imprévu est une opportunité, pas un obstacle. »": ["improvisation", "curiosité"],
+        "« La justice triomphe toujours. »": ["justice", "discipline"]
+      }
+    },
+    {
+      "question": "Quel type de mission te conviendrait le mieux ?",
+      "answers": {
+        "Une mission diplomatique pour négocier la paix.": ["empathie", "justice"],
+        "Une mission d’infiltration secrète et discrète.": ["discrétion", "manipulation"],
+        "Une mission de combat intense et risquée.": ["bravoure", "détermination"],
+        "Une mission scientifique pour découvrir de nouvelles technologies.": ["curiosité", "invention"]
+      }
+    },
+    {
+      "question": "Comment préfères-tu te détendre après une longue journée ?",
+      "answers": {
+        "En discutant avec des amis autour d’un bon repas.": ["détente", "altruisme"],
+        "En méditant ou lisant un livre calme.": ["calme", "sagesse"],
+        "En pratiquant un sport ou un combat.": ["combat", "bravoure"],
+        "En créant quelque chose de nouveau ou original.": ["invention", "folie"]
+      }
+    }
+
 
     
-  {
-    "question": "Quel type de leader respectes-tu le plus ?",
-    "choices": [
-      {"emoji": "🧠", "text": "Celui qui est intelligent et stratégique", "traits": ["stratégique", "sage"]},
-      {"emoji": "💪", "text": "Celui qui mène en première ligne", "traits": ["courageux", "combatif"]},
-      {"emoji": "😇", "text": "Celui qui se soucie de ses hommes", "traits": ["bienveillant", "protecteur"]},
-      {"emoji": "🎭", "text": "Celui qui agit dans l'ombre", "traits": ["discret", "calculateur"]}
-    ]
-  },
-  {
-    "question": "Quel est ton plus grand défaut selon toi ?",
-    "choices": [
-      {"emoji": "🔥", "text": "Je suis trop impulsif", "traits": ["impulsif"]},
-      {"emoji": "❄️", "text": "Je garde trop mes émotions", "traits": ["froid", "réservé"]},
-      {"emoji": "🤔", "text": "Je réfléchis trop", "traits": ["analytique", "indécis"]},
-      {"emoji": "😅", "text": "Je plaisante même dans les moments sérieux", "traits": ["détaché", "insouciant"]}
-    ]
-  },
-  {
-    "question": "Ta philosophie de vie se rapproche le plus de :",
-    "choices": [
-      {"emoji": "⚔️", "text": "Ne jamais reculer face à l’ennemi", "traits": ["brave", "déterminé"]},
-      {"emoji": "🔍", "text": "Toujours chercher la vérité", "traits": ["curieux", "analytique"]},
-      {"emoji": "🛡️", "text": "Protéger ceux qui ne peuvent se défendre", "traits": ["loyal", "protecteur"]},
-      {"emoji": "💤", "text": "La paix intérieure avant tout", "traits": ["calme", "zen"]}
-    ]
-  },
-  {
-    "question": "Quelle est ta plus grande force ?",
-    "choices": [
-      {"emoji": "🗣️", "text": "Ma capacité à convaincre", "traits": ["charismatique", "manipulateur"]},
-      {"emoji": "👁️", "text": "Mon sens de l’observation", "traits": ["observateur", "stratégique"]},
-      {"emoji": "❤️", "text": "Ma compassion", "traits": ["empathique", "bienveillant"]},
-      {"emoji": "💥", "text": "Mon instinct au combat", "traits": ["combatif", "impulsif"]}
-    ]
-  },
-  {
-    "question": "Comment te décriraient tes ennemis ?",
-    "choices": [
-      {"emoji": "😈", "text": "Intraitable et redoutable", "traits": ["impitoyable", "féroce"]},
-      {"emoji": "🌀", "text": "Imprévisible et insaisissable", "traits": ["imprévisible", "rapide"]},
-      {"emoji": "📚", "text": "Tacticien hors pair", "traits": ["stratégique", "intelligent"]},
-      {"emoji": "😐", "text": "Impossible à lire", "traits": ["froid", "mystérieux"]}
-    ]
-  },
-  {
-    "question": "Tu dois infiltrer un lieu ennemi. Que fais-tu ?",
-    "choices": [
-      {"emoji": "🕶️", "text": "Je me fonde dans la masse, discret", "traits": ["discret", "calculateur"]},
-      {"emoji": "💣", "text": "J’y vais à la dure, pas de place pour la subtilité", "traits": ["impulsif", "courageux"]},
-      {"emoji": "📊", "text": "Je prépare un plan parfait", "traits": ["stratégique", "analytique"]},
-      {"emoji": "🎭", "text": "Je joue un rôle pour tromper", "traits": ["manipulateur", "charismatique"]}
-    ]
-  },
-  {
-    "question": "Tu es face à une trahison dans tes rangs. Comment réagis-tu ?",
-    "choices": [
-      {"emoji": "🪓", "text": "Je punis sans pitié", "traits": ["impitoyable", "autoritaire"]},
-      {"emoji": "❓", "text": "Je cherche à comprendre les raisons", "traits": ["analytique", "sage"]},
-      {"emoji": "🤷", "text": "Je laisse une seconde chance", "traits": ["bienveillant", "pacifique"]},
-      {"emoji": "🧊", "text": "Je coupe tout lien sans émotion", "traits": ["froid", "réservé"]}
-    ]
-  },
-  {
-    "question": "Que préfères-tu faire en temps de paix ?",
-    "choices": [
-      {"emoji": "📖", "text": "Lire et me cultiver", "traits": ["sage", "curieux"]},
-      {"emoji": "🏋️", "text": "M'entraîner sans relâche", "traits": ["discipliné", "déterminé"]},
-      {"emoji": "😴", "text": "Me reposer tranquillement", "traits": ["zen", "paresseux"]},
-      {"emoji": "🎉", "text": "Faire la fête", "traits": ["insouciant", "joyeux"]}
-    ]
-  },
-  {
-    "question": "Si tu pouvais maîtriser un seul art, ce serait :",
-    "choices": [
-      {"emoji": "🌀", "text": "Le kidō", "traits": ["intelligent", "stratégique"]},
-      {"emoji": "⚔️", "text": "Le combat au sabre", "traits": ["combatif", "brave"]},
-      {"emoji": "🧬", "text": "L’analyse scientifique", "traits": ["curieux", "calculateur"]},
-      {"emoji": "💭", "text": "La manipulation mentale", "traits": ["manipulateur", "charismatique"]}
-    ]
-  },
-  {
-    "question": "Tu es blessé et encerclé. Tu choisis de :",
-    "choices": [
-      {"emoji": "🦅", "text": "Tenter une percée héroïque", "traits": ["courageux", "brave"]},
-      {"emoji": "🧠", "text": "Chercher une faille logique", "traits": ["stratégique", "analytique"]},
-      {"emoji": "😶", "text": "Attendre en silence l’opportunité parfaite", "traits": ["patient", "froid"]},
-      {"emoji": "📣", "text": "Tromper l’ennemi avec des mots", "traits": ["charismatique", "manipulateur"]}
-    ]
-  }
-]
 
+ 
 
-    // Ajoute ici les autres questions
-  
+  ]
 }
