@@ -67,7 +67,7 @@ bot.is_main_instance = False
 with open("data/reponses.json", encoding="utf-8") as f:
     REPONSES = json.load(f)
 
-GIFS_FOLDER = "gifs"
+GIFS_FOLDER = "data/gifs"
 
 # ──────────────────────────────────────────────────────────────
 # 🔌 Chargement dynamique des commandes depuis /commands/*
