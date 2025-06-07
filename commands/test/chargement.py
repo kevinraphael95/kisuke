@@ -24,7 +24,7 @@ class Chargement(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
 
-    def make_bar(self, current: int, total: int, style: int) -> str:
+    def make_bar(self, progress: float, total: int, style: int) -> str:
         """
         Génère une barre de chargement en fonction du style choisi.
         """
@@ -35,9 +35,17 @@ class Chargement(commands.Cog):
             4: ("🧱", "⬛"),  # Briques
         }
         filled_char, empty_char = styles.get(style, styles[1])
-        filled = filled_char * current
-        empty = empty_char * (total - current)
-        return f"[{filled}{empty}] {int((current / total) * 100)}%"
+
+        if style == 2:
+            percent = min(int(progress), 100)
+            bar_length = 25
+            filled_length = int((percent / 100) * bar_length)
+            bar = filled_char * filled_length + empty_char * (bar_length - filled_length)
+            return f"[{bar}] {percent}%"
+        else:
+            current_blocks = int((progress / 100) * total)
+            bar = filled_char * current_blocks + empty_char * (total - current_blocks)
+            return f"[{bar}] {int(progress)}%"
 
     @commands.command(
         name="chargement",
@@ -53,20 +61,27 @@ class Chargement(commands.Cog):
         try:
             await ctx.message.delete()  # 🔴 Supprime le message de commande
         except discord.Forbidden:
-            pass  # Au cas où le bot ne peut pas supprimer
+            pass  # Si le bot ne peut pas supprimer
 
-        total_steps = 20
-        progress = 0
         style = max(1, min(style, 4))  # 🔒 Sécurise le style (entre 1 et 4)
+        message = await ctx.send(f"🔄 Chargement en cours...\n{self.make_bar(0, 20, style)}")
 
-        message = await ctx.send(f"🔄 Chargement en cours...\n{self.make_bar(progress, total_steps, style)}")
+        if style == 2:
+            progress = 0
+            while progress < 100:
+                await asyncio.sleep(random.uniform(0.2, 0.4))
+                progress += random.randint(1, 5)
+                progress = min(progress, 100)
+                await message.edit(content=f"🔄 Chargement en cours...\n{self.make_bar(progress, 20, style)}")
+        else:
+            total_steps = 20
+            progress = 0
+            while progress < total_steps:
+                await asyncio.sleep(random.uniform(0.2, 0.4))
+                progress += 1
+                await message.edit(content=f"🔄 Chargement en cours...\n{self.make_bar((progress / total_steps) * 100, total_steps, style)}")
 
-        while progress < total_steps:
-            await asyncio.sleep(random.uniform(0.2, 0.5))  # entre 5 et 10s total
-            progress += 1
-            await message.edit(content=f"🔄 Chargement en cours...\n{self.make_bar(progress, total_steps, style)}")
-
-        await message.edit(content=f"✅ Chargement terminé !\n{self.make_bar(progress, total_steps, style)}")
+        await message.edit(content=f"✅ Chargement terminé !\n{self.make_bar(100, 20, style)}")
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🔌 Setup du Cog
