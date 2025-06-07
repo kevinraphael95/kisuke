@@ -29,14 +29,14 @@ class Chargement(commands.Cog):
         Génère une barre de chargement en fonction du style choisi.
         """
         styles = {
-            1: ("🟦", "⬜"),  # Classique
-            2: ("█", "░"),   # Terminal
+            1: ("█", "░"),   # Terminal
+            2: ("🟦", "⬜"),  # Classique
             3: ("🔵", "⚪"),  # Bulles
             4: ("🧱", "⬛"),  # Briques
         }
         filled_char, empty_char = styles.get(style, styles[1])
 
-        if style == 2:
+        if style == 1:
             percent = min(int(progress), 100)
             bar_length = 25
             filled_length = int((percent / 100) * bar_length)
@@ -66,7 +66,7 @@ class Chargement(commands.Cog):
         style = max(1, min(style, 4))  # 🔒 Sécurise le style (entre 1 et 4)
         message = await ctx.send(f"🔄 Chargement en cours...\n{self.make_bar(0, 20, style)}")
 
-        if style == 2:
+        if style == 1:
             progress = 0
             while progress < 100:
                 await asyncio.sleep(random.uniform(0.2, 0.4))
