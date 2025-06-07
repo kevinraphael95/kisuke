@@ -12,7 +12,7 @@ import os
 from collections import Counter
 import asyncio
 
-DATA_JSON_PATH = os.path.join("data", "division_traits.json")
+DATA_JSON_PATH = os.path.join("data", "divisions_quiz.json")
 
 def load_division_data():
     with open(DATA_JSON_PATH, "r", encoding="utf-8") as f:
