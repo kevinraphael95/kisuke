@@ -66,7 +66,7 @@ class Division(commands.Cog):
                     emojis.append((emoji, answer, traits))
 
                 embed = discord.Embed(
-                    title="🧠 Test de division",
+                    title=f"🧠 Test de division — Question {q_index + 1}/10",
                     description=f"**{q['question']}**\n\n{desc}",
                     color=discord.Color.orange()
                 )
