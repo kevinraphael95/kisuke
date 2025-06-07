@@ -154,7 +154,7 @@ async def on_message(message):
             title="Bleach Bot",
             description="Bonjour, je suis un bot basé sur l'univers de **Bleach** !\n"
                         f"Mon préfixe est : `{prefix}`\n\n"
-                        f"📜 Tape `{prefix}help` pour voir toutes les commandes disponibles."
+                        f"📜 Tape `{prefix}help` pour voir toutes les commandes disponibles.",
             color=discord.Color.orange()
         )
         if bot.user.avatar:
