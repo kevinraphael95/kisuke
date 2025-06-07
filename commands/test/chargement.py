@@ -45,7 +45,7 @@ class Chargement(commands.Cog):
         else:
             current_blocks = int((progress / 100) * total)
             bar = filled_char * current_blocks + empty_char * (total - current_blocks)
-            return f"[{bar}] {int(progress)}%"
+            return f"|{bar}| {int(progress)}%"
 
     @commands.command(
         name="chargement",
