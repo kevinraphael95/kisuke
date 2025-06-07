@@ -72,18 +72,22 @@ class Chargement(commands.Cog):
 
         if style == 1:
             progress = 0
+            steps = 100
+            sleep_duration = temps_total / steps
             while progress < 100:
-                step = random.randint(1, 5)
-                progress = min(progress + step, 100)
+                progress += 1
                 await message.edit(content=f"🔄 Chargement en cours...\n{self.make_bar(progress, 20, style)}")
-                await asyncio.sleep(temps_total / (100 / step))  # avance en proportion
+                await asyncio.sleep(sleep_duration)
         else:
             total_steps = 20
+            sleep_duration = temps_total / total_steps
             progress = 0
             while progress < total_steps:
                 progress += 1
-                await message.edit(content=f"🔄 Chargement en cours...\n{self.make_bar((progress / total_steps) * 100, total_steps, style)}")
-                await asyncio.sleep(temps_total / total_steps)
+                percent = (progress / total_steps) * 100
+                await message.edit(content=f"🔄 Chargement en cours...\n{self.make_bar(percent, total_steps, style)}")
+                await asyncio.sleep(sleep_duration)
+
 
 
 
