@@ -1,44 +1,44 @@
 {
   "divisions": {
-    "1ère Division": 
+    "1ère Division": {
       "traits" : ["discipline", "leadership", "sagesse"],
-      "image" : 
-    "2ème Division": 
+      "image" : "data/images/image_par_defaut.jpeg" },
+    "2ème Division": {
       "traits" : ["discrétion", "efficacité", "loyauté"],
-      "image" : 
-    "3ème Division": 
+      "image" : "data/images/image_par_defaut.jpeg" },
+    "3ème Division": {
       "traits" : ["fidélité", "obéissance", "manipulation"],
-      "image" : 
-    "4ème Division": 
+      "image" : "data/images/image_par_defaut.jpeg" },
+    "4ème Division": {
       "traits" : ["empathie", "altruisme", "pacifisme"],
-      "image" : 
-    "5ème Division": 
+      "image" : "data/images/image_par_defaut.jpeg" },
+    "5ème Division": {
       "traits" : ["intelligence", "calme", "analyse"],
-      "image" : 
-    "6ème Division": 
+      "image" : "data/images/image_par_defaut.jpeg" },
+    "6ème Division": {
       "traits" : ["fierté", "honneur", "rigueur"],
-      "image" : 
-    "7ème Division": 
+      "image" : "data/images/image_par_defaut.jpeg" },
+    "7ème Division": {
       "traits" : ["honnêteté", "justice", "force morale"],
-      "image" : 
-    "8ème Division": 
+      "image" : "data/images/image_par_defaut.jpeg" },
+    "8ème Division": {
       "traits" : ["détente", "humour", "improvisation"],
-      "image" : 
-    "9ème Division": 
+      "image" : "data/images/image_par_defaut.jpeg" },
+    "9ème Division": {
       "traits" : ["courage", "endurance", "résilience"],
-      "image" : 
-    "10ème Division": 
+      "image" : "data/images/image_par_defaut.jpeg" },
+    "10ème Division": {
       "traits" : ["équilibre", "adaptabilité", "prudence"],
-      "image" : 
-    "11ème Division": 
+      "image" : "data/images/image_par_defaut.jpeg" },
+    "11ème Division": {
       "traits" : ["combat", "bravoure", "détermination"],
-      "image" : 
-    "12ème Division": 
+      "image" : "data/images/image_par_defaut.jpeg" },
+    "12ème Division": {
       "traits" : ["curiosité", "invention", "folie"],
-      "image" : 
-    "13ème Division": 
+      "image" : "data/images/image_par_defaut.jpeg" },
+    "13ème Division": {
       "traits" : ["compassion", "détermination", "dévouement"],
-      "image" : 
+      "image" : "data/images/image_par_defaut.jpeg" }
   },
   "questions": [
     {
