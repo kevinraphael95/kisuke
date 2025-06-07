@@ -107,9 +107,10 @@ class Division(commands.Cog):
 
             # Calculer la division correspondante
             division_scores = {
-                div: sum(personality_counter[trait] for trait in traits)
-                for div, traits in divisions.items()
+                div: sum(personality_counter[trait] for trait in info["traits"])
+                for div, info in divisions.items()
             }
+
             best_division = max(division_scores, key=division_scores.get)
 
             embed_result = discord.Embed(
@@ -117,6 +118,7 @@ class Division(commands.Cog):
                 description=f"Tu serais dans la **{best_division}** !",
                 color=discord.Color.green()
             )
+            embed_result.set_image(url=f"attachment://{os.path.basename(divisions[best_division]['image'])}")
             await ctx.send(embed=embed_result)
 
         except Exception as e:
