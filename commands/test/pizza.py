@@ -1,6 +1,6 @@
 # ────────────────────────────────────────────────────────────────────────────────
-# 📌 pizza.py — Commande interactive !pizza
-# Objectif : Crée une pizza aléatoire à partir d'ingrédients variés
+# 📌 pizza_aléatoire.py — Commande !pizza
+# Objectif : Générer une pizza aléatoire simple (pâte, sauce, fromage, garnitures, toppings)
 # Catégorie : Test
 # Accès : Public
 # ────────────────────────────────────────────────────────────────────────────────
@@ -10,7 +10,6 @@
 # ────────────────────────────────────────────────────────────────────────────────
 import discord
 from discord.ext import commands
-from discord.ui import View, Button
 import json
 import os
 import random
@@ -18,59 +17,19 @@ import random
 # ────────────────────────────────────────────────────────────────────────────────
 # 📂 Chargement des données JSON
 # ────────────────────────────────────────────────────────────────────────────────
-DATA_JSON_PATH = os.path.join("data", "pizza_data.json")
+DATA_JSON_PATH = os.path.join("data", "pizza_options.json")
 
 def load_data():
-    """Charge les ingrédients de pizza depuis le fichier JSON."""
+    """Charge les options de pizza depuis le fichier JSON."""
     with open(DATA_JSON_PATH, "r", encoding="utf-8") as f:
         return json.load(f)
 
 # ────────────────────────────────────────────────────────────────────────────────
-# 🎛️ UI — Bouton pour générer une pizza aléatoire
-# ────────────────────────────────────────────────────────────────────────────────
-class PizzaView(View):
-    """Vue avec un bouton pour générer une pizza."""
-    def __init__(self, bot, data):
-        super().__init__(timeout=120)
-        self.bot = bot
-        self.data = data
-        self.add_item(PizzaButton(self))
-
-class PizzaButton(Button):
-    """Bouton pour générer une pizza."""
-    def __init__(self, parent_view: PizzaView):
-        super().__init__(label="🍕 Générer une pizza", style=discord.ButtonStyle.primary)
-        self.parent_view = parent_view
-
-    async def callback(self, interaction: discord.Interaction):
-        ingredients = self.parent_view.data
-        pizza = {
-            "Base": random.choice(ingredients["bases"]),
-            "Sauce": random.choice(ingredients["sauces"]),
-            "Fromage": random.choice(ingredients["fromages"]),
-            "Garnitures": random.sample(ingredients["garnitures"], 2),
-            "Toppings spéciaux": random.choice(ingredients["toppings"])
-        }
-
-        embed = discord.Embed(
-            title="🍕 Ta pizza personnalisée est prête !",
-            color=discord.Color.orange()
-        )
-        for k, v in pizza.items():
-            if isinstance(v, list):
-                value = "\n".join(f"• {item}" for item in v)
-            else:
-                value = f"• {v}"
-            embed.add_field(name=k, value=value, inline=False)
-
-        await interaction.response.edit_message(embed=embed, view=self.parent_view)
-
-# ────────────────────────────────────────────────────────────────────────────────
 # 🧠 Cog principal
 # ────────────────────────────────────────────────────────────────────────────────
-class Pizza(commands.Cog):
+class PizzaAleatoire(commands.Cog):
     """
-    Commande !pizza — Crée une pizza aléatoire
+    Commande !pizza — Génère une pizza aléatoire simple
     """
 
     def __init__(self, bot: commands.Bot):
@@ -79,23 +38,41 @@ class Pizza(commands.Cog):
     @commands.command(
         name="pizza",
         help="Génère une pizza aléatoire.",
-        description="Génère une pizza aléatoire avec base, sauce, fromage, garnitures et toppings."
+        description="Affiche une pizza composée d'une pâte, d'une base, d'un fromage, de garnitures et de toppings spéciaux choisis aléatoirement."
     )
     async def pizza(self, ctx: commands.Context):
-        """Commande principale !pizza"""
+        """Commande principale qui envoie une pizza aléatoire."""
+
         try:
             data = load_data()
-            view = PizzaView(self.bot, data)
-            await ctx.send("Appuie sur le bouton pour créer ta pizza :", view=view)
+
+            pate = random.choice(data["pates"])
+            base = random.choice(data["bases"])
+            fromage = random.choice(data["fromages"])
+            garnitures = random.sample(data["garnitures"], k=2)
+            toppings = random.sample(data["toppings_speciaux"], k=1)
+
+            embed = discord.Embed(
+                title="🍕 Ta pizza aléatoire",
+                color=discord.Color.orange()
+            )
+            embed.add_field(name="Pâte", value=pate, inline=False)
+            embed.add_field(name="Base (sauce)", value=base, inline=False)
+            embed.add_field(name="Fromage", value=fromage, inline=False)
+            embed.add_field(name="Garnitures", value=", ".join(garnitures), inline=False)
+            embed.add_field(name="Toppings spéciaux", value=", ".join(toppings), inline=False)
+
+            await ctx.send(embed=embed)
+
         except Exception as e:
             print(f"[ERREUR pizza] {e}")
-            await ctx.send("❌ Une erreur est survenue lors du chargement des données.")
+            await ctx.send("❌ Une erreur est survenue lors de la génération de la pizza.")
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🔌 Setup du Cog
 # ────────────────────────────────────────────────────────────────────────────────
 async def setup(bot: commands.Bot):
-    cog = Pizza(bot)
+    cog = PizzaAleatoire(bot)
     for command in cog.get_commands():
         if not hasattr(command, "category"):
             command.category = "Test"
