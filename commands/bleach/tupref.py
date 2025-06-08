@@ -92,7 +92,7 @@ class TopPersoCommand(commands.Cog):
     @commands.command(
         name="tupreftop",
         aliases=["toptupref", "tpt"],
-        help="📊 Affiche les personnages les plus aimés par les votes de la communauté."
+        help="📊 Affiche les personnages les plus aimés pour la commande tupref."
     )
     async def topperso(self, ctx, limit: int = 10):
         if limit < 1 or limit > 50:
@@ -125,7 +125,7 @@ class TopPersoCommand(commands.Cog):
             emoji = medals[i - 1] if i <= len(medals) else "🔹"
             classement += f"{emoji} {i}. {row['nom']} — 💖 {row['votes']} votes\n"
 
-        embed.description = f"Voici le classement des **plus grands favoris** de la Soul Society 🌌\n\n{classement}"
+        embed.description = f"Classement des personnages les plus préférés avec la commande tupref.\n\n{classement}"
         embed.set_footer(text="🔥 Basé sur les votes enregistrés par la communauté")
 
         await ctx.send(embed=embed)
