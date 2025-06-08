@@ -82,23 +82,27 @@ class PseudoAbsurde(commands.Cog):
                 return
 
             prenom = member.nick if member.nick else member.name
-
             genre = "l’adulte"
 
-            # Choix aléatoire d’adjectifs
-            adj1, adj2 = random.sample(ADJECTIFS_ABSURDES, 2)
+            # Génère un pseudo qui respecte les 32 caractères
+            for _ in range(10):  # Essaye 10 combinaisons aléatoires max
+                adj1, adj2 = random.sample(ADJECTIFS_ABSURDES, 2)
+                pseudo = f"{prenom} {genre} {adj1} et {adj2}"
+                if len(pseudo) <= 32:
+                    break
+            else:
+                # En dernier recours, tronque brutalement
+                pseudo = (f"{prenom} {genre} {adj1} et {adj2}")[:32]
 
-            nouveau_pseudo = f"{prenom} {genre} {adj1} et {adj2}"
-
-            await member.edit(nick=nouveau_pseudo)
-
-            await ctx.send(f"✅ Ton nouveau pseudo est maintenant : **{nouveau_pseudo}**")
+            await member.edit(nick=pseudo)
+            await ctx.send(f"✅ Ton nouveau pseudo est maintenant : **{pseudo}**")
 
         except discord.Forbidden:
             await ctx.send("❌ Je n’ai pas les permissions nécessaires pour modifier ton pseudo.")
         except Exception as e:
             print(f"[ERREUR pseudoabsurde] {e}")
             await ctx.send("❌ Une erreur est survenue en changeant ton pseudo.")
+
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🔌 Setup du Cog
