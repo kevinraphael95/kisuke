@@ -17,8 +17,39 @@ import random
 # ────────────────────────────────────────────────────────────────────────────────
 ADJECTIFS_ABSURDES = [
     "mature", "sérieux", "posé", "cohérent", "maîtrisé", "équilibré",
-    "respectable", "lucide", "professionnel", "logique", "digne", "pondéré"
+    "respectable", "lucide", "professionnel", "logique", "digne", "pondéré",
+    "synthétique", "raisonnable", "consciencieux", "réfléchi", "apaisé", "calculé",
+    "organisé", "cérébral", "pragmatique", "responsable", "structuré", "prévisible",
+    "modéré", "neutre", "objectif", "stable", "réaliste", "stoïque", "assidu",
+    "méticuleux", "protocolaire", "ordonné", "pondéré", "scolaire", "appliqué",
+    "réglementaire", "officiel", "impartial", "méthodique", "cartésien", "diplomatique",
+    "intègre", "subtil", "lucide", "discret", "constant", "conciliant", "rigoureux",
+    "réservé", "inflexible", "éthique", "serein", "légaliste", "taciturne", "stratégique",
+    "loyal", "calme", "rationnel", "respectueux", "docile", "froid", "dévoué", "précis",
+    "systématique", "civique", "fonctionnel", "professionnalisé", "conventionnel",
+    "mesuré", "engagé", "orthodoxe", "formel", "civilisé", "conforme", "fédérateur",
+    "raisonné", "éduqué", "tempéré", "moral", "diplômé", "honnête", "poli",
+    "attentif", "cohésif", "dévot", "atténué", "discipliné", "uniforme", "idéaliste",
+    "préparé", "consistant", "soutenu", "loyaliste", "prévisible", "réfléchi",
+    "adapté", "concret", "fermé", "centré", "analytique", "subordonné", "fonctionnaire",
+    "tolérant", "averti", "conditionné", "respecté", "légitime", "académique",
+    "technocrate", "cultivé", "normalisé", "posé", "structurant", "consensuel",
+    "intellectualisé", "contextualisé", "autorisé", "certifié", "contractuel",
+    "archivé", "régulé", "censé", "solide", "sage", "brillant", "confiant",
+    "pacifique", "orienté", "construit", "domestiqué", "abouti", "validé",
+    "standardisé", "accepté", "négocié", "formalisé", "calibré", "professionnalisé",
+    "préventif", "cadencé", "tolérable", "approuvé", "consolidé", "juridique",
+    "homogène", "convaincu", "introspectif", "mûr", "formaté", "mécanisé",
+    "routinier", "prévisible", "optimisé", "administré", "sanctionné", "réaliste",
+    "philosophique", "institué", "propre", "noble", "habitué", "robotique",
+    "autoritaire", "dirigé", "règlementé", "encadré", "évalué", "classique",
+    "défini", "juridique", "normalisé", "enraciné", "vérifié", "docile", "paternaliste",
+    "didactique", "platonique", "technicisé", "protocolaire", "hiérarchisé",
+    "administratif", "dépourvu", "traditionnel", "raisonné", "confirmé",
+    "programmé", "déterminé", "institutionnel", "éthique", "stratifié", "comptable",
+    "préparé", "contextuel", "routinier", "réglementaire", "certifié"
 ]
+
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🧠 Cog principal
