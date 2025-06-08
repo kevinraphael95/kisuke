@@ -113,21 +113,20 @@ class TopPersoCommand(commands.Cog):
             await ctx.send("📉 Aucun vote n’a encore été enregistré. Sois le premier à voter !")
             return
 
+
         embed = discord.Embed(
             title=f"🏆 Top {limit} des personnages les plus aimés",
-            description="Voici le classement des **plus grands favoris** de la Soul Society 🌌",
             color=discord.Color.gold()
         )
-        embed.set_footer(text="🔥 Basé sur les votes enregistrés par la communauté")
 
         medals = ["🥇", "🥈", "🥉"] + ["🔹"] * (limit - 3)
+        classement = ""
         for i, row in enumerate(result.data, start=1):
             emoji = medals[i - 1] if i <= len(medals) else "🔹"
-            embed.add_field(
-                name=f"{emoji} {i}. {row['nom']}",
-                value=f"💖 **{row['votes']}** votes",
-                inline=False
-            )
+            classement += f"{emoji} {i}. {row['nom']} — 💖 {row['votes']} votes\n"
+
+        embed.description = f"Voici le classement des **plus grands favoris** de la Soul Society 🌌\n\n{classement}"
+        embed.set_footer(text="🔥 Basé sur les votes enregistrés par la communauté")
 
         await ctx.send(embed=embed)
 
