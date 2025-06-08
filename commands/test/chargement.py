@@ -53,43 +53,35 @@ class Chargement(commands.Cog):
         help="Affiche une barre de chargement stylisée.",
         description="Simule un chargement avec une barre animée (styles : 1 à 4)."
     )
-    async def chargement(self, ctx: commands.Context, style: int = 1, temps_total: float = 8.0):
+    async def chargement(self, ctx: commands.Context, style: int = 1):
         """
         Commande principale qui simule une barre de chargement stylisée.
-        L'utilisateur peut choisir un style et une durée en secondes.
-        Usage : !chargement <style> <durée_en_secondes>
-        Exemple : !chargement 2 5
+        L'utilisateur peut choisir un style avec !chargement <style>.
         """
         try:
-            await ctx.message.delete()  # Supprime le message de commande
+            await ctx.message.delete()  # 🔴 Supprime le message de commande
         except discord.Forbidden:
-            pass
+            pass  # Si le bot ne peut pas supprimer
 
-        style = max(1, min(style, 4))  # sécurise le style (entre 1 et 4)
-        temps_total = max(1.0, temps_total)  # minimum 1 seconde
-
+        style = max(1, min(style, 4))  # 🔒 Sécurise le style (entre 1 et 4)
         message = await ctx.send(f"🔄 Chargement en cours...\n{self.make_bar(0, 20, style)}")
 
         if style == 1:
             progress = 0
-            steps = 100
-            sleep_duration = temps_total / steps
             while progress < 100:
-                progress += 1
+                await asyncio.sleep(random.uniform(0.2, 0.4))
+                progress += random.randint(1, 5)
+                progress = min(progress, 100)
                 await message.edit(content=f"🔄 Chargement en cours...\n{self.make_bar(progress, 20, style)}")
-                await asyncio.sleep(sleep_duration)
         else:
             total_steps = 20
-            sleep_duration = temps_total / total_steps
             progress = 0
             while progress < total_steps:
+                await asyncio.sleep(random.uniform(0.2, 0.4))
                 progress += 1
-                percent = (progress / total_steps) * 100
-                await message.edit(content=f"🔄 Chargement en cours...\n{self.make_bar(percent, total_steps, style)}")
-                await asyncio.sleep(sleep_duration)
+                await message.edit(content=f"🔄 Chargement en cours...\n{self.make_bar((progress / total_steps) * 100, total_steps, style)}")
 
-
-
+        await message.edit(content=f"✅ Chargement terminé !\n{self.make_bar(100, 20, style)}")
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🔌 Setup du Cog
