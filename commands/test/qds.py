@@ -85,6 +85,7 @@ class QDS(commands.Cog):
     
 
     @commands.command(name="qds", aliases=["quizzdarksouls"])
+    @commands.cooldown(rate=1, per=3, type=commands.BucketType.user)  # Anti-spam 3 secondes
     async def qds(self, ctx):
         """Lance un quizz QCM multijoueur sur Dark Souls (5 questions)"""
         guild_id = ctx.guild.id
@@ -177,6 +178,7 @@ class QDS(commands.Cog):
         await ctx.send("📊 Résultats du quizz :\n" + "\n".join(lines))
 
     @commands.command(name="qdstop")
+    @commands.cooldown(rate=1, per=3, type=commands.BucketType.user)  # Anti-spam 3 secondes
     async def classement_qds(self, ctx):
         """Affiche le classement local QDS (Dark Souls)"""
         response = supabase.table("qds_scores").select("username", "score").eq("server_id", str(ctx.guild.id)).execute()
