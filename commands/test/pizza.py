@@ -40,6 +40,7 @@ class PizzaAleatoire(commands.Cog):
         help="Génère une pizza aléatoire.",
         description="Affiche une pizza composée d'une pâte, d'une base, d'un fromage, de garnitures et de toppings spéciaux choisis aléatoirement."
     )
+    @commands.cooldown(rate=1, per=3, type=commands.BucketType.user)  # Anti-spam 3 secondes
     async def pizza(self, ctx: commands.Context):
         """Commande principale qui envoie une pizza aléatoire."""
 
