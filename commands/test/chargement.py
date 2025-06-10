@@ -53,6 +53,7 @@ class Chargement(commands.Cog):
         help="Affiche une barre de chargement stylisée.",
         description="Simule un chargement avec une barre animée (styles : 1 à 4)."
     )
+    @commands.cooldown(rate=1, per=3, type=commands.BucketType.user)  # Anti-spam 3 secondes
     async def chargement(self, ctx: commands.Context, style: int = 1):
         """
         Commande principale qui simule une barre de chargement stylisée.
