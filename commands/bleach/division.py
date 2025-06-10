@@ -41,6 +41,7 @@ class Division(commands.Cog):
         help="Détermine ta division dans le Gotei 13.",
         description="Réponds à quelques questions pour savoir dans quelle division tu serais."
     )
+    @commands.cooldown(rate=1, per=3, type=commands.BucketType.user)  # Anti-spam 3 secondes
     async def division(self, ctx: commands.Context):
         """Commande principale QCM de division."""
         try:
