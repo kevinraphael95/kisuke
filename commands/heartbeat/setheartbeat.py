@@ -24,7 +24,7 @@ class HSetHeartbeat(commands.Cog):
         self.supabase = bot.supabase
 
     @commands.command(
-        name="setheart",
+        name="setheartbeat",
         aliases=["sethb"],
         help="Définit le salon où envoyer le heartbeat toutes les 5 minutes.",
         description="Commande admin pour changer le salon heartbeat."
