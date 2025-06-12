@@ -104,26 +104,26 @@ async def on_ready():
 
     now = datetime.now(timezone.utc).isoformat()
 
-    print("💣 Suppression de tout verrou précédent...")
-    supabase.table("bot_lock").delete().eq("id", "reiatsu_lock").execute()
+    try:
+        print("💣 Suppression de tout verrou précédent...")
+        supabase.table("bot_lock").delete().eq("id", "reiatsu_lock").execute()
 
-    print(f"🔐 Prise de verrou par cette instance : {INSTANCE_ID}")
-    supabase.table("bot_lock").insert({
-        "id": "reiatsu_lock",
-        "instance_id": INSTANCE_ID,
-        "updated_at": now
-    }).execute()
+        print(f"🔐 Prise de verrou par cette instance : {INSTANCE_ID}")
+        supabase.table("bot_lock").insert({
+            "id": "reiatsu_lock",
+            "instance_id": INSTANCE_ID,
+            "updated_at": now
+        }).execute()
 
-    bot.is_main_instance = True
-    print(f"✅ Instance principale active : {INSTANCE_ID}")
+        bot.is_main_instance = True
+        print(f"✅ Instance principale active : {INSTANCE_ID}")
 
-    # ⚠️ On supprime ce lancement manuel, c’est géré par le Cog
-    # bot.loop.create_task(heartbeat_task(bot))
-
-    # ⬇️ Ajout du spawner
-    await bot.load_extension("commands.reiatsu.spawner")
-    print("✅ Spawner Reiatsu chargé.")
-
+        # ⬇️ Ajout du spawner
+        await bot.load_extension("commands.reiatsu.spawner")
+        print("✅ Spawner Reiatsu chargé.")
+    except Exception as e:
+        print(f"⚠️ Impossible de se connecter à Supabase : {e}")
+        print("🔓 Aucune gestion de verrou — le bot démarre quand même.")
 
 # ──────────────────────────────────────────────────────────────
 # 📩 Message reçu : réagir aux mots-clés et lancer les commandes
@@ -131,9 +131,13 @@ async def on_ready():
 @bot.event
 async def on_message(message):
     # Vérifie si c’est bien l’instance principale
-    lock = supabase.table("bot_lock").select("instance_id").eq("id", "reiatsu_lock").execute()
-    if lock.data and lock.data[0]["instance_id"] != INSTANCE_ID:
-        return
+    try:
+        lock = supabase.table("bot_lock").select("instance_id").eq("id", "reiatsu_lock").execute()
+        if lock.data and lock.data[0]["instance_id"] != INSTANCE_ID:
+            return
+    except Exception as e:
+        print(f"⚠️ Erreur lors de la vérification du verrou Supabase : {e}")
+        # Si Supabase échoue, on laisse passer quand même
 
     if message.author.bot:
         return
@@ -177,6 +181,7 @@ async def on_message(message):
 
     # Exécution des commandes classiques
     await bot.process_commands(message)
+
 
 # ──────────────────────────────────────────────────────────────
 # ❗ Gestion des erreurs de commandes
