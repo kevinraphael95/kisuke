@@ -13,7 +13,7 @@ class HeartbeatAdmin(commands.Cog):
         self.bot = bot
         self.supabase = bot.supabase
 
-    @commands.command(name="pauseheartbeat", help="Pause le heartbeat automatique.", description="Désactive temporairement le heartbeat.")
+    @commands.command(name="heartbeatpause", aliases=["pausehb", "hbpause"], help="Pause le heartbeat automatique.", description="Désactive temporairement le heartbeat.")
     @commands.has_permissions(administrator=True)
     async def pauseheartbeat(self, ctx: commands.Context):
         try:
@@ -26,7 +26,7 @@ class HeartbeatAdmin(commands.Cog):
             print(f"[pauseheartbeat] Erreur : {e}")
             await ctx.send("❌ Erreur en mettant en pause le heartbeat.")
 
-    @commands.command(name="resumeheartbeat", help="Relance le heartbeat automatique.", description="Réactive le heartbeat.")
+    @commands.command(name="heartbeatresume", aliases=["hbresume"], help="Relance le heartbeat automatique.", description="Réactive le heartbeat.")
     @commands.has_permissions(administrator=True)
     async def resumeheartbeat(self, ctx: commands.Context):
         try:
@@ -39,7 +39,7 @@ class HeartbeatAdmin(commands.Cog):
             print(f"[resumeheartbeat] Erreur : {e}")
             await ctx.send("❌ Erreur en relançant le heartbeat.")
 
-    @commands.command(name="heartbeatstatus", help="Affiche l'état actuel du heartbeat.", description="Vérifie si le heartbeat est actif ou en pause.")
+    @commands.command(name="heartbeatstatus", aliases=["hbstatus", "hbstat"], help="Affiche l'état actuel du heartbeat.", description="Vérifie si le heartbeat est actif ou en pause.")
     @commands.has_permissions(administrator=True)
     async def heartbeatstatus(self, ctx: commands.Context):
         try:
