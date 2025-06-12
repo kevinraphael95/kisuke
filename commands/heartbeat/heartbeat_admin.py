@@ -39,6 +39,27 @@ class HeartbeatAdmin(commands.Cog):
             print(f"[resumeheartbeat] Erreur : {e}")
             await ctx.send("❌ Erreur en relançant le heartbeat.")
 
+    @commands.command(name="heartbeatstatus", help="Affiche l'état actuel du heartbeat.", description="Vérifie si le heartbeat est actif ou en pause.")
+    @commands.has_permissions(administrator=True)
+    async def heartbeatstatus(self, ctx: commands.Context):
+        try:
+            res = self.supabase.table("bot_settings").select("value").eq("key", "heartbeat_paused").execute()
+            paused = False
+
+            if res.data and res.data[0]["value"].lower() == "true":
+                paused = True
+
+            if paused:
+                await ctx.send("🔴 Le heartbeat est **en pause**.")
+            else:
+                await ctx.send("🟢 Le heartbeat est **actif**.")
+        except Exception as e:
+            print(f"[heartbeatstatus] Erreur : {e}")
+            await ctx.send("❌ Erreur en consultant le statut du heartbeat.")
+
+
+
+
 # ────────────────────────────────────────────────────────────────────────────────
 # 🔌 Setup du Cog
 # ────────────────────────────────────────────────────────────────────────────────
