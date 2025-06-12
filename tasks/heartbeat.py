@@ -1,8 +1,8 @@
 # ────────────────────────────────────────────────────────────────────────────────
-# 📌 heartbeat.py — Cog pour gérer le heartbeat avec stockage du salon en Supabase
-# Objectif : Envoyer un message régulier pour garder le bot "alive" et stocker le salon
+# 📌 heartbeat.py — Task automatique d'envoi du heartbeat toutes les 5 minutes
+# Objectif : Garder le bot alive en pingant régulièrement un salon configuré
 # Catégorie : Général
-# Accès : Modérateur (commande setheartbeatchannel)
+# Accès : Interne (aucune commande ici)
 # ────────────────────────────────────────────────────────────────────────────────
 
 # ────────────────────────────────────────────────────────────────────────────────
@@ -15,15 +15,14 @@ from datetime import datetime, timezone
 # ────────────────────────────────────────────────────────────────────────────────
 # 🧠 Cog principal
 # ────────────────────────────────────────────────────────────────────────────────
-class HeartbeatCog(commands.Cog):
+class HeartbeatTask(commands.Cog):
     """
-    Cog heartbeat — Envoie un message toutes les 5 minutes dans un salon configuré.
-    Le salon est stocké dans Supabase pour garder la config persistante.
+    Task qui envoie un message toutes les 5 minutes dans un salon configuré.
     """
 
     def __init__(self, bot: commands.Bot):
         self.bot = bot
-        self.supabase = bot.supabase  # Assure-toi que bot.supabase est bien initialisé
+        self.supabase = bot.supabase
         self.heartbeat_channel_id = None
         self.heartbeat_task.start()
 
@@ -65,27 +64,8 @@ class HeartbeatCog(commands.Cog):
         except Exception as e:
             print(f"[Heartbeat] Erreur lecture Supabase : {e}")
 
-    @commands.command(
-        name="setheartbeatchannel",
-        help="Définit le salon où envoyer le heartbeat toutes les 5 minutes.",
-        description="Commande admin pour changer le salon heartbeat."
-    )
-    @commands.has_permissions(administrator=True)
-    async def setheartbeatchannel(self, ctx: commands.Context, channel: discord.TextChannel):
-        self.heartbeat_channel_id = channel.id
-        try:
-            self.supabase.table("bot_settings").upsert({
-                "key": "heartbeat_channel_id",
-                "value": str(channel.id)
-            }).execute()
-            await ctx.send(f"✅ Salon heartbeat mis à jour : {channel.mention}")
-            print(f"[Heartbeat] Salon heartbeat changé : {channel.id}")
-        except Exception as e:
-            await ctx.send("❌ Erreur lors de la sauvegarde en base.")
-            print(f"[Heartbeat] Erreur Supabase save : {e}")
-
 # ────────────────────────────────────────────────────────────────────────────────
 # 🔌 Setup du Cog
 # ────────────────────────────────────────────────────────────────────────────────
 async def setup(bot: commands.Bot):
-    await bot.add_cog(HeartbeatCog(bot))
+    await bot.add_cog(HeartbeatTask(bot))
