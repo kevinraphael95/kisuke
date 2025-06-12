@@ -25,6 +25,7 @@ from dateutil import parser
 # 📦 Modules internes
 # ──────────────────────────────────────────────────────────────
 from supabase_client import supabase
+from tasks.heartbeat import heartbeat_task
 
 # ──────────────────────────────────────────────────────────────
 # 🔧 Initialisation de l’environnement
@@ -60,6 +61,8 @@ intents.reactions = True
 
 bot = commands.Bot(command_prefix=get_prefix, intents=intents, help_command=None)
 bot.is_main_instance = False
+bot.INSTANCE_ID = INSTANCE_ID      # 🔁 Ajout pour heartbeat.py
+bot.supabase = supabase            # 🔁 Ajout pour heartbeat.py
 
 # ──────────────────────────────────────────────────────────────
 # 📁 JSON : on charge les réponses depuis le dossier data/
@@ -107,6 +110,9 @@ async def on_ready():
 
     bot.is_main_instance = True
     print(f"✅ Instance principale active : {INSTANCE_ID}")
+
+    # 🔁 Démarrer heartbeat_task
+    bot.loop.create_task(heartbeat_task(bot))
 
     # ⬇️ Ajout du spawner
     await bot.load_extension("commands.reiatsu.spawner")
