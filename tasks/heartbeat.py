@@ -19,6 +19,7 @@ async def heartbeat_task(bot):
     Tâche qui tourne en boucle toutes les 60 secondes
     pour envoyer un ping dans Supabase.
     """
+    print("[Heartbeat] Démarrage de la tâche heartbeat")  # ✅ Ici
     while True:
         now = datetime.now(timezone.utc).isoformat()
         try:
