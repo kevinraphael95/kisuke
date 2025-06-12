@@ -31,8 +31,18 @@ class HeartbeatTask(commands.Cog):
 
     @tasks.loop(minutes=5)
     async def heartbeat_task(self):
+        # 🔒 Vérifie si le heartbeat est en pause
+        try:
+            pause_res = self.supabase.table("bot_settings").select("value").eq("key", "heartbeat_paused").execute()
+            if pause_res.data and pause_res.data[0]["value"].lower() == "true":
+                print("[Heartbeat] Pausé — aucune action envoyée.")
+                return
+        except Exception as e:
+            print(f"[Heartbeat] Erreur lecture du flag heartbeat_paused : {e}")
+
         if not self.heartbeat_channel_id:
             await self.load_heartbeat_channel()
+
         if self.heartbeat_channel_id:
             channel = self.bot.get_channel(self.heartbeat_channel_id)
             if channel:
