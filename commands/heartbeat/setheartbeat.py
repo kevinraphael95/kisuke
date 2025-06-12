@@ -54,6 +54,6 @@ async def setup(bot: commands.Bot):
     cog = HSetHeartbeat(bot)
     for command in cog.get_commands():
         if not hasattr(command, "category"):
-            command.category = "Général"
+            command.category = "Heartbeat"
     await bot.add_cog(cog)
-    print("✅ Cog chargé : HSetHeartbeat (catégorie = Général)")
+    print("✅ Cog chargé : HSetHeartbeat (catégorie = Heartbeat)")
