@@ -25,7 +25,6 @@ from dateutil import parser
 # 📦 Modules internes
 # ──────────────────────────────────────────────────────────────
 from supabase_client import supabase
-from tasks.heartbeat import heartbeat_task
 
 # ──────────────────────────────────────────────────────────────
 # 🔧 Initialisation de l’environnement
@@ -88,6 +87,13 @@ async def load_commands():
                     except Exception as e:
                         print(f"❌ Failed to load {path}: {e}")
 
+    # ⚠️ Charge aussi le Cog heartbeat qui lance la tâche automatiquement
+    try:
+        await bot.load_extension("tasks.heartbeat")
+        print("✅ Loaded tasks.heartbeat")
+    except Exception as e:
+        print(f"❌ Failed to load tasks.heartbeat: {e}")
+
 # ──────────────────────────────────────────────────────────────
 # 🔔 On Ready : présence + verrouillage de l’instance
 # ──────────────────────────────────────────────────────────────
@@ -111,8 +117,8 @@ async def on_ready():
     bot.is_main_instance = True
     print(f"✅ Instance principale active : {INSTANCE_ID}")
 
-    # 🔁 Démarrer heartbeat_task
-    bot.loop.create_task(heartbeat_task(bot))
+    # ⚠️ On supprime ce lancement manuel, c’est géré par le Cog
+    # bot.loop.create_task(heartbeat_task(bot))
 
     # ⬇️ Ajout du spawner
     await bot.load_extension("commands.reiatsu.spawner")
@@ -193,7 +199,6 @@ async def on_command_error(ctx, error):
     else:
         # 🔧 En dev : utile pour voir les autres erreurs
         raise error
-
 
 
 # ──────────────────────────────────────────────────────────────
