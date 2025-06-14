@@ -119,7 +119,7 @@ async def on_ready():
         print(f"✅ Instance principale active : {INSTANCE_ID}")
 
         # ⬇️ Ajout du spawner
-        await bot.load_extension("commands.reiatsu.spawner")
+        await bot.load_extension("tasks.reiatsu_spawner")
         print("✅ Spawner Reiatsu chargé.")
     except Exception as e:
         print(f"⚠️ Impossible de se connecter à Supabase : {e}")
