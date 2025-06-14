@@ -59,8 +59,7 @@ class PersoCommand(commands.Cog):
 
             if cible == ctx.author:
                 await ctx.send(
-                    f"🌌 {ctx.author.mention}, tu es **{personnage}** !\n"
-                    f"(C'est ta destinée dans le monde de Bleach 🔥)"
+                    f"🌌 {ctx.author.mention}, dans Bleach le personnage qui te ressemble le plus est **{personnage}** ! 🔥"
                 )
             else:
                 await ctx.send(
