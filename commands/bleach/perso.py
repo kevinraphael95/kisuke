@@ -63,7 +63,7 @@ class PersoCommand(commands.Cog):
                 )
             else:
                 await ctx.send(
-                    f"🌌 {ctx.author.mention}, **{cible.display_name}** est **{personnage}** dans Bleach ! 💫"
+                    f"🌌 {ctx.author.mention}, **{cible.display_name}** ressemble à **{personnage}** dans Bleach ! 💫"
                 )
 
         except FileNotFoundError:
