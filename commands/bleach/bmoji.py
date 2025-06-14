@@ -56,17 +56,13 @@ class BMojiCommand(commands.Cog):
                 return
 
             
-            # Extraire tous les emojis individuels dans une liste plate
-            all_emojis = []
-            for emoji_str in emojis:
-                all_emojis.extend(list(emoji_str))
-
-            # Choisir 3 emojis aléatoires (sans doublons)
-            if len(all_emojis) < 3:
+            # Extraire tous les emojis 
+            if len(emojis) < 3:
                 await ctx.send("⚠️ Pas assez d'emojis pour ce personnage.")
                 return
 
-            emoji_selection = ''.join(random.sample(all_emojis, 3))
+            emoji_selection = ''.join(random.sample(emojis, 3))
+
 
 
             
