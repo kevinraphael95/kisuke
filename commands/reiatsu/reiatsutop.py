@@ -20,8 +20,8 @@ class reiatsuscore(commands.Cog):
     # 📊 COMMANDE : !reiatsuscore [limit]
     # ──────────────────────────────────────────────────────────
     @commands.command(
-        name="reiatsuscore",
-        aliases=["rtsscore", "rtstop"],
+        name="reiatsutop",
+        aliases=["rtstop"],
         help="📊 Affiche le classement des membres avec le plus de points Reiatsu."
     )
     @commands.cooldown(rate=1, per=3, type=commands.BucketType.user)  # 🧊 Cooldown : 3s/user
