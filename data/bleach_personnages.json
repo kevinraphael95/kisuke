@@ -608,28 +608,28 @@
         "nom": "Lanza del Relámpago",
         "degats": 35,
         "cout": 25,
-        "effet": "Foudre destructrice",
+        "effet": "aucun",
         "type": "normale"
       },
       {
         "nom": "Mur Obscur",
         "degats": 0,
         "cout": 12,
-        "effet": "Barrière noire",
+        "effet": "aucun",
         "type": "normale"
       },
       {
         "nom": "Regeneration",
         "degats": 0,
         "cout": 10,
-        "effet": "Récupération",
+        "effet": "aucun",
         "type": "normale"
       },
       {
         "nom": "Segunda Etapa",
         "degats": 60,
         "cout": 40,
-        "effet": "Anéantissement",
+        "effet": "confusion",
         "type": "ultime"
       }
     ],
@@ -654,28 +654,28 @@
         "nom": "Lance Charge",
         "degats": 28,
         "cout": 18,
-        "effet": "Percée frontale",
+        "effet": "aucun",
         "type": "normale"
       },
       {
         "nom": "Cero Dardo",
         "degats": 30,
         "cout": 20,
-        "effet": "Projectile énergétique",
+        "effet": "aucun",
         "type": "normale"
       },
       {
         "nom": "Tourbillon",
         "degats": 26,
         "cout": 15,
-        "effet": "Rotation défensive",
+        "effet": "aucun",
         "type": "normale"
       },
       {
         "nom": "Forma Completa",
         "degats": 58,
         "cout": 40,
-        "effet": "Puissance pure",
+        "effet": "aucun",
         "type": "ultime"
       }
     ],
@@ -700,28 +700,28 @@
         "nom": "Cascada",
         "degats": 30,
         "cout": 20,
-        "effet": "Jet d’eau mortel",
+        "effet": "aucun",
         "type": "normale"
       },
       {
         "nom": "Barracuda Slash",
         "degats": 25,
         "cout": 15,
-        "effet": "Coup liquide",
+        "effet": "aucun",
         "type": "normale"
       },
       {
         "nom": "Marea Alta",
         "degats": 27,
         "cout": 18,
-        "effet": "Inondation",
+        "effet": "aucun",
         "type": "normale"
       },
       {
         "nom": "Espada del Mar",
         "degats": 55,
         "cout": 40,
-        "effet": "Tsunami tranchant",
+        "effet": "aucun",
         "type": "ultime"
       }
     ],
@@ -745,28 +745,28 @@
         "nom": "Cero Metralleta",
         "degats": 32,
         "cout": 22,
-        "effet": "Tir en rafale",
+        "effet": "aucun",
         "type": "normale"
       },
       {
         "nom": "Invocation des loups",
         "degats": 30,
         "cout": 20,
-        "effet": "Doubles attaques",
+        "effet": "aucun",
         "type": "normale"
       },
       {
         "nom": "Bala Multiple",
         "degats": 25,
         "cout": 15,
-        "effet": "Fusillade",
+        "effet": "aucun",
         "type": "normale"
       },
       {
         "nom": "Resurrección Lobo",
         "degats": 60,
         "cout": 40,
-        "effet": "Déluge force",
+        "effet": "aucun",
         "type": "ultime"
       }
     ],
@@ -790,28 +790,28 @@
         "nom": "Axe Vieillissante",
         "degats": 30,
         "cout": 20,
-        "effet": "Pourrissement",
+        "effet": "poison",
         "type": "normale"
       },
       {
         "nom": "Campo de Muerte",
         "degats": 0,
         "cout": 10,
-        "effet": "Ralentissement",
+        "effet": "aucun",
         "type": "normale"
       },
       {
         "nom": "Brume Mortelle",
         "degats": 28,
         "cout": 18,
-        "effet": "Souffle toxique",
+        "effet": "poison",
         "type": "normale"
       },
       {
         "nom": "Aging Touch",
         "degats": 60,
         "cout": 40,
-        "effet": "Dissolution temporelle",
+        "effet": "confusion",
         "type": "ultime"
       }
     ],
@@ -835,28 +835,28 @@
         "nom": "Coup Circulaire",
         "degats": 33,
         "cout": 25,
-        "effet": "Tranchant puissant",
+        "effet": "aucun",
         "type": "normale"
       },
       {
         "nom": "Double Fauche",
         "degats": 30,
         "cout": 20,
-        "effet": "Attaque tournoyante",
+        "effet": "aucun",
         "type": "normale"
       },
       {
         "nom": "Cri de Rage",
         "degats": 28,
         "cout": 18,
-        "effet": "Provocation",
+        "effet": "confusion",
         "type": "normale"
       },
       {
         "nom": "Forma Completa",
         "degats": 58,
         "cout": 40,
-        "effet": "Dualité destructrice",
+        "effet": "aucun",
         "type": "ultime"
       }
     ],
@@ -880,28 +880,28 @@
         "nom": "Clonage ADN",
         "degats": 0,
         "cout": 15,
-        "effet": "Copie partielle",
+        "effet": "aucun",
         "type": "normale"
       },
       {
         "nom": "Manipulation Cellulaire",
         "degats": 20,
         "cout": 15,
-        "effet": "Désorganisation",
+        "effet": "aucun",
         "type": "normale"
       },
       {
         "nom": "Marionnette",
         "degats": 26,
         "cout": 18,
-        "effet": "Contrôle forcé",
+        "effet": "aucun",
         "type": "normale"
       },
       {
         "nom": "Resurrección Forcée",
         "degats": 50,
         "cout": 40,
-        "effet": "Démembrement génétique",
+        "effet": "aucun",
         "type": "ultime"
       }
     ],
@@ -925,28 +925,28 @@
         "nom": "Katen Kyōkotsu",
         "degats": 25,
         "cout": 15,
-        "effet": "Jeu mortel",
+        "effet": "aucun",
         "type": "normale"
       },
       {
         "nom": "Bushōgoma",
         "degats": 28,
         "cout": 18,
-        "effet": "Toupie tranchante",
+        "effet": "aucun",
         "type": "normale"
       },
       {
         "nom": "Takaoni",
         "degats": 26,
         "cout": 20,
-        "effet": "Règle aérienne",
+        "effet": "aucun",
         "type": "normale"
       },
       {
         "nom": "Bankai Karamatsu Shinjū",
         "degats": 60,
         "cout": 40,
-        "effet": "Tragédie partagée",
+        "effet": "aucun",
         "type": "ultime"
       }
     ],
@@ -970,28 +970,28 @@
         "nom": "Sōgyo no Kotowari",
         "degats": 22,
         "cout": 15,
-        "effet": "Renvoi d’énergie",
+        "effet": "aucun",
         "type": "normale"
       },
       {
         "nom": "Onde forcele",
         "degats": 24,
         "cout": 15,
-        "effet": "Flux inversé",
+        "effet": "aucun",
         "type": "normale"
       },
       {
         "nom": "Mur force",
         "degats": 0,
         "cout": 10,
-        "effet": "Bouclier absorbant",
+        "effet": "aucun",
         "type": "normale"
       },
       {
         "nom": "Sacrifice force",
         "degats": 55,
         "cout": 40,
-        "effet": "Partage vital",
+        "effet": "aucun",
         "type": "ultime"
       }
     ],
@@ -1015,28 +1015,28 @@
         "nom": "Sakanade",
         "degats": 25,
         "cout": 15,
-        "effet": "Confusion inversée",
+        "effet": "confusion",
         "type": "normale"
       },
       {
         "nom": "Vision Inversée",
         "degats": 26,
         "cout": 18,
-        "effet": "Illusion mentale",
+        "effet": "confusion",
         "type": "normale"
       },
       {
         "nom": "Inversion Totale",
         "degats": 30,
         "cout": 20,
-        "effet": "Attaque surprise",
+        "effet": "confusion",
         "type": "normale"
       },
       {
         "nom": "Bankai Sakashima Yokoshima Happōfusagari",
         "degats": 58,
         "cout": 40,
-        "effet": "Chaos complet",
+        "effet": "aucun",
         "type": "ultime"
       }
     ],
@@ -1061,28 +1061,28 @@
         "nom": "Benihime Slash",
         "degats": 25,
         "cout": 15,
-        "effet": "Lame sanglante",
+        "effet": "aucun",
         "type": "normale"
       },
       {
         "nom": "Mur de Sang",
         "degats": 0,
         "cout": 15,
-        "effet": "Bouclier rouge",
+        "effet": "aucun",
         "type": "normale"
       },
       {
         "nom": "Explosion Cramoisie",
         "degats": 28,
         "cout": 20,
-        "effet": "Déflagration",
+        "effet": "aucun",
         "type": "normale"
       },
       {
         "nom": "Shibari Bankai",
         "degats": 60,
         "cout": 40,
-        "effet": "Reconstruction totale",
+        "effet": "aucun",
         "type": "ultime"
       }
     ],
@@ -1106,28 +1106,28 @@
         "nom": "Ryūjin Jakka",
         "degats": 35,
         "cout": 25,
-        "effet": "Flammes ancestrales",
+        "effet": "aucun",
         "type": "normale"
       },
       {
         "nom": "Flammes Ardentes",
         "degats": 30,
         "cout": 20,
-        "effet": "Brasier destructeur",
+        "effet": "aucun",
         "type": "normale"
       },
       {
         "nom": "Ennetsu Jigoku",
         "degats": 33,
         "cout": 25,
-        "effet": "Prison ardente",
+        "effet": "aucun",
         "type": "normale"
       },
       {
         "nom": "Zanka no Tachi",
         "degats": 65,
         "cout": 40,
-        "effet": "Apocalypse en feu",
+        "effet": "aucun",
         "type": "ultime"
       }
     ],
@@ -1151,28 +1151,28 @@
         "nom": "Haineko",
         "degats": 24,
         "cout": 15,
-        "effet": "Cendres coupantes",
+        "effet": "aucun",
         "type": "normale"
       },
       {
         "nom": "Brume Cendrée",
         "degats": 22,
         "cout": 12,
-        "effet": "Dissolution",
+        "effet": "aucun",
         "type": "normale"
       },
       {
         "nom": "Vent de Cendres",
         "degats": 26,
         "cout": 18,
-        "effet": "Érosion",
+        "effet": "aucun",
         "type": "normale"
       },
       {
         "nom": "Explosion Furtive",
         "degats": 52,
         "cout": 40,
-        "effet": "Cendres infernales",
+        "effet": "aucun",
         "type": "ultime"
       }
     ],
@@ -1196,28 +1196,28 @@
         "nom": "Hōzukimaru",
         "degats": 28,
         "cout": 18,
-        "effet": "Lance brutale",
+        "effet": "aucun",
         "type": "normale"
       },
       {
         "nom": "Charge Frontale",
         "degats": 30,
         "cout": 20,
-        "effet": "Percée furieuse",
+        "effet": "aucun",
         "type": "normale"
       },
       {
         "nom": "Tourbillon",
         "degats": 26,
         "cout": 15,
-        "effet": "Rotation tranchante",
+        "effet": "aucun",
         "type": "normale"
       },
       {
         "nom": "Ryūmon Hōzukimaru",
         "degats": 58,
         "cout": 40,
-        "effet": "Rage martiale",
+        "effet": "aucun",
         "type": "ultime"
       }
     ],
@@ -1241,28 +1241,28 @@
         "nom": "Ruriiro Kujaku",
         "degats": 25,
         "cout": 15,
-        "effet": "Drain force",
+        "effet": "aucun",
         "type": "normale"
       },
       {
         "nom": "Fleur forcele",
         "degats": 20,
         "cout": 10,
-        "effet": "Absorption vitale",
+        "effet": "aucun",
         "type": "normale"
       },
       {
         "nom": "Coup Esthétique",
         "degats": 26,
         "cout": 18,
-        "effet": "Beauté mortelle",
+        "effet": "aucun",
         "type": "normale"
       },
       {
         "nom": "Déchaînement Floral",
         "degats": 55,
         "cout": 40,
-        "effet": "Annihilation élégante",
+        "effet": "aucun",
         "type": "ultime"
       }
     ],
@@ -1286,28 +1286,28 @@
         "nom": "Wabisuke",
         "degats": 24,
         "cout": 15,
-        "effet": "Poid doublé",
+        "effet": "aucun",
         "type": "normale"
       },
       {
         "nom": "Tranchant Accablant",
         "degats": 26,
         "cout": 18,
-        "effet": "Lourdeur extrême",
+        "effet": "aucun",
         "type": "normale"
       },
       {
         "nom": "Affliction forcele",
         "degats": 28,
         "cout": 20,
-        "effet": "Soumission",
+        "effet": "aucun",
         "type": "normale"
       },
       {
         "nom": "Jugement de Wabisuke",
         "degats": 55,
         "cout": 40,
-        "effet": "Écrasement final",
+        "effet": "aucun",
         "type": "ultime"
       }
     ],
@@ -1331,28 +1331,28 @@
         "nom": "Kazeshini",
         "degats": 28,
         "cout": 18,
-        "effet": "Lames jumeaux",
+        "effet": "aucun",
         "type": "normale"
       },
       {
         "nom": "Frappe Oblique",
         "degats": 26,
         "cout": 15,
-        "effet": "Double entaille",
+        "effet": "aucun",
         "type": "normale"
       },
       {
         "nom": "Tranchant Rapide",
         "degats": 30,
         "cout": 20,
-        "effet": "Découpe vive",
+        "effet": "aucun",
         "type": "normale"
       },
       {
         "nom": "Rage de Kazeshini",
         "degats": 58,
         "cout": 40,
-        "effet": "Tourbillon mortel",
+        "effet": "aucun",
         "type": "ultime"
       }
     ],
@@ -1376,28 +1376,28 @@
         "nom": "Tachikaze Slash",
         "degats": 28,
         "cout": 18,
-        "effet": "Fente sous vide",
+        "effet": "aucun",
         "type": "normale"
       },
       {
         "nom": "Shunpō Uppercut",
         "degats": 26,
         "cout": 16,
-        "effet": "Poing éclair",
+        "effet": "aucun",
         "type": "normale"
       },
       {
         "nom": "Détonation du Vent",
         "degats": 30,
         "cout": 20,
-        "effet": "Onde perçante",
+        "effet": "aucun",
         "type": "normale"
       },
       {
         "nom": "Bankai Tekken Tachikaze",
         "degats": 60,
         "cout": 40,
-        "effet": "Explosion à bout portant",
+        "effet": "aucun",
         "type": "ultime"
       }
     ],
@@ -1421,28 +1421,28 @@
         "nom": "Kinshara Strike",
         "degats": 26,
         "cout": 16,
-        "effet": "Fouet rythmique",
+        "effet": "aucun",
         "type": "normale"
       },
       {
         "nom": "Melody Hypnotique",
         "degats": 28,
         "cout": 18,
-        "effet": "Illusion sonore",
+        "effet": "confusion",
         "type": "normale"
       },
       {
         "nom": "Opera Fantôme",
         "degats": 30,
         "cout": 20,
-        "effet": "Déflagration harmonique",
+        "effet": "aucun",
         "type": "normale"
       },
       {
         "nom": "Bankai Kinshara Butōdan",
         "degats": 58,
         "cout": 42,
-        "effet": "Concert de lames",
+        "effet": "aucun",
         "type": "ultime"
       }
     ],
@@ -1466,28 +1466,28 @@
         "nom": "Frappe de Tenken",
         "degats": 30,
         "cout": 20,
-        "effet": "Lame géante",
+        "effet": "aucun",
         "type": "normale"
       },
       {
         "nom": "Poing du Loup",
         "degats": 28,
         "cout": 18,
-        "effet": "Force sauvage",
+        "effet": "aucun",
         "type": "normale"
       },
       {
         "nom": "Cri de l'Honneur",
         "degats": 25,
         "cout": 14,
-        "effet": "Provocation furieuse",
+        "effet": "aucun",
         "type": "normale"
       },
       {
         "nom": "Kokujo Tengen Myo'o",
         "degats": 60,
         "cout": 42,
-        "effet": "Jugement du colosse",
+        "effet": "aucun",
         "type": "ultime"
       }
     ],
@@ -1511,28 +1511,28 @@
         "nom": "Fente Acrobatique",
         "degats": 28,
         "cout": 18,
-        "effet": "Attaque tournoyante",
+        "effet": "aucun",
         "type": "normale"
       },
       {
         "nom": "Lecture Rapide",
         "degats": 25,
         "cout": 14,
-        "effet": "Analyse instantanée",
+        "effet": "aucun",
         "type": "normale"
       },
       {
         "nom": "Shunkō Pression",
         "degats": 30,
         "cout": 20,
-        "effet": "Frappe spirite",
+        "effet": "aucun",
         "type": "normale"
       },
       {
         "nom": "Bankai du Silence",
         "degats": 58,
         "cout": 40,
-        "effet": "Onde dévastatrice",
+        "effet": "confusion",
         "type": "ultime"
       }
     ],
@@ -1556,28 +1556,28 @@
         "nom": "Hurlement de Rage",
         "degats": 26,
         "cout": 16,
-        "effet": "Cri paralysant",
+        "effet": "confusion",
         "type": "normale"
       },
       {
         "nom": "Coup de Sandale",
         "degats": 24,
         "cout": 14,
-        "effet": "Frustration incarnée",
+        "effet": "aucun",
         "type": "normale"
       },
       {
         "nom": "Déchaînement Brutal",
         "degats": 28,
         "cout": 18,
-        "effet": "Combo furieux",
+        "effet": "aucun",
         "type": "normale"
       },
       {
         "nom": "Shunkō Explosif",
         "degats": 55,
         "cout": 40,
-        "effet": "Impact bestial",
+        "effet": "aucun",
         "type": "ultime"
       }
     ],
@@ -1601,28 +1601,28 @@
         "nom": "Mashiro Kick",
         "degats": 32,
         "cout": 24,
-        "effet": "Coup de pied supersonique",
+        "effet": "aucun",
         "type": "normale"
       },
       {
         "nom": "Mashiro Spécial",
         "degats": 30,
         "cout": 20,
-        "effet": "Saut lunaire",
+        "effet": "aucun",
         "type": "normale"
       },
       {
         "nom": "Acrobatie Verte",
         "degats": 26,
         "cout": 16,
-        "effet": "Bond force",
+        "effet": "aucun",
         "type": "normale"
       },
       {
         "nom": "Mashiro Super Mode",
         "degats": 60,
         "cout": 40,
-        "effet": "Explosion arc-en-ciel",
+        "effet": "aucun",
         "type": "ultime"
       }
     ],
@@ -1646,28 +1646,28 @@
         "nom": "Frappe Colossale",
         "degats": 33,
         "cout": 25,
-        "effet": "Écrasement bestial",
+        "effet": "aucun",
         "type": "normale"
       },
       {
         "nom": "Hurlement de Rage",
         "degats": 28,
         "cout": 18,
-        "effet": "Intimidation totale",
+        "effet": "confusion",
         "type": "normale"
       },
       {
         "nom": "Écrasement force",
         "degats": 30,
         "cout": 20,
-        "effet": "Domination brute",
+        "effet": "aucun",
         "type": "normale"
       },
       {
         "nom": "Forme Déchaînée",
         "degats": 60,
         "cout": 42,
-        "effet": "Cataclysme incarné",
+        "effet": "aucun",
         "type": "ultime"
       }
     ],
@@ -1691,28 +1691,28 @@
         "nom": "Fontaine Curative",
         "degats": 20,
         "cout": 10,
-        "effet": "Soin mineur",
+        "effet": "aucun",
         "type": "normale"
       },
       {
         "nom": "Jet d’Eau Bouillante",
         "degats": 28,
         "cout": 18,
-        "effet": "Brûlure ciblée",
+        "effet": "aucun",
         "type": "normale"
       },
       {
         "nom": "Bain Revigorant",
         "degats": 26,
         "cout": 15,
-        "effet": "Régénération lente",
+        "effet": "aucun",
         "type": "normale"
       },
       {
         "nom": "Ondes du Bain Royal",
         "degats": 55,
         "cout": 40,
-        "effet": "Guérison totale",
+        "effet": "aucun",
         "type": "ultime"
       }
     ],
@@ -1736,28 +1736,28 @@
         "nom": "Soie Tranchante",
         "degats": 26,
         "cout": 16,
-        "effet": "Attaque de précision",
+        "effet": "aucun",
         "type": "normale"
       },
       {
         "nom": "Tissage Hypnotique",
         "degats": 28,
         "cout": 18,
-        "effet": "Contrainte sensorielle",
+        "effet": "confusion",
         "type": "normale"
       },
       {
         "nom": "Marionnette de Soie",
         "degats": 30,
         "cout": 20,
-        "effet": "Contrôle total",
+        "effet": "confusion",
         "type": "normale"
       },
       {
         "nom": "Atatameru",
         "degats": 60,
         "cout": 42,
-        "effet": "Confinement impérial",
+        "effet": "aucun",
         "type": "ultime"
       }
     ],
@@ -1781,28 +1781,28 @@
         "nom": "Sayafushi",
         "degats": 30,
         "cout": 20,
-        "effet": "Tranchant parfait",
+        "effet": "aucun",
         "type": "normale"
       },
       {
         "nom": "Coup Improvisé",
         "degats": 26,
         "cout": 16,
-        "effet": "Création instantanée",
+        "effet": "aucun",
         "type": "normale"
       },
       {
         "nom": "Jet d’Encre",
         "degats": 25,
         "cout": 14,
-        "effet": "Vision brouillée",
+        "effet": "confusion",
         "type": "normale"
       },
       {
         "nom": "Shinsō Sayafushi",
         "degats": 60,
         "cout": 40,
-        "effet": "Découpe absolue",
+        "effet": "confusion",
         "type": "ultime"
       }
     ],
@@ -1826,28 +1826,28 @@
         "nom": "Jet d’Encre",
         "degats": 26,
         "cout": 16,
-        "effet": "Oblitération de nom",
+        "effet": "confusion",
         "type": "normale"
       },
       {
         "nom": "Règle du Verbe",
         "degats": 28,
         "cout": 18,
-        "effet": "Manipulation existentielle",
+        "effet": "confusion",
         "type": "normale"
       },
       {
         "nom": "Nom Volé",
         "degats": 30,
         "cout": 20,
-        "effet": "Diminution de puissance",
+        "effet": "cnfusion",
         "type": "normale"
       },
       {
         "nom": "Shirafude Ichimonji",
         "degats": 65,
         "cout": 42,
-        "effet": "Nom effacé du monde",
+        "effet": "confusion",
         "type": "ultime"
       }
     ],
@@ -1871,28 +1871,28 @@
         "nom": "Sustentation forcele",
         "degats": 0,
         "cout": 12,
-        "effet": "Renforcement allié",
+        "effet": "aucun",
         "type": "normale"
       },
       {
         "nom": "Frappe Nourricière",
         "degats": 26,
         "cout": 16,
-        "effet": "Coup chargé",
+        "effet": "aucun",
         "type": "normale"
       },
       {
         "nom": "Recette de Vie",
         "degats": 28,
         "cout": 18,
-        "effet": "Soutien vital",
+        "effet": "aucun",
         "type": "normale"
       },
       {
         "nom": "Forme Compressée",
         "degats": 60,
         "cout": 40,
-        "effet": "Explosion nutritionnelle",
+        "effet": "aucun",
         "type": "ultime"
       }
     ],
@@ -1916,28 +1916,28 @@
         "nom": "Shunpō Frappe",
         "degats": 25,
         "cout": 15,
-        "effet": "Charge rapide",
+        "effet": "aucun",
         "type": "normale"
       },
       {
         "nom": "Douleur forcele",
         "degats": 27,
         "cout": 18,
-        "effet": "Attaque aveuglante",
+        "effet": "aucun",
         "type": "normale"
       },
       {
         "nom": "Frappe Vengeur",
         "degats": 30,
         "cout": 20,
-        "effet": "Assaut furieux",
+        "effet": "aucun",
         "type": "normale"
       },
       {
         "nom": "Bankai Suzumushi Tsuishiki",
         "degats": 60,
         "cout": 40,
-        "effet": "Silence absolu",
+        "effet": "confusion",
         "type": "ultime"
       }
     ],
@@ -1961,28 +1961,28 @@
         "nom": "Shinsō Piercing",
         "degats": 28,
         "cout": 18,
-        "effet": "Attaque rapide",
+        "effet": "aucun",
         "type": "normale"
       },
       {
         "nom": "Furtivité",
         "degats": 25,
         "cout": 15,
-        "effet": "Discrétion mortelle",
+        "effet": "aucun",
         "type": "normale"
       },
       {
         "nom": "Coup Vipère",
         "degats": 30,
         "cout": 20,
-        "effet": "Tranchant précis",
+        "effet": "aucun",
         "type": "normale"
       },
       {
         "nom": "Bankai Kamishini no Yari",
         "degats": 60,
         "cout": 40,
-        "effet": "Perforation extrême",
+        "effet": "confusion",
         "type": "ultime"
       }
     ],
