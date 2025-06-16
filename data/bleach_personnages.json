@@ -21,7 +21,7 @@
         "nom": "Blut Vene",
         "degats": 28,
         "cout": 18,
-        "effet": "aucun",
+        "effet": "bouclier",
         "type": "normale"
       },
       {
@@ -478,7 +478,7 @@
         "nom": "Champ Protecteur",
         "degats": 0,
         "cout": 10,
-        "effet": "aucun",
+        "effet": "bouclier",
         "type": "normale"
       },
       {
@@ -615,7 +615,7 @@
         "nom": "Mur Obscur",
         "degats": 0,
         "cout": 12,
-        "effet": "aucun",
+        "effet": "bouclier",
         "type": "normale"
       },
       {
@@ -880,7 +880,7 @@
         "nom": "Clonage ADN",
         "degats": 0,
         "cout": 15,
-        "effet": "aucun",
+        "effet": "soin",
         "type": "normale"
       },
       {
@@ -984,7 +984,7 @@
         "nom": "Mur force",
         "degats": 0,
         "cout": 10,
-        "effet": "aucun",
+        "effet": "bouclier",
         "type": "normale"
       },
       {
@@ -1036,7 +1036,7 @@
         "nom": "Bankai Sakashima Yokoshima Happōfusagari",
         "degats": 58,
         "cout": 40,
-        "effet": "aucun",
+        "effet": "bouclier",
         "type": "ultime"
       }
     ],
@@ -1068,7 +1068,7 @@
         "nom": "Mur de Sang",
         "degats": 0,
         "cout": 15,
-        "effet": "aucun",
+        "effet": "bouclier",
         "type": "normale"
       },
       {
@@ -1397,7 +1397,7 @@
         "nom": "Bankai Tekken Tachikaze",
         "degats": 60,
         "cout": 40,
-        "effet": "aucun",
+        "effet": "bouclier",
         "type": "ultime"
       }
     ],
@@ -1480,14 +1480,14 @@
         "nom": "Cri de l'Honneur",
         "degats": 25,
         "cout": 14,
-        "effet": "aucun",
+        "effet": "confusion",
         "type": "normale"
       },
       {
         "nom": "Kokujo Tengen Myo'o",
         "degats": 60,
         "cout": 42,
-        "effet": "aucun",
+        "effet": "bouclier",
         "type": "ultime"
       }
     ],
@@ -1691,7 +1691,7 @@
         "nom": "Fontaine Curative",
         "degats": 20,
         "cout": 10,
-        "effet": "aucun",
+        "effet": "soin",
         "type": "normale"
       },
       {
@@ -1705,14 +1705,14 @@
         "nom": "Bain Revigorant",
         "degats": 26,
         "cout": 15,
-        "effet": "aucun",
+        "effet": "soin",
         "type": "normale"
       },
       {
         "nom": "Ondes du Bain Royal",
         "degats": 55,
         "cout": 40,
-        "effet": "aucun",
+        "effet": "soin",
         "type": "ultime"
       }
     ],
