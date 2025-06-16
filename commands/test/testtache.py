@@ -12,6 +12,7 @@ import discord
 from discord.ext import commands
 from discord.ui import View, Select
 import asyncio
+import random
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 📂 Tâches disponibles
@@ -28,7 +29,7 @@ TACHES = {
 # ────────────────────────────────────────────────────────────────────────────────
 class TacheSelectView(View):
     def __init__(self, bot):
-        super().__init__(timeout=120)  # timeout changé à 120s (2 minutes)
+        super().__init__(timeout=120)  # 2 minutes
         self.bot = bot
         self.add_item(TacheSelect(self))
 
@@ -51,7 +52,7 @@ class TacheSelect(Select):
         elif task_type == "reflexe":
             await lancer_reflexe(interaction)
 
-# 🔹 Fonctions de tâche (exemples de mini-jeux)
+# 🔹 Fonctions de tâche (mini-jeux)
 async def lancer_quiz(interaction):
     question = "Quel capitaine a pour zanpakutō Senbonzakura?"
     bonne_reponse = "Byakuya"
@@ -88,21 +89,42 @@ async def lancer_code(interaction):
         await interaction.followup.send("⌛ Trop tard.")
 
 async def lancer_emoji(interaction):
-    # emojis dans un ordre aléatoire choisi (par exemple: 💀 🌀 🔥)
-    sequence = ["💀", "🌀", "🔥"]
-    await interaction.followup.send(f"🔁 Reproduis cette séquence : {' '.join(sequence)}\nRéponds avec `!rep 💀 🌀 🔥` exactement !")
+    pool = ["💀", "🌀", "🔥", "🌪️", "🌟", "🍥", "🍡", "🧊", "❄️", "💨", "⚡", "☀️", "🌈", "🌊", "🪐", "🌸", "🌿", "🪄", "🎭", "🎯"]
+    sequence = random.sample(pool, 3)
+    mix = random.sample(pool, 20)
 
-    def check(m):
-        return m.channel == interaction.channel and m.content.startswith("!rep")
+    message = await interaction.followup.send(
+        f"🔁 Reproduis cette séquence en cliquant les réactions **dans l'ordre** : {' → '.join(sequence)}\n"
+        f"Tu as 2 minutes ! Le premier qui réussit gagne."
+    )
+
+    for emoji in mix:
+        try:
+            await message.add_reaction(emoji)
+        except:
+            pass  # certains emojis peuvent échouer
+
+    reponses = {}
+
+    def check(reaction, user):
+        if user.bot or reaction.message.id != message.id:
+            return False
+
+        if user.id not in reponses:
+            reponses[user.id] = []
+
+        if str(reaction.emoji) in mix:
+            # Empêche les doublons
+            if str(reaction.emoji) not in reponses[user.id]:
+                reponses[user.id].append(str(reaction.emoji))
+
+        return reponses[user.id] == sequence
 
     try:
-        msg = await interaction.client.wait_for("message", check=check, timeout=12)
-        if msg.content[5:].strip() == " ".join(sequence):
-            await interaction.followup.send(f"✅ Bonne séquence, {msg.author.mention} !")
-        else:
-            await interaction.followup.send("❌ Séquence incorrecte.")
+        reaction, user = await interaction.client.wait_for("reaction_add", check=check, timeout=120)
+        await interaction.followup.send(f"✅ Séquence correcte {user.mention} ! Tu as une bonne mémoire.")
     except asyncio.TimeoutError:
-        await interaction.followup.send("⌛ Temps écoulé.")
+        await interaction.followup.send("⌛ Personne n'a réussi à reproduire la séquence à temps.")
 
 async def lancer_reflexe(interaction):
     await interaction.followup.send("⚡ Tape `!vite` en moins de 5 secondes pour réussir !")
