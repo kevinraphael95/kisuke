@@ -18,21 +18,21 @@
         "type": "normale"
       },
       {
-        "nom": "Zangetsu Rush",
+        "nom": "Blut Vene",
         "degats": 28,
         "cout": 18,
         "effet": "aucun",
         "type": "normale"
       },
       {
-        "nom": "Final Getsuga",
+        "nom": "Getsuga Jujisho",
         "degats": 35,
         "cout": 25,
         "effet": "aucun",
         "type": "normale"
       },
       {
-        "nom": "Mugetsu",
+        "nom": "Mugetsu - Final Getsuga",
         "degats": 60,
         "cout": 40,
         "effet": "confusion",
@@ -85,7 +85,7 @@
         "nom": "Hakka no Togame",
         "degats": 55,
         "cout": 40,
-        "effet": "Congélation totale",
+        "effet": "gel",
         "type": "ultime"
       }
     ],
