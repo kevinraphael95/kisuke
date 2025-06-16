@@ -28,7 +28,7 @@ TACHES = {
 # ────────────────────────────────────────────────────────────────────────────────
 class TacheSelectView(View):
     def __init__(self, bot):
-        super().__init__(timeout=60)
+        super().__init__(timeout=120)  # timeout changé à 120s (2 minutes)
         self.bot = bot
         self.add_item(TacheSelect(self))
 
@@ -88,8 +88,9 @@ async def lancer_code(interaction):
         await interaction.followup.send("⌛ Trop tard.")
 
 async def lancer_emoji(interaction):
-    sequence = ["🔥", "💀", "🌀"]
-    await interaction.followup.send(f"🔁 Reproduis cette séquence : {' '.join(sequence)}\nRéponds avec `!rep 🔥 💀 🌀` exactement !")
+    # emojis dans un ordre aléatoire choisi (par exemple: 💀 🌀 🔥)
+    sequence = ["💀", "🌀", "🔥"]
+    await interaction.followup.send(f"🔁 Reproduis cette séquence : {' '.join(sequence)}\nRéponds avec `!rep 💀 🌀 🔥` exactement !")
 
     def check(m):
         return m.channel == interaction.channel and m.content.startswith("!rep")
