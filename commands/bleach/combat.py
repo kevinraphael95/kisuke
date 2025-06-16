@@ -157,6 +157,12 @@ class CombatCommand(commands.Cog):
                         total = int(total * 1.5)
                         log += "💥 Coup critique !"
 
+
+                    if "bouclier" in defenseur and defenseur["bouclier"]:
+                        total = total // 2
+                        log += "🛡️ Bouclier actif : dégâts réduits de moitié !\n"
+                        defenseur["bouclier"] = False  # effet consommé
+
                     defenseur["vie"] -= total
                     attaquant["energie"] -= attaque["cout"]
 
@@ -178,6 +184,15 @@ class CombatCommand(commands.Cog):
                         defenseur["status"] = "poison"
                         defenseur["status_duree"] = 3
                         log += f"☠️ {defenseur['nom']} est empoisonné !\n"
+
+                    elif effet == "soin":
+                        soin = min(30 + attaquant["stats"]["reiatsu"] // 2, 50)
+                        attaquant["vie"] = min(attaquant["vie"] + soin, 100)
+                        log += f"💖 {attaquant['nom']} se soigne de {soin} PV !\n"
+                    elif effet == "bouclier":
+                        attaquant["bouclier"] = True
+                        log += f"🛡️ {attaquant['nom']} est protégé ! (Demi-dégâts ce tour)\n"
+
 
                     if defenseur["vie"] <= 0:
                         log += f"\n🏆 **{attaquant['nom']} remporte le combat par KO !**"
