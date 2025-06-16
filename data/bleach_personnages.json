@@ -14,28 +14,28 @@
         "nom": "Getsuga Tensho",
         "degats": 30,
         "cout": 20,
-        "effet": "Onde d'énergie",
+        "effet": "confusion",
         "type": "normale"
       },
       {
         "nom": "Zangetsu Rush",
         "degats": 28,
         "cout": 18,
-        "effet": "Coup croisé",
+        "effet": "aucun",
         "type": "normale"
       },
       {
         "nom": "Final Getsuga",
         "degats": 35,
         "cout": 25,
-        "effet": "Explosion noire",
+        "effet": "aucun",
         "type": "normale"
       },
       {
         "nom": "Mugetsu",
         "degats": 60,
         "cout": 40,
-        "effet": "Oblitération",
+        "effet": "confusion",
         "type": "ultime"
       }
     ],
@@ -64,21 +64,21 @@
         "nom": "Sode no Shirayuki",
         "degats": 22,
         "cout": 15,
-        "effet": "Gel partiel",
+        "effet": "aucun",
         "type": "normale"
       },
       {
         "nom": "Tsugi no mai, Hakuren",
         "degats": 27,
         "cout": 18,
-        "effet": "Souffle glacé",
+        "effet": "aucun",
         "type": "normale"
       },
       {
         "nom": "Tsugi no mai, Tsukishiro",
         "degats": 25,
         "cout": 15,
-        "effet": "Gel spatial",
+        "effet": "gel",
         "type": "normale"
       },
       {
@@ -109,14 +109,14 @@
         "nom": "Zabimaru Allonge",
         "degats": 28,
         "cout": 20,
-        "effet": "Frappe étendue",
+        "effet": "aucun",
         "type": "normale"
       },
       {
         "nom": "Zabimaru Rugissement",
         "degats": 26,
         "cout": 15,
-        "effet": "Onde de choc",
+        "effet": "aucun",
         "type": "normale"
       },
       {
@@ -124,13 +124,13 @@
         "degats": 30,
         "cout": 20,
         "effet": "Tranchant circulaire",
-        "type": "normale"
+        "type": "aucun"
       },
       {
         "nom": "Hihiō Zabimaru",
         "degats": 58,
         "cout": 40,
-        "effet": "Fureur bestiale",
+        "effet": "aucun",
         "type": "ultime"
       }
     ],
@@ -154,28 +154,28 @@
         "nom": "Senbonzakura",
         "degats": 25,
         "cout": 15,
-        "effet": "Lames florales",
+        "effet": "aucun",
         "type": "normale"
       },
       {
         "nom": "Senkei",
         "degats": 30,
         "cout": 20,
-        "effet": "Tranchant pur",
+        "effet": "aucun",
         "type": "normale"
       },
       {
         "nom": "Shukei - Hakuteiken",
         "degats": 33,
         "cout": 25,
-        "effet": "Épée blanche",
+        "effet": "aucun",
         "type": "normale"
       },
       {
         "nom": "Bankai Kageyoshi",
         "degats": 60,
         "cout": 40,
-        "effet": "Mille pétales destructeurs",
+        "effet": "aucun",
         "type": "ultime"
       }
     ],
@@ -199,28 +199,28 @@
         "nom": "Hyōrinmaru",
         "degats": 26,
         "cout": 18,
-        "effet": "Dragon de glace",
+        "effet": "aucun",
         "type": "normale"
       },
       {
         "nom": "Ryūsenka",
         "degats": 24,
         "cout": 15,
-        "effet": "Gel destructeur",
+        "effet": "gel",
         "type": "normale"
       },
       {
         "nom": "Sennen Hyōrō",
         "degats": 28,
         "cout": 20,
-        "effet": "Prison glacée",
+        "effet": "confusion",
         "type": "normale"
       },
       {
         "nom": "Daiguren Hyōrinmaru",
         "degats": 55,
         "cout": 40,
-        "effet": "Tempête glaciale",
+        "effet": "gel",
         "type": "ultime"
       }
     ],
@@ -244,28 +244,28 @@
         "nom": "Coup Brutal",
         "degats": 35,
         "cout": 25,
-        "effet": "Tranchant furieux",
+        "effet": "confusion",
         "type": "normale"
       },
       {
         "nom": "Charge Sauvage",
         "degats": 30,
         "cout": 20,
-        "effet": "Impact total",
+        "effet": "aucun",
         "type": "normale"
       },
       {
         "nom": "Cri de Guerre",
         "degats": 33,
         "cout": 25,
-        "effet": "Intimidation",
+        "effet": "confusion",
         "type": "normale"
       },
       {
         "nom": "No Eyepatch",
         "degats": 60,
         "cout": 40,
-        "effet": "Puissance déchaînée",
+        "effet": "confusion",
         "type": "ultime"
       }
     ],
@@ -289,28 +289,28 @@
         "nom": "Ashisogi Jizō",
         "degats": 20,
         "cout": 10,
-        "effet": "Paralysie",
+        "effet": "confusion",
         "type": "normale"
       },
       {
         "nom": "Neurotoxines",
         "degats": 24,
         "cout": 15,
-        "effet": "Altération mentale",
+        "effet": "confusion",
         "type": "normale"
       },
       {
         "nom": "Gaz Corrosif",
         "degats": 26,
         "cout": 18,
-        "effet": "Affaiblissement",
+        "effet": "poison",
         "type": "normale"
       },
       {
         "nom": "Bankai Jōkaku Enran",
         "degats": 50,
         "cout": 40,
-        "effet": "Empoisonnement total",
+        "effet": "poison",
         "type": "ultime"
       }
     ],
@@ -334,28 +334,28 @@
         "nom": "Kyōka Suigetsu",
         "degats": 28,
         "cout": 15,
-        "effet": "Illusion parfaite",
+        "effet": "confusion",
         "type": "normale"
       },
       {
         "nom": "Hypnose Suprême",
         "degats": 26,
         "cout": 18,
-        "effet": "Confusion mentale",
+        "effet": "Confusion",
         "type": "normale"
       },
       {
         "nom": "Slash force",
         "degats": 30,
         "cout": 20,
-        "effet": "Désorientation",
+        "effet": "aucun",
         "type": "normale"
       },
       {
         "nom": "Fusion Hōgyoku",
         "degats": 60,
         "cout": 40,
-        "effet": "Transcendance divine",
+        "effet": "confusion",
         "type": "ultime"
       }
     ],
@@ -380,28 +380,28 @@
         "nom": "Reishi Pfeil",
         "degats": 22,
         "cout": 10,
-        "effet": "Flèche forcele",
+        "effet": "aucun",
         "type": "normale"
       },
       {
         "nom": "Seele Schneider",
         "degats": 28,
         "cout": 18,
-        "effet": "Épée vibrante",
+        "effet": "aucun",
         "type": "normale"
       },
       {
         "nom": "Heilig Pfeil",
         "degats": 25,
         "cout": 15,
-        "effet": "Perforation rapide",
+        "effet": "aucun",
         "type": "normale"
       },
       {
         "nom": "Letzt Stil",
         "degats": 55,
         "cout": 40,
-        "effet": "Explosion Quincy",
+        "effet": "confusion",
         "type": "ultime"
       }
     ],
@@ -426,28 +426,28 @@
         "nom": "Shunpo Kick",
         "degats": 24,
         "cout": 15,
-        "effet": "Attaque éclair",
+        "effet": "aucun",
         "type": "normale"
       },
       {
         "nom": "Shunkō Blitz",
         "degats": 26,
         "cout": 18,
-        "effet": "Vague électrique",
+        "effet": "aucun",
         "type": "normale"
       },
       {
         "nom": "Raijin Griffe",
         "degats": 28,
         "cout": 20,
-        "effet": "Électrocution",
+        "effet": "aucun",
         "type": "normale"
       },
       {
         "nom": "Mode Raijin",
         "degats": 58,
         "cout": 40,
-        "effet": "Assaut divin",
+        "effet": "aucun",
         "type": "ultime"
       }
     ],
@@ -471,28 +471,28 @@
         "nom": "Benihime Rayon",
         "degats": 26,
         "cout": 15,
-        "effet": "Rayon de sang",
+        "effet": "aucun",
         "type": "normale"
       },
       {
         "nom": "Champ Protecteur",
         "degats": 0,
         "cout": 10,
-        "effet": "Bouclier défensif",
+        "effet": "aucun",
         "type": "normale"
       },
       {
         "nom": "Onde de Répulsion",
         "degats": 22,
         "cout": 15,
-        "effet": "Repoussement",
+        "effet": "aucun",
         "type": "normale"
       },
       {
         "nom": "Kannonbiraki Benihime Aratame",
         "degats": 55,
         "cout": 40,
-        "effet": "Désintégration totale",
+        "effet": "aucun",
         "type": "ultime"
       }
     ],
@@ -516,28 +516,28 @@
         "nom": "Sakanade Tranche",
         "degats": 25,
         "cout": 15,
-        "effet": "Inversion des sens",
+        "effet": "confusion",
         "type": "normale"
       },
       {
         "nom": "Distorsion",
         "degats": 27,
         "cout": 18,
-        "effet": "Vision inversée",
+        "effet": "confusion",
         "type": "normale"
       },
       {
         "nom": "Feinte Mentale",
         "degats": 23,
         "cout": 15,
-        "effet": "Illusion confuse",
+        "effet": "confusion",
         "type": "normale"
       },
       {
         "nom": "Bankai Inversé",
         "degats": 58,
         "cout": 40,
-        "effet": "Chaos absolu",
+        "effet": "confusion",
         "type": "ultime"
       }
     ],
@@ -562,28 +562,28 @@
         "nom": "Garras del Pantera",
         "degats": 30,
         "cout": 20,
-        "effet": "Griffes sauvages",
+        "effet": "aucun",
         "type": "normale"
       },
       {
         "nom": "Coup Frontal",
         "degats": 28,
         "cout": 18,
-        "effet": "Frappe directe",
+        "effet": "aucun",
         "type": "normale"
       },
       {
         "nom": "Desgarón",
         "degats": 33,
         "cout": 25,
-        "effet": "Lames géantes",
+        "effet": "aucun",
         "type": "normale"
       },
       {
         "nom": "Pantera Final",
         "degats": 60,
         "cout": 40,
-        "effet": "Démolition totale",
+        "effet": "aucun",
         "type": "ultime"
       }
     ],
