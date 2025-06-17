@@ -25,11 +25,21 @@ TACHES = {
 }
 
 # ────────────────────────────────────────────────────────────────────────────────
+# 🧩 Mots possibles pour Code Hollow
+# ────────────────────────────────────────────────────────────────────────────────
+MOTS_HOLLOW = [
+    "hollow", "espada", "zanpakuto", "quincy", "shinigami",
+    "bankai", "ressureccion", "aizen", "kido", "mask",
+    "vasto", "adjuchas", "menos", "karakura", "kyoka",
+    "hisagi", "gin", "ulquiorra", "barragan", "hueco"
+]
+
+# ────────────────────────────────────────────────────────────────────────────────
 # 🎛️ UI — Menu de sélection des tâches
 # ────────────────────────────────────────────────────────────────────────────────
 class TacheSelectView(View):
     def __init__(self, bot):
-        super().__init__(timeout=120)  # 2 minutes
+        super().__init__(timeout=120)
         self.bot = bot
         self.add_item(TacheSelect(self))
 
@@ -52,7 +62,9 @@ class TacheSelect(Select):
         elif task_type == "reflexe":
             await lancer_reflexe(interaction)
 
-# 🔹 Fonctions de tâche (mini-jeux)
+# ────────────────────────────────────────────────────────────────────────────────
+# 🔹 Fonctions de tâches (mini-jeux)
+# ────────────────────────────────────────────────────────────────────────────────
 async def lancer_quiz(interaction):
     question = "Quel capitaine a pour zanpakutō Senbonzakura?"
     bonne_reponse = "Byakuya"
@@ -73,25 +85,29 @@ async def lancer_quiz(interaction):
         await interaction.followup.send("⌛ Temps écoulé, personne n'a répondu.")
 
 async def lancer_code(interaction):
-    mot_code = "H_L_OW"
-    await interaction.followup.send(f"🔐 Devine le mot : `{mot_code}` — Réponds avec `!rep <mot>`")
+    mot = random.choice(MOTS_HOLLOW)
+    lettres = list(mot)
+    indices_manquants = random.sample(range(len(lettres)), k=min(3, len(mot)//2))
+    mot_code = ''.join('_' if i in indices_manquants else c.upper() for i, c in enumerate(lettres))
+
+    await interaction.followup.send(f"🔐 Trouve le mot : `{mot_code}` — Réponds avec `!rep <mot>`")
 
     def check(m):
         return m.channel == interaction.channel and m.content.startswith("!rep")
 
     try:
         msg = await interaction.client.wait_for("message", check=check, timeout=10)
-        if msg.content[5:].strip().lower() == "hollow":
-            await interaction.followup.send(f"✅ Bien joué {msg.author.mention}, c'était `HOLLOW` !")
+        if msg.content[5:].strip().lower() == mot:
+            await interaction.followup.send(f"✅ Bien joué {msg.author.mention}, c'était `{mot.upper()}` !")
         else:
             await interaction.followup.send(f"❌ Mauvais mot {msg.author.mention}.")
     except asyncio.TimeoutError:
         await interaction.followup.send("⌛ Trop tard.")
 
 async def lancer_emoji(interaction):
-    pool = ["💀", "🌀", "🔥", "🌪️", "🌟", "🍥", "🍡", "🧊", "❄️", "💨", "⚡", "☀️", "🌈", "🌊", "🪐", "🌸", "🌿", "🪄", "🎭", "🎯"]
+    pool = ["💀", "🌀", "🔥", "🌪️", "🌟", "🍥", "🍡", "🧊", "❄️", "💨"]
     sequence = random.sample(pool, 3)
-    mix = random.sample(pool, 20)
+    mix = random.sample(pool, 5)
 
     message = await interaction.followup.send(
         f"🔁 Reproduis cette séquence en cliquant les réactions **dans l'ordre** : {' → '.join(sequence)}\n"
@@ -102,7 +118,7 @@ async def lancer_emoji(interaction):
         try:
             await message.add_reaction(emoji)
         except:
-            pass  # certains emojis peuvent échouer
+            pass
 
     reponses = {}
 
@@ -114,7 +130,6 @@ async def lancer_emoji(interaction):
             reponses[user.id] = []
 
         if str(reaction.emoji) in mix:
-            # Empêche les doublons
             if str(reaction.emoji) not in reponses[user.id]:
                 reponses[user.id].append(str(reaction.emoji))
 
@@ -127,18 +142,35 @@ async def lancer_emoji(interaction):
         await interaction.followup.send("⌛ Personne n'a réussi à reproduire la séquence à temps.")
 
 async def lancer_reflexe(interaction):
-    await interaction.followup.send("⚡ Tape `!vite` en moins de 5 secondes pour réussir !")
+    compte = ["5️⃣", "4️⃣", "3️⃣", "2️⃣", "1️⃣"]
+    message = await interaction.followup.send("🕒 Clique les réactions `5️⃣ 4️⃣ 3️⃣ 2️⃣ 1️⃣` **dans l'ordre** le plus vite possible !")
 
-    def check(m):
-        return m.channel == interaction.channel and m.content.strip() == "!vite"
+    for emoji in compte:
+        await message.add_reaction(emoji)
+
+    reponses = {}
+
+    def check(reaction, user):
+        if user.bot or reaction.message.id != message.id:
+            return False
+
+        if user.id not in reponses:
+            reponses[user.id] = []
+
+        if str(reaction.emoji) == compte[len(reponses[user.id])]:
+            reponses[user.id].append(str(reaction.emoji))
+
+        return reponses[user.id] == compte
 
     try:
-        msg = await interaction.client.wait_for("message", check=check, timeout=5)
-        await interaction.followup.send(f"✅ Rapidité confirmée, {msg.author.mention} !")
+        reaction, user = await interaction.client.wait_for("reaction_add", check=check, timeout=20)
+        await interaction.followup.send(f"⚡ Réflexe parfait, {user.mention} !")
     except asyncio.TimeoutError:
-        await interaction.followup.send("❌ Trop lent !")
-
+        await interaction.followup.send("⌛ Aucun réflexe parfait enregistré.")
+        
+# ────────────────────────────────────────────────────────────────────────────────
 # 🧠 Cog principal
+# ────────────────────────────────────────────────────────────────────────────────
 class TestTache(commands.Cog):
     """
     Commande !testtache — Teste les différentes tâches du mode Hollow
