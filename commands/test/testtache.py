@@ -107,7 +107,9 @@ async def lancer_code(interaction):
 async def lancer_emoji(interaction):
     pool = ["💀", "🌀", "🔥", "🌪️", "🌟", "🍥", "🍡", "🧊", "❄️", "💨"]
     sequence = random.sample(pool, 3)
-    mix = random.sample(pool, 5)
+    autres = [e for e in pool if e not in sequence]
+    mix = sequence + random.sample(autres, 2)
+    random.shuffle(mix)
 
     message = await interaction.followup.send(
         f"🔁 Reproduis cette séquence en cliquant les réactions **dans l'ordre** : {' → '.join(sequence)}\n"
@@ -129,17 +131,17 @@ async def lancer_emoji(interaction):
         if user.id not in reponses:
             reponses[user.id] = []
 
-        if str(reaction.emoji) in mix:
-            if str(reaction.emoji) not in reponses[user.id]:
-                reponses[user.id].append(str(reaction.emoji))
+        if str(reaction.emoji) == sequence[len(reponses[user.id])]:
+            reponses[user.id].append(str(reaction.emoji))
 
         return reponses[user.id] == sequence
 
     try:
         reaction, user = await interaction.client.wait_for("reaction_add", check=check, timeout=120)
-        await interaction.followup.send(f"✅ Séquence correcte {user.mention} ! Tu as une bonne mémoire.")
+        await interaction.followup.send(f"✅ Séquence correcte {user.mention} !")
     except asyncio.TimeoutError:
-        await interaction.followup.send("⌛ Personne n'a réussi à reproduire la séquence à temps.")
+        await interaction.followup.send("⌛ Personne n'a réussi.")
+
 
 async def lancer_reflexe(interaction):
     compte = ["5️⃣", "4️⃣", "3️⃣", "2️⃣", "1️⃣"]
