@@ -23,7 +23,7 @@ TACHES = {
     "Séquence emoji": "emoji",
     "Réflexe rapide": "reflexe",
     "Séquence fléchée": "fleche",
-    "Mémorisation éclair": "memo"
+    "Infusion de Reiatsu": "infusion"
 }
 
 # ────────────────────────────────────────────────────────────────────────────────
@@ -65,8 +65,8 @@ class TacheSelect(Select):
             await lancer_reflexe(interaction)
         elif task_type == "fleche":
             await lancer_fleche(interaction)
-        elif task_type == "memo":
-            await lancer_memo(interaction)
+        elif task_type == "infusion":
+            await lancer_infusion(interaction)
 
 
 
@@ -234,32 +234,43 @@ async def lancer_fleche(interaction):
 
 # ────────────────────────────────────────────────────────────────────────────────
 
-async def lancer_memo(interaction):
-    chiffres = [str(random.randint(1, 9)) for _ in range(5)]
-    sequence = ' '.join(chiffres)
+async def lancer_infusion(interaction):
+    await interaction.followup.send("🔵 Prépare-toi à synchroniser ton Reiatsu...")
 
-    affichage = await interaction.followup.send(
-        f"🧠 Mémorise cette suite de chiffres : `{sequence}`\nTu as 4 secondes..."
-    )
-    await asyncio.sleep(4)
-    await affichage.delete()
+    await asyncio.sleep(2)
 
-    await interaction.followup.send(
-        "✍️ Tape la suite exacte avec `!rep <suite>` (séparée par des espaces) ! Tu as 10 secondes."
-    )
+    # Étapes de remplissage du cercle
+    message = await interaction.followup.send("🔵")
+    for _ in range(3):
+        await asyncio.sleep(0.6)
+        await message.edit(content="🔵🔵")
+        await asyncio.sleep(0.6)
+        await message.edit(content="🔵🔵🔵")
 
-    def check(m):
-        return m.channel == interaction.channel and m.content.startswith("!rep")
+    # Passage en rouge
+    await asyncio.sleep(0.5)
+    await message.edit(content="🔴")
+
+    # Délai d’activation de la réaction
+    await message.add_reaction("⚡")
+    start_time = discord.utils.utcnow()
+
+    def check(reaction, user):
+        if user.bot:
+            return False
+        if reaction.message.id != message.id:
+            return False
+        if str(reaction.emoji) != "⚡":
+            return False
+        delta = (discord.utils.utcnow() - start_time).total_seconds()
+        return 0.8 <= delta <= 1.2  # ✅ Fenêtre parfaite
 
     try:
-        msg = await interaction.client.wait_for("message", check=check, timeout=10)
-        reponse = msg.content[5:].strip()
-        if reponse == sequence:
-            await interaction.followup.send(f"✅ Parfait {msg.author.mention}, tu as une mémoire d’éléphant 🐘 !")
-        else:
-            await interaction.followup.send(f"❌ Raté {msg.author.mention}, c'était : `{sequence}`")
+        reaction, user = await interaction.client.wait_for("reaction_add", check=check, timeout=2)
+        await interaction.followup.send(f"✅ {user.mention}, Synchronisation parfaite ! Ton Reiatsu est stable.")
     except asyncio.TimeoutError:
-        await interaction.followup.send(f"⌛ Temps écoulé. La séquence était : `{sequence}`")
+        await interaction.followup.send("❌ Échec de l’infusion. Reiatsu instable.")
+
 
 
 
