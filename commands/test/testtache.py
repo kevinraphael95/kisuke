@@ -21,7 +21,8 @@ TACHES = {
     "Quiz Bleach": "quiz",
     "Code Hollow": "code",
     "Séquence emoji": "emoji",
-    "Réflexe rapide": "reflexe"
+    "Réflexe rapide": "reflexe",
+    "Séquence fléchée": "fleche"  
 }
 
 # ────────────────────────────────────────────────────────────────────────────────
@@ -61,10 +62,14 @@ class TacheSelect(Select):
             await lancer_emoji(interaction)
         elif task_type == "reflexe":
             await lancer_reflexe(interaction)
+        elif task_type == "fleche":
+            await lancer_fleche(interaction)
+
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🔹 Fonctions de tâches (mini-jeux)
 # ────────────────────────────────────────────────────────────────────────────────
+
 async def lancer_quiz(interaction):
     question = "Quel capitaine a pour zanpakutō Senbonzakura?"
     bonne_reponse = "Byakuya"
@@ -83,6 +88,8 @@ async def lancer_quiz(interaction):
             await interaction.followup.send(f"❌ Mauvaise réponse {msg.author.mention} !")
     except asyncio.TimeoutError:
         await interaction.followup.send("⌛ Temps écoulé, personne n'a répondu.")
+
+# ────────────────────────────────────────────────────────────────────────────────
 
 async def lancer_code(interaction):
     mot = random.choice(MOTS_HOLLOW)
@@ -142,6 +149,7 @@ async def lancer_emoji(interaction):
     except asyncio.TimeoutError:
         await interaction.followup.send("⌛ Personne n'a réussi.")
 
+# ────────────────────────────────────────────────────────────────────────────────
 
 async def lancer_reflexe(interaction):
     compte = ["5️⃣", "4️⃣", "3️⃣", "2️⃣", "1️⃣"]
@@ -169,6 +177,58 @@ async def lancer_reflexe(interaction):
         await interaction.followup.send(f"⚡ Réflexe parfait, {user.mention} !")
     except asyncio.TimeoutError:
         await interaction.followup.send("⌛ Aucun réflexe parfait enregistré.")
+
+# ────────────────────────────────────────────────────────────────────────────────
+
+async def lancer_fleche(interaction):
+    fleches = ["⬅️", "⬆️", "⬇️", "➡️"]
+    sequence = [random.choice(fleches) for _ in range(5)]
+
+    # Afficher la séquence pendant 5 secondes
+    affichage = await interaction.followup.send(
+        f"🧭 Mémorise cette séquence de flèches :\n`{' '.join(sequence)}`\nTu as 5 secondes..."
+    )
+    await asyncio.sleep(5)
+    await affichage.delete()
+
+    # Message avec réactions
+    message = await interaction.followup.send(
+        "🔁 Reproduis la séquence **dans le bon ordre** en cliquant les flèches ci-dessous.\n"
+        "Chaque clic correct supprime l'emoji correspondant.\nTu as 30 secondes !"
+    )
+
+    for emoji in fleches:
+        await message.add_reaction(emoji)
+
+    reponses = {}
+
+    def check(reaction, user):
+        if user.bot or reaction.message.id != message.id:
+            return False
+
+        if user.id not in reponses:
+            reponses[user.id] = []
+
+        pos = len(reponses[user.id])
+        if pos >= len(sequence):
+            return False
+
+        attendu = sequence[pos]
+        if str(reaction.emoji) == attendu:
+            reponses[user.id].append(str(reaction.emoji))
+            asyncio.create_task(message.clear_reaction(reaction.emoji))
+            return len(reponses[user.id]) == len(sequence)
+        else:
+            reponses[user.id] = []  # reset
+            return False
+
+    try:
+        reaction, user = await interaction.client.wait_for("reaction_add", check=check, timeout=30)
+        await interaction.followup.send(f"✅ Séquence parfaite {user.mention} !")
+    except asyncio.TimeoutError:
+        await interaction.followup.send("⌛ Personne n'a réussi la séquence.")
+
+
         
 # ────────────────────────────────────────────────────────────────────────────────
 # 🧠 Cog principal
