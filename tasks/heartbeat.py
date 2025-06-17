@@ -48,7 +48,7 @@ class HeartbeatTask(commands.Cog):
             if channel:
                 try:
                     now = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
-                    await channel.send(f"💓 Heartbeat — Je suis toujours vivant ! ({now})")
+                    await channel.send(f"💓💓 Boom boom ! ({now})")
                 except Exception as e:
                     print(f"[Heartbeat] Erreur en envoyant le message : {e}")
             else:
