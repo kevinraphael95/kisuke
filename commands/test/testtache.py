@@ -22,7 +22,8 @@ TACHES = {
     "Code Hollow": "code",
     "Séquence emoji": "emoji",
     "Réflexe rapide": "reflexe",
-    "Séquence fléchée": "fleche"  
+    "Séquence fléchée": "fleche",
+    "Mémorisation éclair": "memo"
 }
 
 # ────────────────────────────────────────────────────────────────────────────────
@@ -64,6 +65,9 @@ class TacheSelect(Select):
             await lancer_reflexe(interaction)
         elif task_type == "fleche":
             await lancer_fleche(interaction)
+        elif task_type == "memo":
+            await lancer_memo(interaction)
+
 
 
 # ────────────────────────────────────────────────────────────────────────────────
@@ -227,6 +231,36 @@ async def lancer_fleche(interaction):
         await interaction.followup.send(f"✅ Séquence parfaite {user.mention} !")
     except asyncio.TimeoutError:
         await interaction.followup.send("⌛ Personne n'a réussi la séquence.")
+
+# ────────────────────────────────────────────────────────────────────────────────
+
+async def lancer_memo(interaction):
+    chiffres = [str(random.randint(1, 9)) for _ in range(5)]
+    sequence = ' '.join(chiffres)
+
+    affichage = await interaction.followup.send(
+        f"🧠 Mémorise cette suite de chiffres : `{sequence}`\nTu as 4 secondes..."
+    )
+    await asyncio.sleep(4)
+    await affichage.delete()
+
+    await interaction.followup.send(
+        "✍️ Tape la suite exacte avec `!rep <suite>` (séparée par des espaces) ! Tu as 10 secondes."
+    )
+
+    def check(m):
+        return m.channel == interaction.channel and m.content.startswith("!rep")
+
+    try:
+        msg = await interaction.client.wait_for("message", check=check, timeout=10)
+        reponse = msg.content[5:].strip()
+        if reponse == sequence:
+            await interaction.followup.send(f"✅ Parfait {msg.author.mention}, tu as une mémoire d’éléphant 🐘 !")
+        else:
+            await interaction.followup.send(f"❌ Raté {msg.author.mention}, c'était : `{sequence}`")
+    except asyncio.TimeoutError:
+        await interaction.followup.send(f"⌛ Temps écoulé. La séquence était : `{sequence}`")
+
 
 
         
