@@ -216,7 +216,7 @@ async def lancer_fleche(interaction):
         attendu = sequence[pos]
         if str(reaction.emoji) == attendu:
             reponses[user.id].append(str(reaction.emoji))
-            asyncio.create_task(message.clear_reaction(reaction.emoji))
+            asyncio.create_task(message.remove_reaction(reaction.emoji, user))
             return len(reponses[user.id]) == len(sequence)
         else:
             reponses[user.id] = []  # reset
