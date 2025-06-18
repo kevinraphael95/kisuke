@@ -338,21 +338,31 @@ async def lancer_emoji9(interaction):
         ["💡", "🧱"],  # ampoule / brique
     ]
 
+    # Choisir un groupe et décider s'il y a un intrus ou pas
     base, intrus = random.choice(groupes)
-    intrus_present = random.choice([True, False])
+    y_a_intrus = random.choice([True, False])  # 50% de chance
 
-    if intrus_present:
-        emojis = [base] * 8 + [intrus]
+    if y_a_intrus:
+        # Met 8 fois la base, 1 fois l'intrus à une position aléatoire
+        emojis = [base] * 9
+        pos_intrus = random.randint(0, 8)
+        emojis[pos_intrus] = intrus
         random.shuffle(emojis)
     else:
+        # Tous les emojis sont identiques
         emojis = [base] * 9
 
-    view = EmojiBoutons(vrai_reponse=intrus_present)
+    ligne = ""
+    for i in range(9):
+        ligne += emojis[i]
+        if (i + 1) % 3 == 0:
+            ligne += "\n"
+
     await interaction.followup.send(
-        f"👀 Clique sur ✅ si tous les emojis sont pareils, ❌ si tu vois un intrus :\n"
-        f"{''.join(emojis)}",
-        view=view
+        content="🔎 Une seule réponse : Est-ce qu'un des emojis est **différent** des autres ?",
+        view=EmojiBoutons(y_a_intrus)
     )
+    await interaction.followup.send(f"```\n{ligne}```")
 
 
 
