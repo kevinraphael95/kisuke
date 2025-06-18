@@ -23,7 +23,9 @@ TACHES = {
     "Séquence emoji": "emoji",
     "Réflexe rapide": "reflexe",
     "Séquence fléchée": "fleche",
-    "Infusion de Reiatsu": "infusion"
+    "Infusion de Reiatsu": "infusion",
+    "Emoji suspects": "emoji9"
+    
 }
 
 # ────────────────────────────────────────────────────────────────────────────────
@@ -66,6 +68,9 @@ class TacheSelect(Select):
             await lancer_fleche(interaction)
         elif task_type == "infusion":
             await lancer_infusion(interaction)
+        elif task_type == "emoji9":
+            await lancer_emoji9(interaction)
+        
 
 
 
@@ -272,6 +277,66 @@ async def lancer_infusion(interaction):
     except asyncio.TimeoutError:
         await interaction.followup.send("❌ Échec de l’infusion. Reiatsu instable.")
 
+
+# ────────────────────────────────────────────────────────────────────────────────
+# 🔎 9 Emojis – Trouve l’intrus
+# ────────────────────────────────────────────────────────────────────────────────
+class EmojiBoutons(discord.ui.View):
+    def __init__(self, vrai_reponse):
+        super().__init__(timeout=15)
+        self.vrai_reponse = vrai_reponse
+        self.repondu = False
+
+    @discord.ui.button(label="✅", style=discord.ButtonStyle.success)
+    async def bouton_vrai(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if self.repondu:
+            return
+        self.repondu = True
+        await self.verifie(interaction, True)
+
+    @discord.ui.button(label="❌", style=discord.ButtonStyle.danger)
+    async def bouton_faux(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if self.repondu:
+            return
+        self.repondu = True
+        await self.verifie(interaction, False)
+
+    async def verifie(self, interaction, reponse):
+        if reponse == self.vrai_reponse:
+            await interaction.response.send_message(f"✅ Bonne réponse !", ephemeral=True)
+        else:
+            await interaction.response.send_message(f"❌ Mauvaise réponse !", ephemeral=True)
+        self.stop()
+
+async def lancer_emoji9(interaction):
+    groupes = [
+        ["🍎", "🍅"],  # pomme / tomate
+        ["☁️", "🌥️"],  # nuages
+        ["☘️", "🍀"],  # trèfles
+        ["🌺", "💮"],  # fleurs
+        ["👜", "💼"],  # sacs
+        ["🐶", "🦊"],  # animaux
+        ["🍞", "🥐"],  # pains
+        ["🚗", "🚕"],  # voitures
+        ["🐟", "🐠"],  # poissons
+    ]
+
+    base, intrus = random.choice(groupes)
+    intrus_present = random.choice([True, False])
+
+    if intrus_present:
+        emojis = [base] * 8 + [intrus]
+        random.shuffle(emojis)
+    else:
+        emojis = [base] * 9
+
+    view = EmojiBoutons(vrai_reponse=intrus_present)
+    await interaction.followup.send(
+        f"👀 Clique sur ✅ si tous les emojis sont pareils, ❌ si tu vois un intrus :\n"
+        f"{''.join(emojis)}",
+        view=vie
+        w
+        )
 
 
 
