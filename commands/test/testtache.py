@@ -334,8 +334,7 @@ async def lancer_emoji9(interaction):
     await interaction.followup.send(
         f"👀 Clique sur ✅ si tous les emojis sont pareils, ❌ si tu vois un intrus :\n"
         f"{''.join(emojis)}",
-        view=vie
-        w
+        view=view
         )
 
 
