@@ -302,14 +302,14 @@ class EmojiBoutons(discord.ui.View):
         self.vrai_reponse = vrai_reponse
         self.repondu = False
 
-    @discord.ui.button(label="✅", style=discord.ButtonStyle.success)
+    @discord.ui.button(label="✅ Oui", style=discord.ButtonStyle.success)
     async def bouton_vrai(self, interaction: discord.Interaction, button: discord.ui.Button):
         if self.repondu:
             return
         self.repondu = True
         await self.verifie(interaction, True)
 
-    @discord.ui.button(label="❌", style=discord.ButtonStyle.danger)
+    @discord.ui.button(label="❌ Non", style=discord.ButtonStyle.danger)
     async def bouton_faux(self, interaction: discord.Interaction, button: discord.ui.Button):
         if self.repondu:
             return
@@ -318,51 +318,38 @@ class EmojiBoutons(discord.ui.View):
 
     async def verifie(self, interaction, reponse):
         if reponse == self.vrai_reponse:
-            await interaction.response.send_message(f"✅ Bonne réponse !", ephemeral=True)
+            await interaction.response.send_message("✅ Bonne réponse !", ephemeral=True)
         else:
-            await interaction.response.send_message(f"❌ Mauvaise réponse !", ephemeral=True)
+            await interaction.response.send_message("❌ Mauvaise réponse !", ephemeral=True)
         self.stop()
 
 async def lancer_emoji9(interaction):
     groupes = [
-        ["🍎", "🍌"],  # pomme / banane
-        ["☁️", "🔥"],  # nuage / feu
-        ["☘️", "🌵"],  # trèfle / cactus
-        ["🌺", "🪷"],  # fleur / lotus
-        ["👜", "👠"],  # sac / chaussure
-        ["🐶", "🐍"],  # chien / serpent
-        ["🍞", "🍕"],  # pain / pizza
-        ["🚗", "🚀"],  # voiture / fusée
-        ["🐟", "🦖"],  # poisson / dinosaure
-        ["📘", "🧃"],  # livre / jus
-        ["💡", "🧱"],  # ampoule / brique
+        ["🍎", "🍌"], ["☁️", "🔥"], ["☘️", "🌵"], ["🌺", "🪷"], ["👜", "👠"],
+        ["🐶", "🐍"], ["🍞", "🍕"], ["🚗", "🚀"], ["🐟", "🦖"], ["📘", "🧃"], ["💡", "🧱"]
     ]
 
-    # Choisir un groupe et décider s'il y a un intrus ou pas
     base, intrus = random.choice(groupes)
-    y_a_intrus = random.choice([True, False])  # 50% de chance
+    y_a_intrus = random.choice([True, False])
 
     if y_a_intrus:
-        # Met 8 fois la base, 1 fois l'intrus à une position aléatoire
         emojis = [base] * 9
-        pos_intrus = random.randint(0, 8)
-        emojis[pos_intrus] = intrus
+        emojis[random.randint(0, 8)] = intrus
         random.shuffle(emojis)
     else:
-        # Tous les emojis sont identiques
         emojis = [base] * 9
 
-    ligne = ""
-    for i in range(9):
-        ligne += emojis[i]
-        if (i + 1) % 3 == 0:
-            ligne += "\n"
+    ligne = "".join(emojis)
 
-    await interaction.followup.send(
-        content="🔎 Une seule réponse : Est-ce qu'un des emojis est **différent** des autres ?",
-        view=EmojiBoutons(y_a_intrus)
+    embed = discord.Embed(
+        title="🔎 Tous identiques ?",
+        description="Appuie sur ✅ si **tous** les emojis sont identiques,\n❌ sinon.",
+        color=discord.Color.orange()
     )
-    await interaction.followup.send(f"```\n{ligne}```")
+
+    await interaction.followup.send(embed=embed, view=EmojiBoutons(not y_a_intrus))
+    await interaction.followup.send(ligne)
+
 
 
 
