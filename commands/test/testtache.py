@@ -19,7 +19,7 @@ import random
 # ────────────────────────────────────────────────────────────────────────────────
 TACHES = {
     "Quiz Bleach": "quiz",
-    "Code Hollow": "code",
+    "Code": "code",
     "Séquence emoji": "emoji",
     "Réflexe rapide": "reflexe",
     "Séquence fléchée": "fleche",
@@ -27,13 +27,12 @@ TACHES = {
 }
 
 # ────────────────────────────────────────────────────────────────────────────────
-# 🧩 Mots possibles pour Code Hollow
+# 🧩 Mots possibles pour Code
 # ────────────────────────────────────────────────────────────────────────────────
-MOTS_HOLLOW = [
-    "hollow", "espada", "zanpakuto", "quincy", "shinigami",
-    "bankai", "ressureccion", "aizen", "kido", "mask",
-    "vasto", "adjuchas", "menos", "karakura", "kyoka",
-    "hisagi", "gin", "ulquiorra", "barragan", "hueco"
+MOTS_CODE = [
+    "hollow", "shinigami", "quincy", "zanpakuto", 
+    "shikai", "bankai", "kido", "shunpo", 
+    "karakura", "vizard", "capitaine", "reiatsu"
 ]
 
 # ────────────────────────────────────────────────────────────────────────────────
@@ -96,7 +95,7 @@ async def lancer_quiz(interaction):
 # ────────────────────────────────────────────────────────────────────────────────
 
 async def lancer_code(interaction):
-    mot = random.choice(MOTS_HOLLOW)
+    mot = random.choice(MOTS_CODE)
     lettres = list(mot)
     indices_manquants = random.sample(range(len(lettres)), k=min(3, len(mot)//2))
     mot_code = ''.join('_' if i in indices_manquants else c.upper() for i, c in enumerate(lettres))
@@ -114,6 +113,8 @@ async def lancer_code(interaction):
             await interaction.followup.send(f"❌ Mauvais mot {msg.author.mention}.")
     except asyncio.TimeoutError:
         await interaction.followup.send("⌛ Trop tard.")
+
+# ────────────────────────────────────────────────────────────────────────────────
 
 async def lancer_emoji(interaction):
     pool = ["💀", "🌀", "🔥", "🌪️", "🌟", "🍥", "🍡", "🧊", "❄️", "💨"]
