@@ -327,7 +327,9 @@ async def lancer_emoji9(interaction):
     groupes = [
         ["🍎", "🍅"], ["☁️", "🌥️"], ["☘️", "🍀"], ["🌺", "🌸"], 
         ["👜", "💼"], ["🌹", "🌷"], ["🤞", "✌️"], ["✊", "👊"], 
-        ["😕", "😐"], ["🌟", "⭐"], ["🦝", "🐨"]
+        ["😕", "😐"], ["🌟", "⭐"], ["🦝", "🐨"], [":lock:", ":unlock:"], 
+        [":medal:", ":first_place:"], [":cloud_rain:", ":cloud_snow: "], [":tiger2:", ":leopard:"], [":see_no_evil:", ":speak_no_evil:"], 
+        [":whale:", ":whale2:"], [":turtle:", ":crocodile:"]
             ]
 
     base, intrus = random.choice(groupes)
