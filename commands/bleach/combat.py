@@ -53,7 +53,7 @@ class CombatCommand(commands.Cog):
             elif p["status"] == "poison":
                 statut = f"☠️ Empoisonné ({p['status_duree']} tours)"
             else:
-                statut = "👌"
+                statut = "Aucun effet"
             return f"{p['nom']} — {coeur} | {batterie} | {statut}"
 
         try:
@@ -71,8 +71,6 @@ class CombatCommand(commands.Cog):
                 p["status_duree"] = 0
                 for atk in p["attaques"]:
                     atk["utilisé"] = False
-                    p["bouclier"] = False  # Bouclier inactif par défaut
-
 
             p1_init = p1["stats"]["mobilité"] + random.randint(0, 10)
             p2_init = p2["stats"]["mobilité"] + random.randint(0, 10)
@@ -146,43 +144,18 @@ class CombatCommand(commands.Cog):
                         else:
                             log += f"⚡ {defenseur['nom']} voulait esquiver mais manque d'énergie !\n"
 
-
-                
-                    effet = attaque.get("effet", "").lower()
-
-                    # Gérer le soin
-                    if effet == "soin":
-                        soin = min(30 + attaquant["stats"]["reiatsu"] // 2, 50)
-                        attaquant["vie"] = min(attaquant["vie"] + soin, 100)
-                        attaquant["energie"] -= attaque["cout"]
-                        log += f"💖 {attaquant['nom']} utilise **{attaque['nom']}** et se soigne de {soin} PV !\n\n"
-                        continue
-
-                    # Gérer le bouclier
-                    if effet == "bouclier":
-                        attaquant["bouclier"] = True
-                        attaquant["energie"] -= attaque["cout"]
-                        log += f"🛡️ {attaquant['nom']} utilise **{attaque['nom']}** et se protège ! (Demi-dégâts pendant 1 tour)\n\n"
-                        continue
-
-                    # Calcul des dégâts (attaque normale ou à effet secondaire)
-                    base = attaque.get("degats", 0)
+                    base = attaque["degats"]
                     bonus = (
                         attaquant["stats"]["attaque"]
                         + attaquant["stats"]["force"]
-                        - defenseur["stats"]["defense"]  # <-- correction ici : defense au lieu de défense
+                        - defenseur["stats"]["défense"]
                         + attaquant["stats"]["pression"] // 5
                     )
                     total = base + max(0, bonus)
 
                     if random.random() < min(0.1 + attaquant["stats"]["force"] / 50, 0.4):
                         total = int(total * 1.5)
-                        log += "💥 Coup critique !\n"
-
-                    if "bouclier" in defenseur and defenseur["bouclier"]:
-                        total = total // 2
-                        log += "🛡️ Bouclier actif : dégâts réduits de moitié !\n"
-                        defenseur["bouclier"] = False  # effet consommé
+                        log += "💥 Coup critique !"
 
                     defenseur["vie"] -= total
                     attaquant["energie"] -= attaque["cout"]
@@ -205,15 +178,6 @@ class CombatCommand(commands.Cog):
                         defenseur["status"] = "poison"
                         defenseur["status_duree"] = 3
                         log += f"☠️ {defenseur['nom']} est empoisonné !\n"
-
-                    elif effet == "soin":
-                        soin = min(30 + attaquant["stats"]["reiatsu"] // 2, 50)
-                        attaquant["vie"] = min(attaquant["vie"] + soin, 100)
-                        log += f"💖 {attaquant['nom']} se soigne de {soin} PV !\n"
-                    elif effet == "bouclier":
-                        attaquant["bouclier"] = True
-                        log += f"🛡️ {attaquant['nom']} est protégé ! (Demi-dégâts ce tour)\n"
-
 
                     if defenseur["vie"] <= 0:
                         log += f"\n🏆 **{attaquant['nom']} remporte le combat par KO !**"
