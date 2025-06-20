@@ -53,7 +53,7 @@ class CombatCommand(commands.Cog):
             elif p["status"] == "poison":
                 statut = f"☠️ Empoisonné ({p['status_duree']} tours)"
             else:
-                statut = "Aucun effet"
+                statut = "❌"
             return f"{p['nom']} — {coeur} | {batterie} | {statut}"
 
         try:
