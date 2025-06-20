@@ -76,7 +76,7 @@ class CombatCommand(commands.Cog):
             p2_init = p2["stats"]["mobilité"] + random.randint(0, 10)
             tour_order = [p1, p2] if p1_init >= p2_init else [p2, p1]
 
-            log = f"⚔️ **{p1['nom']} contre {p2['nom']} !**\n\n"
+            log = f"**{p1['nom']} contre {p2['nom']} !**\n\n"
 
             for tour in range(1, 6):
                 log += f"**🌀─────── Tour {tour} ───────🌀**\n"
