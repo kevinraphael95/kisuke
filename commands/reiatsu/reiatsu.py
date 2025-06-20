@@ -39,7 +39,20 @@ class ReiatsuCommand(commands.Cog):
         points = data.data[0]["points"] if data.data else 0
 
         # 🖊️ Affichage du résultat
-        await ctx.send(f"💠 {user.mention} a **{points}** points de Reiatsu.")
+        embed = discord.Embed(
+            title="💠 Score de Reiatsu",
+            description=f"{user.mention} a **{points}** points de Reiatsu.",
+            color=user.color if user.color.value != 0 else discord.Color.blue()
+        )
+        embed.set_thumbnail(url=user.avatar.url)
+
+        embed.set_footer(text=f"Demandé par {ctx.author.display_name}", icon_url=ctx.author.avatar.url)
+        embed.timestamp = ctx.message.created_at
+
+        await ctx.send(embed=embed)
+
+
+
 
     # 🏷️ Attribution de la catégorie
     def cog_load(self):
