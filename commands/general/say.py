@@ -26,12 +26,9 @@ class SayCommand(commands.Cog):
         # 🧽 Tente de supprimer le message original
         try:
             await ctx.message.delete()
-        except discord.Forbidden:
-            await ctx.send("❌ Je n'ai pas la permission de supprimer le message.")
-            return
-        except discord.HTTPException:
-            await ctx.send("⚠️ Une erreur est survenue lors de la suppression du message.")
-            return
+        except (discord.Forbidden, discord.HTTPException):
+            pass  # Ignore l'erreur silencieusement
+
 
         # 📢 Le bot répète le message
         await ctx.send(message)
