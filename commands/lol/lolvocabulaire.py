@@ -92,6 +92,7 @@ class VocabulaireLoL(commands.Cog):
         help="Cherche un terme du lexique League of Legends.",
         description="Ex : !voc adc ou !voc jgl — Sans argument, affiche tout le lexique."
     )
+    @commands.cooldown(rate=1, per=3, type=commands.BucketType.user)
     async def voc(self, ctx: commands.Context, *, terme: str = None):
         """Commande principale pour consulter un terme ou l'intégralité du lexique."""
         try:
