@@ -63,6 +63,7 @@ class AstucesLoL(commands.Cog):
         help="Affiche une astuce LoL aléatoire avec un bouton pour en changer.",
         description="Ex : !astuce — Affiche une astuce aléatoire, et tu peux cliquer sur le bouton pour une autre."
     )
+    @commands.cooldown(rate=1, per=3, type=commands.BucketType.user)
     async def astuce(self, ctx: commands.Context):
         """Commande principale avec bouton interactif."""
         try:
