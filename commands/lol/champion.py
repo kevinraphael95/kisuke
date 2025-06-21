@@ -10,6 +10,7 @@ import discord
 from discord.ext import commands
 from discord.ui import View, Select
 import aiohttp
+import traceback
 
 # 📂 API URLs
 DD_VERSION = "13.6.1"
@@ -41,11 +42,17 @@ class ChampData:
 
     @classmethod
     async def load_ugg(cls, key):
-        async with aiohttp.ClientSession() as s:
-            async with s.get(UGG_API_URL.format(champ=key.lower())) as r:
-                if r.status == 200:
-                    return (await r.json())[0]
-                return {}
+        try:
+            async with aiohttp.ClientSession() as s:
+                async with s.get(UGG_API_URL.format(champ=key.lower())) as r:
+                    if r.status == 200:
+                        data = await r.json()
+                        return data[0] if data else {}
+                    print(f"UGG API error {r.status} for {key}")
+                    return {}
+        except Exception as e:
+            print(f"[ERREUR UGG API] {e}")
+            return {}
 
 # 🎛️ UI — Étape 1 : Sélection du champion
 class ChampionSelectView(View):
@@ -53,15 +60,17 @@ class ChampionSelectView(View):
         super().__init__(timeout=120)
         self.bot = bot
         self.champs = []
+
+    async def setup(self):
+        await ChampData.load_list()
         self.add_item(ChampionSelect(self))
 
 class ChampionSelect(Select):
     def __init__(self, parent):
         self.parent = parent
-        super().__init__(placeholder="Sélectionne un champion", options=[])
-    async def on_ready(self):
-        await ChampData.load_list()
-        self.options = [discord.SelectOption(label=k, value=k) for k in sorted(ChampData.champions.keys())][:25]
+        options = [discord.SelectOption(label=k, value=k) for k in sorted(ChampData.champions.keys())][:25]
+        super().__init__(placeholder="Sélectionne un champion", options=options)
+
     async def callback(self, interaction):
         champ = self.values[0]
         champ_data = await ChampData.load_champ(champ)
@@ -84,27 +93,34 @@ class PageSelect(Select):
         opts = ["Passif", "Sorts", "Build", "Runes", "Conseils"]
         self.options = [discord.SelectOption(label=o, value=o.lower()) for o in opts]
         super().__init__(placeholder="Choisis une page", options=self.options)
+
     async def callback(self, interaction):
         data = self.parent.champ_data
         ugg = self.parent.champ_ugg
         page = self.values[0]
         embed = discord.Embed(title=f"{data['name']} — {page.capitalize()}", color=discord.Color.blue())
+
         if page == "passif":
             p = data["passive"]
             embed.set_thumbnail(url=f"https://ddragon.leagueoflegends.com/cdn/{DD_VERSION}/img/passive/{p['image']['full']}")
             embed.add_field(name=p["name"], value=p["description"], inline=False)
+
         elif page == "sorts":
             for spell in data["spells"]:
                 embed.add_field(name=spell["name"], value=spell["description"], inline=False)
+
         elif page == "build":
-            items = ugg.get("coreItems", [])
-            embed.description = "\n".join(f"• {i}" for i in items) or "N/A"
+            items = ugg.get("coreItems") or []
+            embed.description = "\n".join(f"• {i}" for i in items) or "Aucun build trouvé."
+
         elif page == "runes":
-            runes = ugg.get("runes", [])
-            embed.description = "\n".join(f"• {r}" for r in runes) or "N/A"
-        else:  # conseils
-            tips = ugg.get("notes", []) or ["Pas de conseils disponibles."]
+            runes = ugg.get("runes") or []
+            embed.description = "\n".join(f"• {r}" for r in runes) or "Aucune rune trouvée."
+
+        elif page == "conseils":
+            tips = ugg.get("notes") or ["Pas de conseils disponibles."]
             embed.description = "\n".join(f"• {t}" for t in tips)
+
         await interaction.response.edit_message(embed=embed, view=self.parent)
 
 # 🧠 Cog principal
@@ -120,11 +136,11 @@ class ChampionAPI(commands.Cog):
     async def champion(self, ctx: commands.Context):
         try:
             view = ChampionSelectView(self.bot)
-            await ChampData.load_list()
+            await view.setup()
             await ctx.send("Sélectionne un champion :", view=view)
         except Exception as e:
-            print(f"[ERREUR !champion] {e}")
-            await ctx.send("❌ Une erreur est survenue lors de la récupération des données.")
+            print(f"[ERREUR !champion]\n{traceback.format_exc()}")
+            await ctx.send("❌ Une erreur interne est survenue. Merci de réessayer plus tard.")
 
 # 🔌 Setup du Cog
 async def setup(bot: commands.Bot):
