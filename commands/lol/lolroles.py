@@ -79,6 +79,7 @@ class RoleCommand(commands.Cog):
         help="Affiche les rôles LoL via un menu interactif.",
         description="Affiche les rôles jouables dans LoL et leur description (Tank, Mage, ADC, etc.)."
     )
+    @commands.cooldown(rate=1, per=3, type=commands.BucketType.user)
     async def role(self, ctx: commands.Context):
         """Commande principale avec menu déroulant des rôles."""
         try:
