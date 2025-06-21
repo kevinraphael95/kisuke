@@ -131,5 +131,5 @@ async def setup(bot: commands.Bot):
     cog = ChampionAPI(bot)
     for cmd in cog.get_commands():
         if not hasattr(cmd, "category"):
-            cmd.category = "Lol"
+            cmd.category = "LoL"
     await bot.add_cog(cog)
