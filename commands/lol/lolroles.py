@@ -75,7 +75,7 @@ class RoleCommand(commands.Cog):
         self.bot = bot
 
     @commands.command(
-        name="role",
+        name="lolroles",
         help="Affiche les rôles LoL via un menu interactif.",
         description="Affiche les rôles jouables dans LoL et leur description (Tank, Mage, ADC, etc.)."
     )
