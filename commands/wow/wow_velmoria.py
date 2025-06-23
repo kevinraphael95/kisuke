@@ -101,13 +101,12 @@ class VelmoriaCommand(commands.Cog):
             await ctx.send("❌ Impossible de récupérer les infos.")
 
 
-
 # ────────────────────────────────────────────────────────────────────────────────
 # 🔌 Setup du Cog
 # ────────────────────────────────────────────────────────────────────────────────
 async def setup(bot: commands.Bot):
     cog = VelmoriaCommand(bot)
     for command in cog.get_commands():
-        command.category = "WoW"
+        if not hasattr(command, "category"):
+            command.category = "WoW"
     await bot.add_cog(cog)
-    print("✅ Cog chargé : VelmoriaCommand (catégorie = WoW)")
