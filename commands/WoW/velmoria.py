@@ -100,8 +100,14 @@ class VelmoriaCommand(commands.Cog):
             print(f"[ERREUR velmoria] {e}")
             await ctx.send("❌ Impossible de récupérer les infos.")
 
+
+
 # ────────────────────────────────────────────────────────────────────────────────
 # 🔌 Setup du Cog
 # ────────────────────────────────────────────────────────────────────────────────
 async def setup(bot: commands.Bot):
-    await bot.add_cog(VelmoriaCommand(bot))
+    cog = VelmoriaCommand(bot)
+    for command in cog.get_commands():
+        command.category = "WoW"
+    await bot.add_cog(cog)
+    print("✅ Cog chargé : VelmoriaCommand (catégorie = WoW)")
