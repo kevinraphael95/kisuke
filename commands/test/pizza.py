@@ -10,6 +10,7 @@
 # ────────────────────────────────────────────────────────────────────────────────
 import discord
 from discord.ext import commands
+from discord.ui import View, button
 import json
 import os
 import random
@@ -23,6 +24,35 @@ def load_data():
     """Charge les options de pizza depuis le fichier JSON."""
     with open(DATA_JSON_PATH, "r", encoding="utf-8") as f:
         return json.load(f)
+
+# ────────────────────────────────────────────────────────────────────────────────
+# 🎛️ Vue avec bouton "🍕 Nouvelle pizza"
+# ────────────────────────────────────────────────────────────────────────────────
+class PizzaView(View):
+    """Vue contenant un bouton pour générer une nouvelle pizza."""
+    def __init__(self, data):
+        super().__init__(timeout=60)
+        self.data = data
+
+    @button(label="🍕 Nouvelle pizza", style=discord.ButtonStyle.green)
+    async def nouvelle_pizza(self, interaction: discord.Interaction, button: discord.ui.Button):
+        pate = random.choice(self.data["pates"])
+        base = random.choice(self.data["bases"])
+        fromage = random.choice(self.data["fromages"])
+        garnitures = random.sample(self.data["garnitures"], k=2)
+        toppings = random.sample(self.data["toppings_speciaux"], k=1)
+
+        embed = discord.Embed(
+            title="🍕 Ta pizza aléatoire",
+            color=discord.Color.orange()
+        )
+        embed.add_field(name="Pâte", value=pate, inline=False)
+        embed.add_field(name="Base (sauce)", value=base, inline=False)
+        embed.add_field(name="Fromage", value=fromage, inline=False)
+        embed.add_field(name="Garnitures", value=", ".join(garnitures), inline=False)
+        embed.add_field(name="Toppings spéciaux", value=", ".join(toppings), inline=False)
+
+        await interaction.response.edit_message(embed=embed, view=self)
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🧠 Cog principal
@@ -63,7 +93,8 @@ class PizzaAleatoire(commands.Cog):
             embed.add_field(name="Garnitures", value=", ".join(garnitures), inline=False)
             embed.add_field(name="Toppings spéciaux", value=", ".join(toppings), inline=False)
 
-            await ctx.send(embed=embed)
+            view = PizzaView(data)
+            await ctx.send(embed=embed, view=view)
 
         except Exception as e:
             print(f"[ERREUR pizza] {e}")
