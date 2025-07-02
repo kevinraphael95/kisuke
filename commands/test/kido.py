@@ -38,6 +38,7 @@ class Kido(commands.Cog):
         help="🎼 Lance un sort de Kidō ! Syntaxe : `!!kido <type> <numéro>`",
         description="Exemple : `!!kido bakudo 61`"
     )
+    @commands.cooldown(rate=1, per=3, type=commands.BucketType.user)  # 🧊 Anti-spam : 3 secondes
     async def kido(self, ctx, type_kido: str.lower, numero: int):
         try:
             data = load_kido_data()
