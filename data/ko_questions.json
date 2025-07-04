@@ -1,23 +1,15 @@
 {
   "Questions": {
-
-
-
-
-“1” : { “date” : “2021.01.18”,
-
-“question” : “Could you tell us if there was any music, for instance, which became the basis for the image of each character in BTW?”,
-
-“réponse” : “I’ll write about it in the set list section at some point.” }
-
-“2” : { “date” : “2021.01.18”,
-
-“question” : “How can I be a mangaka for Shueisha?”,
-
-“réponse” : “You can make a submission to Jump-mangasho. All Jump editors can speak English.” }
-
-
-
+    "1": {
+      "date": "2021.01.18",
+      "question": "Could you tell us if there was any music, for instance, which became the basis for the image of each character in BTW?",
+      "réponse": "I’ll write about it in the set list section at some point."
+    },
+    "2": {
+      "date": "2021.01.18",
+      "question": "How can I be a mangaka for Shueisha?",
+      "réponse": "You can make a submission to Jump-mangasho. All Jump editors can speak English."
+    },
     "3": {
       "date": "2021.01.18",
       "question": "Could you give us the details around how you came up with the word “Bankai”?",
@@ -57,10 +49,7 @@
       "date": "2021.01.18",
       "question": "Regarding Gin, rather than a Kyoto dialect, is that an Osaka dialect with a touch of Kyoto?",
       "réponse": "That’s correct."
-    }
-
-{
-  "Questions": {
+    },
     "11": {
       "date": "2021.01.25",
       "question": "I would like to know what it was that Renji wanted to hear from Urahara-san after turning up in the Human World during the Arrancar Arrival arc, even going so far as to do chores for him!",
@@ -111,62 +100,5 @@
       "question": "When I was reading “BURN THE WITCH”, I very often got the impression that Noel was always positioned on the left and Ninny on the right, but I wonder if there’s any significance behind this positional relationship…!?",
       "réponse": "In order to generate an impression of the characters with a limited number of pages, I did this as a sort of staging effect in the sense that ‘a character’s traits are incorporated in their stance.’ You have a good eye…."
     }
-  
-    "21": {
-      "date": "2021.02.01",
-      "question": "I believe each squad was assigned a color, I once tried to identify the location of squad barracks based on those colors. Since there are 4 gates associated with a particular color, I thought of Shōryūmon as Seiryū (east - blue), Shuwaimon as Suzaku (south - red), Hakutōmon as Byakko (west - white), Kokuryōmon as Genbu (north - black). As I recall, the townscape was circular so I tried to arrange the colors of each squad with the ‘Yellow Emperor’ as the centre and it turned out as follows. I suspect it might be in this circular arrangement: starting from Shōryūmon with 6, 1, 11, 8, then from Shuwaimon with 13, 4, 2, from Hakutōmon with 3, 5, 9, and finally from Kokuryōmon with 7, 10, 12. Moreover, I’m awfully curious about the actual line up because it is Ichimaru-san from Squad 3 who interrupted the gatekeeper of Hakutōmon, and the three individuals who turned traitor are situated close together. Is there any established blueprint for the placement of squad barracks within Sensei’s mind?",
-      "réponse": "I can’t say for sure without seeing an illustration but judging by what I just read, I think this is very insightful."
-    },
-    "22": {
-      "date": "2021.02.01",
-      "question": "Are there any manga, anime, dramas, movies, etc. (other than Kubo-sensei’s own works) that as a reader or viewer make you think “this work is amazing!” or “I want you to read/watch that!”?",
-      "réponse": "My favourite program of the past few years has been Netflix’s “The Final Table.” It’s a cooking competition show, but I think it’s the pinnacle of Shōnen manga style cooking battles."
-    },
-    "23": {
-      "date": "2021.02.01",
-      "question": "What is your favorite Hiroshima specialty?",
-      "réponse": "Cream cheese momiji* and plain momiji with chunky sweet red bean paste. (*Momiji manjū are maple leaf shaped sweets.)"
-    },
-    "24": {
-      "date": "2021.02.01",
-      "question": "I would like to know what kind of work tools you use!",
-      "réponse": "I don’t really have many special tools because I’m not that particular about them … if it’s okay, I’ll post a photo soon."
-    },
-    "25": {
-      "date": "2021.02.01",
-      "question": "I’ve read in some articles before that the series consists of arcs mainly focused on members of Ichigo’s entourage like with Rukia’s rescue arc, the Arrancar arc, the Fullbring arc and the Quincy arc. Was this structure something decided upon by Kubo-sensei from the very beginning of the series?",
-      "réponse": "That’s right. I was drawing while wondering if I could continue the series until I reached Uryū."
-    },
-    "26": {
-      "date": "2021.02.01",
-      "question": "Izuru-kun’s Zanpakutō is Wabisuke and Wabisuke is the name of a type of camellia. Does the theory that the reason why there are multiple scenes within the story where he decapitates his opponent, have its origins in the fact that the camellia is likened to a head and is described as falling?",
-      "réponse": "That’s correct. I thought everyone would take notice about the Wabisuke camellia but at the time it wasn’t really picked up on that much."
-    },
-    "27": {
-      "date": "2021.02.01",
-      "question": "What is your favourite Pokémon?",
-      "réponse": "I’ve never played Pokémon so I haven’t the slightest clue."
-    },
-    "28": {
-      "date": "2021.02.08",
-      "question": "Does sensei decide the contents, continuity elements and general flow of novelized works like “BLEACH WE DO knot ALWAYS LOVE YOU” and “BLEACH Can’t Fear Your Own World”?",
-      "réponse": "I was the one who passed on the contents and details affecting continuity, I left its portrayal up to the two authors. Whenever they happened upon a part they didn’t quite understand along the way, they would also come to consult with me."
-    },
-    "29": {
-      "date": "2021.02.08",
-      "question": "When is the collaboration between sensei and THE BACK HORN?!",
-      "réponse": "I’d like to do that with the Thousand-Year Blood War arc."
-    },
-    "30": {
-      "date": "2021.02.08",
-      "question": "Please give us details about the iPad you use at work!",
-      "réponse": "It’s a regular iPad with a larger screen."
-    }
-  
-
-
-
-
   }
 }
-
