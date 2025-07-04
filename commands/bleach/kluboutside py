@@ -1,0 +1,81 @@
+# ────────────────────────────────────────────────────────────────────────────────
+# 📌 kluboutside.py — Commande !kluboutside / !ko
+# Objectif : Afficher une question Klub Outside avec numéro
+# Catégorie : KlubOutside
+# Accès : Public
+# ────────────────────────────────────────────────────────────────────────────────
+
+# 📦 Imports nécessaires
+import discord
+from discord.ext import commands
+import json
+import os
+
+# 📂 Chargement des données Klub Outside
+KO_DATA_PATH = os.path.join("data", "ko.json")
+KO_IMAGE_DIR = os.path.join("data", "koimages")
+
+def load_ko_data():
+    with open(KO_DATA_PATH, "r", encoding="utf-8") as f:
+        return json.load(f)
+
+# 🧠 Cog principal
+class KlubOutside(commands.Cog):
+    """
+    Commande !kluboutside — Affiche une question Klub Outside par numéro
+    """
+    def __init__(self, bot):
+        self.bot = bot
+
+    @commands.command(
+        name="kluboutside",
+        aliases=["ko"],
+        help="📓 Affiche une question Klub Outside par son numéro.",
+        description="Utilise : `!ko <numéro>`"
+    )
+    async def kluboutside(self, ctx: commands.Context, numero: int):
+        try:
+            data = load_ko_data()
+            questions = data.get("Questions", {})
+
+            entry = questions.get(str(numero))
+            if not entry:
+                await ctx.send(f"❌ Aucune question trouvée pour le numéro {numero}.")
+                return
+
+            date = entry.get("date", "Inconnue")
+            question = entry.get("question", "*Non précisée*")
+            reponse = entry.get("réponse", "*Aucune réponse*")
+
+            embed = discord.Embed(
+                title=f"📘 Question Klub Outside n°{numero}",
+                color=discord.Color.green()
+            )
+            embed.add_field(name="📅 Date", value=date, inline=False)
+            embed.add_field(name="❓ Question", value=question, inline=False)
+            embed.add_field(name="💬 Réponse", value=reponse, inline=False)
+
+            # 📷 Vérifie si une image existe pour cette question
+            for ext in ["png", "jpg", "jpeg", "webp"]:
+                image_path = os.path.join(KO_IMAGE_DIR, f"ko{numero}.{ext}")
+                if os.path.exists(image_path):
+                    file = discord.File(image_path, filename=f"ko{numero}.{ext}")
+                    embed.set_image(url=f"attachment://ko{numero}.{ext}")
+                    await ctx.send(embed=embed, file=file)
+                    return
+
+            await ctx.send(embed=embed)
+
+        except FileNotFoundError:
+            await ctx.send("❌ Le fichier `ko.json` est introuvable.")
+        except Exception as e:
+            await ctx.send(f"⚠️ Erreur : `{e}`")
+
+# 🔌 Setup du cog
+async def setup(bot: commands.Bot):
+    cog = KlubOutside(bot)
+    for command in cog.get_commands():
+        if not hasattr(command, "category"):
+            command.category = "KlubOutside"
+    await bot.
+add_cog(cog)
