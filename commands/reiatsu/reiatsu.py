@@ -3,7 +3,7 @@
 # ──────────────────────────────────────────────────────────────
 
 # ──────────────────────────────────────────────────────────────
-# IMPORTS 
+# IMPORTS
 # ──────────────────────────────────────────────────────────────
 import discord
 from discord.ext import commands
@@ -19,68 +19,70 @@ class ReiatsuCommand(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
 
-# ──────────────────────────────────────────────────────────────
-# COMMANDE PRINCIPALE 
-# ──────────────────────────────────────────────────────────────
-@commands.command(
-    name="reiatsu",
-    aliases=["rts"],
-    help="💠 Affiche le score de Reiatsu d’un membre (ou soi-même)."
-)
-@commands.cooldown(rate=1, per=3, type=commands.BucketType.user)
-async def reiatsu(self, ctx: commands.Context, member: discord.Member = None):
-    user = member or ctx.author
-    user_id = str(user.id)
-    guild_id = str(ctx.guild.id)
-
-    data = supabase.table("reiatsu") \
-                   .select("points") \
-                   .eq("user_id", user_id) \
-                   .execute()
-    points = data.data[0]["points"] if data.data else 0
-
-    embed = discord.Embed(
-        title="💠 Score de Reiatsu",
-        description=f"{user.mention} a **{points}** points de Reiatsu.",
-        color=user.color if user.color.value != 0 else discord.Color.blue()
+    # ──────────────────────────────────────────────────────────────
+    # COMMANDE PRINCIPALE
+    # ──────────────────────────────────────────────────────────────
+    @commands.command(
+        name="reiatsu",
+        aliases=["rts"],
+        help="💠 Affiche le score de Reiatsu d’un membre (ou soi-même)."
     )
-    embed.set_thumbnail(url=user.avatar.url)
-    embed.set_footer(text=f"Demandé par {ctx.author.display_name}", icon_url=ctx.author.avatar.url)
-    embed.timestamp = ctx.message.created_at
+    @commands.cooldown(rate=1, per=3, type=commands.BucketType.user)
+    async def reiatsu(self, ctx: commands.Context, member: discord.Member = None):
+        user = member or ctx.author
+        user_id = str(user.id)
+        guild_id = str(ctx.guild.id)
 
-    msg = await ctx.send(embed=embed)
+        # Récupération des points
+        data = supabase.table("reiatsu") \
+                       .select("points") \
+                       .eq("user_id", user_id) \
+                       .execute()
+        points = data.data[0]["points"] if data.data else 0
 
-    # Envoie direct des infos supplémentaires
-    await self.send_reiatsu_channel(ctx)
-    await self.send_reiatsu_timer(ctx)
-
-    # Ajout réaction uniquement pour le classement
-    emoji = "📊"
-    await msg.add_reaction(emoji)
-
-    def check(reaction, user_react):
-        return (
-            reaction.message.id == msg.id
-            and user_react.id == ctx.author.id
-            and str(reaction.emoji) == emoji
+        # Embed principal
+        embed = discord.Embed(
+            title="💠 Score de Reiatsu",
+            description=f"{user.mention} a **{points}** points de Reiatsu.",
+            color=user.color if user.color.value != 0 else discord.Color.blue()
         )
+        embed.set_thumbnail(url=user.avatar.url)
+        embed.set_footer(text=f"Demandé par {ctx.author.display_name}", icon_url=ctx.author.avatar.url)
+        embed.timestamp = ctx.message.created_at
 
-    try:
-        reaction, _ = await self.bot.wait_for("reaction_add", timeout=60.0, check=check)
-        await msg.remove_reaction(reaction.emoji, ctx.author)
-        await self.send_reiatsu_top(ctx)
-    except Exception:
-        pass  # Timeout ou erreur silencieuse
+        msg = await ctx.send(embed=embed)
 
-                
-# ──────────────────────────────────────────────────────────────
-# MÉTHODES SECONDAIRES
-# ──────────────────────────────────────────────────────────────
+        # Ajout d'une réaction (pour afficher le classement)
+        emoji = "📊"
+        await msg.add_reaction(emoji)
+
+        # Envoie les informations secondaires (sans réaction)
+        await self.send_reiatsu_channel(ctx)
+        await self.send_reiatsu_timer(ctx)
+
+        # Gestion de la réaction
+        def check(reaction, user_react):
+            return (
+                reaction.message.id == msg.id
+                and user_react.id == ctx.author.id
+                and str(reaction.emoji) == emoji
+            )
+
+        try:
+            reaction, _ = await self.bot.wait_for("reaction_add", timeout=60.0, check=check)
+            await msg.remove_reaction(reaction.emoji, ctx.author)
+            await self.send_reiatsu_top(ctx)
+        except Exception:
+            pass  # Timeout ou erreur silencieuse
+
+    # ──────────────────────────────────────────────────────────────
+    # MÉTHODES SECONDAIRES
+    # ──────────────────────────────────────────────────────────────
+
     # 📍 Affiche le salon Reiatsu configuré
     async def send_reiatsu_channel(self, ctx):
         guild_id = str(ctx.guild.id)
         data = supabase.table("reiatsu_config").select("channel_id").eq("guild_id", guild_id).execute()
-
         if data.data:
             channel_id = int(data.data[0]["channel_id"])
             channel = self.bot.get_channel(channel_id)
@@ -118,6 +120,7 @@ async def reiatsu(self, ctx: commands.Context, member: discord.Member = None):
 
         delay = conf.get("delay_minutes", 1800)
         last_spawn_str = conf.get("last_spawn_at")
+
         if not last_spawn_str:
             await ctx.send("💠 Un Reiatsu peut apparaître **à tout moment** !")
             return
@@ -133,10 +136,7 @@ async def reiatsu(self, ctx: commands.Context, member: discord.Member = None):
             seconds = remaining % 60
             await ctx.send(f"⏳ Le prochain Reiatsu est attendu dans **{minutes}m {seconds}s**.")
 
-
-    # ──────────────────────────────────────────────────────────────
     # 🏆 Affiche le classement des 10 meilleurs joueurs
-    # ──────────────────────────────────────────────────────────────
     async def send_reiatsu_top(self, ctx):
         result = supabase.table("reiatsu").select("username", "points").order("points", desc=True).limit(10).execute()
         if not result.data:
@@ -148,11 +148,11 @@ async def reiatsu(self, ctx: commands.Context, member: discord.Member = None):
             description="Voici les utilisateurs avec le plus de **points de Reiatsu**.",
             color=discord.Color.purple()
         )
+
         for i, row in enumerate(result.data, start=1):
             embed.add_field(name=f"**{i}.** {row['username']}", value=f"💠 {row['points']} points", inline=False)
 
         await ctx.send(embed=embed)
-
 
 # ──────────────────────────────────────────────────────────────
 # 🔌 SETUP POUR CHARGEMENT AUTOMATIQUE DU COG
