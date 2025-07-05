@@ -78,12 +78,13 @@ class ReiatsuCommand(commands.Cog):
 
         # 📋 Création de l'embed
         embed = discord.Embed(
-            title=f"💠 Score de Reiatsu pour {user.display_name}",
+            title="💠 Score de Reiatsu",
+            description=f"**{user.display_name}** a actuellement :\n**{points}** points de Reiatsu\n\n"
+                        f"__**Infos**__\n"
+                        f"📍 Le Reiatsu apparaît sur le salon : {salon_text}\n"
+                        f"⏳ Le Reiatsu va apparaître dans : {temps_text}",
             color=discord.Color.purple()
         )
-        embed.add_field(name="🔢 Points", value=f"**{points}**", inline=False)
-        embed.add_field(name="📍 Salon de spawn", value=salon_text, inline=False)
-        embed.add_field(name="⏳ Temps restant", value=temps_text, inline=False)
         embed.set_footer(text="Réagis avec 📊 pour voir le classement.")
 
         msg = await ctx.send(embed=embed)
@@ -112,7 +113,7 @@ class ReiatsuCommand(commands.Cog):
             .execute().data
 
         embed = discord.Embed(
-            title="📊 Top 10 des utilisateurs qui ont le plus de Reiatsu",
+            title="📊 Top 10 des utilisateurs Reiatsu",
             color=discord.Color.gold()
         )
 
