@@ -22,65 +22,56 @@ class ReiatsuCommand(commands.Cog):
 # ──────────────────────────────────────────────────────────────
 # COMMANDE PRINCIPALE 
 # ──────────────────────────────────────────────────────────────
-    @commands.command(
-        name="reiatsu",
-        aliases=["rts"],
-        help="💠 Affiche le score de Reiatsu d’un membre (ou soi-même)."
+@commands.command(
+    name="reiatsu",
+    aliases=["rts"],
+    help="💠 Affiche le score de Reiatsu d’un membre (ou soi-même)."
+)
+@commands.cooldown(rate=1, per=3, type=commands.BucketType.user)
+async def reiatsu(self, ctx: commands.Context, member: discord.Member = None):
+    user = member or ctx.author
+    user_id = str(user.id)
+    guild_id = str(ctx.guild.id)
+
+    data = supabase.table("reiatsu") \
+                   .select("points") \
+                   .eq("user_id", user_id) \
+                   .execute()
+    points = data.data[0]["points"] if data.data else 0
+
+    embed = discord.Embed(
+        title="💠 Score de Reiatsu",
+        description=f"{user.mention} a **{points}** points de Reiatsu.",
+        color=user.color if user.color.value != 0 else discord.Color.blue()
     )
-    @commands.cooldown(rate=1, per=3, type=commands.BucketType.user)
-    async def reiatsu(self, ctx: commands.Context, member: discord.Member = None):
-        user = member or ctx.author
-        user_id = str(user.id)
-        guild_id = str(ctx.guild.id)
+    embed.set_thumbnail(url=user.avatar.url)
+    embed.set_footer(text=f"Demandé par {ctx.author.display_name}", icon_url=ctx.author.avatar.url)
+    embed.timestamp = ctx.message.created_at
 
-        data = supabase.table("reiatsu") \
-                       .select("points") \
-                       .eq("user_id", user_id) \
-                       .execute()
-        points = data.data[0]["points"] if data.data else 0
+    msg = await ctx.send(embed=embed)
 
-        embed = discord.Embed(
-            title="💠 Score de Reiatsu",
-            description=(
-                f"{user.mention} a **{points}** points de Reiatsu.\n\n"
-                "Réagis avec :\n"
-                "‼️ pour savoir dans quel salon le Reiatsu apparaît sur ce serveur\n"
-                "⏰ pour connaître le **temps restant** avant la prochaine apparition de Reiatsu\n"
-                "📊 pour afficher le **classement**, top 10 des gens qui ont le plus de Reiatsu"
-            ),
-            color=user.color if user.color.value != 0 else discord.Color.blue()
+    # Envoie direct des infos supplémentaires
+    await self.send_reiatsu_channel(ctx)
+    await self.send_reiatsu_timer(ctx)
+
+    # Ajout réaction uniquement pour le classement
+    emoji = "📊"
+    await msg.add_reaction(emoji)
+
+    def check(reaction, user_react):
+        return (
+            reaction.message.id == msg.id
+            and user_react.id == ctx.author.id
+            and str(reaction.emoji) == emoji
         )
-        embed.set_thumbnail(url=user.avatar.url)
-        embed.set_footer(text=f"Demandé par {ctx.author.display_name}", icon_url=ctx.author.avatar.url)
-        embed.timestamp = ctx.message.created_at
 
-        msg = await ctx.send(embed=embed)
+    try:
+        reaction, _ = await self.bot.wait_for("reaction_add", timeout=60.0, check=check)
+        await msg.remove_reaction(reaction.emoji, ctx.author)
+        await self.send_reiatsu_top(ctx)
+    except Exception:
+        pass  # Timeout ou erreur silencieuse
 
-        emojis = ["‼️", "⏰", "📊"]
-        for emoji in emojis:
-            await msg.add_reaction(emoji)
-
-        def check(reaction, user_react):
-            return (
-                reaction.message.id == msg.id
-                and user_react.id == ctx.author.id
-                and str(reaction.emoji) in emojis
-            )
-
-        while True:
-            try:
-                reaction, _ = await self.bot.wait_for("reaction_add", timeout=60.0, check=check)
-                await msg.remove_reaction(reaction.emoji, ctx.author)
-
-                if str(reaction.emoji) == "‼️":
-                    await self.send_reiatsu_channel(ctx)
-                elif str(reaction.emoji) == "⏰":
-                    await self.send_reiatsu_timer(ctx)
-                elif str(reaction.emoji) == "📊":
-                    await self.send_reiatsu_top(ctx)
-
-            except Exception:
-                break  # Fin après 60 secondes ou erreur
                 
 # ──────────────────────────────────────────────────────────────
 # MÉTHODES SECONDAIRES
