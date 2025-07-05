@@ -69,14 +69,22 @@ class Reiatsu2Command(commands.Cog):
         # 🛠️ Préparation des infos config
         salon_text = "❌ Aucun salon configuré"
         temps_text = "⚠️ Inconnu"
+
+        
         if config:
-            # Salon
             salon = ctx.guild.get_channel(int(config["channel_id"])) if config.get("channel_id") else None
             salon_text = salon.mention if salon else "⚠️ Salon introuvable"
 
-            # Temps
             if config.get("en_attente"):
-                temps_text = "💠 Un Reiatsu est **déjà apparu** !"
+                guild_id = ctx.guild.id
+                channel_id = config.get("channel_id")
+                msg_id = config.get("spawn_message_id")
+
+                if msg_id and channel_id:
+                    link = f"https://discord.com/channels/{guild_id}/{channel_id}/{msg_id}"
+                    temps_text = f"💠 Un Reiatsu est **déjà apparu** ! [Cliquer ici pour voir où]({link})"
+                else:
+                    temps_text = "💠 Un Reiatsu est **déjà apparu** ! (Lien indisponible)"
             else:
                 last_spawn = config.get("last_spawn_at")
                 delay = config.get("delay_minutes", 1800)
@@ -99,11 +107,11 @@ class Reiatsu2Command(commands.Cog):
                 f"**{user.display_name}** a actuellement :\n"
                 f"**{points}** points de Reiatsu\n\n"
                 f"__**Infos**__\n"
-                f"📍 Le Reiatsu apparaît sur le salon : *_n"
+                f"📍 Le Reiatsu apparaît sur le salon : \n"
                 "{salon_text}\n"
-                f"⏳ Le Reiatsu va apparaître dans : *_n"
+                f"⏳ Le Reiatsu va apparaître dans : \n"
                 "{temps_text}\n"
-                f"🕵️ Temps avant de pouvoir tenter un vol : _n"
+                f"🕵️ Temps avant de pouvoir tenter un vol : \n"
                 "{cooldown_text}"
             ),
             color=discord.Color.purple()
