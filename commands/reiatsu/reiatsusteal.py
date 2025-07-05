@@ -31,10 +31,32 @@ class VolReiatsu(commands.Cog):
         help="💠 Tente de voler 5% du Reiatsu d’un autre membre. 25% de réussite. Cooldown : 24h.",
         description="Commande de vol de Reiatsu avec échec possible. Perte de Reiatsu en cas d’échec. Cooldown persistant."
     )
-    async def volreiatsu(self, ctx: commands.Context, cible: discord.Member):
+    async def volreiatsu(self, ctx: commands.Context, cible: discord.Member = None):        
         """Commande principale pour voler du Reiatsu à un autre membre."""
 
         voleur = ctx.author
+
+        if cible is None:
+            voleur_id = str(voleur.id)
+            voleur_data = supabase.table("reiatsu").select("*").eq("user_id", voleur_id).execute()
+            now = datetime.utcnow()
+            dernier_vol_str = voleur_data.data[0].get("last_steal_attempt") if voleur_data.data else None
+
+            if dernier_vol_str:
+                dernier_vol = datetime.fromisoformat(dernier_vol_str)
+                prochain_vol = dernier_vol + timedelta(hours=24)
+                if now < prochain_vol:
+                    restant = prochain_vol - now
+                    h, m = divmod(restant.seconds // 60, 60)
+                    await ctx.send(f"⏳ Il te reste **{restant.days}j {h}h{m}m** avant de pouvoir retenter un vol.")
+                    return
+            await ctx.send("ℹ️ Tu peux utiliser la commande `!volreiatsu @membre` pour tenter de voler du Reiatsu.")
+            return
+
+
+
+
+        
 
         # ❌ Auto-ciblage interdit
         if voleur.id == cible.id:
