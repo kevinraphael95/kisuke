@@ -49,18 +49,17 @@ class ReiatsuCommand(commands.Cog):
         embed.set_thumbnail(url=user.avatar.url)
         embed.set_footer(text=f"Demandé par {ctx.author.display_name}", icon_url=ctx.author.avatar.url)
         embed.timestamp = ctx.message.created_at
-
         msg = await ctx.send(embed=embed)
 
-        # Ajout d'une réaction (pour afficher le classement)
+        # Ajout de la réaction 📊 pour afficher le top
         emoji = "📊"
         await msg.add_reaction(emoji)
 
-        # Envoie les informations secondaires (sans réaction)
+        # Affichage direct des informations secondaires
         await self.send_reiatsu_channel(ctx)
         await self.send_reiatsu_timer(ctx)
 
-        # Gestion de la réaction
+        # Gestion de la réaction pour afficher le top
         def check(reaction, user_react):
             return (
                 reaction.message.id == msg.id
@@ -73,7 +72,7 @@ class ReiatsuCommand(commands.Cog):
             await msg.remove_reaction(reaction.emoji, ctx.author)
             await self.send_reiatsu_top(ctx)
         except Exception:
-            pass  # Timeout ou erreur silencieuse
+            pass  # Timeout ou autre, on ignore silencieusement
 
     # ──────────────────────────────────────────────────────────────
     # MÉTHODES SECONDAIRES
@@ -87,7 +86,7 @@ class ReiatsuCommand(commands.Cog):
             channel_id = int(data.data[0]["channel_id"])
             channel = self.bot.get_channel(channel_id)
             if channel:
-                await ctx.send(f"💠 Le salon configuré pour le spawn de Reiatsu est : {channel.mention}")
+                await ctx.send(f"💠 Le Reiatsu apparaît sur le salon : {channel.mention}")
             else:
                 await ctx.send("⚠️ Le salon configuré n'existe plus ou n'est pas accessible.")
         else:
@@ -102,7 +101,6 @@ class ReiatsuCommand(commands.Cog):
             return
 
         conf = res.data[0]
-
         if conf.get("en_attente"):
             msg_id = conf.get("spawn_message_id")
             chan_id = conf.get("channel_id")
@@ -120,21 +118,19 @@ class ReiatsuCommand(commands.Cog):
 
         delay = conf.get("delay_minutes", 1800)
         last_spawn_str = conf.get("last_spawn_at")
-
         if not last_spawn_str:
-            await ctx.send("💠 Un Reiatsu peut apparaître **à tout moment** !")
+            await ctx.send("💠 Le Reiatsu va apparaître dans : **à tout moment** !")
             return
 
         last_spawn_ts = parser.parse(last_spawn_str).timestamp()
         now = time.time()
         remaining = int((last_spawn_ts + delay) - now)
-
         if remaining <= 0:
-            await ctx.send("💠 Le Reiatsu peut apparaître **à tout moment** !")
+            await ctx.send("💠 Le Reiatsu va apparaître dans : **à tout moment** !")
         else:
             minutes = remaining // 60
             seconds = remaining % 60
-            await ctx.send(f"⏳ Le prochain Reiatsu est attendu dans **{minutes}m {seconds}s**.")
+            await ctx.send(f"💠 Le Reiatsu va apparaître dans : **{minutes}m {seconds}s**.")
 
     # 🏆 Affiche le classement des 10 meilleurs joueurs
     async def send_reiatsu_top(self, ctx):
