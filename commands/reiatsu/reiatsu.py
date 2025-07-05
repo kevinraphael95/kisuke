@@ -112,17 +112,22 @@ class ReiatsuCommand(commands.Cog):
             .limit(10) \
             .execute().data
 
-        embed = discord.Embed(
-            title="📊 Top 10 des utilisateurs Reiatsu",
-            color=discord.Color.gold()
-        )
-
+        # 📄 Génération du bloc texte
+        top_texte = ""
         for i, entry in enumerate(leaderboard, start=1):
             member = ctx.guild.get_member(int(entry["user_id"]))
             name = member.display_name if member else f"<Inconnu {entry['user_id']}>"
-            embed.add_field(name=f"#{i} — {name}", value=f"**{entry['points']}** points", inline=False)
+            points = entry["points"]
+            top_texte += f"**#{i}** — {name} : {points} pts\n"
 
+        # 🖼️ Embed final
+        embed = discord.Embed(
+            title="📊 Top 10 des utilisateurs avec le plus de Reiatsu",
+            description=top_texte,
+            color=discord.Color.gold()
+        )
         await ctx.send(embed=embed, reference=original_message)
+
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🔌 Setup du Cog
