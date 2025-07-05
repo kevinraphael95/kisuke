@@ -22,8 +22,8 @@ class SpawnReiatsuCommand(commands.Cog):
     # 💠 COMMANDE : spawnreiatsu
     # ──────────────────────────────────────────────────────────
     @commands.command(
-        name="spawnreiatsu",
-        aliases=["spawnrts"],
+        name="reiatsuspawn",
+        aliases=["rtsspawn"],
         help="Force le spawn d’un Reiatsu dans le salon configuré. (Admin uniquement)"
     )
     @commands.has_permissions(administrator=True)
