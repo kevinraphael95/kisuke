@@ -1,135 +1,87 @@
-# ────────────────────────────────────────────────────────────────────────────────
-# 📌 reiatsu.py — Commande interactive !reiatsu
-# Objectif : Affiche le score Reiatsu d’un membre, le salon de spawn et le temps restant
-# Catégorie : Reiatsu
-# Accès : Public
-# ────────────────────────────────────────────────────────────────────────────────
+# ──────────────────────────────────────────────────────────────
+# 📁 REIATSU - TEMPS RESTANT AVANT LE PROCHAIN SPAWN
+# ──────────────────────────────────────────────────────────────
 
-# ────────────────────────────────────────────────────────────────────────────────
-# 📦 Imports nécessaires
-# ────────────────────────────────────────────────────────────────────────────────
+# ──────────────────────────────────────────────────────────────
+# 📦 IMPORTS
+# ──────────────────────────────────────────────────────────────
 import discord
-from discord.ext import commands
-from dateutil import parser
 import time
+from datetime import datetime
+from dateutil import parser
+from discord.ext import commands
 from supabase_client import supabase
 
-# ────────────────────────────────────────────────────────────────────────────────
-# 🧠 Cog principal
-# ────────────────────────────────────────────────────────────────────────────────
-class ReiatsuCommand(commands.Cog):
-    """
-    Commande !reiatsu — Affiche ton score de Reiatsu, le salon et le temps avant le prochain spawn.
-    """
+# ──────────────────────────────────────────────────────────────
+# 🔧 COG : reiatsutempsCommand
+# ──────────────────────────────────────────────────────────────
+class reiatsutempsCommand(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
 
+    # ──────────────────────────────────────────────────────────
+    # ⏳ COMMANDE : reiatsutemps
+    # ──────────────────────────────────────────────────────────
     @commands.command(
-        name="reiatsu",
-        aliases=["rts"],
-        help="💠 Affiche le score de Reiatsu d’un membre (ou soi-même).",
-        description="Affiche le score, le salon de spawn et le temps restant avant le prochain Reiatsu."
+        name="reiatsutemps",
+        aliases=["rtstps", "rtst"],
+        help="Affiche le temps restant avant le prochain Reiatsu."
     )
     @commands.cooldown(rate=1, per=3, type=commands.BucketType.user)
-    async def reiatsu(self, ctx: commands.Context, member: discord.Member = None):
-        user = member or ctx.author
-        user_id = str(user.id)
+    async def reiatsutemps(self, ctx: commands.Context):
         guild_id = str(ctx.guild.id)
 
-        # 📦 Requête : Score utilisateur
-        score_data = supabase.table("reiatsu") \
-            .select("points") \
-            .eq("user_id", user_id) \
-            .execute()
-        points = score_data.data[0]["points"] if score_data.data else 0
+        # 📦 Récupère les données de configuration
+        res = supabase.table("reiatsu_config").select("*").eq("guild_id", guild_id).execute()
+        if not res.data:
+            await ctx.send("❌ Ce serveur n’a pas encore de salon Reiatsu configuré (`!setreiatsu`).")
+            return
 
-        # 📦 Requête : Configuration serveur
-        config_data = supabase.table("reiatsu_config") \
-            .select("*") \
-            .eq("guild_id", guild_id) \
-            .execute()
-        config = config_data.data[0] if config_data.data else None
+        conf = res.data[0]
 
-        # 🛠️ Préparation des infos config
-        salon_text = "❌ Aucun salon configuré"
-        temps_text = "⚠️ Inconnu"
-        if config:
-            # Salon
-            salon = ctx.guild.get_channel(int(config["channel_id"])) if config.get("channel_id") else None
-            salon_text = salon.mention if salon else "⚠️ Salon introuvable"
+        # 💠 Un Reiatsu est déjà présent
+        if conf.get("en_attente"):
+            msg_id = conf.get("spawn_message_id")
+            chan_id = conf.get("channel_id")
 
-            # Temps
-            if config.get("en_attente"):
-                temps_text = "💠 Un Reiatsu est **déjà apparu** !"
-            else:
-                last_spawn = config.get("last_spawn_at")
-                delay = config.get("delay_minutes", 1800)
-                if last_spawn:
-                    last_ts = parser.parse(last_spawn).timestamp()
-                    now = time.time()
-                    remaining = int((last_ts + delay) - now)
-                    if remaining <= 0:
-                        temps_text = "💠 Un Reiatsu peut apparaître **à tout moment** !"
-                    else:
-                        minutes, seconds = divmod(remaining, 60)
-                        temps_text = f"⏳ Prochain dans **{minutes}m {seconds}s**"
-                else:
-                    temps_text = "💠 Un Reiatsu peut apparaître **à tout moment** !"
+            if msg_id and chan_id:
+                channel = ctx.guild.get_channel(int(chan_id))
+                if channel:
+                    try:
+                        spawn_msg = await channel.fetch_message(int(msg_id))
+                        await ctx.send("💠 Un Reiatsu est **déjà apparu** !", reference=spawn_msg)
+                        return
+                    except discord.NotFound:
+                        pass
 
-        # 📋 Création de l'embed
-        embed = discord.Embed(
-            title="💠 Score de Reiatsu",
-            description=f"**{user.display_name}** a actuellement :\n**{points}** points de Reiatsu\n\n"
-                        f"__**Infos**__\n"
-                        f"📍 Le Reiatsu apparaît sur le salon : {salon_text}\n"
-                        f"⏳ Le Reiatsu va apparaître dans : {temps_text}",
-            color=discord.Color.purple()
-        )
-        embed.set_footer(text="Réagis avec 📊 pour voir le classement.")
+            await ctx.send("💠 Un Reiatsu est **déjà apparu**, mais son message est introuvable.")
+            return
 
-        msg = await ctx.send(embed=embed)
-        await msg.add_reaction("📊")
+        # ⏳ Calcul du temps avant le prochain spawn
+        delay = conf.get("delay_minutes", 1800)
+        last_spawn_str = conf.get("last_spawn_at")
 
-        # 🔁 Écoute des réactions (classement)
-        def check(reaction, user_check):
-            return (
-                reaction.message.id == msg.id and
-                str(reaction.emoji) == "📊" and
-                user_check == ctx.author
-            )
+        if not last_spawn_str:
+            await ctx.send("💠 Un Reiatsu peut apparaître **à tout moment** !")
+            return
 
-        try:
-            reaction, _ = await self.bot.wait_for("reaction_add", check=check, timeout=30)
-            await self.show_leaderboard(ctx, original_message=msg)
-        except Exception:
-            pass  # Timeout ou erreur : on ne fait rien
+        last_spawn_ts = parser.parse(last_spawn_str).timestamp()
+        now = time.time()
+        remaining = int((last_spawn_ts + delay) - now)
 
-    async def show_leaderboard(self, ctx, original_message=None):
-        # 📦 Requête : Classement
-        leaderboard = supabase.table("reiatsu") \
-            .select("user_id, points") \
-            .order("points", desc=True) \
-            .limit(10) \
-            .execute().data
+        if remaining <= 0:
+            await ctx.send("💠 Le Reiatsu peut apparaître **à tout moment** !")
+        else:
+            minutes = remaining // 60
+            seconds = remaining % 60
+            await ctx.send(f"⏳ Le prochain Reiatsu est attendu dans **{minutes}m {seconds}s**.")
 
-        embed = discord.Embed(
-            title="📊 Top 10 des utilisateurs Reiatsu",
-            color=discord.Color.gold()
-        )
-
-        for i, entry in enumerate(leaderboard, start=1):
-            member = ctx.guild.get_member(int(entry["user_id"]))
-            name = member.display_name if member else f"<Inconnu {entry['user_id']}>"
-            embed.add_field(name=f"#{i} — {name}", value=f"**{entry['points']}** points", inline=False)
-
-        await ctx.send(embed=embed, reference=original_message)
-
-# ────────────────────────────────────────────────────────────────────────────────
-# 🔌 Setup du Cog
-# ────────────────────────────────────────────────────────────────────────────────
+# ──────────────────────────────────────────────────────────────
+# 🔌 SETUP AUTOMATIQUE DU COG
+# ──────────────────────────────────────────────────────────────
 async def setup(bot: commands.Bot):
-    cog = ReiatsuCommand(bot)
+    cog = reiatsutempsCommand(bot)
     for command in cog.get_commands():
         command.category = "Reiatsu"
     await bot.add_cog(cog)
-    print("✅ Cog chargé : ReiatsuCommand (catégorie = Reiatsu)")
+    print("✅ Cog chargé : reiatsutempsCommand (Temps restant)")
