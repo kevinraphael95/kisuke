@@ -82,7 +82,7 @@ class Reiatsu2Command(commands.Cog):
 
                 if msg_id and channel_id:
                     link = f"https://discord.com/channels/{guild_id}/{channel_id}/{msg_id}"
-                    temps_text = f"Un Reiatsu 💠 est **déjà apparu** ! [Cliquer ici pour voir où]({link})"
+                    temps_text = f"Un Reiatsu 💠 est **déjà apparu** ! [Aller le prendre]({link})"
                 else:
                     temps_text = "Un Reiatsu 💠 est **déjà apparu** ! (Lien indisponible)"
             else:
@@ -107,12 +107,12 @@ class Reiatsu2Command(commands.Cog):
                 f"**{user.display_name}** a actuellement :\n"
                 f"**{points}** points de Reiatsu\n\n"
                 f"__**Infos**__\n"
-                f"📍 Le Reiatsu apparaît sur le salon : \n"
-                f"• {salon_text}\n"
-                f"⏳ Le Reiatsu va apparaître dans : \n"
-                f"• {temps_text}\n"
-                f"🕵️ Temps avant de pouvoir tenter un vol : \n"
-                f"• {cooldown_text}"
+                f"• 📍 Le Reiatsu apparaît sur le salon : \n"
+                f"{salon_text}\n"
+                f"• ⏳ Le Reiatsu va apparaître dans : \n"
+                f"{temps_text}\n"
+                f"• 🕵️ Temps avant de pouvoir tenter un vol : \n"
+                f"{cooldown_text}"
             ),
             color=discord.Color.purple()
         )
