@@ -26,8 +26,8 @@ class Reiatsu2Command(commands.Cog):
         self.bot = bot
 
     @commands.command(
-        name="reiatsu2",
-        aliases=["rts2"],
+        name="reiatsu",
+        aliases=["rts"],
         help="💠 Affiche le score de Reiatsu d’un membre (ou soi-même).",
         description="Affiche le score, le salon de spawn et le temps restant avant le prochain Reiatsu."
     )
