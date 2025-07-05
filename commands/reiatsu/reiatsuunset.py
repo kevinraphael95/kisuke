@@ -20,8 +20,8 @@ class UnsetReiatsuCommand(commands.Cog):
     # 🗑️ COMMANDE : unsetreiatsu
     # ──────────────────────────────────────────────────────────
     @commands.command(
-        name="unsetreiatsu",
-        aliases=["unsetrts"],
+        name="reiatsuunset"],
+        aliases=["rtsunset"],
         help="Supprime le salon configuré pour le spawn de Reiatsu. (Admin uniquement)"
     )
     @commands.cooldown(rate=1, per=3, type=commands.BucketType.user)
