@@ -28,9 +28,9 @@ class Reiatsu2Command(commands.Cog):
     @commands.command(
         name="reiatsu",
         aliases=["rts"],
-        help="💠 Affiche le score de Reiatsu d’un membre (ou soi-même).",
+        help="💠 Affiche le score de reiatsu, le salon ou apparaît le reiatsu et le cooldown d'apparition, et le cooldown de la commande vol.",
         description="Affiche le score, le salon de spawn et le temps restant avant le prochain Reiatsu."
-    )
+    
     @commands.cooldown(rate=1, per=3, type=commands.BucketType.user)
     async def reiatsu(self, ctx: commands.Context, member: discord.Member = None):
         user = member or ctx.author
