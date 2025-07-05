@@ -49,7 +49,7 @@ class Reiatsu2Command(commands.Cog):
             .select("last_steal_attempt") \
             .eq("user_id", user_id) \
             .execute()
-        cooldown_text = "✅ Disponible"
+        cooldown_text = "Disponible ✅"
         if steal_data.data and steal_data.data[0].get("last_steal_attempt"):
             last_steal = parser.parse(steal_data.data[0]["last_steal_attempt"])
             next_steal = last_steal + timedelta(hours=24)
@@ -57,7 +57,7 @@ class Reiatsu2Command(commands.Cog):
             if now < next_steal:
                 restant = next_steal - now
                 h, m = divmod(restant.seconds // 60, 60)
-                cooldown_text = f"⏳ {restant.days}j {h}h{m}m"
+                cooldown_text = f"{restant.days}j {h}h{m}m"
 
         # 📦 Requête : Configuration serveur
         config_data = supabase.table("reiatsu_config") \
@@ -82,9 +82,9 @@ class Reiatsu2Command(commands.Cog):
 
                 if msg_id and channel_id:
                     link = f"https://discord.com/channels/{guild_id}/{channel_id}/{msg_id}"
-                    temps_text = f"💠 Un Reiatsu est **déjà apparu** ! [Cliquer ici pour voir où]({link})"
+                    temps_text = f"Un Reiatsu 💠 est **déjà apparu** ! [Cliquer ici pour voir où]({link})"
                 else:
-                    temps_text = "💠 Un Reiatsu est **déjà apparu** ! (Lien indisponible)"
+                    temps_text = "Un Reiatsu 💠 est **déjà apparu** ! (Lien indisponible)"
             else:
                 last_spawn = config.get("last_spawn_at")
                 delay = config.get("delay_minutes", 1800)
@@ -98,7 +98,7 @@ class Reiatsu2Command(commands.Cog):
                         minutes, seconds = divmod(remaining, 60)
                         temps_text = f"**{minutes}m {seconds}s**"
                 else:
-                    temps_text = "💠 Un Reiatsu peut apparaître **à tout moment** !"
+                    temps_text = "Un Reiatsu 💠 peut apparaître **à tout moment** !"
 
         # 📋 Création de l'embed
         embed = discord.Embed(
@@ -108,11 +108,11 @@ class Reiatsu2Command(commands.Cog):
                 f"**{points}** points de Reiatsu\n\n"
                 f"__**Infos**__\n"
                 f"📍 Le Reiatsu apparaît sur le salon : \n"
-                f"{salon_text}\n"
+                f"• {salon_text}\n"
                 f"⏳ Le Reiatsu va apparaître dans : \n"
-                f"{temps_text}\n"
+                f"• {temps_text}\n"
                 f"🕵️ Temps avant de pouvoir tenter un vol : \n"
-                f"{cooldown_text}"
+                f"• {cooldown_text}"
             ),
             color=discord.Color.purple()
         )
