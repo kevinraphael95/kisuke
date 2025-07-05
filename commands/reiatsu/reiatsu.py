@@ -44,9 +44,9 @@ class ReiatsuCommand(commands.Cog):
             description=(
                 f"{user.mention} a **{points}** points de Reiatsu.\n\n"
                 "Réagis avec :\n"
-                "‼️ pour connaître le **salon du Reiatsu**\n"
-                "⏰ pour connaître le **temps restant**\n"
-                "📊 pour afficher le **classement**"
+                "‼️ pour savoir dans quel salon le Reiatsu apparaît sur ce serveur\n"
+                "⏰ pour connaître le **temps restant** avant la prochaine apparition de Reiatsu\n"
+                "📊 pour afficher le **classement**, top 10 des gens qui ont le plus de Reiatsu"
             ),
             color=user.color if user.color.value != 0 else discord.Color.blue()
         )
