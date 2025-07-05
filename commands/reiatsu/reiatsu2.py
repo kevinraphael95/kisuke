@@ -107,12 +107,9 @@ class Reiatsu2Command(commands.Cog):
                 f"**{user.display_name}** a actuellement :\n"
                 f"**{points}** points de Reiatsu\n\n"
                 f"__**Infos**__\n"
-                f"• 📍 Le Reiatsu apparaît sur le salon : \n"
-                f"{salon_text}\n"
-                f"• ⏳ Le Reiatsu va apparaître dans : \n"
-                f"{temps_text}\n"
-                f"• 🕵️ Temps avant de pouvoir tenter un vol : \n"
-                f"{cooldown_text}"
+                f"• 📍 Lieu d'apparition : {salon_text}\n"
+                f"• ⏳ Cooldown : {temps_text}\n"
+                f"• 🕵️ Cooldown vol : {cooldown_text}"
             ),
             color=discord.Color.purple()
         )
