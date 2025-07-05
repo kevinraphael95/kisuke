@@ -78,7 +78,7 @@ class ReiatsuCommand(commands.Cog):
 
         # 📋 Création de l'embed
         embed = discord.Embed(
-            title="💠 Score de Reiatsu",
+            title="__**💠 Score de Reiatsu**__",
             description=f"**{user.display_name}** a actuellement :\n**{points}** points de Reiatsu\n\n"
                         f"__**Infos**__\n"
                         f"📍 Le Reiatsu apparaît sur le salon : {salon_text}\n"
