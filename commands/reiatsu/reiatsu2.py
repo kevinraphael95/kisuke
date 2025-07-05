@@ -18,7 +18,7 @@ from supabase_client import supabase
 # ────────────────────────────────────────────────────────────────────────────────
 # 🧠 Cog principal
 # ────────────────────────────────────────────────────────────────────────────────
-class ReiatsuCommand(commands.Cog):
+class Reiatsu2Command(commands.Cog):
     """
     Commande !reiatsu — Affiche ton score de Reiatsu, le salon et le temps avant le prochain spawn.
     """
@@ -155,8 +155,8 @@ class ReiatsuCommand(commands.Cog):
 # 🔌 Setup du Cog
 # ────────────────────────────────────────────────────────────────────────────────
 async def setup(bot: commands.Bot):
-    cog = ReiatsuCommand(bot)
+    cog = Reiatsu2Command(bot)
     for command in cog.get_commands():
         command.category = "Reiatsu"
     await bot.add_cog(cog)
-    print("✅ Cog chargé : ReiatsuCommand (catégorie = Reiatsu)")
+    print("✅ Cog chargé : Reiatsu2Command (catégorie = Reiatsu)")
