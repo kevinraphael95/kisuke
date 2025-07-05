@@ -22,8 +22,8 @@ class SetReiatsuCommand(commands.Cog):
     # ⚙️ COMMANDE : !setreiatsu
     # ──────────────────────────────────────────────────────────
     @commands.command(
-        name="setreiatsu",
-        aliases=["setrts"],
+        name="reiatsuset",
+        aliases=["rtsset"],
         help="💠 Définit le salon actuel comme le salon Reiatsu. (Admin uniquement)"
     )
     @commands.cooldown(rate=1, per=3, type=commands.BucketType.user)  # 🧊 Cooldown 3s
