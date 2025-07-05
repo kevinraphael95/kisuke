@@ -84,16 +84,16 @@ class ReiatsuCommand(commands.Cog):
         embed.add_field(name="🔢 Points", value=f"**{points}**", inline=False)
         embed.add_field(name="📍 Salon de spawn", value=salon_text, inline=False)
         embed.add_field(name="⏳ Temps restant", value=temps_text, inline=False)
-        embed.set_footer(text="Réagis avec 🔝 pour voir le classement.")
+        embed.set_footer(text="Réagis avec 📊 pour voir le classement.")
 
         msg = await ctx.send(embed=embed)
-        await msg.add_reaction("🔝")
+        await msg.add_reaction("📊")
 
         # 🔁 Écoute des réactions (classement)
         def check(reaction, user_check):
             return (
                 reaction.message.id == msg.id and
-                str(reaction.emoji) == "🔝" and
+                str(reaction.emoji) == "📊" and
                 user_check == ctx.author
             )
 
@@ -112,7 +112,7 @@ class ReiatsuCommand(commands.Cog):
             .execute().data
 
         embed = discord.Embed(
-            title="🔝 Top 10 des utilisateurs Reiatsu",
+            title="📊 Top 10 des utilisateurs qui ont le plus de Reiatsu",
             color=discord.Color.gold()
         )
 
