@@ -43,6 +43,21 @@ class ReiatsuCommand(commands.Cog):
             .execute()
         points = score_data.data[0]["points"] if score_data.data else 0
 
+        # 📦 Requête : Dernier vol
+        steal_data = supabase.table("reiatsu") \
+            .select("last_steal_attempt") \
+            .eq("user_id", user_id) \
+            .execute()
+        cooldown_text = "✅ Disponible"
+        if steal_data.data and steal_data.data[0].get("last_steal_attempt"):
+            last_steal = parser.parse(steal_data.data[0]["last_steal_attempt"])
+            next_steal = last_steal + timedelta(hours=24)
+            now = datetime.utcnow()
+            if now < next_steal:
+                restant = next_steal - now
+                h, m = divmod(restant.seconds // 60, 60)
+                cooldown_text = f"⏳ {restant.days}j {h}h{m}m"
+
         # 📦 Requête : Configuration serveur
         config_data = supabase.table("reiatsu_config") \
             .select("*") \
@@ -82,7 +97,8 @@ class ReiatsuCommand(commands.Cog):
             description=f"**{user.display_name}** a actuellement :\n**{points}** points de Reiatsu\n\n"
                         f"__**Infos**__\n"
                         f"📍 Le Reiatsu apparaît sur le salon : {salon_text}\n"
-                        f"⏳ Le Reiatsu va apparaître dans : {temps_text}",
+                        f"⏳ Le Reiatsu va apparaître dans : {temps_text}\n"
+                        f"🕵️ Temps avant prochain vol : {cooldown_text}"
             color=discord.Color.purple()
         )
         embed.set_footer(text="Réagis avec 📊 pour voir le classement.")
