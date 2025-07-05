@@ -37,7 +37,7 @@ class BMojiCommand(commands.Cog):
 
     @commands.command(
         name="bmoji",
-        help="Devine quel personnage Bleach se cache derrière cet emoji."
+        help="Devine quel personnage Bleach est représenté par ces 3 emojis."
     )
     @commands.cooldown(rate=1, per=3, type=commands.BucketType.user)  # Anti-spam 3 secondes
     async def bmoji(self, ctx: commands.Context):
