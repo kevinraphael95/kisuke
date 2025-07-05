@@ -72,7 +72,7 @@ class ReiatsuCommand(commands.Cog):
                         temps_text = "💠 Un Reiatsu peut apparaître **à tout moment** !"
                     else:
                         minutes, seconds = divmod(remaining, 60)
-                        temps_text = f"⏳ Prochain dans **{minutes}m {seconds}s**"
+                        temps_text = f"**{minutes}m {seconds}s**"
                 else:
                     temps_text = "💠 Un Reiatsu peut apparaître **à tout moment** !"
 
