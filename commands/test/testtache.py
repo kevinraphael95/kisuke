@@ -373,7 +373,7 @@ async def lancer_emoji9(interaction):
 # 🧠 bmoji
 # ────────────────────────────────────────────────────────────────────────────────
 
-async def tache_bmoji(self, interaction: discord.Interaction):
+async def lancer_bmoji(self, interaction: discord.Interaction):
     # On choisit un personnage aléatoire
     personnage = random.choice(list(self.bmoji_data.keys()))
     emojis = self.bmoji_data[personnage]
