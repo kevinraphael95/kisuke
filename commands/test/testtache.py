@@ -373,52 +373,65 @@ async def lancer_emoji9(interaction):
 # 🧠 bmoji
 # ────────────────────────────────────────────────────────────────────────────────
 
-async def lancer_bmoji(self, interaction: discord.Interaction):
-    # On choisit un personnage aléatoire
-    personnage = random.choice(list(self.bmoji_data.keys()))
-    emojis = self.bmoji_data[personnage]
+async def lancer_bmoji(interaction):
+    # Charge les personnages et leurs emojis
+    bmoji_data = load_characters()  # Charge le JSON avec personnages et emojis
 
-    # On récupère trois emojis, sous forme de string avec espaces
-    emoji_str = " ".join(emojis)
+    # Choix aléatoire du personnage principal
+    personnage = random.choice(list(bmoji_data.keys()))
+    emojis = bmoji_data[personnage]
 
-    # On sélectionne trois autres personnages pour les mauvaises réponses
-    autres_personnages = list(self.bmoji_data.keys())
+    # Emojis à afficher (3 max)
+    emojis_a_afficher = emojis[:3]
+    emoji_str = " ".join(emojis_a_afficher)
+
+    # Choix des 3 mauvaises réponses (autres personnages)
+    autres_personnages = list(bmoji_data.keys())
     autres_personnages.remove(personnage)
     mauvaises_reponses = random.sample(autres_personnages, 3)
 
-    # On crée la liste de propositions et on mélange
+    # Mélanger les propositions
     propositions = mauvaises_reponses + [personnage]
     random.shuffle(propositions)
 
-    # On construit le message de la tâche
-    description = f"Devine le personnage représenté par ces trois emojis :\n\n**{emoji_str}**\n\n"
-    description += "\n".join([f"{emoji} {nom}" for emoji, nom in zip(["🇦", "🇧", "🇨", "🇩"], propositions)])
-    embed = discord.Embed(title="Quel personnage est-ce ?", description=description, color=0x4B0082)
+    # Créer un embed avec la question et les choix
+    embed = discord.Embed(
+        title="🧩 Qui est ce personnage Bleach ?",
+        description=f"Voici les emojis : {emoji_str}\n\n"
+                    "Réponds en cliquant sur la réaction correspondant à ta réponse :\n\n" +
+                    "\n".join([f"{chr(0x1F1E6 + i)} : {propositions[i]}" for i in range(4)]),
+        color=discord.Color.purple()
+    )
 
-    # Envoie du message
-    message = await interaction.followup.send(embed=embed, ephemeral=True)
+    message = await interaction.followup.send(embed=embed)
 
-    # Ajout des réactions
-    emojis_reaction = ["🇦", "🇧", "🇨", "🇩"]
-    for emoji in emojis_reaction:
-        await message.add_reaction(emoji)
+    # Ajouter les réactions A, B, C, D
+    reactions = ['🇦', '🇧', '🇨', '🇩']
+    for r in reactions:
+        await message.add_reaction(r)
 
-    # Fonction de vérification de l'utilisateur et de l'emoji utilisé
     def check(reaction, user):
-        return user == interaction.user and reaction.message.id == message.id and str(reaction.emoji) in emojis_reaction
+        return (
+            user == interaction.user
+            and reaction.message.id == message.id
+            and str(reaction.emoji) in reactions
+        )
 
     try:
-        reaction, user = await self.bot.wait_for("reaction_add", timeout=20.0, check=check)
+        reaction, user = await interaction.client.wait_for('reaction_add', timeout=30.0, check=check)
     except asyncio.TimeoutError:
-        await interaction.followup.send("⏱️ Temps écoulé !", ephemeral=True)
+        await interaction.followup.send(f"⌛ Temps écoulé, aucune réponse de {interaction.user.mention}.")
         return
 
-    # Vérification de la réponse
-    index_reponse = emojis_reaction.index(str(reaction.emoji))
-    if propositions[index_reponse] == personnage:
-        await interaction.followup.send("✅ Bonne réponse !", ephemeral=True)
+    # Trouver l'indice de la réponse choisie
+    choix = reactions.index(str(reaction.emoji))
+    reponse = propositions[choix]
+
+    if reponse == personnage:
+        await interaction.followup.send(f"✅ Bravo {user.mention}, c'est bien **{personnage}** !")
     else:
-        await interaction.followup.send(f"❌ Mauvaise réponse ! C'était **{personnage}**.", ephemeral=True)
+        await interaction.followup.send(f"❌ Désolé {user.mention}, ce n'est pas **{reponse}** mais **{personnage}**.")
+
 
 
 
