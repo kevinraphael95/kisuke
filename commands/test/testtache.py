@@ -361,21 +361,15 @@ async def lancer_emoji9(interaction):
     ligne = "".join(emojis)
 
 
-    embed = Embed(
-    title="🕵️ Emoji suspects",
-    description="Un intrus s’est glissé parmi ces emojis...\n\n" + " ".join(melange)
-)
-embed.set_footer(text="Clique sur le bon emoji pour gagner !")
-message = await interaction.followup.send(embed=embed)
 
 
     embed = discord.Embed(
         title="🔎 Tous identiques ?",
-        description="Appuie sur ✅ si **tous** les emojis sont identiques,\n❌ sinon.",
+        description="Appuie sur ✅ si **tous** les emojis sont identiques,\n❌ sinon.\n\n" + " ".join(melange),
         color=discord.Color.orange()
     )
 
-    await interaction.followup.send(embed=embed, view=EmojiBoutons(not y_a_intrus))
+
     await interaction.followup.send(ligne)
 
 
