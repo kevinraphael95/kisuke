@@ -118,6 +118,8 @@ async def lancer_quiz(interaction):
     except asyncio.TimeoutError:
         await interaction.followup.send("⌛ Temps écoulé, personne n'a répondu.")
 
+        
+
 # ────────────────────────────────────────────────────────────────────────────────
 # 🔎 Mot code
 # ────────────────────────────────────────────────────────────────────────────────
@@ -141,6 +143,10 @@ async def lancer_code(interaction):
             await interaction.followup.send(f"❌ Mauvais mot {msg.author.mention}.")
     except asyncio.TimeoutError:
         await interaction.followup.send("⌛ Trop tard.")
+        
+
+
+
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🔎 Séquence emojis
@@ -184,16 +190,20 @@ async def lancer_emoji(interaction):
     except asyncio.TimeoutError:
         await interaction.followup.send("⌛ Personne n'a réussi.")
 
+        
+
 # ────────────────────────────────────────────────────────────────────────────────
 # de 5 a 1
 # ────────────────────────────────────────────────────────────────────────────────
 
 async def lancer_reflexe(interaction):
     compte = ["5️⃣", "4️⃣", "3️⃣", "2️⃣", "1️⃣"]
-    message = await interaction.followup.send("🕒 Clique les réactions `5️⃣ 4️⃣ 3️⃣ 2️⃣ 1️⃣` **dans l'ordre** le plus vite possible !")
+    message = await interaction.followup.send(
+        "🕒 Clique les réactions `5️⃣ 4️⃣ 3️⃣ 2️⃣ 1️⃣` **dans l'ordre** le plus vite possible !"
+    )
 
-    for emoji in compte:
-        await message.add_reaction(emoji)
+    # ✅ Ajoute toutes les réactions en parallèle
+    await asyncio.gather(*[message.add_reaction(emoji) for emoji in compte])
 
     reponses = {}
 
@@ -204,7 +214,8 @@ async def lancer_reflexe(interaction):
         if user.id not in reponses:
             reponses[user.id] = []
 
-        if str(reaction.emoji) == compte[len(reponses[user.id])]:
+        attendu = compte[len(reponses[user.id])]
+        if str(reaction.emoji) == attendu:
             reponses[user.id].append(str(reaction.emoji))
 
         return reponses[user.id] == compte
@@ -214,6 +225,9 @@ async def lancer_reflexe(interaction):
         await interaction.followup.send(f"⚡ Réflexe parfait, {user.mention} !")
     except asyncio.TimeoutError:
         await interaction.followup.send("⌛ Aucun réflexe parfait enregistré.")
+
+
+
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🔎 Code avec les flècches
