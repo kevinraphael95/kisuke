@@ -86,6 +86,7 @@ def infliger_degats(perso, degats, log):
     return log
 
 def appliquer_effet(attaque, cible, log):
+    """Applique les effets spéciaux de l'attaque à la cible."""
     effet = attaque.get("effet", "").lower()
     if effet in ["gel", "paralysie"]:
         cible["status"] = "gel"
@@ -100,19 +101,13 @@ def appliquer_effet(attaque, cible, log):
         cible["status_duree"] = 3
         log += f"☠️ {cible['nom']} est empoisonné !\n"
     elif effet == "soin":
-        pression = cible["stats"].get("pression", 0)
-        min_soin = 10
-        max_soin = min(30, pression) if pression > 10 else 10
-        montant_soin = random.randint(min_soin, max_soin)
-        log = appliquer_soin(cible, montant_soin, log)
+        # Soin s'applique au lanceur (attaquant)
+        # Le montant de soin sera dans attaque["degats"] (on l'utilise comme montant de soin)
+        log = appliquer_soin(cible, attaque["degats"], log)
     elif effet == "bouclier":
-        defense = cible["stats"].get("défense", 0)
-        pression = cible["stats"].get("pression", 0)
-        max_bouclier = max(10, min(30, defense + pression // 2))
-        montant_bouclier = random.randint(10, max_bouclier)
-        log = appliquer_bouclier(cible, montant_bouclier, log)
+        # Bouclier s'applique au lanceur (attaquant)
+        log = appliquer_bouclier(cible, attaque["degats"], log)
     return log
-
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🧠 Cog principal
@@ -187,18 +182,20 @@ class Combat3Command(commands.Cog):
                     ]
 
                     # Si pas assez d'énergie mais a au moins 10 énergie, attaque facile basée sur force
-                    if not possibles and attaquant["energie"] >= 10:
-                        # Attaque facile : dégâts = force / 2, coût 10 énergie
-                        degats = attaquant["stats"]["force"] // 2
-                        attaque = {
-                            "nom": "Attaque facile",
-                            "degats": degats,
-                            "cout": 10,
-                            "effet": ""
-                        }
-                    elif not possibles:
-                        log += f"💤 **{attaquant['nom']}** est à court d'énergie.\n\n"
-                        continue
+                    if not possibles:
+                        if attaquant["energie"] >= 10:
+                            # Coût nul si attaquant a plus d'énergie que défenseur
+                            cout_attaque_facile = 0 if attaquant["energie"] > defenseur["energie"] else 10
+                            degats = attaquant["stats"]["force"] // 2
+                            attaque = {
+                                "nom": "Attaque facile",
+                                "degats": degats,
+                                "cout": cout_attaque_facile,
+                                "effet": ""
+                            }
+                        else:
+                            log += f"💤 **{attaquant['nom']}** est à court d'énergie.\n\n"
+                            continue
                     else:
                         attaque = random.choice(possibles)
                         if attaque["type"] == "ultime":
