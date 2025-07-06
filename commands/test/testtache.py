@@ -376,11 +376,15 @@ async def lancer_bmoji(interaction):
     characters = load_characters()
     personnage = random.choice(characters)
     nom_correct = personnage["nom"]
-    emojis = personnage["emojis"]
+
+    # Sélectionner 3 emojis aléatoires parmi ceux du personnage (sans doublons)
+    emojis = random.sample(personnage["emojis"], k=min(3, len(personnage["emojis"])))
 
     # Générer 3 autres noms de personnages différents
     autres = [c["nom"] for c in characters if c["nom"] != nom_correct]
     distracteurs = random.sample(autres, 3)
+
+    # Mélanger la bonne réponse avec les distracteurs
     propositions = distracteurs + [nom_correct]
     random.shuffle(propositions)
 
@@ -388,30 +392,33 @@ async def lancer_bmoji(interaction):
     lettre_index = propositions.index(nom_correct)
     bonne_reaction = emoji_lettres[lettre_index]
 
+    # Afficher seulement les 3 emojis sélectionnés, pas toute la liste
     message = await interaction.followup.send(
         f"🔍 Quel personnage Bleach est représenté par ces emojis ?\n"
         f"{' '.join(emojis)}\n\n"
-        f"🇦 {propositions[0]}\n🇧 {propositions[1]}\n🇨 {propositions[2]}\n🇩 {propositions[3]}"
+        + "\n".join(f"{emoji_lettres[i]}: {propositions[i]}" for i in range(4))
+        + "\n\nRéagis avec 🇦 🇧 🇨 ou 🇩 pour répondre."
     )
 
+    # Ajout des réactions pour le choix
     for emoji in emoji_lettres:
         await message.add_reaction(emoji)
 
     def check(reaction, user):
         return (
-            not user.bot
+            user == interaction.user
             and reaction.message.id == message.id
             and str(reaction.emoji) in emoji_lettres
         )
 
     try:
-        reaction, user = await interaction.client.wait_for("reaction_add", check=check, timeout=15)
+        reaction, user = await interaction.client.wait_for("reaction_add", check=check, timeout=30)
         if str(reaction.emoji) == bonne_reaction:
-            await interaction.followup.send(f"✅ Bravo {user.mention}, bonne réponse ! C’était **{nom_correct}**.")
+            await interaction.followup.send(f"✅ Bravo {user.mention}, bonne réponse !")
         else:
-            await interaction.followup.send(f"❌ Mauvaise réponse {user.mention}. C’était **{nom_correct}**.")
+            await interaction.followup.send(f"❌ Désolé {user.mention}, ce n'est pas la bonne réponse.")
     except asyncio.TimeoutError:
-        await interaction.followup.send(f"⌛ Temps écoulé ! La bonne réponse était **{nom_correct}**.")
+        await interaction.followup.send("⌛ Temps écoulé, personne n'a répondu.")
 
 
 
