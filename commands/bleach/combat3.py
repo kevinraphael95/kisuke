@@ -58,7 +58,7 @@ def appliquer_soin(perso, montant, log):
     perso["vie"] = min(100, perso["vie"] + montant)
     soin_reel = perso["vie"] - vie_avant
     if soin_reel > 0:
-        log += f"✨ {perso['nom']} récupère {soin_reel} PV grâce à un soin.\n"
+        log += f"✨ {perso['nom']} se soigne et récupère {soin_reel} PV.\n"
     return log
 
 def appliquer_bouclier(perso, montant, log):
