@@ -374,7 +374,6 @@ async def lancer_emoji9(interaction):
 # ────────────────────────────────────────────────────────────────────────────────
 
 async def lancer_bmoji(interaction):
-    # Charge les personnages et leurs emojis
     bmoji_data = load_characters()  # Charge le JSON avec personnages et emojis
 
     # Choix aléatoire du personnage principal
@@ -390,47 +389,49 @@ async def lancer_bmoji(interaction):
     autres_personnages.remove(personnage)
     mauvaises_reponses = random.sample(autres_personnages, 3)
 
-    # Mélanger les propositions
-    propositions = mauvaises_reponses + [personnage]
+    # Mélange réponses
+    propositions = [personnage] + mauvaises_reponses
     random.shuffle(propositions)
 
-    # Créer un embed avec la question et les choix
+    # Préparation du message embed
     embed = discord.Embed(
-        title="🧩 Qui est ce personnage Bleach ?",
-        description=f"Voici les emojis : {emoji_str}\n\n"
-                    "Réponds en cliquant sur la réaction correspondant à ta réponse :\n\n" +
-                    "\n".join([f"{chr(0x1F1E6 + i)} : {propositions[i]}" for i in range(4)]),
+        title="🧩 Devine le personnage Bleach",
+        description=f"Voici les emojis : {emoji_str}\n\nChoisis le personnage correspondant en réagissant :\n\n"
+                    f"🇦 {propositions[0]}\n"
+                    f"🇧 {propositions[1]}\n"
+                    f"🇨 {propositions[2]}\n"
+                    f"🇩 {propositions[3]}",
         color=discord.Color.purple()
     )
 
     message = await interaction.followup.send(embed=embed)
 
-    # Ajouter les réactions A, B, C, D
-    reactions = ['🇦', '🇧', '🇨', '🇩']
-    for r in reactions:
-        await message.add_reaction(r)
+    emojis_reactions = ["🇦", "🇧", "🇨", "🇩"]
+    for emoji in emojis_reactions:
+        await message.add_reaction(emoji)
 
     def check(reaction, user):
         return (
-            user == interaction.user
-            and reaction.message.id == message.id
-            and str(reaction.emoji) in reactions
+            user == interaction.user and
+            reaction.message.id == message.id and
+            str(reaction.emoji) in emojis_reactions
         )
 
     try:
-        reaction, user = await interaction.client.wait_for('reaction_add', timeout=30.0, check=check)
+        reaction, user = await interaction.client.wait_for("reaction_add", timeout=30.0, check=check)
     except asyncio.TimeoutError:
-        await interaction.followup.send(f"⌛ Temps écoulé, aucune réponse de {interaction.user.mention}.")
+        await interaction.followup.send(f"⌛ Temps écoulé {interaction.user.mention}, tu n'as pas répondu.")
         return
 
-    # Trouver l'indice de la réponse choisie
-    choix = reactions.index(str(reaction.emoji))
-    reponse = propositions[choix]
+    index_choisi = emojis_reactions.index(str(reaction.emoji))
+    reponse_choisie = propositions[index_choisi]
 
-    if reponse == personnage:
+    if reponse_choisie == personnage:
         await interaction.followup.send(f"✅ Bravo {user.mention}, c'est bien **{personnage}** !")
     else:
-        await interaction.followup.send(f"❌ Désolé {user.mention}, ce n'est pas **{reponse}** mais **{personnage}**.")
+        await interaction.followup.send(f"❌ Dommage {user.mention}, la bonne réponse était **{personnage}**.")
+
+
 
 
 
