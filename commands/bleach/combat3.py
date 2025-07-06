@@ -86,7 +86,6 @@ def infliger_degats(perso, degats, log):
     return log
 
 def appliquer_effet(attaque, cible, log):
-    """Applique les effets spéciaux de l'attaque à la cible."""
     effet = attaque.get("effet", "").lower()
     if effet in ["gel", "paralysie"]:
         cible["status"] = "gel"
@@ -101,13 +100,19 @@ def appliquer_effet(attaque, cible, log):
         cible["status_duree"] = 3
         log += f"☠️ {cible['nom']} est empoisonné !\n"
     elif effet == "soin":
-        # Soin s'applique au lanceur (attaquant)
-        # Le montant de soin sera dans attaque["degats"] (on l'utilise comme montant de soin)
-        log = appliquer_soin(cible, attaque["degats"], log)
+        pression = cible["stats"].get("pression", 0)
+        min_soin = 10
+        max_soin = min(30, pression) if pression > 10 else 10
+        montant_soin = random.randint(min_soin, max_soin)
+        log = appliquer_soin(cible, montant_soin, log)
     elif effet == "bouclier":
-        # Bouclier s'applique au lanceur (attaquant)
-        log = appliquer_bouclier(cible, attaque["degats"], log)
+        defense = cible["stats"].get("défense", 0)
+        pression = cible["stats"].get("pression", 0)
+        max_bouclier = max(10, min(30, defense + pression // 2))
+        montant_bouclier = random.randint(10, max_bouclier)
+        log = appliquer_bouclier(cible, montant_bouclier, log)
     return log
+
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🧠 Cog principal
