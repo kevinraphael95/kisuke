@@ -374,47 +374,51 @@ async def lancer_emoji9(interaction):
 # ────────────────────────────────────────────────────────────────────────────────
 async def lancer_bmoji(interaction):
     characters = load_characters()
-    good = random.choice(characters)
-    wrong_choices = random.sample([c for c in characters if c["name"] != good["name"]], 3)
-    options = [good] + wrong_choices
-    random.shuffle(options)
+    personnage = random.choice(characters)
+    nom_correct = personnage["nom"]
 
-    emojis = ["🇦", "🇧", "🇨", "🇩"]
-    index_correct = options.index(good)
+    # Sélectionner 3 emojis aléatoires parmi ceux du personnage (sans doublons)
+    emojis = random.sample(personnage["emojis"], k=min(3, len(personnage["emojis"])))
 
-    # Création de l'embed
-    embed = discord.Embed(
-        title="🧩 Devine le personnage Bleach",
-        description=f"{good['emojis']}\n\nChoisis la bonne réponse ci-dessous en réagissant !",
-        color=discord.Color.blue()
+    # Générer 3 autres noms de personnages différents
+    autres = [c["nom"] for c in characters if c["nom"] != nom_correct]
+    distracteurs = random.sample(autres, 3)
+
+    # Mélanger la bonne réponse avec les distracteurs
+    propositions = distracteurs + [nom_correct]
+    random.shuffle(propositions)
+
+    emoji_lettres = ["🇦", "🇧", "🇨", "🇩"]
+    lettre_index = propositions.index(nom_correct)
+    bonne_reaction = emoji_lettres[lettre_index]
+
+    # Afficher seulement les 3 emojis sélectionnés, pas toute la liste
+    message = await interaction.followup.send(
+        f"🔍 Quel personnage Bleach est représenté par ces emojis ?\n"
+        f"{' '.join(emojis)}\n\n"
+        + "\n".join(f"{emoji_lettres[i]}: {propositions[i]}" for i in range(4))
+        + "\n\nRéagis avec 🇦 🇧 🇨 ou 🇩 pour répondre."
     )
 
-    for i, option in enumerate(options):
-        embed.add_field(name=emojis[i], value=option["name"], inline=False)
-
-    message = await interaction.followup.send(embed=embed)
-
-    # Ajout des réactions pour voter
-    for e in emojis:
-        await message.add_reaction(e)
+    # Ajout des réactions pour le choix
+    for emoji in emoji_lettres:
+        await message.add_reaction(emoji)
 
     def check(reaction, user):
         return (
-            user != interaction.client.user
+            user == interaction.user
             and reaction.message.id == message.id
-            and str(reaction.emoji) in emojis
+            and str(reaction.emoji) in emoji_lettres
         )
 
     try:
-        reaction, user = await interaction.client.wait_for("reaction_add", check=check, timeout=15)
-        choice_index = emojis.index(str(reaction.emoji))
-        if choice_index == index_correct:
-            await interaction.followup.send(f"✅ Bonne réponse {user.mention} ! C'était **{good['name']}**.")
+        reaction, user = await interaction.client.wait_for("reaction_add", check=check, timeout=30)
+        if str(reaction.emoji) == bonne_reaction:
+            await interaction.followup.send(f"✅ Bravo {user.mention}, bonne réponse !")
         else:
-            await interaction.followup.send(f"❌ Mauvaise réponse {user.mention}... C'était **{good['name']}**.")
+            await interaction.followup.send(f"❌ Désolé {user.mention}, ce n'est pas la bonne réponse.")
     except asyncio.TimeoutError:
-        await interaction.followup.send("⌛ Temps écoulé ! Personne n'a répondu.")
-
+        await interaction.followup.send("⌛ Temps écoulé, personne n'a répondu.")
 
 
 
