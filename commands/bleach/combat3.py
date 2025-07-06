@@ -181,21 +181,17 @@ class Combat3Command(commands.Cog):
                         if a["cout"] <= attaquant["energie"] and (a["type"] != "ultime" or not a["utilisé"])
                     ]
 
-                    # Si pas assez d'énergie mais a au moins 10 énergie, attaque facile basée sur force
+                    # Si aucune attaque normale n'est possible, utiliser attaque simple quelle que soit l'énergie
                     if not possibles:
-                        if attaquant["energie"] >= 10:
-                            # Coût nul si attaquant a plus d'énergie que défenseur
-                            cout_attaque_facile = 0 if attaquant["energie"] > defenseur["energie"] else 10
-                            degats = attaquant["stats"]["force"] // 2
-                            attaque = {
-                                "nom": "Attaque facile",
-                                "degats": degats,
-                                "cout": cout_attaque_facile,
-                                "effet": ""
-                            }
-                        else:
-                            log += f"💤 **{attaquant['nom']}** est à court d'énergie.\n\n"
-                            continue
+                        cout_attaque_simple = 0 if attaquant["energie"] > defenseur["energie"] else min(10, attaquant["energie"])
+                        degats = attaquant["stats"]["force"] // 2
+                        attaque = {
+                            "nom": "Attaque simple",
+                            "degats": degats,
+                            "cout": cout_attaque_simple,
+                            "effet": ""
+                        }
+
                     else:
                         attaque = random.choice(possibles)
                         if attaque["type"] == "ultime":
@@ -235,7 +231,7 @@ class Combat3Command(commands.Cog):
                     # Critique
                     if random.random() < min(0.1 + attaquant["stats"]["force"] / 50, 0.4):
                         total = int(total * 1.5)
-                        log += "💥 Coup critique ! "
+                        log += "**Coup critique ! **"
 
                     # Dépense énergie attaque
                     attaquant["energie"] -= attaque["cout"]
