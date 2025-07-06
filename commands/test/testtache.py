@@ -196,10 +196,12 @@ async def lancer_emoji(interaction):
 # ────────────────────────────────────────────────────────────────────────────────
 # de 5 a 1
 # ────────────────────────────────────────────────────────────────────────────────
-
-
 async def lancer_reflexe(interaction):
     compte = ["5️⃣", "4️⃣", "3️⃣", "2️⃣", "1️⃣"]
+    timeout = 30
+
+    # Répondre officiellement à l’interaction (obligatoire avant followup)
+    await interaction.response.defer()
 
     # Envoie immédiatement le message
     message = await interaction.followup.send(
@@ -211,7 +213,6 @@ async def lancer_reflexe(interaction):
 
     reponses = []
     debut_temps = None
-    timeout = 30
     start = time.monotonic()
 
     def check(reaction, user):
@@ -255,8 +256,6 @@ async def lancer_reflexe(interaction):
             break
 
     await interaction.followup.send("⌛ Temps écoulé, pas de réflexe parfait.")
-
-
 
 
 
