@@ -79,7 +79,7 @@ class CombatCommand(commands.Cog):
             log = f"**{p1['nom']} contre {p2['nom']} !**\n\n"
 
             for tour in range(1, 6):
-                log += f"**🌀─────── Tour {tour} ───────🌀**\n"
+                log += f"**🌀 __Tour {tour}__ 🌀**\n"
                 log += f"{format_etat_ligne(p1)}\n{format_etat_ligne(p2)}\n\n"
 
                 for attaquant in tour_order:
