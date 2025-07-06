@@ -198,72 +198,36 @@ async def lancer_emoji(interaction):
 # ────────────────────────────────────────────────────────────────────────────────
 async def lancer_reflexe(interaction):
     compte = ["5️⃣", "4️⃣", "3️⃣", "2️⃣", "1️⃣"]
-    timeout = 30
+    message = await interaction.followup.send("🕒 Clique les réactions `5️⃣ 4️⃣ 3️⃣ 2️⃣ 1️⃣` **dans l'ordre** le plus vite possible !")
 
-    # Répondre officiellement à l’interaction (obligatoire avant followup)
-    await interaction.response.defer()
+    for emoji in compte:
+        await message.add_reaction(emoji)
 
-    # Envoie immédiatement le message
-    message = await interaction.followup.send(
-        "🕒 Clique les réactions `5️⃣ 4️⃣ 3️⃣ 2️⃣ 1️⃣` **dans l'ordre** le plus vite possible !"
-    )
-
-    # Ajoute les réactions en tâche de fond
-    asyncio.create_task(asyncio.gather(*[message.add_reaction(emoji) for emoji in compte]))
-
-    reponses = []
-    debut_temps = None
-    start = time.monotonic()
+    reponses = {}
 
     def check(reaction, user):
-        return (
-            user.id == interaction.user.id and
-            not user.bot and
-            reaction.message.id == message.id and
-            str(reaction.emoji) in compte
-        )
+        if user.bot or reaction.message.id != message.id:
+            return False
 
-    while time.monotonic() - start < timeout:
-        try:
-            reaction, _ = await interaction.client.wait_for(
-                "reaction_add", timeout=timeout - (time.monotonic() - start), check=check
-            )
+        if user.id not in reponses:
+            reponses[user.id] = []
 
-            attendu = compte[len(reponses)]
-            if str(reaction.emoji) == attendu:
-                if not debut_temps:
-                    debut_temps = time.monotonic()
-                reponses.append(str(reaction.emoji))
+        if str(reaction.emoji) == compte[len(reponses[user.id])]:
+            reponses[user.id].append(str(reaction.emoji))
 
-                if reponses == compte:
-                    temps_mis = time.monotonic() - debut_temps
-                    await interaction.followup.send(
-                        f"⚡ Réflexe parfait, {interaction.user.mention} ! Temps : `{temps_mis:.2f}` secondes."
-                    )
-                    return
-            else:
-                # 🧹 Mauvaise réaction → on reset + suppression des réactions du joueur
-                try:
-                    for emoji in compte:
-                        await message.remove_reaction(emoji, interaction.user)
-                except Exception:
-                    pass  # si ça échoue, on ignore
+        return reponses[user.id] == compte
 
-                reponses = []
-                debut_temps = None
-
-        except asyncio.TimeoutError:
-            break
-
-    await interaction.followup.send("⌛ Temps écoulé, pas de réflexe parfait.")
-
+    try:
+        reaction, user = await interaction.client.wait_for("reaction_add", check=check, timeout=20)
+        await interaction.followup.send(f"⚡ Réflexe parfait, {user.mention} !")
+    except asyncio.TimeoutError:
+        await interaction.followup.send("⌛ Aucun réflexe parfait enregistré.")
 
 
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🔎 Code avec les flècches
 # ────────────────────────────────────────────────────────────────────────────────
-
 async def lancer_fleche(interaction):
     fleches = ["⬅️", "⬆️", "⬇️", "➡️"]
     sequence = [random.choice(fleches) for _ in range(5)]
