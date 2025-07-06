@@ -13,6 +13,8 @@ from discord.ext import commands
 from discord.ui import View, Select
 import asyncio
 import random
+import os
+import json
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 📂 Chargement des données JSON — personnages Bleach avec emojis
