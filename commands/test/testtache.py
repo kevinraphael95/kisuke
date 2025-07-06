@@ -376,7 +376,8 @@ async def lancer_bmoji(interaction):
     characters = load_characters()
     personnage = random.choice(characters)
     nom_correct = personnage["nom"]
-    emojis = personnage["emojis"]
+    emojis = random.sample(personnage["emoji"], k=3)
+
 
     # Générer 3 autres noms de personnages différents
     autres = [c["nom"] for c in characters if c["nom"] != nom_correct]
