@@ -11,6 +11,7 @@
 import discord
 from discord.ext import commands
 from discord.ui import View, Select
+from discord import Embed
 import asyncio
 import random
 import os
@@ -392,13 +393,39 @@ async def lancer_bmoji(interaction):
     lettre_index = propositions.index(nom_correct)
     bonne_reaction = emoji_lettres[lettre_index]
 
-    # Afficher seulement les 3 emojis sélectionnés, pas toute la liste
-    message = await interaction.followup.send(
-        f"🔍 Quel personnage Bleach est représenté par ces emojis ?\n"
-        f"{' '.join(emojis)}\n\n"
-        + "\n".join(f"{emoji_lettres[i]}: {propositions[i]}" for i in range(4))
-        + "\n\nRéagis avec 🇦 🇧 🇨 ou 🇩 pour répondre."
+
+    # Création de l'embed
+    embed = Embed(
+        title="🔍 Devine le personnage Bleach",
+        description="Quel personnage Bleach est représenté par ces emojis ?",
+        color=0x1abc9c  # couleur turquoise par exemple
     )
+
+    # Ajouter un champ pour les emojis
+    embed.add_field(
+        name="Emojis",
+        value=' '.join(emojis),
+        inline=False
+    )
+
+    # Ajouter un champ pour les propositions
+    propositions_text = "\n".join(f"{emoji_lettres[i]}: {propositions[i]}" for i in range(4))
+    embed.add_field(
+        name="Choisis ta réponse",
+        value=propositions_text,
+        inline=False
+    )
+
+    # Ajouter une note sur la réaction
+    embed.set_footer(text="Réagis avec 🇦 🇧 🇨 ou 🇩 pour répondre.")
+
+    # Envoyer l'embed
+    message = await interaction.followup.send(embed=embed)
+
+
+
+
+        
 
     # Ajout des réactions pour le choix
     for emoji in emoji_lettres:
