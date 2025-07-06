@@ -198,12 +198,11 @@ async def lancer_emoji(interaction):
 
 async def lancer_reflexe(interaction):
     compte = ["5️⃣", "4️⃣", "3️⃣", "2️⃣", "1️⃣"]
+
+    # Envoie immédiatement le message
     message = await interaction.followup.send(
         "🕒 Clique les réactions `5️⃣ 4️⃣ 3️⃣ 2️⃣ 1️⃣` **dans l'ordre** le plus vite possible !"
     )
-
-    # ✅ Ajoute toutes les réactions en parallèle
-    await asyncio.gather(*[message.add_reaction(emoji) for emoji in compte])
 
     reponses = {}
 
@@ -220,11 +219,18 @@ async def lancer_reflexe(interaction):
 
         return reponses[user.id] == compte
 
+    # ⏳ Attend jusqu'à 30 secondes
+    wait_task = asyncio.create_task(interaction.client.wait_for("reaction_add", check=check, timeout=30))
+
+    # ✅ Ajoute les emojis en arrière-plan (sans bloquer)
+    asyncio.create_task(asyncio.gather(*[message.add_reaction(emoji) for emoji in compte]))
+
     try:
-        reaction, user = await interaction.client.wait_for("reaction_add", check=check, timeout=20)
+        reaction, user = await wait_task
         await interaction.followup.send(f"⚡ Réflexe parfait, {user.mention} !")
     except asyncio.TimeoutError:
-        await interaction.followup.send("⌛ Aucun réflexe parfait enregistré.")
+        await interaction.followup.send("⌛ Aucun réflexe parfait enregistré en 30 secondes.")
+
 
 
 
