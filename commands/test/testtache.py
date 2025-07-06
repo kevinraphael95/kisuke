@@ -24,7 +24,8 @@ TACHES = {
     "Réflexe rapide": "reflexe",
     "Séquence fléchée": "fleche",
     "Infusion de Reiatsu": "infusion",
-    "Emoji suspects": "emoji9"
+    "Emoji suspects": "emoji9",
+    "Bmoji": "bmoji"
     
 }
 
@@ -70,6 +71,8 @@ class TacheSelect(Select):
             await lancer_infusion(interaction)
         elif task_type == "emoji9":
             await lancer_emoji9(interaction)
+        elif task_type == "bmoji": 
+            await lancer_bmoji(interaction)
         
 
 
@@ -352,6 +355,72 @@ async def lancer_emoji9(interaction):
 
     await interaction.followup.send(embed=embed, view=EmojiBoutons(not y_a_intrus))
     await interaction.followup.send(ligne)
+
+
+# ────────────────────────────────────────────────────────────────────────────────
+# 🧠 Cog principal
+# ────────────────────────────────────────────────────────────────────────────────
+
+async def lancer_bmoji(interaction):
+    # Liste de personnages avec leur "trio d'emojis" et leur nom
+    personnages = [
+        {"emojis": "🦇🗡️🌑", "nom": "Ulquiorra"},
+        {"emojis": "🐉🔥🗡️", "nom": "Ichigo"},
+        {"emojis": "🐸🧙‍♂️🎩", "nom": "Yoruichi"},
+        {"emojis": "🕊️⚔️✨", "nom": "Rukia"},
+        {"emojis": "👺🍙⚡", "nom": "Renji"},
+        {"emojis": "🐺❄️🔥", "nom": "Toshiro"},
+        # Ajoute-en autant que tu veux
+    ]
+
+    # Choisir un personnage au hasard
+    correct = random.choice(personnages)
+
+    # Préparer 3 fausses réponses + la bonne
+    noms_possibles = [p["nom"] for p in personnages if p != correct]
+    fausses_reponses = random.sample(noms_possibles, k=3)
+    options = fausses_reponses + [correct["nom"]]
+    random.shuffle(options)
+
+    # Lettres correspondantes aux réactions
+    lettres = ['🇦', '🇧', '🇨', '🇩']
+
+    # Construire le texte avec les propositions
+    description = f"Devine le personnage représenté par ces emojis : {correct['emojis']}\n\n"
+    for i, option in enumerate(options):
+        description += f"{lettres[i]} - {option}\n"
+
+    embed = discord.Embed(
+        title="🧐 Quel est ce personnage ?",
+        description=description,
+        color=discord.Color.purple()
+    )
+
+    message = await interaction.followup.send(embed=embed)
+
+    # Ajouter les réactions A, B, C, D
+    for lettre in lettres:
+        await message.add_reaction(lettre)
+
+    def check(reaction, user):
+        return (
+            user != interaction.client.user and
+            reaction.message.id == message.id and
+            str(reaction.emoji) in lettres
+        )
+
+    try:
+        reaction, user = await interaction.client.wait_for("reaction_add", check=check, timeout=30)
+        choix = lettres.index(str(reaction.emoji))
+        reponse = options[choix]
+
+        if reponse == correct["nom"]:
+            await interaction.followup.send(f"✅ Bravo {user.mention} ! C’est bien **{correct['nom']}**.")
+        else:
+            await interaction.followup.send(f"❌ Désolé {user.mention}, c’était **{correct['nom']}**.")
+    except asyncio.TimeoutError:
+        await interaction.followup.send("⌛ Temps écoulé, personne n'a répondu.")
+
 
 
 
