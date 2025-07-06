@@ -210,7 +210,7 @@ class Combat2Command(commands.Cog):
             log = log[:MAX_EMBED_DESC - 50] + "\n...[log tronqué]..."
 
         embed = discord.Embed(
-            title="🗡️ Résultat du combat",
+            title="🗡️ {nom1} vs {nom2}",
             description=log,
             color=discord.Color.red()
         )
