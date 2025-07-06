@@ -95,20 +95,21 @@ class Combat2Command(commands.Cog):
             p1, p2 = random.sample(personnages, 2)
             for p in (p1, p2): init_personnage(p)
 
+            nom1 = p1["nom"]
+            nom2 = p2["nom"]
+
             # Détermine l'ordre des tours en fonction de la mobilité
             tour_order = sorted([p1, p2], key=lambda p: p["stats"]["mobilité"] + random.randint(0, 10), reverse=True)
-            log = f"**{p1['nom']} contre {p2['nom']} !**\n\n"
+            log = ""
 
             for tour in range(1, 6):
                 log += f"**🌀 __Tour {tour}__ 🌀**\n{formater_etat(p1)}\n{formater_etat(p2)}\n\n"
                 for attaquant in tour_order:
                     defenseur = p2 if attaquant == p1 else p1
 
-                    # Si mort, passe le tour
                     if attaquant["vie"] <= 0 or defenseur["vie"] <= 0:
                         continue
 
-                    # Gère les effets de statut
                     if attaquant["status"] == "gel":
                         log += f"❄️ **{attaquant['nom']}** est gelé et ne peut pas agir.\n\n"
                         attaquant["status_duree"] -= 1
@@ -131,7 +132,6 @@ class Combat2Command(commands.Cog):
                         if attaquant["status_duree"] <= 0:
                             attaquant["status"] = None
 
-                    # Choix de l'attaque possible
                     possibles = [
                         a for a in attaquant["attaques"]
                         if a["cout"] <= attaquant["energie"] and (a["type"] != "ultime" or not a["utilisé"])
@@ -144,7 +144,6 @@ class Combat2Command(commands.Cog):
                     if attaque["type"] == "ultime":
                         attaque["utilisé"] = True
 
-                    # Esquive et contre-attaque
                     esquive_chance = min(defenseur["stats"]["mobilité"] / 40 + random.uniform(0, 0.2), 0.5)
                     tentative = random.random()
                     cout_esquive = 50 if attaque["type"] == "ultime" else 10
@@ -158,14 +157,13 @@ class Combat2Command(commands.Cog):
                             log += f"🔁 Contre-attaque ! {attaquant['nom']} subit {contre} dégâts !\n"
                             if attaquant["vie"] <= 0:
                                 log += f"\n🏆 **{defenseur['nom']} gagne par contre-attaque !**"
-                                return await self.send_embed_log(ctx, log)
+                                return await self.send_embed_log(ctx, log, nom1, nom2)
                         log += "\n"
                         continue
 
                     elif tentative < esquive_chance:
                         log += f"⚡ {defenseur['nom']} voulait esquiver mais manque d'énergie !\n"
 
-                    # Calcul des dégâts
                     base = attaque["degats"]
                     bonus = (
                         attaquant["stats"]["attaque"] +
@@ -191,26 +189,26 @@ class Combat2Command(commands.Cog):
 
                     if defenseur["vie"] <= 0:
                         log += f"\n🏆 **{attaquant['nom']} remporte le combat par KO !**"
-                        return await self.send_embed_log(ctx, log)
+                        return await self.send_embed_log(ctx, log, nom1, nom2)
 
                     log += "\n"
 
             gagnant = p1 if p1["vie"] > p2["vie"] else p2
             log += f"🏁 Fin du combat, vainqueur : **{gagnant['nom']}** !"
-            await self.send_embed_log(ctx, log)
+            await self.send_embed_log(ctx, log, nom1, nom2)
 
         except Exception as e:
             print(f"[ERREUR !combat] {e}")
             await ctx.send("❌ Une erreur est survenue lors de la simulation du combat.")
 
-    async def send_embed_log(self, ctx, log: str):
+    async def send_embed_log(self, ctx, log: str, nom1: str, nom2: str):
         """Envoie le log dans un embed, tronque si trop long."""
         MAX_EMBED_DESC = 6000
         if len(log) > MAX_EMBED_DESC:
             log = log[:MAX_EMBED_DESC - 50] + "\n...[log tronqué]..."
 
         embed = discord.Embed(
-            title="🗡️ {nom1} vs {nom2}",
+            title=f"🗡️ {nom1} vs {nom2}",
             description=log,
             color=discord.Color.red()
         )
