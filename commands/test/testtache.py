@@ -346,7 +346,7 @@ async def lancer_emoji9(interaction):
         ["😕", "😐"], ["🌟", "⭐"], ["🦝", "🐨"], ["🔒", "🔓"], 
         ["🏅", "🥇"], ["🌧️", "🌨️"], ["🐆", "🐅"], ["🙈", "🙊"], 
         ["🐋", "🐳"], ["🐢", "🐊"]
-            ]
+    ]
 
     base, intrus = random.choice(groupes)
     y_a_intrus = random.choice([True, False])
@@ -360,17 +360,14 @@ async def lancer_emoji9(interaction):
 
     ligne = "".join(emojis)
 
-
-
-
     embed = discord.Embed(
         title="🔎 Tous identiques ?",
-        description="Appuie sur ✅ si **tous** les emojis sont identiques,\n❌ sinon.",
+        description=f"{ligne}\n\nAppuie sur ✅ si **tous** les emojis sont identiques,\n❌ sinon.",
         color=discord.Color.orange()
     )
 
     await interaction.followup.send(embed=embed, view=EmojiBoutons(not y_a_intrus))
-    await interaction.followup.send(ligne)
+
 
 
 # ────────────────────────────────────────────────────────────────────────────────
