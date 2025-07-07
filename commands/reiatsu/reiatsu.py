@@ -44,7 +44,7 @@ class Reiatsu2Command(commands.Cog):
             .execute()
         points = score_data.data[0]["points"] if score_data.data else 0
 
-        # 📦 Requête : Dernier vol
+        # 📦 Requête : Cooldown de vol
         steal_data = supabase.table("reiatsu") \
             .select("last_steal_attempt") \
             .eq("user_id", user_id) \
@@ -70,16 +70,13 @@ class Reiatsu2Command(commands.Cog):
         salon_text = "❌ Aucun salon configuré"
         temps_text = "⚠️ Inconnu"
 
-        
         if config:
             salon = ctx.guild.get_channel(int(config["channel_id"])) if config.get("channel_id") else None
             salon_text = salon.mention if salon else "⚠️ Salon introuvable"
 
             if config.get("en_attente"):
-                guild_id = ctx.guild.id
                 channel_id = config.get("channel_id")
                 msg_id = config.get("spawn_message_id")
-
                 if msg_id and channel_id:
                     link = f"https://discord.com/channels/{guild_id}/{channel_id}/{msg_id}"
                     temps_text = f"Un Reiatsu 💠 est **déjà apparu** ! [Aller le prendre]({link})"
@@ -118,7 +115,7 @@ class Reiatsu2Command(commands.Cog):
         msg = await ctx.send(embed=embed)
         await msg.add_reaction("📊")
 
-        # 🔁 Écoute des réactions (classement)
+        # 🔁 Écoute de la réaction
         def check(reaction, user_check):
             return (
                 reaction.message.id == msg.id and
@@ -127,22 +124,21 @@ class Reiatsu2Command(commands.Cog):
             )
 
         try:
-            reaction, _ = await self.bot.wait_for("reaction_add", check=check, timeout=30)
+            await self.bot.wait_for("reaction_add", check=check, timeout=30)
             await self.show_leaderboard(ctx, original_message=msg)
         except Exception:
-            pass  # Timeout ou erreur : on ne fait rien
+            pass  # Timeout ou autre erreur : on ignore
 
-    async def show_leaderboard(self, ctx, original_message=None):
-        # 📦 Requête : Classement
+    async def show_leaderboard(self, ctx: commands.Context, original_message=None):
+        # 📦 Requête : Top 10 joueurs
         leaderboard_resp = supabase.table("reiatsu") \
             .select("user_id, points") \
             .order("points", desc=True) \
             .limit(10) \
             .execute()
-
         leaderboard = leaderboard_resp.data if leaderboard_resp.data else []
 
-        # 📄 Génération du bloc texte
+        # 📄 Formatage du classement
         top_texte = ""
         for i, entry in enumerate(leaderboard, start=1):
             member = ctx.guild.get_member(int(entry["user_id"]))
@@ -150,7 +146,7 @@ class Reiatsu2Command(commands.Cog):
             points = entry["points"]
             top_texte += f"**#{i}** — {name} : {points} pts\n"
 
-        # 🖼️ Embed final
+        # 🖼️ Embed du classement
         embed = discord.Embed(
             title="📊 Top 10 des utilisateurs avec le plus de Reiatsu",
             description=top_texte,
