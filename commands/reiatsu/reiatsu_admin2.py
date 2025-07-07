@@ -138,32 +138,31 @@ class ReiatsuAdmin2(commands.Cog):
     # ──────────────────────────────────────────────────────────
     # 💠 SOUS-COMMANDE : SPAWN
     # ──────────────────────────────────────────────────────────
-	@ReiatsuAdmin2.command(name="spawn")
-	@commands.cooldown(rate=1, per=3, type=commands.BucketType.user)  # ⏱️ Anti-spam : 3 sec
-	async def spawn_reiatsu(self, ctx: commands.Context):
-		channel = ctx.channel  # Le spawn se fait dans le salon courant
+    @ReiatsuAdmin2.command(name="spawn")
+    @commands.cooldown(rate=1, per=3, type=commands.BucketType.user)  # ⏱️ Anti-spam : 3 sec
+    async def spawn_reiatsu(self, ctx: commands.Context):
+        channel = ctx.channel  # Le spawn se fait dans le salon courant
 
-		embed = discord.Embed(
-			title="💠 Un Reiatsu sauvage apparaît !",
-			description="Cliquez sur la réaction 💠 pour l'absorber.",
-			color=discord.Color.purple()
-		)
-		message = await channel.send(embed=embed)
-		await message.add_reaction("💠")
+        embed = discord.Embed(
+            title="💠 Un Reiatsu sauvage apparaît !",
+            description="Cliquez sur la réaction 💠 pour l'absorber.",
+            color=discord.Color.purple()
+        )
+        message = await channel.send(embed=embed)
+        await message.add_reaction("💠")
 
-		def check(reaction, user):
-			return (
-				reaction.message.id == message.id
-				and str(reaction.emoji) == "💠"
-				and not user.bot
-			)
+        def check(reaction, user):
+            return (
+                reaction.message.id == message.id
+                and str(reaction.emoji) == "💠"
+                and not user.bot
+            )
 
-		try:
-			reaction, user = await self.bot.wait_for("reaction_add", timeout=40.0, check=check)
-			await channel.send(f"💠 {user.mention} a absorbé le Reiatsu !")
-		except asyncio.TimeoutError:
-			await channel.send("⏳ Le Reiatsu s’est dissipé dans l’air... personne ne l’a absorbé.")
-
+        try:
+            reaction, user = await self.bot.wait_for("reaction_add", timeout=40.0, check=check)
+            await channel.send(f"💠 {user.mention} a absorbé le Reiatsu !")
+        except asyncio.TimeoutError:
+            await channel.send("⏳ Le Reiatsu s’est dissipé dans l’air... personne ne l’a absorbé.")
 
 
 
