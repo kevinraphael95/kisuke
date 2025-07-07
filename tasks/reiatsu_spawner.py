@@ -101,21 +101,28 @@ class ReiatsuSpawner(commands.Cog):
         if not channel or not user:
             return
 
-        # ➕ Ajoute 1 point au joueur
+        # 🎲 Détermine si c'est un Super Reiatsu (1% de chance)
+        is_super = random.randint(1, 100) == 1
+        gain = 15 if is_super else 1
+
+        # ➕ Ajoute les points au joueur
         user_id = str(user.id)
         reiatsu = supabase.table("reiatsu").select("points").eq("user_id", user_id).execute()
-
         if reiatsu.data:
-            points = reiatsu.data[0]["points"] + 1
+            points = reiatsu.data[0]["points"] + gain
             supabase.table("reiatsu").update({"points": points}).eq("user_id", user_id).execute()
         else:
             supabase.table("reiatsu").insert({
                 "user_id": user_id,
                 "username": user.name,
-                "points": 1
+                "points": gain
             }).execute()
 
-        await channel.send(f"💠 {user.mention} a absorbé le Reiatsu et gagné **+1** point !")
+        # 📣 Message de confirmation
+        if is_super:
+            await channel.send(f"🌟 {user.mention} a absorbé un **Super Reiatsu** et gagné **+15** points !")
+        else:
+            await channel.send(f"💠 {user.mention} a absorbé le Reiatsu et gagné **+1** point !")
 
         # 🔄 Réinitialisation de l’état de spawn
         new_delay = random.randint(1800, 5400)
