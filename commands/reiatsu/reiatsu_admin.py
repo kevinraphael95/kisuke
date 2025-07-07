@@ -141,9 +141,19 @@ class ReiatsuAdmin(commands.Cog):
     @reiatsuadmin.command(name="spawn")
     @commands.cooldown(rate=1, per=3, type=commands.BucketType.user)  # ⏱️ Anti-spam : 3 sec
     async def spawn_reiatsu(self, ctx: commands.Context):
-        """Force l'apparition d'un Reiatsu dans le salon actuel, sans impacter le système auto."""
-    
-        channel = ctx.channel  # Le reiatsu apparaît dans le salon où la commande est appelée
+        guild_id = str(ctx.guild.id)
+        config = supabase.table("reiatsu_config").select("channel_id").eq("guild_id", guild_id).execute()
+
+        if not config.data:
+            await ctx.send("❌ Aucun salon Reiatsu n’a été configuré. Utilise `!!rtsa set`.")
+            return
+
+        channel_id = int(config.data[0]["channel_id"])
+        channel = self.bot.get_channel(channel_id)
+
+        if not channel:
+            await ctx.send("⚠️ Le salon configuré est introuvable.")
+            return
 
         embed = discord.Embed(
             title="💠 Un Reiatsu sauvage apparaît !",
@@ -152,6 +162,12 @@ class ReiatsuAdmin(commands.Cog):
         )
         message = await channel.send(embed=embed)
         await message.add_reaction("💠")
+
+        supabase.table("reiatsu_config").update({
+            "en_attente": True,
+            "spawn_message_id": str(message.id),
+            "last_spawn_at": datetime.utcnow().isoformat()
+        }).eq("guild_id", guild_id).execute()
 
         def check(reaction, user):
             return (
@@ -179,6 +195,15 @@ class ReiatsuAdmin(commands.Cog):
         except asyncio.TimeoutError:
             await channel.send("⏳ Le Reiatsu s’est dissipé dans l’air... personne ne l’a absorbé.")
 
+        supabase.table("reiatsu_config").update({
+            "en_attente": False,
+            "spawn_message_id": None
+        }).eq("guild_id", guild_id).execute()
+
+    # 🧩 Ajout d'une catégorie personnalisée
+    def cog_load(self):
+        for command in self.get_commands():
+            command.category = "Reiatsu"
 
 # ──────────────────────────────────────────────────────────────
 # 🔌 SETUP AUTOMATIQUE DU COG
