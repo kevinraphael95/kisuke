@@ -27,7 +27,7 @@ class ReiatsuAdmin2(commands.Cog):
     # ──────────────────────────────────────────────────────────
     @commands.group(
         name="ReiatsuAdmin2",
-        aliases=["rtsa"],
+        aliases=["rtsa2"],
         invoke_without_command=True,
         help="(Admin) Gère les paramètres Reiatsu (set, unset, change, spawn)."
     )
