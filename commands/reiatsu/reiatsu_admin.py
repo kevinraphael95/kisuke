@@ -42,7 +42,7 @@ class ReiatsuAdmin(commands.Cog):
                 "`!!rtsa set` — Définit le salon de spawn de Reiatsu\n"
                 "`!!rtsa unset` — Supprime le salon configuré\n"
                 "`!!rtsa change @membre <points>` — Modifie les points d’un membre\n"
-                "`!!rtsa autonow` — Force le spawn immédiat d’un Reiatsu"
+                "`!!rtsa autonow` — Force le spawn auto de Reiatsu à être imminent"
             ),
             color=discord.Color.blurple()
         )
