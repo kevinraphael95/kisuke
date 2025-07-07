@@ -1,5 +1,5 @@
 # ────────────────────────────────────────────────────────────────────────────────
-# 📌 ReiatsuAdmin2.py — Commande interactive !ReiatsuAdmin2 / !rtsa
+# 📌 ReiatsuAdmin.py — Commande interactive !ReiatsuAdmin / !rtsa
 # Objectif : Gérer les paramètres Reiatsu (définir, supprimer un salon, ou modifier les points d’un membre)
 # Catégorie : Reiatsu
 # Accès : Administrateur
@@ -16,23 +16,23 @@ from discord.ext import commands
 from supabase_client import supabase
 
 # ──────────────────────────────────────────────────────────────
-# 🔧 COG : ReiatsuAdmin2
+# 🔧 COG : ReiatsuAdmin
 # ──────────────────────────────────────────────────────────────
-class ReiatsuAdmin2(commands.Cog):
+class ReiatsuAdmin(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
 
     # ──────────────────────────────────────────────────────────
-    # 🧭 COMMANDE PRINCIPALE : !ReiatsuAdmin2 / !rtsa
+    # 🧭 COMMANDE PRINCIPALE : !ReiatsuAdmin / !rtsa
     # ──────────────────────────────────────────────────────────
     @commands.group(
-        name="ReiatsuAdmin2",
-        aliases=["rtsa2"],
+        name="reiatsuadmin",
+        aliases=["rtsa"],
         invoke_without_command=True,
         help="(Admin) Gère les paramètres Reiatsu (set, unset, change, spawn)."
     )
     @commands.has_permissions(administrator=True)
-    async def ReiatsuAdmin2(self, ctx: commands.Context):
+    async def ReiatsuAdmin(self, ctx: commands.Context):
         embed = discord.Embed(
             title="🧪 Commande Reiatsu Admin",
             description=(
@@ -50,7 +50,7 @@ class ReiatsuAdmin2(commands.Cog):
     # ──────────────────────────────────────────────────────────
     # ⚙️ SOUS-COMMANDE : SET
     # ──────────────────────────────────────────────────────────
-    @ReiatsuAdmin2.command(name="set")
+    @ReiatsuAdmin.command(name="set")
     async def set_reiatsu(self, ctx: commands.Context):
         channel_id = ctx.channel.id
         guild_id = str(ctx.guild.id)
@@ -81,7 +81,7 @@ class ReiatsuAdmin2(commands.Cog):
     # ──────────────────────────────────────────────────────────
     # 🗑️ SOUS-COMMANDE : UNSET
     # ──────────────────────────────────────────────────────────
-    @ReiatsuAdmin2.command(name="unset")
+    @ReiatsuAdmin.command(name="unset")
     async def unset_reiatsu(self, ctx: commands.Context):
         guild_id = str(ctx.guild.id)
         res = supabase.table("reiatsu_config").select("id").eq("guild_id", guild_id).execute()
@@ -95,7 +95,7 @@ class ReiatsuAdmin2(commands.Cog):
     # ──────────────────────────────────────────────────────────
     # ✨ SOUS-COMMANDE : CHANGE
     # ──────────────────────────────────────────────────────────
-    @ReiatsuAdmin2.command(name="change")
+    @ReiatsuAdmin.command(name="change")
     async def change_reiatsu(self, ctx: commands.Context, member: discord.Member, points: int):
         if points < 0:
             await ctx.send("❌ Le score Reiatsu doit être un nombre **positif**.")
@@ -138,7 +138,7 @@ class ReiatsuAdmin2(commands.Cog):
     # ──────────────────────────────────────────────────────────
     # 💠 SOUS-COMMANDE : SPAWN
     # ──────────────────────────────────────────────────────────
-    @ReiatsuAdmin2.command(name="spawn")
+    @ReiatsuAdmin.command(name="spawn")
     @commands.cooldown(rate=1, per=3, type=commands.BucketType.user)  # ⏱️ Anti-spam : 3 sec
     async def spawn_reiatsu(self, ctx: commands.Context):
         channel = ctx.channel  # Le spawn se fait dans le salon courant
@@ -172,5 +172,5 @@ class ReiatsuAdmin2(commands.Cog):
 # 🔌 SETUP AUTOMATIQUE DU COG
 # ──────────────────────────────────────────────────────────────
 async def setup(bot: commands.Bot):
-    await bot.add_cog(ReiatsuAdmin2(bot))
-    print("✅ Cog chargé : ReiatsuAdmin2 (catégorie = Reiatsu)")
+    await bot.add_cog(ReiatsuAdmin(bot))
+    print("✅ Cog chargé : ReiatsuAdmin (catégorie = Reiatsu)")
