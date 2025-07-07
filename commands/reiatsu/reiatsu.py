@@ -62,8 +62,8 @@ class Reiatsu2Command(commands.Cog):
 
         # 📦 Requête : Configuration serveur
         config = None
-        salon_text = "❌ Indisponible en DM"
-        temps_text = "⚠️ Inconnu"
+        salon_text = "❌"
+        temps_text = "❌"
 
         if ctx.guild:
             config_data = supabase.table("reiatsu_config") \
