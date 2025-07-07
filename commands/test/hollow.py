@@ -95,7 +95,7 @@ class HollowCommand(commands.Cog):
         file = discord.File(HOLLOW_IMAGE_PATH, filename="hollow.jpg")
         embed = discord.Embed(
             title="👹 Un Hollow est apparu !",
-            description="Attaque-le en dépensant 50 points de Reiatsu !",
+            description=f"Attaque-le en dépensant {REIATSU_COST} Reiatsu !",
             color=discord.Color.dark_red()
         )
         embed.set_image(url="attachment://hollow.jpg")
