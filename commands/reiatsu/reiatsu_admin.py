@@ -29,7 +29,7 @@ class ReiatsuAdmin(commands.Cog):
         name="reiatsuadmin",
         aliases=["rtsa"],
         invoke_without_command=True,
-        help="(Admin) Gère les paramètres Reiatsu (set, unset, change, spawn)."
+        help="(Admin) Gère les paramètres admin pour le Reiatsu (set, unset, change, autonow)."
     )
     @commands.has_permissions(administrator=True)
     async def reiatsuadmin(self, ctx: commands.Context):
