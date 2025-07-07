@@ -51,7 +51,6 @@ class ReiatsuAdmin(commands.Cog):
     # ⚙️ SOUS-COMMANDE : SET
     # ──────────────────────────────────────────────────────────
     @reiatsuadmin.command(name="set")
-    @commands.cooldown(rate=1, per=3, type=commands.BucketType.user)  # ⏱️ Anti-spam : 3 sec
     async def set_reiatsu(self, ctx: commands.Context):
         channel_id = ctx.channel.id
         guild_id = str(ctx.guild.id)
@@ -83,7 +82,6 @@ class ReiatsuAdmin(commands.Cog):
     # 🗑️ SOUS-COMMANDE : UNSET
     # ──────────────────────────────────────────────────────────
     @reiatsuadmin.command(name="unset")
-    @commands.cooldown(rate=1, per=3, type=commands.BucketType.user)  # ⏱️ Anti-spam : 3 sec
     async def unset_reiatsu(self, ctx: commands.Context):
         guild_id = str(ctx.guild.id)
         res = supabase.table("reiatsu_config").select("id").eq("guild_id", guild_id).execute()
@@ -98,7 +96,6 @@ class ReiatsuAdmin(commands.Cog):
     # ✨ SOUS-COMMANDE : CHANGE
     # ──────────────────────────────────────────────────────────
     @reiatsuadmin.command(name="change")
-    @commands.cooldown(rate=1, per=3, type=commands.BucketType.user)  # ⏱️ Anti-spam : 3 sec
     async def change_reiatsu(self, ctx: commands.Context, member: discord.Member, points: int):
         if points < 0:
             await ctx.send("❌ Le score Reiatsu doit être un nombre **positif**.")
@@ -144,24 +141,13 @@ class ReiatsuAdmin(commands.Cog):
     @reiatsuadmin.command(name="spawn")
     @commands.cooldown(rate=1, per=3, type=commands.BucketType.user)  # ⏱️ Anti-spam : 3 sec
     async def spawn_reiatsu(self, ctx: commands.Context):
-        """Fait apparaître un Reiatsu manuel (capturable pendant 40 secondes)."""
-        guild_id = str(ctx.guild.id)
-        config = supabase.table("reiatsu_config").select("channel_id").eq("guild_id", guild_id).execute()
-
-        if not config.data:
-            await ctx.send("❌ Aucun salon Reiatsu n’a été configuré. Utilise `!!rtsa set`.")
-            return
-
-        channel_id = int(config.data[0]["channel_id"])
-        channel = self.bot.get_channel(channel_id)
-
-        if not channel:
-            await ctx.send("⚠️ Le salon configuré est introuvable.")
-            return
+        """Force l'apparition d'un Reiatsu dans le salon actuel, sans impacter le système auto."""
+    
+        channel = ctx.channel  # Le reiatsu apparaît dans le salon où la commande est appelée
 
         embed = discord.Embed(
-            title="💠 Un Reiatsu vient d’être invoqué manuellement !",
-            description="Cliquez sur la réaction 💠 pour l’absorber (40 secondes max).",
+            title="💠 Un Reiatsu sauvage apparaît !",
+            description="Cliquez sur la réaction 💠 pour l'absorber.",
             color=discord.Color.purple()
         )
         message = await channel.send(embed=embed)
@@ -175,7 +161,7 @@ class ReiatsuAdmin(commands.Cog):
             )
 
         try:
-            reaction, user = await self.bot.wait_for("reaction_add", timeout=40.0, check=check)
+            reaction, user = await self.bot.wait_for("reaction_add", timeout=10800.0, check=check)
             user_id = str(user.id)
             data = supabase.table("reiatsu").select("points").eq("user_id", user_id).execute()
 
@@ -191,7 +177,8 @@ class ReiatsuAdmin(commands.Cog):
 
             await channel.send(f"💠 {user.mention} a absorbé le Reiatsu et gagné **+1** point !")
         except asyncio.TimeoutError:
-            await channel.send("⏳ Le Reiatsu invoqué s’est dissipé… personne ne l’a absorbé.")
+            await channel.send("⏳ Le Reiatsu s’est dissipé dans l’air... personne ne l’a absorbé.")
+
 
 # ──────────────────────────────────────────────────────────────
 # 🔌 SETUP AUTOMATIQUE DU COG
