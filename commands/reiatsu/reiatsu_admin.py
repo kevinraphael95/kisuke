@@ -14,8 +14,6 @@ import random
 from datetime import datetime
 from discord.ext import commands
 from supabase_client import supabase
-from datetime import datetime, timedelta  # ✅ Ajout de timedelta
-
 
 # ──────────────────────────────────────────────────────────────
 # 🔧 COG : ReiatsuAdmin
@@ -31,7 +29,7 @@ class ReiatsuAdmin(commands.Cog):
         name="reiatsuadmin",
         aliases=["rtsa"],
         invoke_without_command=True,
-        help="(Admin) Gère les paramètres admin pour le Reiatsu (set, unset, change, autonow)."
+        help="(Admin) Gère les paramètres Reiatsu (set, unset, change, spawn)."
     )
     @commands.has_permissions(administrator=True)
     async def reiatsuadmin(self, ctx: commands.Context):
@@ -42,7 +40,7 @@ class ReiatsuAdmin(commands.Cog):
                 "`!!rtsa set` — Définit le salon de spawn de Reiatsu\n"
                 "`!!rtsa unset` — Supprime le salon configuré\n"
                 "`!!rtsa change @membre <points>` — Modifie les points d’un membre\n"
-                "`!!rtsa autonow` — Force le spawn immédiat d’un Reiatsu"
+                "`!!rtsa spawn` — Force le spawn immédiat d’un Reiatsu"
             ),
             color=discord.Color.blurple()
         )
@@ -138,36 +136,74 @@ class ReiatsuAdmin(commands.Cog):
             await ctx.send(f"⚠️ Une erreur est survenue : `{e}`")
 
     # ──────────────────────────────────────────────────────────
-    # ⏱️ SOUS-COMMANDE : AUTONOW
+    # 💠 SOUS-COMMANDE : SPAWN
     # ──────────────────────────────────────────────────────────
-    @reiatsuadmin.command(name="autonow")
-    @commands.cooldown(rate=1, per=3, type=commands.BucketType.user)
-    async def force_next_spawn_timer(self, ctx: commands.Context):
-        """Avance le timer du prochain spawn automatique."""
+    @reiatsuadmin.command(name="spawn")
+    @commands.cooldown(rate=1, per=3, type=commands.BucketType.user)  # ⏱️ Anti-spam : 3 sec
+    async def spawn_reiatsu(self, ctx: commands.Context):
         guild_id = str(ctx.guild.id)
-
-        # 📦 Récupération de la configuration actuelle
-        config = supabase.table("reiatsu_config").select("channel_id", "delay_minutes").eq("guild_id", guild_id).execute()
+        config = supabase.table("reiatsu_config").select("channel_id").eq("guild_id", guild_id).execute()
 
         if not config.data:
-            await ctx.send("❌ Aucun salon Reiatsu n’a été configuré. Utilise `!rtsa set`.")
+            await ctx.send("❌ Aucun salon Reiatsu n’a été configuré. Utilise `!!rtsa set`.")
             return
 
-        delay_minutes = config.data[0].get("delay_minutes", 30)  # Valeur par défaut = 30 min
-        now = datetime.utcnow()
+        channel_id = int(config.data[0]["channel_id"])
+        channel = self.bot.get_channel(channel_id)
 
-        # ⏪ On recule last_spawn_at pour que le système automatique déclenche un spawn dès le prochain check
-        last_spawn_forced = now - timedelta(minutes=delay_minutes + 1)
+        if not channel:
+            await ctx.send("⚠️ Le salon configuré est introuvable.")
+            return
 
-        # 🛠️ Mise à jour dans la base Supabase
+        embed = discord.Embed(
+            title="💠 Un Reiatsu sauvage apparaît !",
+            description="Cliquez sur la réaction 💠 pour l'absorber.",
+            color=discord.Color.purple()
+        )
+        message = await channel.send(embed=embed)
+        await message.add_reaction("💠")
+
         supabase.table("reiatsu_config").update({
-            "last_spawn_at": last_spawn_forced.isoformat(),
+            "en_attente": True,
+            "spawn_message_id": str(message.id),
+            "last_spawn_at": datetime.utcnow().isoformat()
+        }).eq("guild_id", guild_id).execute()
+
+        def check(reaction, user):
+            return (
+                reaction.message.id == message.id
+                and str(reaction.emoji) == "💠"
+                and not user.bot
+            )
+
+        try:
+            reaction, user = await self.bot.wait_for("reaction_add", timeout=10800.0, check=check)
+            user_id = str(user.id)
+            data = supabase.table("reiatsu").select("points").eq("user_id", user_id).execute()
+
+            if data.data:
+                current = data.data[0]["points"]
+                supabase.table("reiatsu").update({"points": current + 1}).eq("user_id", user_id).execute()
+            else:
+                supabase.table("reiatsu").insert({
+                    "user_id": user_id,
+                    "username": user.name,
+                    "points": 1
+                }).execute()
+
+            await channel.send(f"💠 {user.mention} a absorbé le Reiatsu et gagné **+1** point !")
+        except asyncio.TimeoutError:
+            await channel.send("⏳ Le Reiatsu s’est dissipé dans l’air... personne ne l’a absorbé.")
+
+        supabase.table("reiatsu_config").update({
             "en_attente": False,
             "spawn_message_id": None
         }).eq("guild_id", guild_id).execute()
 
-        await ctx.send("⏱️ Le timer a été avancé : le prochain **spawn automatique** est désormais **imminent**.")
-
+    # 🧩 Ajout d'une catégorie personnalisée
+    def cog_load(self):
+        for command in self.get_commands():
+            command.category = "Reiatsu"
 
 # ──────────────────────────────────────────────────────────────
 # 🔌 SETUP AUTOMATIQUE DU COG
