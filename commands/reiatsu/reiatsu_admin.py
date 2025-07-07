@@ -14,6 +14,8 @@ import random
 from datetime import datetime
 from discord.ext import commands
 from supabase_client import supabase
+from datetime import datetime, timedelta  # ✅ Ajout de timedelta
+
 
 # ──────────────────────────────────────────────────────────────
 # 🔧 COG : ReiatsuAdmin
@@ -165,6 +167,7 @@ class ReiatsuAdmin(commands.Cog):
         }).eq("guild_id", guild_id).execute()
 
         await ctx.send("⏱️ Le timer a été avancé : le prochain **spawn automatique** est désormais **imminent**.")
+
 
 # ──────────────────────────────────────────────────────────────
 # 🔌 SETUP AUTOMATIQUE DU COG
