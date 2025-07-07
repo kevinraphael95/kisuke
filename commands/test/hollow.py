@@ -25,7 +25,7 @@ REIATSU_COST = 0
 # ────────────────────────────────────────────────────────────────────────────────
 class HollowView(View):
     def __init__(self, author_id: int):
-        super().__init__(timeout=60)  # timeout 60 secondes pour l’interaction
+        super().__init__(timeout=60)
         self.author_id = author_id
         self.attacked = False
 
@@ -41,7 +41,7 @@ class HollowView(View):
 
         user_id = str(interaction.user.id)
 
-        # Récupérer le score reiatsu
+        # Récupération reiatsu
         resp = supabase.table("reiatsu").select("points").eq("user_id", user_id).execute()
         if not resp.data:
             await interaction.response.send_message("❌ Tu n’as pas de Reiatsu enregistré.", ephemeral=True)
@@ -49,28 +49,36 @@ class HollowView(View):
 
         points = resp.data[0].get("points", 0)
         if points < REIATSU_COST:
-            await interaction.response.send_message(f"❌ Tu n’as pas assez de Reiatsu (il te faut {REIATSU_COST}).", ephemeral=True)
+            await interaction.response.send_message(f"❌ Il te faut {REIATSU_COST} reiatsu pour attaquer.", ephemeral=True)
             return
 
-        # Retirer les 50 points reiatsu
+        # Mise à jour reiatsu
         new_points = points - REIATSU_COST
         update_resp = supabase.table("reiatsu").update({"points": new_points}).eq("user_id", user_id).execute()
         if update_resp.error:
-            await interaction.response.send_message("⚠️ Une erreur est survenue lors de la mise à jour.", ephemeral=True)
+            await interaction.response.send_message("⚠️ Erreur lors de la mise à jour de ton reiatsu.", ephemeral=True)
             return
 
         self.attacked = True
 
-        # Répondre à l’interaction d’abord
-        await interaction.response.send_message(
-            f"🎉 Bravo {interaction.user.display_name}, tu as vaincu le Hollow en dépensant {REIATSU_COST} reiatsu !",
-            ephemeral=False
+        # Répondre à l’interaction (obligatoire AVANT toute autre action)
+        await interaction.response.defer()
+
+        # Message de victoire
+        await interaction.followup.send(
+            f"🎉 Bravo {interaction.user.display_name}, tu as vaincu le Hollow en dépensant {REIATSU_COST} reiatsu !"
         )
 
-        # Ensuite désactiver le bouton et mettre à jour le message
+        # Désactiver le bouton
         for child in self.children:
             child.disabled = True
-        await interaction.message.edit(view=self)
+
+        # Mise à jour de la view sans toucher à l’image ou l’embed
+        try:
+            await interaction.message.edit(view=self)
+        except Exception as e:
+            print(f"[ERREUR EDIT MESSAGE] {e}")
+
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🧠 Cog principal — HollowCommand
