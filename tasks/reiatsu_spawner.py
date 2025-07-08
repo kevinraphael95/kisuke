@@ -103,7 +103,7 @@ class ReiatsuSpawner(commands.Cog):
 
         # 🎲 Détermine si c'est un Super Reiatsu (1% de chance)
         is_super = random.randint(1, 100) == 1
-        gain = 15 if is_super else 1
+        gain = 100 if is_super else 1
 
         # ➕ Ajoute les points au joueur
         user_id = str(user.id)
@@ -120,9 +120,9 @@ class ReiatsuSpawner(commands.Cog):
 
         # 📣 Message de confirmation
         if is_super:
-            await channel.send(f"🌟 {user.mention} a absorbé un **Super Reiatsu** et gagné **+15** points !")
+            await channel.send(f"🌟 {user.mention} a absorbé un **Super Reiatsu** et gagné **+100** reiatsu !")
         else:
-            await channel.send(f"💠 {user.mention} a absorbé le Reiatsu et gagné **+1** point !")
+            await channel.send(f"💠 {user.mention} a absorbé le Reiatsu et gagné **+1** reiatsu !")
 
         # 🔄 Réinitialisation de l’état de spawn
         new_delay = random.randint(1800, 5400)
