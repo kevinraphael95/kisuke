@@ -28,7 +28,7 @@ class ReiatsuVol(commands.Cog):
     @commands.command(
         name="reiatsuvol",
         aliases=["rtsv", "volreiatsu", "vrts"],
-        help="💠 Tente de voler 5% du Reiatsu d’un autre membre. 25% de réussite. Cooldown : 24h.",
+        help="💠 Tente de voler 10% du Reiatsu d’un autre membre. 25% de réussite. Cooldown : 24h.",
         description="Commande de vol de Reiatsu avec échec possible. Perte de Reiatsu en cas d’échec. Cooldown persistant."
     )
     async def volreiatsu(self, ctx: commands.Context, cible: discord.Member = None):        
@@ -96,7 +96,7 @@ class ReiatsuVol(commands.Cog):
             return
 
         # 🎲 Calcul du vol
-        montant = max(1, cible_points // 20)
+        montant = max(1, cible_points // 10)
         succes = random.random() < 0.25
 
         # 🛠️ Préparation de la mise à jour Supabase
