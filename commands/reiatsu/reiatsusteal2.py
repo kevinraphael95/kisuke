@@ -136,8 +136,7 @@ class VolReiatsu2(commands.Cog):
                     "points": montant
                 }).execute()
 
-            await ctx.send(f"😵 {voleur.mention} a tenté de voler {cible.mention}... mais a échoué et perdu **{montant}** points ! Ces points vont au bot. �
-            �")
+            await ctx.send(f"😵 {voleur.mention} a tenté de voler {cible.mention}... mais a échoué et perdu **{montant}** points ! Ces points vont au bot.")
 
         
 # ────────────────────────────────────────────────────────────────────────────────
