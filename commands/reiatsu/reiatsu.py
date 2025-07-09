@@ -133,21 +133,19 @@ class Reiatsu2Command(commands.Cog):
             pass  # Timeout ou autre erreur : on ignore
 
     async def show_leaderboard(self, ctx: commands.Context, original_message=None):
-        # 📦 Requête : Top 10 joueurs
+        # 📦 Requête : Top 10 joueurs avec uniquement username
         leaderboard_resp = supabase.table("reiatsu") \
-            .select("user_id, points") \
+            .select("username, points") \
             .order("points", desc=True) \
             .limit(10) \
             .execute()
+
         leaderboard = leaderboard_resp.data if leaderboard_resp.data else []
 
         # 📄 Formatage du classement
         top_texte = ""
         for i, entry in enumerate(leaderboard, start=1):
-            member = None
-            if ctx.guild:
-                member = ctx.guild.get_member(int(entry["user_id"]))
-            name = member.display_name if member else f"<Inconnu {entry['user_id']}>"
+            name = entry.get("username", "Inconnu")
             points = entry["points"]
             top_texte += f"**#{i}** — {name} : {points} pts\n"
 
@@ -158,6 +156,7 @@ class Reiatsu2Command(commands.Cog):
             color=discord.Color.gold()
         )
         await ctx.send(embed=embed, reference=original_message)
+
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🔌 Setup du Cog
