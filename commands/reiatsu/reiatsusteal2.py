@@ -19,7 +19,7 @@ import random
 # ────────────────────────────────────────────────────────────────────────────────
 class VolReiatsu2(commands.Cog):
     """
-    Commande !volreiatsu — Tente de voler du Reiatsu à un autre joueur (25% de chance)
+    Commande !volreiatsu2 — Tente de voler du Reiatsu à un autre joueur (25% de chance)
     """
 
     def __init__(self, bot: commands.Bot):
@@ -27,7 +27,7 @@ class VolReiatsu2(commands.Cog):
 
     @commands.command(
         name="volreiatsu2",
-        aliases=["stealreiatsu", "rtss", "rtsvol", "rtsv"],
+        aliases=["stealreiatsu2", "rtss2", "rtsvol2", "rtsv2"],
         help="💠 Tente de voler 5% du Reiatsu d’un autre membre. 25% de réussite. Cooldown : 24h.",
         description="Commande de vol de Reiatsu avec échec possible. Perte de Reiatsu en cas d’échec. Cooldown persistant."
     )
