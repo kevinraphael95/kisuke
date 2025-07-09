@@ -115,13 +115,31 @@ class VolReiatsu(commands.Cog):
 
             await ctx.send(f"🩸 {voleur.mention} a réussi à voler **{montant}** points de Reiatsu à {cible.mention} !")
 
+
+
         else:
             # ❌ Vol raté → perte pour le voleur
             payload_voleur["points"] = max(0, voleur_points - montant)
             supabase.table("reiatsu").update(payload_voleur).eq("user_id", voleur_id).execute()
 
-            await ctx.send(f"😵 {voleur.mention} a tenté de voler {cible.mention}... mais a échoué et perdu **{montant}** points !")
+            # ➕ Le bot récupère les points perdus
+            bot_id = str(self.bot.user.id)
+            bot_data = supabase.table("reiatsu").select("id, points").eq("user_id", bot_id).execute()
 
+            if bot_data.data:
+                points_actuels = bot_data.data[0]["points"]
+                supabase.table("reiatsu").update({"points": points_actuels + montant}).eq("user_id", bot_id).execute()
+            else:
+                supabase.table("reiatsu").insert({
+                    "user_id": bot_id,
+                    "username": self.bot.user.name,
+                    "points": montant
+                }).execute()
+
+            await ctx.send(f"😵 {voleur.mention} a tenté de voler {cible.mention}... mais a échoué et perdu **{montant}** points ! Ces points vont au bot. �
+            �")
+
+        
 # ────────────────────────────────────────────────────────────────────────────────
 # 🔌 Setup du Cog
 # ────────────────────────────────────────────────────────────────────────────────
