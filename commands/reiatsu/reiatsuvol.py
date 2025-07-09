@@ -17,7 +17,7 @@ import random
 # ────────────────────────────────────────────────────────────────────────────────
 # 🧠 Cog principal
 # ────────────────────────────────────────────────────────────────────────────────
-class VolReiatsu2(commands.Cog):
+class VolReiatsu(commands.Cog):
     """
     Commande !volreiatsu2 — Tente de voler du Reiatsu à un autre joueur (25% de chance)
     """
@@ -26,8 +26,8 @@ class VolReiatsu2(commands.Cog):
         self.bot = bot
 
     @commands.command(
-        name="volreiatsu2",
-        aliases=["stealreiatsu2", "rtss2", "rtsvol2", "rtsv2"],
+        name="reiatsuvol",
+        aliases=["rtsv", "volreiatsu", "vers"],
         help="💠 Tente de voler 5% du Reiatsu d’un autre membre. 25% de réussite. Cooldown : 24h.",
         description="Commande de vol de Reiatsu avec échec possible. Perte de Reiatsu en cas d’échec. Cooldown persistant."
     )
@@ -50,7 +50,7 @@ class VolReiatsu2(commands.Cog):
                     h, m = divmod(restant.seconds // 60, 60)
                     await ctx.send(f"⏳ Il te reste **{restant.days}j {h}h{m}m** avant de pouvoir retenter un vol.")
                     return
-            await ctx.send("ℹ️ Tu peux utiliser la commande `!volreiatsu @membre` pour tenter de voler du Reiatsu.")
+            await ctx.send("ℹ️ Tu dois faire `!!volreiatsu @membre` pour tenter de voler du Reiatsu.")
             return
 
 
@@ -143,7 +143,7 @@ class VolReiatsu2(commands.Cog):
 # 🔌 Setup du Cog
 # ────────────────────────────────────────────────────────────────────────────────
 async def setup(bot: commands.Bot):
-    cog = VolReiatsu2(bot)
+    cog = VolReiatsu(bot)
     for command in cog.get_commands():
         if not hasattr(command, "category"):
             command.category = "Reiatsu"
