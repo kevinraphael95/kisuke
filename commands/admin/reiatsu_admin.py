@@ -173,5 +173,5 @@ async def setup(bot: commands.Bot):
     cog = ReiatsuAdmin(bot)
     for command in cog.get_commands():
         if not hasattr(command, "category"):
-            command.category = "Reiatsu"
+            command.category = "Admin"
     await bot.add_cog(cog)
