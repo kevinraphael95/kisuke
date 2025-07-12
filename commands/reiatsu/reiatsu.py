@@ -103,14 +103,18 @@ class Reiatsu2Command(commands.Cog):
 
         # 📋 Création de l'embed
         embed = discord.Embed(
-            title="__**💠 Score de Reiatsu**__",
+            title="__**💠 Profil**__",
             description=(
                 f"**{user.display_name}** a actuellement :\n"
-                f"**{points}** points de Reiatsu\n\n"
+                f"**{points}** points de Reiatsu\n"
+                f"• 🕵️ Cooldown vol : {cooldown_text}\n\n"
+                f"__**Classe**__\n"
+                f"Compétence passive : x\n"
+                f"Compétence active : x\n\n"
                 f"__**Infos**__\n"
                 f"• 📍 Lieu d'apparition : {salon_text}\n"
-                f"• ⏳ Cooldown : {temps_text}\n"
-                f"• 🕵️ Cooldown vol : {cooldown_text}"
+                f"• ⏳ Cooldown : {temps_text}"
+        
             ),
             color=discord.Color.purple()
         )
