@@ -48,5 +48,4 @@ async def setup(bot: commands.Bot):
     for command in cog.get_commands():
         if not hasattr(command, "category"):
             command.category = "Général"
-    await bot.add_co
-g(cog)
+    await bot.add_cog(cog)
