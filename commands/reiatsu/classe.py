@@ -10,10 +10,10 @@
 # ────────────────────────────────────────────────────────────────────────────────
 import discord
 from discord.ext import commands
+from discord import app_commands
 from discord.ui import View, Select, select
 from supabase import create_client, Client
 import os
-import json
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🔧 Configuration Supabase
@@ -23,11 +23,30 @@ SUPABASE_KEY = os.getenv("SUPABASE_KEY")
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 # ────────────────────────────────────────────────────────────────────────────────
-# 📂 Chargement des données JSON
+# 📊 Données des classes Reiatsu
 # ────────────────────────────────────────────────────────────────────────────────
-# Charger le fichier JSON au démarrage du module
-with open("classes.json", "r", encoding="utf-8") as f:
-    CLASSES = json.load(f)
+CLASSES = {
+    "Voleur": {
+        "Passive": "Réduction de 5h du cooldown de vol, +10% chance de réussite",
+        "Active": "!volgaranti — Prochain vol garanti. (CD: 12h)"
+    },
+    "Absorbeur": {
+        "Passive": "+10 Reiatsu par absorption réussie",
+        "Active": "!superabsorption — Prochain Reiatsu est Super. (CD: 12h)"
+    },
+    "Mimique": {
+        "Passive": "Copie 20% du dernier gain d'un autre joueur",
+        "Active": "!copie — Copie la dernière compétence active utilisée. (CD: 16h)"
+    },
+    "Illusionniste": {
+        "Passive": "En cas de vol raté subi, un autre joueur est accusé (RP uniquement)",
+        "Active": "!miroirdombre — Renvoie le vol à l'expéditeur. (CD: 8h)"
+    },
+    "Parieur": {
+        "Passive": "20% de chance de doubler les gains lors d'un vol",
+        "Active": "!pari — Mise 10 reiatsu pour tenter d'en gagner 50. (CD: 12h)"
+    }
+}
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🎛️ UI — Vue du menu de sélection de classe
@@ -52,21 +71,16 @@ class ClasseSelect(discord.ui.Select):
 
         classe = self.values[0]
         user_id = str(interaction.user.id)
-
         try:
             supabase.table("reiatsu").update({"classe": classe}).eq("user_id", user_id).execute()
-
             embed = discord.Embed(
                 title=f"✅ Classe choisie : {classe}",
                 description=f"**Passive** : {CLASSES[classe]['Passive']}\n**Active** : {CLASSES[classe]['Active']}",
                 color=discord.Color.green()
             )
-
-            await interaction.message.edit(embed=embed, view=None)
-            await interaction.response.defer()
+            await interaction.response.edit_message(embed=embed, view=None)
         except Exception as e:
             await interaction.response.send_message(f"❌ Erreur lors de l'enregistrement : {e}", ephemeral=True)
-
 
 class ClasseSelectView(View):
     def __init__(self, user_id):
@@ -94,14 +108,12 @@ class ChoisirClasse(commands.Cog):
             description="Sélectionne une classe dans le menu déroulant ci-dessous. Chaque classe possède une compétence passive et une active.",
             color=discord.Color.purple()
         )
-
         for nom, details in CLASSES.items():
             embed.add_field(
                 name=f"🌀 {nom}",
                 value=f"**Passive :** {details['Passive']}\n**Active :** {details['Active']}",
                 inline=False
             )
-
         view = ClasseSelectView(ctx.author.id)
         await ctx.send(embed=embed, view=view)
 
