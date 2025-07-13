@@ -1,22 +1,22 @@
 {
-    "Voleur": {
-        "Passive": "Réduction de 5h du cooldown de vol, +10% chance de réussite",
-        "Active": "!volgaranti — Prochain vol garanti. (CD: 12h)"
-    },
-    "Absorbeur": {
-        "Passive": "+10 Reiatsu par absorption réussie",
-        "Active": "!superabsorption — Prochain Reiatsu est Super. (CD: 12h)"
-    },
-    "Mimique": {
-        "Passive": "Copie 20% du dernier gain d'un autre joueur",
-        "Active": "!copie — Copie la dernière compétence active utilisée. (CD: 16h)"
-    },
-    "Illusionniste": {
-        "Passive": "En cas de vol raté subi, un autre joueur est accusé (RP uniquement)",
-        "Active": "!miroirdombre — Renvoie le vol à l'expéditeur. (CD: 8h)"
-    },
-    "Parieur": {
-        "Passive": "20% de chance de doubler les gains lors d'un vol",
-        "Active": "!pari — Mise 10 reiatsu pour tenter d'en gagner 50. (CD: 12h)"
-    }
+  "Voleur": {
+    "Passive": "Cooldown du vol - 5h, +10% chance de réussite du vol",
+    "Active": "!volgaranti : Le prochain vol réussit à 100% (Cooldown : 12h)"
+  },
+  "Absorbeur": {
+    "Passive": "+10 Reiatsu bonus à chaque absorption",
+    "Active": "!superabsorption : Le prochain Reiatsu collecté est forcément un Super Reiatsu (Cooldown : 12h)"
+  },
+  "Mimique": {
+    "Passive": "Copie 20% des gains Reiatsu du dernier joueur ayant absorbé",
+    "Active": "!copie : Copie la dernière compétence active utilisée sur le serveur (Cooldown : 16h)"
+  },
+  "Illusionniste": {
+    "Passive": "Lorsqu’il rate un vol, le vrai voleur est un autre joueur choisi aléatoirement (affichage RP seulement)",
+    "Active": "\"Miroir d’ombre\" : La prochaine tentative de vol de reiatsu est renvoyée aléatoirement vers un autre joueur du serveur (ni toi, ni le voleur initial). (Cooldown : 8h)"
+  },
+  "Parieur": {
+    "Passive": "Chaque vol réussi a 20% de chance de doubler les points volés",
+    "Active": "!pari : Mise 10 Reiatsu pour tenter de gagner 50 Reiatsu (50% de chances). (Cooldown : 12h)"
+  }
 }
