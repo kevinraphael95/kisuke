@@ -49,20 +49,24 @@ class ClasseSelect(discord.ui.Select):
         if interaction.user.id != self.user_id:
             await interaction.response.send_message("❌ Tu ne peux pas choisir une classe pour un autre joueur.", ephemeral=True)
             return
+
         classe = self.values[0]
         user_id = str(interaction.user.id)
+
         try:
             supabase.table("reiatsu").update({"classe": classe}).eq("user_id", user_id).execute()
+
             embed = discord.Embed(
                 title=f"✅ Classe choisie : {classe}",
                 description=f"**Passive** : {CLASSES[classe]['Passive']}\n**Active** : {CLASSES[classe]['Active']}",
                 color=discord.Color.green()
             )
+
             await interaction.message.edit(embed=embed, view=None)
             await interaction.response.defer()
-
         except Exception as e:
             await interaction.response.send_message(f"❌ Erreur lors de l'enregistrement : {e}", ephemeral=True)
+
 
 class ClasseSelectView(View):
     def __init__(self, user_id):
@@ -90,12 +94,14 @@ class ChoisirClasse(commands.Cog):
             description="Sélectionne une classe dans le menu déroulant ci-dessous. Chaque classe possède une compétence passive et une active.",
             color=discord.Color.purple()
         )
+
         for nom, details in CLASSES.items():
             embed.add_field(
                 name=f"🌀 {nom}",
                 value=f"**Passive :** {details['Passive']}\n**Active :** {details['Active']}",
                 inline=False
             )
+
         view = ClasseSelectView(ctx.author.id)
         await ctx.send(embed=embed, view=view)
 
