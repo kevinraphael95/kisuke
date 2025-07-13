@@ -14,6 +14,7 @@ from discord import app_commands
 from discord.ui import View, Select, select
 from supabase import create_client, Client
 import os
+import json
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🔧 Configuration Supabase
@@ -25,28 +26,8 @@ supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 # ────────────────────────────────────────────────────────────────────────────────
 # 📊 Données des classes Reiatsu
 # ────────────────────────────────────────────────────────────────────────────────
-CLASSES = {
-    "Voleur": {
-        "Passive": "Réduction de 5h du cooldown de vol, +10% chance de réussite",
-        "Active": "!volgaranti — Prochain vol garanti. (CD: 12h)"
-    },
-    "Absorbeur": {
-        "Passive": "+10 Reiatsu par absorption réussie",
-        "Active": "!superabsorption — Prochain Reiatsu est Super. (CD: 12h)"
-    },
-    "Mimique": {
-        "Passive": "Copie 20% du dernier gain d'un autre joueur",
-        "Active": "!copie — Copie la dernière compétence active utilisée. (CD: 16h)"
-    },
-    "Illusionniste": {
-        "Passive": "En cas de vol raté subi, un autre joueur est accusé (RP uniquement)",
-        "Active": "!miroirdombre — Renvoie le vol à l'expéditeur. (CD: 8h)"
-    },
-    "Parieur": {
-        "Passive": "20% de chance de doubler les gains lors d'un vol",
-        "Active": "!pari — Mise 10 reiatsu pour tenter d'en gagner 50. (CD: 12h)"
-    }
-}
+with open("data/classes.json", "r", encoding="utf-8") as f:
+    CLASSES = json.load(f)
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🎛️ UI — Vue du menu de sélection de classe
@@ -71,6 +52,7 @@ class ClasseSelect(discord.ui.Select):
 
         classe = self.values[0]
         user_id = str(interaction.user.id)
+
         try:
             supabase.table("reiatsu").update({"classe": classe}).eq("user_id", user_id).execute()
             embed = discord.Embed(
