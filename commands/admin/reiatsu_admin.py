@@ -105,7 +105,7 @@ class ReiatsuAdmin(commands.Cog):
         username = member.display_name
 
         try:
-            data = supabase.table("reiatsu").select("id").eq("user_id", user_id).execute()
+            data = supabase.table("reiatsu").select("user_id").eq("user_id", user_id).execute()
             if data.data:
                 supabase.table("reiatsu").update({"points": points}).eq("user_id", user_id).execute()
                 status = "🔄 Score mis à jour"
