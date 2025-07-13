@@ -8,8 +8,8 @@
     "Active": "!superabsorption — Prochain Reiatsu est Super. (CD: 12h)"
   },
   "Illusionniste": {
-    "Passive": "En cas de vol raté subi, un autre joueur est accusé (RP uniquement)",
-    "Active": "!miroirdombre — Renvoie le vol à l'expéditeur. (CD: 8h)"
+    "Passive": "50% de chance de ne pas perdre de reiatsu quand volé",
+    "Active": "!reiatsupiege — Envoie un faux reiatsu qui si quelqu'un le prend ça donne 10 reiatsu. (CD: 8h)"
   },
   "Parieur": {
     "Passive": "pensant l'absorption d'un reiatsu : 50% de chance de rater, 50% d'en récupérer 5",
