@@ -45,6 +45,28 @@ class Reiatsu2Command(commands.Cog):
             .execute()
         points = score_data.data[0]["points"] if score_data.data else 0
 
+        # 📦 Requête : Classe
+        classe_data = supabase.table("reiatsu") \
+            .select("classe") \
+            .eq("user_id", user_id) \
+            .execute()
+        classe_nom = classe_data.data[0]["classe"] if classe_data.data and classe_data.data[0].get("classe") else None
+
+        # 🔁 Chargement des infos de la classe (si elle existe)
+        import json
+        with open("data/classes.json", "r", encoding="utf-8") as f:
+            CLASSES = json.load(f)
+
+        if classe_nom and classe_nom in CLASSES:
+            classe_text = (
+                f"Classe : **{classe_nom}**\n"
+                f"Compétence passive : {CLASSES[classe_nom]['Passive']}\n"
+                f"Compétence active : {CLASSES[classe_nom]['Active']}"
+            )
+        else:
+            classe_text = "Aucune classe sélectionnée.\nUtilise la commande `!classe` pour en choisir une
+            ."
+
         # 📦 Requête : Cooldown de vol
         steal_data = supabase.table("reiatsu") \
             .select("last_steal_attempt") \
@@ -111,8 +133,7 @@ class Reiatsu2Command(commands.Cog):
                 f"__**Classe**__\n"
                 f"pas encore ajouté au bot\n"
                 f"Classe: x\n"
-                f"Compétence passive : x\n"
-                f"Compétence active : x\n\n"
+                f"{classe_text}\n\n"
                 f"__**Infos**__\n"
                 f"• 📍 Lieu d'apparition : {salon_text}\n"
                 f"• ⏳ Cooldown : {temps_text}"
