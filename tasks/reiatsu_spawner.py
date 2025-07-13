@@ -107,22 +107,49 @@ class ReiatsuSpawner(commands.Cog):
 
         # ➕ Ajoute les points au joueur
         user_id = str(user.id)
-        reiatsu = supabase.table("reiatsu").select("points").eq("user_id", user_id).execute()
-        if reiatsu.data:
-            points = reiatsu.data[0]["points"] + gain
-            supabase.table("reiatsu").update({"points": points}).eq("user_id", user_id).execute()
+
+        # Récupère la classe et points actuels
+        user_data = supabase.table("reiatsu").select("classe", "points").eq("user_id", user_id).execute()
+        if user_data.data:
+            classe = user_data.data[0].get("classe")
+            current_points = user_data.data[0]["points"]
+        else:
+            classe = None
+            current_points = 0
+
+        # Gestion des passifs — uniquement si ce n'est PAS un Super Reiatsu
+        if not is_super:
+            if classe == "Absorbeur":
+                gain += 10
+
+            elif classe == "Parieur":
+                if random.random() < 0.5:
+                    gain = 0
+                else:
+                    gain = 5
+
+
+        # Mise à jour des points
+        new_total = current_points + gain
+        if user_data.data:
+            supabase.table("reiatsu").update({"points": new_total}).eq("user_id", user_id).execute()
         else:
             supabase.table("reiatsu").insert({
                 "user_id": user_id,
                 "username": user.name,
-                "points": gain
+                "points": gain,
+                "classe": classe
             }).execute()
 
-        # 📣 Message de confirmation
+        # Message de confirmation
         if is_super:
-            await channel.send(f"🌟 {user.mention} a absorbé un **Super Reiatsu** et gagné **+100** reiatsu !")
+            await channel.send(f"🌟 {user.mention} a absorbé un **Super Reiatsu** et gagné **+{gain}** reiatsu !")
         else:
-            await channel.send(f"💠 {user.mention} a absorbé le Reiatsu et gagné **+1** reiatsu !")
+            if classe == "Parieur" and gain == 0:
+                await channel.send(f"🎲 {user.mention} a tenté d’absorber un reiatsu mais a raté (passif Parieur) !")
+            else:
+                await channel.send(f"💠 {user.mention} a absorbé le Reiatsu et gagné **+{gain}** reiatsu !")
+
 
         # 🔄 Réinitialisation de l’état de spawn
         new_delay = random.randint(1800, 5400)
