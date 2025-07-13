@@ -1,0 +1,125 @@
+# ────────────────────────────────────────────────────────────────────────────────
+# 📌 choisir_classe.py — Commande interactive !classe
+# Objectif : Permettre aux joueurs de choisir leur classe Reiatsu via un menu déroulant
+# Catégorie : VAACT
+# Accès : Public
+# ────────────────────────────────────────────────────────────────────────────────
+
+# ────────────────────────────────────────────────────────────────────────────────
+# 📦 Imports nécessaires
+# ────────────────────────────────────────────────────────────────────────────────
+import discord
+from discord.ext import commands
+from discord.ui import View, Select
+from supabase import create_client, Client
+import os
+
+# ────────────────────────────────────────────────────────────────────────────────
+# 🔧 Configuration Supabase (à adapter selon ton projet)
+# ────────────────────────────────────────────────────────────────────────────────
+SUPABASE_URL = os.getenv("SUPABASE_URL")
+SUPABASE_KEY = os.getenv("SUPABASE_KEY")
+supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
+
+# ────────────────────────────────────────────────────────────────────────────────
+# 📊 Données des classes Reiatsu
+# ────────────────────────────────────────────────────────────────────────────────
+CLASSES = {
+    "Voleur": {
+        "Passive": "Réduction de 5h du cooldown de vol, +10% chance de réussite",
+        "Active": "!volgaranti — Prochain vol garanti. (CD: 12h)"
+    },
+    "Absorbeur": {
+        "Passive": "+10 Reiatsu par absorption réussie",
+        "Active": "!superabsorption — Prochain Reiatsu est Super. (CD: 12h)"
+    },
+    "Mimique": {
+        "Passive": "Copie 20% du dernier gain d'un autre joueur",
+        "Active": "!copie — Copie la dernière compétence active utilisée. (CD: 16h)"
+    },
+    "Illusionniste": {
+        "Passive": "En cas de vol raté subi, un autre joueur est accusé (RP uniquement)",
+        "Active": "!miroirdombre — Renvoie le vol à l'expéditeur. (CD: 8h)"
+    },
+    "Parieur": {
+        "Passive": "20% de chance de doubler les gains lors d'un vol",
+        "Active": "!pari — Mise 10 reiatsu pour tenter d'en gagner 50. (CD: 12h)"
+    }
+}
+
+# ────────────────────────────────────────────────────────────────────────────────
+# 🎛️ UI — Vue du menu de sélection de classe
+# ────────────────────────────────────────────────────────────────────────────────
+class ClasseSelectView(View):
+    def __init__(self, bot, user_id):
+        super().__init__(timeout=60)
+        self.bot = bot
+        self.user_id = user_id
+        self.add_item(ClasseSelect(self))
+
+class ClasseSelect(Select):
+    def __init__(self, view: ClasseSelectView):
+        self.view = view
+        options = [
+            discord.SelectOption(
+                label=classe,
+                description=data["Passive"][:100],
+                value=classe
+            )
+            for classe, data in CLASSES.items()
+        ]
+        super().__init__(placeholder="Choisis ta classe Reiatsu", options=options)
+
+    async def callback(self, interaction: discord.Interaction):
+        classe = self.values[0]
+        user_id = str(interaction.user.id)
+        try:
+            supabase.table("reiatsu").update({"classe": classe}).eq("user_id", user_id).execute()
+            embed = discord.Embed(
+                title=f"Classe choisie : {classe}",
+                description=f"**Passive** : {CLASSES[classe]['Passive']}\n**Active** : {CLASSES[classe]['Active']}",
+                color=discord.Color.green()
+            )
+            await interaction.response.edit_message(embed=embed, content=None, view=None)
+        except Exception as e:
+            await interaction.response.send_message(f"❌ Erreur lors de l'enregistrement : {e}", ephemeral=True)
+
+# ────────────────────────────────────────────────────────────────────────────────
+# 🧠 Cog principal
+# ────────────────────────────────────────────────────────────────────────────────
+class ChoisirClasse(commands.Cog):
+    """
+    Commande !classe — Choisir sa classe Reiatsu
+    """
+    def __init__(self, bot):
+        self.bot = bot
+
+    @commands.command(
+        name="classe",
+        help="Choisir sa classe Reiatsu",
+        description="Affiche un menu interactif pour choisir sa spécialisation Reiatsu."
+    )
+    async def classe(self, ctx: commands.Context):
+        embed = discord.Embed(
+            title="🎭 Choisis ta classe Reiatsu",
+            description="Sélectionne une classe dans le menu déroulant ci-dessous. Chaque classe possède une compétence passive et une active.",
+            color=discord.Color.purple()
+        )
+        for nom, details in CLASSES.items():
+            embed.add_field(
+                name=f"🌀 {nom}",
+                value=f"**Passive :** {details['Passive']}\n**Active :** {details['Active']}",
+                inline=False
+            )
+        view = ClasseSelectView(self.bot, ctx.author.id)
+        await ctx.send(embed=embed, view=view)
+
+# ────────────────────────────────────────────────────────────────────────────────
+# 🔌 Setup du Cog
+# ────────────────────────────────────────────────────────────────────────────────
+async def setup(bot: commands.Bot):
+    cog = ChoisirClasse(bot)
+    for command in cog.get_commands():
+        if not hasattr(command, "category"):
+            command.category = "Reiatsu"
+    await bot.add_cog(cog)
