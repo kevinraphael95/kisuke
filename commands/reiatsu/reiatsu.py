@@ -62,7 +62,7 @@ class Reiatsu2Command(commands.Cog):
                 f"• Classe : **{classe_nom}**\n"
                 f"• Compétence passive : {CLASSES[classe_nom]['Passive']}\n"
                 f"• Compétence active : {CLASSES[classe_nom]['Active']}\n"
-                f"(non les compétences ne sont pas encore ajoutées, oui la classe est inutile pour l'instant)"
+                f"(les compétences actives ne sont pas ajoutées)"
             )
         else:
             classe_text = "Aucune classe sélectionnée.\nUtilise la commande `!classe` pour en choisir une."
