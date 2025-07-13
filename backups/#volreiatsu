@@ -17,18 +17,18 @@ import random
 # ────────────────────────────────────────────────────────────────────────────────
 # 🧠 Cog principal
 # ────────────────────────────────────────────────────────────────────────────────
-class VolReiatsu(commands.Cog):
+class ReiatsuVol(commands.Cog):
     """
-    Commande !volreiatsu — Tente de voler du Reiatsu à un autre joueur (25% de chance)
+    Commande !volreiatsu— Tente de voler du Reiatsu à un autre joueur (25% de chance)
     """
 
     def __init__(self, bot: commands.Bot):
         self.bot = bot
 
     @commands.command(
-        name="volreiatsu",
-        aliases=["stealreiatsu", "rtss", "rtsvol", "rtsv"],
-        help="💠 Tente de voler 5% du Reiatsu d’un autre membre. 25% de réussite. Cooldown : 24h.",
+        name="reiatsuvol",
+        aliases=["rtsv", "volreiatsu", "vrts"],
+        help="💠 Tente de voler 10% du Reiatsu d’un autre membre. 25% de réussite. Cooldown : 24h.",
         description="Commande de vol de Reiatsu avec échec possible. Perte de Reiatsu en cas d’échec. Cooldown persistant."
     )
     async def volreiatsu(self, ctx: commands.Context, cible: discord.Member = None):        
@@ -50,7 +50,7 @@ class VolReiatsu(commands.Cog):
                     h, m = divmod(restant.seconds // 60, 60)
                     await ctx.send(f"⏳ Il te reste **{restant.days}j {h}h{m}m** avant de pouvoir retenter un vol.")
                     return
-            await ctx.send("ℹ️ Tu peux utiliser la commande `!volreiatsu @membre` pour tenter de voler du Reiatsu.")
+            await ctx.send("ℹ️ Tu dois faire `!!volreiatsu @membre` pour tenter de voler du Reiatsu.")
             return
 
 
@@ -96,7 +96,7 @@ class VolReiatsu(commands.Cog):
             return
 
         # 🎲 Calcul du vol
-        montant = max(1, cible_points // 20)
+        montant = max(1, cible_points // 10)
         succes = random.random() < 0.25
 
         # 🛠️ Préparation de la mise à jour Supabase
@@ -115,18 +115,35 @@ class VolReiatsu(commands.Cog):
 
             await ctx.send(f"🩸 {voleur.mention} a réussi à voler **{montant}** points de Reiatsu à {cible.mention} !")
 
+
+
         else:
             # ❌ Vol raté → perte pour le voleur
             payload_voleur["points"] = max(0, voleur_points - montant)
             supabase.table("reiatsu").update(payload_voleur).eq("user_id", voleur_id).execute()
 
-            await ctx.send(f"😵 {voleur.mention} a tenté de voler {cible.mention}... mais a échoué et perdu **{montant}** points !")
+            # ➕ Le bot récupère les points perdus
+            bot_id = str(self.bot.user.id)
+            bot_data = supabase.table("reiatsu").select("id, points").eq("user_id", bot_id).execute()
 
+            if bot_data.data:
+                points_actuels = bot_data.data[0]["points"]
+                supabase.table("reiatsu").update({"points": points_actuels + montant}).eq("user_id", bot_id).execute()
+            else:
+                supabase.table("reiatsu").insert({
+                    "user_id": bot_id,
+                    "username": self.bot.user.name,
+                    "points": montant
+                }).execute()
+
+            await ctx.send(f"😵 {voleur.mention} a tenté de voler {cible.mention}... mais a échoué et perdu **{montant}** points ! Ces points vont au bot.")
+
+        
 # ────────────────────────────────────────────────────────────────────────────────
 # 🔌 Setup du Cog
 # ────────────────────────────────────────────────────────────────────────────────
 async def setup(bot: commands.Bot):
-    cog = VolReiatsu(bot)
+    cog = ReiatsuVol(bot)
     for command in cog.get_commands():
         if not hasattr(command, "category"):
             command.category = "Reiatsu"
