@@ -64,8 +64,7 @@ class Reiatsu2Command(commands.Cog):
                 f"Compétence active : {CLASSES[classe_nom]['Active']}"
             )
         else:
-            classe_text = "Aucune classe sélectionnée.\nUtilise la commande `!classe` pour en choisir une
-            ."
+            classe_text = "Aucune classe sélectionnée.\nUtilise la commande `!classe` pour en choisir une."
 
         # 📦 Requête : Cooldown de vol
         steal_data = supabase.table("reiatsu") \
