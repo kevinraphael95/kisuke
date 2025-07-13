@@ -72,7 +72,7 @@ class ClasseSelect(discord.ui.Select):
         classe = self.values[0]
         user_id = str(interaction.user.id)
         try:
-            await supabase.table("reiatsu").update({"classe": classe}).eq("user_id", user_id).execute()
+            supabase.table("reiatsu").update({"classe": classe}).eq("user_id", user_id).execute()
             embed = discord.Embed(
                 title=f"✅ Classe choisie : {classe}",
                 description=f"**Passive** : {CLASSES[classe]['Passive']}\n**Active** : {CLASSES[classe]['Active']}",
