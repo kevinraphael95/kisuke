@@ -59,9 +59,9 @@ class Reiatsu2Command(commands.Cog):
 
         if classe_nom and classe_nom in CLASSES:
             classe_text = (
-                f"Classe : **{classe_nom}**\n"
-                f"Compétence passive : {CLASSES[classe_nom]['Passive']}\n"
-                f"Compétence active : {CLASSES[classe_nom]['Active']}"
+                f"• Classe : **{classe_nom}**\n"
+                f"• Compétence passive : {CLASSES[classe_nom]['Passive']}\n"
+                f"• Compétence active : {CLASSES[classe_nom]['Active']}"
             )
         else:
             classe_text = "Aucune classe sélectionnée.\nUtilise la commande `!classe` pour en choisir une."
