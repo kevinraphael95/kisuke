@@ -58,7 +58,9 @@ class ClasseSelect(discord.ui.Select):
                 description=f"**Passive** : {CLASSES[classe]['Passive']}\n**Active** : {CLASSES[classe]['Active']}",
                 color=discord.Color.green()
             )
-            await interaction.response.edit_message(embed=embed, view=None)
+            await interaction.message.edit(embed=embed, view=None)
+            await interaction.response.defer()
+
         except Exception as e:
             await interaction.response.send_message(f"❌ Erreur lors de l'enregistrement : {e}", ephemeral=True)
 
