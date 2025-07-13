@@ -129,12 +129,12 @@ class Reiatsu2Command(commands.Cog):
             description=(
                 f"**{user.display_name}** a actuellement :\n"
                 f"**{points}** points de Reiatsu\n"
-                f"• 🕵️ Cooldown vol : {cooldown_text}\n\n"
+                f"• 🕵️ Cooldown vol : {cooldown_text} (!!reiatsuvol pour voler du reiatsu à quelqu'un)\n\n"
                 f"__**Classe**__\n"
                 f"{classe_text}\n\n"
-                f"__**Infos**__\n"
+                f"__**Spawn du reiatsu**__\n"
                 f"• 📍 Lieu d'apparition : {salon_text}\n"
-                f"• ⏳ Cooldown : {temps_text}"
+                f"• ⏳ Temps avant apparition : {temps_text}"
         
             ),
             color=discord.Color.purple()
