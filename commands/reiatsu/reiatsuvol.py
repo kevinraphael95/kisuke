@@ -42,9 +42,14 @@ class ReiatsuVol(commands.Cog):
             now = datetime.utcnow()
             dernier_vol_str = voleur_data.data[0].get("last_steal_attempt") if voleur_data.data else None
 
+            cooldown_heures = 24
+            voleur_classe = voleur_data.data[0].get("classe") if voleur_data.data else None
+            if voleur_classe == "Voleur":
+                cooldown_heures -= 5
+
             if dernier_vol_str:
                 dernier_vol = datetime.fromisoformat(dernier_vol_str)
-                prochain_vol = dernier_vol + timedelta(hours=24)
+                prochain_vol = dernier_vol + timedelta(hours=cooldown_heures)
                 if now < prochain_vol:
                     restant = prochain_vol - now
                     h, m = divmod(restant.seconds // 60, 60)
@@ -52,11 +57,6 @@ class ReiatsuVol(commands.Cog):
                     return
             await ctx.send("ℹ️ Tu dois faire `!!volreiatsu @membre` pour tenter de voler du Reiatsu.")
             return
-
-
-
-
-        
 
         # ❌ Auto-ciblage interdit
         if voleur.id == cible.id:
@@ -72,14 +72,20 @@ class ReiatsuVol(commands.Cog):
 
         voleur_points = voleur_data.data[0]["points"] if voleur_data.data else 0
         cible_points = cible_data.data[0]["points"] if cible_data.data else 0
+        voleur_classe = voleur_data.data[0].get("classe") if voleur_data.data else None
+        cible_classe = cible_data.data[0].get("classe") if cible_data.data else None
 
         # ⏳ Vérifie cooldown
         now = datetime.utcnow()
         dernier_vol_str = voleur_data.data[0].get("last_steal_attempt") if voleur_data.data else None
 
+        cooldown_heures = 24
+        if voleur_classe == "Voleur":
+            cooldown_heures -= 5
+
         if dernier_vol_str:
             dernier_vol = datetime.fromisoformat(dernier_vol_str)
-            prochain_vol = dernier_vol + timedelta(hours=24)
+            prochain_vol = dernier_vol + timedelta(hours=cooldown_heures)
             if now < prochain_vol:
                 restant = prochain_vol - now
                 h, m = divmod(restant.seconds // 60, 60)
@@ -97,6 +103,9 @@ class ReiatsuVol(commands.Cog):
 
         # 🎲 Calcul du vol
         montant = max(1, cible_points // 10)
+        if voleur_classe == "Voleur" and random.random() < 0.2:
+            montant *= 2  # Voleur a 20% chance de doubler
+
         succes = random.random() < 0.25
 
         # 🛠️ Préparation de la mise à jour Supabase
@@ -109,13 +118,13 @@ class ReiatsuVol(commands.Cog):
             payload_voleur["points"] = voleur_points + montant
             supabase.table("reiatsu").update(payload_voleur).eq("user_id", voleur_id).execute()
 
-            supabase.table("reiatsu").update({
-                "points": max(0, cible_points - montant)
-            }).eq("user_id", cible_id).execute()
-
-            await ctx.send(f"🩸 {voleur.mention} a réussi à voler **{montant}** points de Reiatsu à {cible.mention} !")
-
-
+            if cible_classe == "Illusionniste" and random.random() < 0.5:
+                await ctx.send(f"🩸 {voleur.mention} a volé **{montant}** points à {cible.mention}... mais c'était une illusion, {cible.mention} n'a rien perdu !")
+            else:
+                supabase.table("reiatsu").update({
+                    "points": max(0, cible_points - montant)
+                }).eq("user_id", cible_id).execute()
+                await ctx.send(f"🩸 {voleur.mention} a réussi à voler **{montant}** points de Reiatsu à {cible.mention} !")
 
         else:
             # ❌ Vol raté → perte pour le voleur
@@ -138,7 +147,6 @@ class ReiatsuVol(commands.Cog):
 
             await ctx.send(f"😵 {voleur.mention} a tenté de voler {cible.mention}... mais a échoué et perdu **{montant}** points ! Ces points vont au bot.")
 
-        
 # ────────────────────────────────────────────────────────────────────────────────
 # 🔌 Setup du Cog
 # ────────────────────────────────────────────────────────────────────────────────
