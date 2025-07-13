@@ -10,12 +10,13 @@
 # ────────────────────────────────────────────────────────────────────────────────
 import discord
 from discord.ext import commands
-from discord.ui import View, Select
+from discord import app_commands
+from discord.ui import View, Select, select
 from supabase import create_client, Client
 import os
 
 # ────────────────────────────────────────────────────────────────────────────────
-# 🔧 Configuration Supabase (à adapter selon ton projet)
+# 🔧 Configuration Supabase
 # ────────────────────────────────────────────────────────────────────────────────
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY")
@@ -50,16 +51,9 @@ CLASSES = {
 # ────────────────────────────────────────────────────────────────────────────────
 # 🎛️ UI — Vue du menu de sélection de classe
 # ────────────────────────────────────────────────────────────────────────────────
-class ClasseSelectView(View):
-    def __init__(self, bot, user_id):
-        super().__init__(timeout=60)
-        self.bot = bot
+class ClasseSelect(discord.ui.Select):
+    def __init__(self, user_id):
         self.user_id = user_id
-        self.add_item(ClasseSelect(self))
-
-class ClasseSelect(Select):
-    def __init__(self, view: ClasseSelectView):
-        self.view = view
         options = [
             discord.SelectOption(
                 label=classe,
@@ -68,21 +62,30 @@ class ClasseSelect(Select):
             )
             for classe, data in CLASSES.items()
         ]
-        super().__init__(placeholder="Choisis ta classe Reiatsu", options=options)
+        super().__init__(placeholder="Choisis ta classe Reiatsu", options=options, min_values=1, max_values=1)
 
     async def callback(self, interaction: discord.Interaction):
+        if interaction.user.id != self.user_id:
+            await interaction.response.send_message("❌ Tu ne peux pas choisir une classe pour un autre joueur.", ephemeral=True)
+            return
+
         classe = self.values[0]
         user_id = str(interaction.user.id)
         try:
-            supabase.table("reiatsu").update({"classe": classe}).eq("user_id", user_id).execute()
+            await supabase.table("reiatsu").update({"classe": classe}).eq("user_id", user_id).execute()
             embed = discord.Embed(
-                title=f"Classe choisie : {classe}",
+                title=f"✅ Classe choisie : {classe}",
                 description=f"**Passive** : {CLASSES[classe]['Passive']}\n**Active** : {CLASSES[classe]['Active']}",
                 color=discord.Color.green()
             )
-            await interaction.response.edit_message(embed=embed, content=None, view=None)
+            await interaction.response.edit_message(embed=embed, view=None)
         except Exception as e:
             await interaction.response.send_message(f"❌ Erreur lors de l'enregistrement : {e}", ephemeral=True)
+
+class ClasseSelectView(View):
+    def __init__(self, user_id):
+        super().__init__(timeout=60)
+        self.add_item(ClasseSelect(user_id))
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🧠 Cog principal
@@ -111,7 +114,7 @@ class ChoisirClasse(commands.Cog):
                 value=f"**Passive :** {details['Passive']}\n**Active :** {details['Active']}",
                 inline=False
             )
-        view = ClasseSelectView(self.bot, ctx.author.id)
+        view = ClasseSelectView(ctx.author.id)
         await ctx.send(embed=embed, view=view)
 
 # ────────────────────────────────────────────────────────────────────────────────
