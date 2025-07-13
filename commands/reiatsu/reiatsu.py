@@ -109,6 +109,8 @@ class Reiatsu2Command(commands.Cog):
                 f"**{points}** points de Reiatsu\n"
                 f"• 🕵️ Cooldown vol : {cooldown_text}\n\n"
                 f"__**Classe**__\n"
+                f"pas encore ajouté au bot\n"
+                f"Classe: x\n"
                 f"Compétence passive : x\n"
                 f"Compétence active : x\n\n"
                 f"__**Infos**__\n"
