@@ -10,7 +10,6 @@
 # ────────────────────────────────────────────────────────────────────────────────
 import discord
 from discord.ext import commands
-from discord import app_commands
 from discord.ui import View, Select, select
 from supabase import create_client, Client
 import os
@@ -50,7 +49,6 @@ class ClasseSelect(discord.ui.Select):
         if interaction.user.id != self.user_id:
             await interaction.response.send_message("❌ Tu ne peux pas choisir une classe pour un autre joueur.", ephemeral=True)
             return
-
         classe = self.values[0]
         user_id = str(interaction.user.id)
         try:
