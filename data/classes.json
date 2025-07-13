@@ -1,6 +1,6 @@
 {
   "Voleur": {
-    "Passive": "Réduction de 5h du cooldown de vol, +10% chance de réussite",
+    "Passive": "Réduction de 5h du cooldown de vol, 20% de chance de doubler les gains lors d'un vol",
     "Active": "!volgaranti — Prochain vol garanti. (CD: 12h)"
   },
   "Absorbeur": {
@@ -16,7 +16,7 @@
     "Active": "!miroirdombre — Renvoie le vol à l'expéditeur. (CD: 8h)"
   },
   "Parieur": {
-    "Passive": "20% de chance de doubler les gains lors d'un vol",
+    "Passive": "pensant l'absorption d'un reiatsu : 50% de chance de rater, 50% d'en récupérer 5",
     "Active": "!pari — Mise 10 reiatsu pour tenter d'en gagner 50. (CD: 12h)"
   }
 }
