@@ -120,13 +120,13 @@ class ReiatsuSpawner(commands.Cog):
         # Gestion des passifs — uniquement si ce n'est PAS un Super Reiatsu
         if not is_super:
             if classe == "Absorbeur":
-                gain += 10
+                gain += 5
 
             elif classe == "Parieur":
                 if random.random() < 0.5:
                     gain = 0
                 else:
-                    gain = random.randint(5, 25) 
+                    gain = random.randint(5, 15) 
 
 
 
