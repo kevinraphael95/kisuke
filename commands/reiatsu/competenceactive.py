@@ -5,17 +5,12 @@
 # Accès : Public
 # ────────────────────────────────────────────────────────────────────────────────
 
-# ────────────────────────────────────────────────────────────────────────────────
 # 📦 Imports nécessaires
-# ────────────────────────────────────────────────────────────────────────────────
 import discord
 from discord.ext import commands
 from datetime import datetime, timedelta
 
-# ────────────────────────────────────────────────────────────────────────────────
-# 📂 Fonctions utilitaires pour la base de données (à remplacer par tes requêtes réelles)
-# ────────────────────────────────────────────────────────────────────────────────
-
+# 📂 Fonctions utilitaires pour la base de données
 async def db_get_player_class_and_cd(bot, user_id):
     # Récupère classe et cooldown 'comp' pour user_id depuis Supabase
     response = await bot.supabase.from_("reiatsu").select("classe, comp").eq("user_id", str(user_id)).single()
@@ -37,9 +32,14 @@ async def db_update_comp_cd(bot, user_id, new_cd):
 async def db_set_flag(bot, user_id, flag_name, value=True):
     await bot.supabase.from_("reiatsu").update({flag_name: value}).eq("user_id", str(user_id))
 
-async def db_place_fake_reiatsu(bot, user_id):
-    # Exemple d'insertion d'un piège reiatsu dans une autre table
-    await bot.supabase.from_("pieges_reiatsu").insert({"user_id": str(user_id), "created_at": datetime.utcnow().isoformat()})
+async def db_place_fake_reiatsu(bot, user_id, server_id):
+    # Enregistre un faux reiatsu posé par l'Illusionniste
+    await bot.supabase.from_("faux_reiatsu").insert({
+        "user_id": str(user_id),
+        "server_id": str(server_id),
+        "created_at": datetime.utcnow().isoformat(),
+        "consommé": False
+    })
 
 def lancer_pari():
     import random
@@ -48,9 +48,7 @@ def lancer_pari():
     else:
         return random.randint(5, 50)
 
-# ────────────────────────────────────────────────────────────────────────────────
 # 🧠 Cog principal
-# ────────────────────────────────────────────────────────────────────────────────
 class CompetenceActive(commands.Cog):
     """
     Commande !!ca — Active la compétence active de la classe du joueur (cooldown global)
@@ -96,8 +94,8 @@ class CompetenceActive(commands.Cog):
                 message = "💥 Super absorption activée pour ta prochaine absorption."
 
             elif classe == "Illusionniste":
-                await db_place_fake_reiatsu(self.bot, user_id)
-                message = "🎭 Piège reiatsu placé, attention aux prochains joueurs."
+                await db_place_fake_reiatsu(self.bot, user_id, ctx.guild.id)
+                message = "🎭 Tu as placé un faux reiatsu. Si quelqu'un le ramasse, tu gagneras 15 reiatsu !"
 
             elif classe == "Parieur":
                 gain = lancer_pari()
@@ -112,16 +110,13 @@ class CompetenceActive(commands.Cog):
 
             new_cd = now + timedelta(hours=cooldowns.get(classe, 12))
             await db_update_comp_cd(self.bot, user_id, new_cd)
-
             await ctx.send(message)
 
         except Exception as e:
             print(f"[ERREUR !!ca] {e}")
             await ctx.send("❌ Une erreur est survenue lors de l'activation de ta compétence.")
 
-# ────────────────────────────────────────────────────────────────────────────────
 # 🔌 Setup du Cog
-# ────────────────────────────────────────────────────────────────────────────────
 async def setup(bot: commands.Bot):
     cog = CompetenceActive(bot)
     for command in cog.get_commands():
