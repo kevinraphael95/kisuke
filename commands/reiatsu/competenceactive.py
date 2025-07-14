@@ -1,6 +1,6 @@
 # ────────────────────────────────────────────────────────────────────────────────
-# 📌 competence_active.py — Commande interactive !!ca pour activer la compétence active selon la classe
-# Objectif : Activer la compétence active selon la classe du joueur avec cooldown global
+# 📌 competence_active.py — Commande interactive !!ca
+# Objectif : Activer la compétence active selon la classe du joueur avec cooldown
 # Catégorie : VAACT
 # Accès : Public
 # ────────────────────────────────────────────────────────────────────────────────
@@ -13,55 +13,47 @@ from discord.ext import commands
 from datetime import datetime, timedelta
 
 # ────────────────────────────────────────────────────────────────────────────────
-# 📂 Fonctions simulées pour accès base de données (à remplacer par ton ORM ou requêtes)
+# 📂 Fonctions utilitaires pour la base de données (à remplacer par tes requêtes réelles)
 # ────────────────────────────────────────────────────────────────────────────────
 
-def db_get_player_class_and_cd(user_id):
-    """
-    Simule la récupération en base de la classe et du cooldown comp_cd du joueur.
-    Retour : (classe_str, comp_cd_datetime_or_None)
-    """
-    # Exemple statique pour test
-    # Remplacer par une vraie requête SQL / ORM ici
-    # Exemple : ("Voleur", datetime.now() - timedelta(hours=1)) => cooldown passé
-    return "Voleur", None
-
-def db_update_comp_cd(user_id, new_cd):
-    """
-    Met à jour le cooldown en base.
-    """
-    print(f"[DB] Set comp_cd for {user_id} to {new_cd}")
-
-def db_set_flag(user_id, flag_name, value=True):
-    """
-    Enregistre un flag (ex : vol_garanti) en base lié au joueur.
-    """
-    print(f"[DB] Set flag {flag_name}={value} for {user_id}")
-
-def db_place_fake_reiatsu(user_id):
-    """
-    Place un piège reiatsu (illusionniste)
-    """
-    print(f"[DB] Fake reiatsu placed by {user_id}")
-
-def lancer_pari(user_id):
-    """
-    Simule le pari du parieur, retourne gain (ou perte)
-    """
-    import random
-    chance = random.random()
-    if chance < 0.5:
-        return -10  # perte de la mise
+async def db_get_player_class_and_cd(bot, user_id):
+    # Récupère classe et cooldown 'comp' pour user_id depuis Supabase
+    response = await bot.supabase.from_("reiatsu").select("classe, comp").eq("user_id", str(user_id)).single()
+    if response.get("error") or response.get("data") is None:
+        return None, None
+    data = response["data"]
+    classe = data.get("classe")
+    comp_cd_str = data.get("comp")
+    if comp_cd_str:
+        comp_cd = datetime.fromisoformat(comp_cd_str)
     else:
-        gain = random.randint(5, 50)
-        return gain
+        comp_cd = None
+    return classe, comp_cd
+
+async def db_update_comp_cd(bot, user_id, new_cd):
+    iso_cd = new_cd.isoformat()
+    await bot.supabase.from_("reiatsu").update({"comp": iso_cd}).eq("user_id", str(user_id))
+
+async def db_set_flag(bot, user_id, flag_name, value=True):
+    await bot.supabase.from_("reiatsu").update({flag_name: value}).eq("user_id", str(user_id))
+
+async def db_place_fake_reiatsu(bot, user_id):
+    # Exemple d'insertion d'un piège reiatsu dans une autre table
+    await bot.supabase.from_("pieges_reiatsu").insert({"user_id": str(user_id), "created_at": datetime.utcnow().isoformat()})
+
+def lancer_pari():
+    import random
+    if random.random() < 0.5:
+        return -10
+    else:
+        return random.randint(5, 50)
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🧠 Cog principal
 # ────────────────────────────────────────────────────────────────────────────────
 class CompetenceActive(commands.Cog):
     """
-    Commande !!ca — Active la compétence active de la classe du joueur (avec cooldown)
+    Commande !!ca — Active la compétence active de la classe du joueur (cooldown global)
     """
 
     def __init__(self, bot: commands.Bot):
@@ -72,37 +64,43 @@ class CompetenceActive(commands.Cog):
         help="Active la compétence active de ta classe (cooldown 8h à 12h selon la compétence).",
         description="Commande pour activer ta compétence active selon ta classe."
     )
-    async def ca_command(self, ctx: commands.Context):
+    async def ca(self, ctx: commands.Context):
         user_id = ctx.author.id
         try:
-            classe, comp_cd = db_get_player_class_and_cd(user_id)
-            now = datetime.now()
-
-            if comp_cd and now < comp_cd:
-                remaining = comp_cd - now
-                hours = remaining.seconds // 3600
-                minutes = (remaining.seconds % 3600) // 60
-                await ctx.send(f"⏳ Ta compétence active est en cooldown, disponible dans {hours}h {minutes}min.")
+            classe, comp_cd = await db_get_player_class_and_cd(self.bot, user_id)
+            if classe is None:
+                await ctx.send("❌ Impossible de trouver ta classe dans la base de données.")
                 return
 
+            now = datetime.utcnow()
+            if comp_cd and now < comp_cd:
+                remaining = comp_cd - now
+                heures = remaining.seconds // 3600
+                minutes = (remaining.seconds % 3600) // 60
+                await ctx.send(f"⏳ Ta compétence active est en cooldown, disponible dans {heures}h {minutes}min.")
+                return
+
+            cooldowns = {
+                "Voleur": 12,
+                "Absorbeur": 12,
+                "Illusionniste": 8,
+                "Parieur": 12
+            }
+
             if classe == "Voleur":
-                db_set_flag(user_id, "vol_garanti", True)
-                new_cd = now + timedelta(hours=12)
+                await db_set_flag(self.bot, user_id, "vol_garanti", True)
                 message = "🗡️ Vol garanti activé, valable pour ton prochain vol."
 
             elif classe == "Absorbeur":
-                db_set_flag(user_id, "super_absorption", True)
-                new_cd = now + timedelta(hours=12)
+                await db_set_flag(self.bot, user_id, "super_absorption", True)
                 message = "💥 Super absorption activée pour ta prochaine absorption."
 
             elif classe == "Illusionniste":
-                db_place_fake_reiatsu(user_id)
-                new_cd = now + timedelta(hours=8)
+                await db_place_fake_reiatsu(self.bot, user_id)
                 message = "🎭 Piège reiatsu placé, attention aux prochains joueurs."
 
             elif classe == "Parieur":
-                gain = lancer_pari(user_id)
-                new_cd = now + timedelta(hours=12)
+                gain = lancer_pari()
                 if gain > 0:
                     message = f"🎲 Pari réussi ! Tu as gagné {gain} reiatsu."
                 else:
@@ -112,7 +110,9 @@ class CompetenceActive(commands.Cog):
                 await ctx.send("❌ Tu n'as pas de classe valide ou pas de compétence active.")
                 return
 
-            db_update_comp_cd(user_id, new_cd)
+            new_cd = now + timedelta(hours=cooldowns.get(classe, 12))
+            await db_update_comp_cd(self.bot, user_id, new_cd)
+
             await ctx.send(message)
 
         except Exception as e:
