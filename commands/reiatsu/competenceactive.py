@@ -72,7 +72,7 @@ class CompetenceActive(commands.Cog):
         help="Active la compétence active de ta classe (cooldown 8h à 12h selon la compétence).",
         description="Commande pour activer ta compétence active selon ta classe."
     )
-    async def ca(self, ctx: commands.Context):
+    async def ca_command(self, ctx: commands.Context):
         user_id = ctx.author.id
         try:
             classe, comp_cd = db_get_player_class_and_cd(user_id)
