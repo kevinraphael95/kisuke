@@ -12,7 +12,7 @@
     "Active": "!reiatsupiege — Envoie un faux reiatsu qui si quelqu'un le prend ça donne 10 reiatsu. (CD: 8h)"
   },
   "Parieur": {
-    "Passive": "pensant l'absorption d'un reiatsu : 50% de chance de rater, 50% d'en récupérer aléatoirement entre 5 et 50",
+    "Passive": "pensant l'absorption d'un reiatsu : 50% de chance de rater, 50% d'en récupérer aléatoirement entre 5 et 25",
     "Active": "!pari — Mise 10 reiatsu pour tenter d'en gagner 50. (CD: 12h)"
   }
 }
