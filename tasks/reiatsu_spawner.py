@@ -126,7 +126,7 @@ class ReiatsuSpawner(commands.Cog):
                 if random.random() < 0.5:
                     gain = 0
                 else:
-                    gain = random.randint(5, 50) 
+                    gain = random.randint(5, 25) 
 
 
 
