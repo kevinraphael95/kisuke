@@ -38,7 +38,7 @@ async def db_place_fake_reiatsu(bot, user_id, server_id):
         "user_id": str(user_id),
         "server_id": str(server_id),
         "created_at": datetime.utcnow().isoformat(),
-        "consommé": False
+        "consomme": False
     })
 
 def lancer_pari():
