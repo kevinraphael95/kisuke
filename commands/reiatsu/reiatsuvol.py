@@ -63,21 +63,20 @@ class ReiatsuVol(commands.Cog):
         voleur_classe = voleur_data.get("classe")
         cible_classe = cible_data.get("classe")
 
+        voleur_cd = voleur_data.get("steal_cd", 24)  # 👈 récupère le cooldown personnalisé
+
         now = datetime.utcnow()
         dernier_vol_str = voleur_data.get("last_steal_attempt")
-        cooldown_heures = 24
-
-        if voleur_classe == "Voleur":
-            cooldown_heures -= 5
 
         if dernier_vol_str:
             dernier_vol = datetime.fromisoformat(dernier_vol_str)
-            prochain_vol = dernier_vol + timedelta(hours=cooldown_heures)
+            prochain_vol = dernier_vol + timedelta(hours=voleur_cd)
             if now < prochain_vol:
                 restant = prochain_vol - now
                 h, m = divmod(restant.seconds // 60, 60)
                 await ctx.send(f"⏳ Tu dois encore attendre **{restant.days}j {h}h{m}m** avant de retenter.")
                 return
+
 
         if cible_points == 0:
             await ctx.send(f"⚠️ {cible.mention} n’a pas de Reiatsu à voler.")
