@@ -37,6 +37,13 @@ class ClasseSelect(discord.ui.Select):
         self.user_id = user_id
         options = [
             discord.SelectOption(
+                label="Sans classe",
+                description="Ne pas avoir de classe Reiatsu",
+                value="NONE"
+            )
+        ]
+        options += [
+            discord.SelectOption(
                 label=classe,
                 description=data["Passive"][:100],
                 value=classe
@@ -54,13 +61,24 @@ class ClasseSelect(discord.ui.Select):
         user_id = str(interaction.user.id)
 
         try:
-            supabase.table("reiatsu").update({"classe": classe}).eq("user_id", user_id).execute()
-            embed = discord.Embed(
-                title=f"✅ Classe choisie : {classe}",
-                description=f"**Passive** : {CLASSES[classe]['Passive']}\n**Active** : {CLASSES[classe]['Active']}",
-                color=discord.Color.green()
-            )
+            if classe == "NONE":
+                # Supprimer la classe en mettant à None
+                supabase.table("reiatsu").update({"classe": None}).eq("user_id", user_id).execute()
+                embed = discord.Embed(
+                    title="✅ Classe supprimée",
+                    description="Tu n'as plus de classe Reiatsu.",
+                    color=discord.Color.orange()
+                )
+            else:
+                # Choisir une classe normale
+                supabase.table("reiatsu").update({"classe": classe}).eq("user_id", user_id).execute()
+                embed = discord.Embed(
+                    title=f"✅ Classe choisie : {classe}",
+                    description=f"**Passive** : {CLASSES[classe]['Passive']}\n**Active** : {CLASSES[classe]['Active']}",
+                    color=discord.Color.green()
+                )
             await interaction.response.edit_message(embed=embed, view=None)
+
         except Exception as e:
             await interaction.response.send_message(f"❌ Erreur lors de l'enregistrement : {e}", ephemeral=True)
 
@@ -87,7 +105,10 @@ class ChoisirClasse(commands.Cog):
     async def classe(self, ctx: commands.Context):
         embed = discord.Embed(
             title="🎭 Choisis ta classe Reiatsu",
-            description="Sélectionne une classe dans le menu déroulant ci-dessous. Chaque classe possède une compétence passive et une active.",
+            description=(
+                "Sélectionne une classe dans le menu déroulant ci-dessous. Chaque classe possède une compétence passive et une active.\n\n"
+                "👉 Tu peux aussi choisir **Sans classe** pour ne pas avoir de spécialisation."
+            ),
             color=discord.Color.purple()
         )
         for nom, details in CLASSES.items():
