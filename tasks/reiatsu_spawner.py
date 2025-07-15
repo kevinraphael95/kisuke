@@ -105,41 +105,53 @@ class ReiatsuSpawner(commands.Cog):
         is_super = random.randint(1, 100) == 1
         gain = 100 if is_super else 1
 
-        # ➕ Ajoute les points au joueur
         user_id = str(user.id)
-
-        # Récupère la classe et points actuels
-        user_data = supabase.table("reiatsu").select("classe", "points").eq("user_id", user_id).execute()
+        # Récupère classe, points et bonus5
+        user_data = supabase.table("reiatsu").select("classe", "points", "bonus5").eq("user_id", user_id).execute()
         if user_data.data:
             classe = user_data.data[0].get("classe")
             current_points = user_data.data[0]["points"]
+            bonus5 = user_data.data[0].get("bonus5", 0) or 0
         else:
             classe = None
             current_points = 0
+            bonus5 = 0
 
         # Gestion des passifs — uniquement si ce n'est PAS un Super Reiatsu
         if not is_super:
             if classe == "Absorbeur":
                 gain += 5
-
             elif classe == "Parieur":
                 if random.random() < 0.5:
                     gain = 0
                 else:
-                    gain = random.randint(5, 15) 
+                    gain = random.randint(5, 15)
+            # Bonus spécial pour joueurs sans classe
+            if not classe:
+                bonus5 += 1
+                if bonus5 >= 5:
+                    gain += 6
+                    bonus5 = 0
+                    
+        else:
+            # Si Super Reiatsu, on ne compte pas dans bonus5
+            bonus5 = 0
 
-
-
-        # Mise à jour des points
         new_total = current_points + gain
+
+        # Mise à jour ou insertion avec mise à jour bonus5
         if user_data.data:
-            supabase.table("reiatsu").update({"points": new_total}).eq("user_id", user_id).execute()
+            supabase.table("reiatsu").update({
+                "points": new_total,
+                "bonus5": bonus5
+            }).eq("user_id", user_id).execute()
         else:
             supabase.table("reiatsu").insert({
                 "user_id": user_id,
                 "username": user.name,
                 "points": gain,
-                "classe": classe
+                "classe": classe,
+                "bonus5": 1 if not classe else 0
             }).execute()
 
         # Message de confirmation
@@ -151,7 +163,6 @@ class ReiatsuSpawner(commands.Cog):
             else:
                 await channel.send(f"💠 {user.mention} a absorbé le Reiatsu et gagné **+{gain}** reiatsu !")
 
-
         # 🔄 Réinitialisation de l’état de spawn
         new_delay = random.randint(1800, 5400)
         supabase.table("reiatsu_config").update({
@@ -159,6 +170,7 @@ class ReiatsuSpawner(commands.Cog):
             "spawn_message_id": None,
             "delay_minutes": new_delay
         }).eq("guild_id", guild_id).execute()
+
 
 # ──────────────────────────────────────────────────────────────
 # 🔌 SETUP AUTOMATIQUE DU COG
