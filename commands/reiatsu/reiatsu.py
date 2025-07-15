@@ -14,6 +14,7 @@ from dateutil import parser
 from datetime import datetime, timedelta
 import time
 from supabase_client import supabase
+import json
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🧠 Cog principal
@@ -38,22 +39,19 @@ class Reiatsu2Command(commands.Cog):
         user_id = str(user.id)
         guild_id = str(ctx.guild.id) if ctx.guild else None
 
-        # 📦 Requête : Score utilisateur
-        score_data = supabase.table("reiatsu") \
-            .select("points") \
+        # 📦 Requête : Données joueur
+        user_data = supabase.table("reiatsu") \
+            .select("points, classe, last_steal_attempt, steal_cd") \
             .eq("user_id", user_id) \
             .execute()
-        points = score_data.data[0]["points"] if score_data.data else 0
+        data = user_data.data[0] if user_data.data else {}
 
-        # 📦 Requête : Classe
-        classe_data = supabase.table("reiatsu") \
-            .select("classe") \
-            .eq("user_id", user_id) \
-            .execute()
-        classe_nom = classe_data.data[0]["classe"] if classe_data.data and classe_data.data[0].get("classe") else None
+        points = data.get("points", 0)
+        classe_nom = data.get("classe")
+        last_steal_str = data.get("last_steal_attempt")
+        steal_cd = data.get("steal_cd")
 
         # 🔁 Chargement des infos de la classe (si elle existe)
-        import json
         with open("data/classes.json", "r", encoding="utf-8") as f:
             CLASSES = json.load(f)
 
@@ -67,20 +65,21 @@ class Reiatsu2Command(commands.Cog):
         else:
             classe_text = "Aucune classe sélectionnée.\nUtilise la commande `!classe` pour en choisir une."
 
-        # 📦 Requête : Cooldown de vol
-        steal_data = supabase.table("reiatsu") \
-            .select("last_steal_attempt") \
-            .eq("user_id", user_id) \
-            .execute()
+        # 📦 Gestion du cooldown dynamique
         cooldown_text = "Disponible ✅"
-        if steal_data.data and steal_data.data[0].get("last_steal_attempt"):
-            last_steal = parser.parse(steal_data.data[0]["last_steal_attempt"])
-            next_steal = last_steal + timedelta(hours=24)
+        if classe_nom and steal_cd is None:
+            steal_cd = 19 if classe_nom == "Voleur" else 24
+            supabase.table("reiatsu").update({"steal_cd": steal_cd}).eq("user_id", user_id).execute()
+
+        if last_steal_str and steal_cd:
+            last_steal = parser.parse(last_steal_str)
+            next_steal = last_steal + timedelta(hours=steal_cd)
             now = datetime.utcnow()
             if now < next_steal:
                 restant = next_steal - now
-                h, m = divmod(restant.seconds // 60, 60)
-                cooldown_text = f"{restant.days}j {h}h{m}m"
+                minutes_total = int(restant.total_seconds() // 60)
+                h, m = divmod(minutes_total, 60)
+                cooldown_text = f"{restant.days}j {h}h{m}m" if restant.days else f"{h}h{m}m"
 
         # 📦 Requête : Configuration serveur
         config = None
@@ -135,7 +134,6 @@ class Reiatsu2Command(commands.Cog):
                 f"__**Spawn du reiatsu**__\n"
                 f"• 📍 Lieu d'apparition : {salon_text}\n"
                 f"• ⏳ Temps avant apparition : {temps_text}"
-        
             ),
             color=discord.Color.purple()
         )
@@ -191,4 +189,3 @@ async def setup(bot: commands.Bot):
     for command in cog.get_commands():
         command.category = "Reiatsu"
     await bot.add_cog(cog)
-    print("✅ Cog chargé : Reiatsu2Command (catégorie = Reiatsu)")
