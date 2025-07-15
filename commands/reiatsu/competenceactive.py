@@ -11,22 +11,19 @@
 import discord
 from discord.ext import commands
 from datetime import datetime, timedelta
+import random
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 📂 Fonctions utilitaires pour la base de données
 # ────────────────────────────────────────────────────────────────────────────────
 async def db_get_player_class_and_cd(bot, user_id):
-    # Récupère classe et cooldown 'comp' pour user_id depuis Supabase
     response = await bot.supabase.from_("reiatsu").select("classe, comp").eq("user_id", str(user_id)).single()
     if response.get("error") or response.get("data") is None:
         return None, None
     data = response["data"]
     classe = data.get("classe")
     comp_cd_str = data.get("comp")
-    if comp_cd_str:
-        comp_cd = datetime.fromisoformat(comp_cd_str)
-    else:
-        comp_cd = None
+    comp_cd = datetime.fromisoformat(comp_cd_str) if comp_cd_str else None
     return classe, comp_cd
 
 async def db_update_comp_cd(bot, user_id, new_cd):
@@ -37,7 +34,6 @@ async def db_set_flag(bot, user_id, flag_name, value=True):
     await bot.supabase.from_("reiatsu").update({flag_name: value}).eq("user_id", str(user_id))
 
 async def db_place_fake_reiatsu(bot, user_id, server_id):
-    # Enregistre un faux reiatsu posé par l'Illusionniste
     await bot.supabase.from_("faux_reiatsu").insert({
         "user_id": str(user_id),
         "server_id": str(server_id),
@@ -46,11 +42,11 @@ async def db_place_fake_reiatsu(bot, user_id, server_id):
     })
 
 def lancer_pari():
-    import random
     if random.random() < 0.5:
         return -10
     else:
         return random.randint(5, 50)
+
 # ────────────────────────────────────────────────────────────────────────────────
 # 🧠 Cog principal
 # ────────────────────────────────────────────────────────────────────────────────
@@ -100,14 +96,14 @@ class CompetenceActive(commands.Cog):
 
             elif classe == "Illusionniste":
                 await db_place_fake_reiatsu(self.bot, user_id, ctx.guild.id)
-                message = "🎭 Tu as placé un faux reiatsu. Si quelqu'un le ramasse, tu gagneras 15 reiatsu !"
+                message = "🎭 Tu as placé un faux reiatsu. Si quelqu'un le ramasse, tu gagneras 10 reiatsu !"
 
             elif classe == "Parieur":
                 gain = lancer_pari()
                 if gain > 0:
                     message = f"🎲 Pari réussi ! Tu as gagné {gain} reiatsu."
                 else:
-                    message = f"🎲 Pari perdu ! Tu as perdu 10 reiatsu."
+                    message = "🎲 Pari perdu ! Tu as perdu 10 reiatsu."
 
             else:
                 await ctx.send("❌ Tu n'as pas de classe valide ou pas de compétence active.")
@@ -120,6 +116,8 @@ class CompetenceActive(commands.Cog):
         except Exception as e:
             print(f"[ERREUR !!ca] {e}")
             await ctx.send("❌ Une erreur est survenue lors de l'activation de ta compétence.")
+
+
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🔌 Setup du Cog
