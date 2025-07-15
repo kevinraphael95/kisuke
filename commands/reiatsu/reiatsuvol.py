@@ -32,51 +32,26 @@ class ReiatsuVol(commands.Cog):
         description="Commande de vol de Reiatsu avec échec possible. Perte de Reiatsu en cas d’échec. Cooldown persistant."
     )
     async def volreiatsu(self, ctx: commands.Context, cible: discord.Member = None):
-        """Commande principale pour voler du Reiatsu à un autre membre."""
-
         voleur = ctx.author
-
-        if cible is None:
-            await ctx.send("ℹ️ Tu dois faire `!!volreiatsu @membre` pour tenter de voler du Reiatsu.")
-            return
-
-        if voleur.id == cible.id:
-            await ctx.send("❌ Tu ne peux pas te voler toi-même.")
-            return
-
         voleur_id = str(voleur.id)
-        cible_id = str(cible.id)
 
-        # 📥 Récupération des données Supabase
+        # Récupération des données du voleur (nécessaire pour cooldown)
         voleur_data = supabase.table("reiatsu").select("*").eq("user_id", voleur_id).execute()
-        cible_data = supabase.table("reiatsu").select("*").eq("user_id", cible_id).execute()
-
-        if not voleur_data.data or not cible_data.data:
-            await ctx.send("⚠️ Données introuvables pour le voleur ou la cible.")
+        if not voleur_data.data:
+            await ctx.send("⚠️ Données introuvables pour toi.")
             return
-
         voleur_data = voleur_data.data[0]
-        cible_data = cible_data.data[0]
 
-        voleur_points = voleur_data.get("points", 0)
-        cible_points = cible_data.get("points", 0)
         voleur_classe = voleur_data.get("classe")
-        cible_classe = cible_data.get("classe")
         voleur_cd = voleur_data.get("steal_cd")
-
-        # Appliquer un cooldown de classe si absent
         if voleur_cd is None:
             voleur_cd = 19 if voleur_classe == "Voleur" else 24
-            supabase.table("reiatsu").update({
-                "steal_cd": voleur_cd
-            }).eq("user_id", voleur_id).execute()
+            supabase.table("reiatsu").update({"steal_cd": voleur_cd}).eq("user_id", voleur_id).execute()
 
-
-        voleur_cd = voleur_data.get("steal_cd", 24)  # 👈 récupère le cooldown personnalisé
+        voleur_cd = voleur_data.get("steal_cd", 24)
 
         now = datetime.utcnow()
         dernier_vol_str = voleur_data.get("last_steal_attempt")
-
         if dernier_vol_str:
             dernier_vol = datetime.fromisoformat(dernier_vol_str)
             prochain_vol = dernier_vol + timedelta(hours=voleur_cd)
@@ -86,6 +61,29 @@ class ReiatsuVol(commands.Cog):
                 await ctx.send(f"⏳ Tu dois encore attendre **{restant.days}j {h}h{m}m** avant de retenter.")
                 return
 
+        # Ici cooldown OK => on vérifie la cible
+        if cible is None:
+            await ctx.send("ℹ️ Tu dois faire `!!volreiatsu @membre` pour tenter de voler du Reiatsu.")
+            return
+
+        if voleur.id == cible.id:
+            await ctx.send("❌ Tu ne peux pas te voler toi-même.")
+            return
+
+        cible_id = str(cible.id)
+
+        # 📥 Récupération des données Supabase
+        cible_data = supabase.table("reiatsu").select("*").eq("user_id", cible_id).execute()
+
+        if not cible_data.data:
+            await ctx.send("⚠️ Données introuvables pour la cible.")
+            return
+
+        cible_data = cible_data.data[0]
+
+        voleur_points = voleur_data.get("points", 0)
+        cible_points = cible_data.get("points", 0)
+        cible_classe = cible_data.get("classe")
 
         if cible_points == 0:
             await ctx.send(f"⚠️ {cible.mention} n’a pas de Reiatsu à voler.")
@@ -135,6 +133,7 @@ class ReiatsuVol(commands.Cog):
                 }).execute()
 
             await ctx.send(f"😵 {voleur.mention} a tenté de voler {cible.mention}... mais a échoué et perdu **{montant}** points ! Ces points vont au bot.")
+
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🔌 Setup du Cog
