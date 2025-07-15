@@ -43,11 +43,6 @@ class ReiatsuVol(commands.Cog):
         voleur_data = voleur_data.data[0]
 
         voleur_classe = voleur_data.get("classe")
-        voleur_cd = voleur_data.get("steal_cd")
-        if voleur_cd is None:
-            voleur_cd = 19 if voleur_classe == "Voleur" else 24
-            supabase.table("reiatsu").update({"steal_cd": voleur_cd}).eq("user_id", voleur_id).execute()
-
         voleur_cd = voleur_data.get("steal_cd", 24)
 
         now = datetime.utcnow()
