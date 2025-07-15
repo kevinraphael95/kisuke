@@ -11,7 +11,7 @@
 import discord
 from discord.ext import commands
 from datetime import datetime, timedelta
-from supabase_client import supabase  # ⚠️ Remplace par ton instance Supabase
+from supabase_client import supabase
 import random
 
 # ────────────────────────────────────────────────────────────────────────────────
@@ -31,34 +31,15 @@ class ReiatsuVol(commands.Cog):
         help="💠 Tente de voler 10% du Reiatsu d’un autre membre. 25% de réussite. Cooldown : 24h.",
         description="Commande de vol de Reiatsu avec échec possible. Perte de Reiatsu en cas d’échec. Cooldown persistant."
     )
-    async def volreiatsu(self, ctx: commands.Context, cible: discord.Member = None):        
+    async def volreiatsu(self, ctx: commands.Context, cible: discord.Member = None):
         """Commande principale pour voler du Reiatsu à un autre membre."""
 
         voleur = ctx.author
 
         if cible is None:
-            voleur_id = str(voleur.id)
-            voleur_data = supabase.table("reiatsu").select("*").eq("user_id", voleur_id).execute()
-            now = datetime.utcnow()
-            dernier_vol_str = voleur_data.data[0].get("last_steal_attempt") if voleur_data.data else None
-
-            cooldown_heures = 24
-            voleur_classe = voleur_data.data[0].get("classe") if voleur_data.data else None
-            if voleur_classe == "Voleur":
-                cooldown_heures -= 5
-
-            if dernier_vol_str:
-                dernier_vol = datetime.fromisoformat(dernier_vol_str)
-                prochain_vol = dernier_vol + timedelta(hours=cooldown_heures)
-                if now < prochain_vol:
-                    restant = prochain_vol - now
-                    h, m = divmod(restant.seconds // 60, 60)
-                    await ctx.send(f"⏳ Il te reste **{restant.days}j {h}h{m}m** avant de pouvoir retenter un vol.")
-                    return
             await ctx.send("ℹ️ Tu dois faire `!!volreiatsu @membre` pour tenter de voler du Reiatsu.")
             return
 
-        # ❌ Auto-ciblage interdit
         if voleur.id == cible.id:
             await ctx.send("❌ Tu ne peux pas te voler toi-même.")
             return
@@ -70,16 +51,22 @@ class ReiatsuVol(commands.Cog):
         voleur_data = supabase.table("reiatsu").select("*").eq("user_id", voleur_id).execute()
         cible_data = supabase.table("reiatsu").select("*").eq("user_id", cible_id).execute()
 
-        voleur_points = voleur_data.data[0]["points"] if voleur_data.data else 0
-        cible_points = cible_data.data[0]["points"] if cible_data.data else 0
-        voleur_classe = voleur_data.data[0].get("classe") if voleur_data.data else None
-        cible_classe = cible_data.data[0].get("classe") if cible_data.data else None
+        if not voleur_data.data or not cible_data.data:
+            await ctx.send("⚠️ Données introuvables pour le voleur ou la cible.")
+            return
 
-        # ⏳ Vérifie cooldown
+        voleur_data = voleur_data.data[0]
+        cible_data = cible_data.data[0]
+
+        voleur_points = voleur_data.get("points", 0)
+        cible_points = cible_data.get("points", 0)
+        voleur_classe = voleur_data.get("classe")
+        cible_classe = cible_data.get("classe")
+
         now = datetime.utcnow()
-        dernier_vol_str = voleur_data.data[0].get("last_steal_attempt") if voleur_data.data else None
-
+        dernier_vol_str = voleur_data.get("last_steal_attempt")
         cooldown_heures = 24
+
         if voleur_classe == "Voleur":
             cooldown_heures -= 5
 
@@ -92,7 +79,6 @@ class ReiatsuVol(commands.Cog):
                 await ctx.send(f"⏳ Tu dois encore attendre **{restant.days}j {h}h{m}m** avant de retenter.")
                 return
 
-        # 🛑 Vérifie que la cible et le voleur ont des points
         if cible_points == 0:
             await ctx.send(f"⚠️ {cible.mention} n’a pas de Reiatsu à voler.")
             return
@@ -102,19 +88,16 @@ class ReiatsuVol(commands.Cog):
             return
 
         # 🎲 Calcul du vol
-        montant = max(1, cible_points // 10)
+        montant = max(1, cible_points // 20)
         if voleur_classe == "Voleur" and random.random() < 0.2:
-            montant *= 2  # Voleur a 20% chance de doubler
+            montant *= 2
 
         succes = random.random() < 0.25
-
-        # 🛠️ Préparation de la mise à jour Supabase
         payload_voleur = {
             "last_steal_attempt": now.isoformat()
         }
 
         if succes:
-            # ✅ Vol réussi
             payload_voleur["points"] = voleur_points + montant
             supabase.table("reiatsu").update(payload_voleur).eq("user_id", voleur_id).execute()
 
@@ -127,13 +110,11 @@ class ReiatsuVol(commands.Cog):
                 await ctx.send(f"🩸 {voleur.mention} a réussi à voler **{montant}** points de Reiatsu à {cible.mention} !")
 
         else:
-            # ❌ Vol raté → perte pour le voleur
             payload_voleur["points"] = max(0, voleur_points - montant)
             supabase.table("reiatsu").update(payload_voleur).eq("user_id", voleur_id).execute()
 
-            # ➕ Le bot récupère les points perdus
             bot_id = str(self.bot.user.id)
-            bot_data = supabase.table("reiatsu").select("id, points").eq("user_id", bot_id).execute()
+            bot_data = supabase.table("reiatsu").select("points").eq("user_id", bot_id).execute()
 
             if bot_data.data:
                 points_actuels = bot_data.data[0]["points"]
