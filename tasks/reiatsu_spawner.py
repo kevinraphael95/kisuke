@@ -132,7 +132,7 @@ class ReiatsuSpawner(commands.Cog):
                 if bonus5 >= 5:
                     gain += 6
                     bonus5 = 0
-                    await channel.send(f"🎉 {user.mention} a récupéré 5 reiatsu, il gagne un bonus de 6 reiatsu !")
+                
                     
         else:
             # Si Super Reiatsu, on ne compte pas dans bonus5
