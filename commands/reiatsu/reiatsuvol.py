@@ -92,7 +92,7 @@ class ReiatsuVol(commands.Cog):
         # 🎲 Calcul du vol
         montant = max(1, cible_points // 10)  # 10%
         if voleur_classe == "Voleur" and random.random() < 0.5: #50% de chance de tripler le gain
-            montant *= 3  # triple
+            montant *= 2  # double
 
         if voleur_classe == "Voleur":
             succes = random.random() < 0.40  # 40% de chance pour la classe Voleur
