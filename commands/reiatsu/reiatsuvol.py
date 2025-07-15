@@ -52,8 +52,9 @@ class ReiatsuVol(commands.Cog):
             prochain_vol = dernier_vol + timedelta(hours=voleur_cd)
             if now < prochain_vol:
                 restant = prochain_vol - now
+                j = restant.days
                 h, m = divmod(restant.seconds // 60, 60)
-                await ctx.send(f"⏳ Tu dois encore attendre **{restant.days}j {h}h{m}m** avant de retenter.")
+                await ctx.send(f"⏳ Tu dois encore attendre **{j}j {h}h{m}m** avant de retenter.")
                 return
 
         # Ici cooldown OK => on vérifie la cible
@@ -89,7 +90,7 @@ class ReiatsuVol(commands.Cog):
             return
 
         # 🎲 Calcul du vol
-        montant = max(1, cible_points // 20)
+        montant = max(1, cible_points // 20)  # 5%
         if voleur_classe == "Voleur" and random.random() < 0.2:
             montant *= 3  # triple au lieu de double
 
@@ -98,6 +99,10 @@ class ReiatsuVol(commands.Cog):
         else:
             succes = random.random() < 0.25  # 25% sinon
 
+        # Préparation du payload pour le voleur (update points + cooldown)
+        payload_voleur = {
+            "last_steal_attempt": now.isoformat()
+        }
 
         if succes:
             payload_voleur["points"] = voleur_points + montant
@@ -129,6 +134,7 @@ class ReiatsuVol(commands.Cog):
                 }).execute()
 
             await ctx.send(f"😵 {voleur.mention} a tenté de voler {cible.mention}... mais a échoué et perdu **{montant}** points ! Ces points vont au bot.")
+
 
 
 # ────────────────────────────────────────────────────────────────────────────────
