@@ -62,16 +62,23 @@ class ClasseSelect(discord.ui.Select):
 
         try:
             if classe == "NONE":
-                # Supprimer la classe en mettant à None
-                supabase.table("reiatsu").update({"classe": None}).eq("user_id", user_id).execute()
+                # Supprimer la classe et réinitialiser le cooldown à 24h
+                supabase.table("reiatsu").update({
+                    "classe": None,
+                    "steal_cd": 24
+                }).eq("user_id", user_id).execute()
                 embed = discord.Embed(
                     title="✅ Classe supprimée",
                     description="Tu n'as plus de classe Reiatsu.",
                     color=discord.Color.orange()
                 )
             else:
-                # Choisir une classe normale
-                supabase.table("reiatsu").update({"classe": classe}).eq("user_id", user_id).execute()
+                # Choisir une classe et ajuster le cooldown selon la classe choisie
+                nouveau_cd = 19 if classe == "Voleur" else 24
+                supabase.table("reiatsu").update({
+                    "classe": classe,
+                    "steal_cd": nouveau_cd
+                }).eq("user_id", user_id).execute()
                 embed = discord.Embed(
                     title=f"✅ Classe choisie : {classe}",
                     description=f"**Passive** : {CLASSES[classe]['Passive']}\n**Active** : {CLASSES[classe]['Active']}",
@@ -81,6 +88,7 @@ class ClasseSelect(discord.ui.Select):
 
         except Exception as e:
             await interaction.response.send_message(f"❌ Erreur lors de l'enregistrement : {e}", ephemeral=True)
+
 
 class ClasseSelectView(View):
     def __init__(self, user_id):
