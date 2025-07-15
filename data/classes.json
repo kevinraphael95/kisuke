@@ -1,6 +1,6 @@
 {
   "Voleur": {
-    "Passive": "Réduction de 5h du cooldown de vol, 20% de chance de doubler les gains lors d'un vol",
+    "Passive": "Réduction de 5h du cooldown de vol, 40% de chance de réussir un vol, 20% de chance de tripler les gains lors d'un vol",
     "Active": "!volgaranti — Prochain vol garanti. (CD: 12h)"
   },
   "Absorbeur": {
