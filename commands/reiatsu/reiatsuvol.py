@@ -113,7 +113,7 @@ class ReiatsuVol(commands.Cog):
         else:
             # Échec : seulement mise à jour du cooldown, pas de perte de points ni de transfert au bot
             supabase.table("reiatsu").update(payload_voleur).eq("user_id", voleur_id).execute()
-            await ctx.send(f"😵 {voleur.mention} a tenté de voler {cible.mention}... mais a échoué sans perdre de points !")
+            await ctx.send(f"😵 {voleur.mention} a tenté de voler {cible.mention}... mais a échoué !")
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🔌 Setup du Cog
