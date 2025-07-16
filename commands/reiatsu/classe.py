@@ -35,13 +35,7 @@ with open("data/classes.json", "r", encoding="utf-8") as f:
 class ClasseSelect(discord.ui.Select):
     def __init__(self, user_id):
         self.user_id = user_id
-        options = [
-            discord.SelectOption(
-                label="Sans classe",
-                description="Ne pas avoir de classe Reiatsu",
-                value="NONE"
-            )
-        ]
+
         options += [
             discord.SelectOption(
                 label=classe,
@@ -61,18 +55,7 @@ class ClasseSelect(discord.ui.Select):
         user_id = str(interaction.user.id)
 
         try:
-            if classe == "NONE":
-                # Supprimer la classe et réinitialiser le cooldown à 24h
-                supabase.table("reiatsu").update({
-                    "classe": None,
-                    "steal_cd": 24
-                }).eq("user_id", user_id).execute()
-                embed = discord.Embed(
-                    title="✅ Classe supprimée",
-                    description="Tu n'as plus de classe Reiatsu.",
-                    color=discord.Color.orange()
-                )
-            else:
+       
                 # Choisir une classe et ajuster le cooldown selon la classe choisie
                 nouveau_cd = 19 if classe == "Voleur" else 24
                 supabase.table("reiatsu").update({
@@ -115,7 +98,7 @@ class ChoisirClasse(commands.Cog):
             title="🎭 Choisis ta classe Reiatsu",
             description=(
                 "Sélectionne une classe dans le menu déroulant ci-dessous. Chaque classe possède une compétence passive et une active.\n\n"
-                "👉 Tu peux aussi choisir **Sans classe** pour ne pas avoir de spécialisation."
+                "👉 Si tu n’as jamais choisi de classe, tu es **Travailleur** par défaut."
             ),
             color=discord.Color.purple()
         )
