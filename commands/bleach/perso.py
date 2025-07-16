@@ -40,7 +40,7 @@ class PersoCommand(commands.Cog):
         help="🧬 Découvre quel personnage de Bleach tu es (ou un autre membre).",
         description="Choix déterministe en fonction de l'identifiant Discord."
     )
-    @commands.cooldown(rate=1, per=3, type=commands.BucketType.user)  # ⏱️ Anti-spam
+    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def perso(self, ctx: commands.Context, membre: discord.Member = None):
         """
         Retourne un personnage de Bleach déterminé par l'utilisateur ou un autre membre mentionné.
