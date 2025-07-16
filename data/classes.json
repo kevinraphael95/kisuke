@@ -1,9 +1,8 @@
-  {
-    "Sans Classe": {
-      "Passive": "Une fois sur 5 : Récupère 6 Reiatsu au lieu de 1 reiatsu."
-      "Active": "Aucune"
-    },
-  {
+{
+  "Sans Classe": {
+    "Passive": "Une fois sur 5 : Récupère 6 Reiatsu au lieu de 1 reiatsu.",
+    "Active": "Aucune"
+  },
   "Voleur": {
     "Passive": "Réduction de 5h du cooldown de vol, 40% de chance de réussir un vol, 50% de chance de doubler les gains lors d'un vol",
     "Active": "!!skill — Le prochain vol est garanti. (CD: 12h)"
@@ -14,10 +13,10 @@
   },
   "Illusionniste": {
     "Passive": "50% de chance de ne pas perdre de reiatsu quand volé",
-    "Active": "!!skill — Envoie un faux reiatsu qui si quelqu'un le prend ça donne 10 reiatsu a l'illusionniste.(CD: 8h)"
+    "Active": "!!skill — Envoie un faux reiatsu qui si quelqu'un le prend ça donne 10 reiatsu à l'illusionniste. (CD: 8h)"
   },
   "Parieur": {
-    "Passive": "pensant l'absorption d'un reiatsu : 50% de chance de rater, 50% d'en récupérer aléatoirement entre 5 et 12",
+    "Passive": "Pendant l'absorption d'un reiatsu : 50% de chance de rater, 50% d'en récupérer aléatoirement entre 5 et 12",
     "Active": "!!skill — Mise 10 reiatsu pour tenter d'en gagner 30. (CD: 12h)"
   }
 }
