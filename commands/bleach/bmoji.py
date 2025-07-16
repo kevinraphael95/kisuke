@@ -39,7 +39,7 @@ class BMojiCommand(commands.Cog):
         name="bmoji",
         help="Devine quel personnage Bleach est représenté par ces 3 emojis."
     )
-    @commands.cooldown(rate=1, per=3, type=commands.BucketType.user)  # Anti-spam 3 secondes
+    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def bmoji(self, ctx: commands.Context):
         try:
             personnages = load_characters()
