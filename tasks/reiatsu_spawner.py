@@ -113,7 +113,7 @@ class ReiatsuSpawner(commands.Cog):
             current_points = user_data.data[0]["points"]
             bonus5 = user_data.data[0].get("bonus5", 0) or 0
         else:
-            classe = None
+            classe = "Travailleur"
             current_points = 0
             bonus5 = 0
 
@@ -126,12 +126,13 @@ class ReiatsuSpawner(commands.Cog):
                     gain = 0
                 else:
                     gain = random.randint(5, 12)
-            # Bonus spécial pour joueurs sans classe
-            if not classe:
+            # Passif Travailleur
+            if classe == "Travailleur":
                 bonus5 += 1
                 if bonus5 >= 5:
-                    gain += 6
+                    gain = 6
                     bonus5 = 0
+
                 
                     
         else:
@@ -151,9 +152,10 @@ class ReiatsuSpawner(commands.Cog):
                 "user_id": user_id,
                 "username": user.name,
                 "points": gain,
-                "classe": classe,
-                "bonus5": 1 if not classe else 0
+                "classe": "Travailleur",
+                "bonus5": 1
             }).execute()
+
 
         # Message de confirmation
         if is_super:
