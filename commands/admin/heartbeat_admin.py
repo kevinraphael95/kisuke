@@ -26,6 +26,7 @@ class HeartbeatAdmin(commands.Cog):
         description="Gère le heartbeat automatique (pause, relance, statut, salon)."
     )
     @commands.has_permissions(administrator=True)
+    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def heartbeat(self, ctx: commands.Context, action: str = None, channel: discord.TextChannel = None):
         try:
             if action is None:
