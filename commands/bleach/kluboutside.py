@@ -95,6 +95,7 @@ class KlubOutside(commands.Cog):
         help="📓 Affiche une question Klub Outside par son numéro, ou pagine toutes si aucun numéro n'est donné.",
         description="Utilisation : `!ko [numéro]`"
     )
+    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def kluboutside(self, ctx: commands.Context, numero: int = None):
         try:
             data = load_data()
