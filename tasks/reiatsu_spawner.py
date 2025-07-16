@@ -125,7 +125,7 @@ class ReiatsuSpawner(commands.Cog):
                 if random.random() < 0.5:
                     gain = 0
                 else:
-                    gain = random.randint(5, 15)
+                    gain = random.randint(5, 12)
             # Bonus spécial pour joueurs sans classe
             if not classe:
                 bonus5 += 1
