@@ -32,6 +32,7 @@ class ReiatsuAdmin(commands.Cog):
         help="Commande admin pour gérer le Reiatsu : set, unset, change, spawn."
     )
     @commands.has_permissions(administrator=True)
+    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def ReiatsuAdmin(self, ctx: commands.Context):
         embed = discord.Embed(
             title="🧪 Commande Reiatsu Admin",
