@@ -36,7 +36,7 @@ class ClasseSelect(discord.ui.Select):
     def __init__(self, user_id):
         self.user_id = user_id
 
-        options += [
+        options = [
             discord.SelectOption(
                 label=classe,
                 description=data["Passive"][:100],
@@ -55,18 +55,18 @@ class ClasseSelect(discord.ui.Select):
         user_id = str(interaction.user.id)
 
         try:
-       
-                # Choisir une classe et ajuster le cooldown selon la classe choisie
-                nouveau_cd = 19 if classe == "Voleur" else 24
-                supabase.table("reiatsu").update({
-                    "classe": classe,
-                    "steal_cd": nouveau_cd
-                }).eq("user_id", user_id).execute()
-                embed = discord.Embed(
-                    title=f"✅ Classe choisie : {classe}",
-                    description=f"**Passive** : {CLASSES[classe]['Passive']}\n**Active** : {CLASSES[classe]['Active']}",
-                    color=discord.Color.green()
-                )
+            # Choisir une classe et ajuster le cooldown selon la classe choisie
+            nouveau_cd = 19 if classe == "Voleur" else 24
+            supabase.table("reiatsu").update({
+                "classe": classe,
+                "steal_cd": nouveau_cd
+            }).eq("user_id", user_id).execute()
+
+            embed = discord.Embed(
+                title=f"✅ Classe choisie : {classe}",
+                description=f"**Passive** : {CLASSES[classe]['Passive']}\n**Active** : {CLASSES[classe]['Active']}",
+                color=discord.Color.green()
+            )
             await interaction.response.edit_message(embed=embed, view=None)
 
         except Exception as e:
