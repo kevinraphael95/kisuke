@@ -1,18 +1,18 @@
 {
   "Voleur": {
     "Passive": "Réduction de 5h du cooldown de vol, 40% de chance de réussir un vol, 50% de chance de doubler les gains lors d'un vol",
-    "Active": "!volgaranti — Prochain vol garanti. (CD: 12h)"
+    "Active": "!!skill — Le prochain vol est garanti. (CD: 12h)"
   },
   "Absorbeur": {
     "Passive": "5 Reiatsu par reiatsu récupéré",
-    "Active": "!superabsorption — Prochain Reiatsu est Super. (CD: 12h)"
+    "Active": "!!skill — le Prochain Reiatsu absorbé est forcément un Super reiatsu. (super reiatsu = 100 reiatsu)(CD: 12h)"
   },
   "Illusionniste": {
     "Passive": "50% de chance de ne pas perdre de reiatsu quand volé",
-    "Active": "!reiatsupiege — Envoie un faux reiatsu qui si quelqu'un le prend ça donne 10 reiatsu. (CD: 8h)"
+    "Active": "!!skill — Envoie un faux reiatsu qui si quelqu'un le prend ça donne 10 reiatsu a l'illusionniste.(CD: 8h)"
   },
   "Parieur": {
     "Passive": "pensant l'absorption d'un reiatsu : 50% de chance de rater, 50% d'en récupérer aléatoirement entre 5 et 15",
-    "Active": "!pari — Mise 10 reiatsu pour tenter d'en gagner 50. (CD: 12h)"
+    "Active": "!!skill — Mise 10 reiatsu pour tenter d'en gagner 30. (CD: 12h)"
   }
 }
