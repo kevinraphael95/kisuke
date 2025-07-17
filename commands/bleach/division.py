@@ -14,9 +14,10 @@ import json
 import os
 from collections import Counter
 import asyncio
-import random  # <-- Ajouté pour tirage aléatoire
+import random  
 
-from discord_utils import safe_send, safe_edit  # <-- Import des utils
+# Import des fonctions sécurisées pour éviter le rate-limit 429
+from utils.discord_utils import safe_send, safe_edit  # <-- Import des utils
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 📂 Chargement des données JSON
