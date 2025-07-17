@@ -16,6 +16,8 @@ from supabase import create_client, Client
 import os
 import json
 
+from discord_utils import safe_send, safe_respond  # <-- import fonctions anti 429
+
 # ────────────────────────────────────────────────────────────────────────────────
 # 🔧 Configuration Supabase
 # ────────────────────────────────────────────────────────────────────────────────
@@ -48,7 +50,7 @@ class ClasseSelect(discord.ui.Select):
 
     async def callback(self, interaction: discord.Interaction):
         if interaction.user.id != self.user_id:
-            await interaction.response.send_message("❌ Tu ne peux pas choisir une classe pour un autre joueur.", ephemeral=True)
+            await safe_respond(interaction, "❌ Tu ne peux pas choisir une classe pour un autre joueur.", ephemeral=True)
             return
 
         classe = self.values[0]
@@ -70,7 +72,7 @@ class ClasseSelect(discord.ui.Select):
             await interaction.response.edit_message(embed=embed, view=None)
 
         except Exception as e:
-            await interaction.response.send_message(f"❌ Erreur lors de l'enregistrement : {e}", ephemeral=True)
+            await safe_respond(interaction, f"❌ Erreur lors de l'enregistrement : {e}", ephemeral=True)
 
 
 class ClasseSelectView(View):
@@ -109,7 +111,7 @@ class ChoisirClasse(commands.Cog):
                 inline=False
             )
         view = ClasseSelectView(ctx.author.id)
-        await ctx.send(embed=embed, view=view)
+        await safe_send(ctx.channel, embed=embed, view=view)
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🔌 Setup du Cog
