@@ -1,7 +1,7 @@
 # ────────────────────────────────────────────────────────────────────────────────
 # 📌 combat.py — Commande interactive !combat
-# Objectif : Simule un combat entre 2 personnages de Bleach avec stats, énergie et effets.
-# Catégorie : Bleach
+# Objectif : Simuler un combat automatisé entre deux personnages
+# Catégorie : Général
 # Accès : Public
 # ────────────────────────────────────────────────────────────────────────────────
 
@@ -14,21 +14,24 @@ import random
 import json
 import os
 
+from discord_utils import safe_send  # Import de la fonction utilitaire pour gérer le rate-limit
+
 # ────────────────────────────────────────────────────────────────────────────────
-# 📂 Chargement des personnages
+# 📂 Chargement des données JSON (personnages Bleach)
 # ────────────────────────────────────────────────────────────────────────────────
 DATA_JSON_PATH = os.path.join("data", "bleach_personnages.json")
 
 def load_personnages():
+    """Charge les personnages depuis le fichier JSON."""
     with open(DATA_JSON_PATH, "r", encoding="utf-8") as f:
         return json.load(f)
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🧠 Cog principal
 # ────────────────────────────────────────────────────────────────────────────────
-class CombatCommand(commands.Cog):
+class Combat(commands.Cog):
     """
-    Commande !combat — Simule un combat entre 2 personnages de Bleach avec stats, énergie et effets.
+    Commande !combat — Simule un combat automatisé entre 2 personnages
     """
 
     def __init__(self, bot: commands.Bot):
@@ -41,26 +44,11 @@ class CombatCommand(commands.Cog):
     )
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def combat(self, ctx: commands.Context):
-        """Commande principale simulant un combat."""
-
-        def format_etat_ligne(p: dict) -> str:
-            coeur = f"❤️ {max(p['vie'], 0)}"
-            batterie = f"🔋 {p['energie']}"
-            if p["status"] == "gel":
-                statut = f"❄️ Gelé ({p['status_duree']} tour{'s' if p['status_duree'] > 1 else ''})"
-            elif p["status"] == "confusion":
-                statut = f"💫 Confus ({p['status_duree']} tours)"
-            elif p["status"] == "poison":
-                statut = f"☠️ Empoisonné ({p['status_duree']} tours)"
-            else:
-                statut = "❌"
-            return f"{p['nom']} — {coeur} | {batterie} | {statut}"
-
+        """Commande principale qui gère le combat et affiche les résultats."""
         try:
             personnages = load_personnages()
-
             if len(personnages) < 2:
-                await ctx.send("❌ Pas assez de personnages dans le fichier.")
+                await safe_send(ctx.channel, "❌ Pas assez de personnages dans le fichier.")
                 return
 
             p1, p2 = random.sample(personnages, 2)
@@ -72,15 +60,28 @@ class CombatCommand(commands.Cog):
                 for atk in p["attaques"]:
                     atk["utilisé"] = False
 
+            # Détermine l'initiative (mobilité + aléatoire)
             p1_init = p1["stats"]["mobilité"] + random.randint(0, 10)
             p2_init = p2["stats"]["mobilité"] + random.randint(0, 10)
             tour_order = [p1, p2] if p1_init >= p2_init else [p2, p1]
 
-            log = f"**{p1['nom']} contre {p2['nom']} !**\n\n"
+            def format_etat(p):
+                coeur = f"❤️ {max(p['vie'], 0)}"
+                batterie = f"🔋 {p['energie']}"
+                if p["status"] == "gel":
+                    statut = f"❄️ Gelé ({p['status_duree']} tour{'s' if p['status_duree'] > 1 else ''})"
+                elif p["status"] == "confusion":
+                    statut = f"💫 Confus ({p['status_duree']} tours)"
+                elif p["status"] == "poison":
+                    statut = f"☠️ Empoisonné ({p['status_duree']} tours)"
+                else:
+                    statut = "❌"
+                return f"{p['nom']} — {coeur} | {batterie} | {statut}"
 
+            log = f"**{p1['nom']} contre {p2['nom']} !**\n\n"
             for tour in range(1, 6):
                 log += f"**🌀 __Tour {tour}__ 🌀**\n"
-                log += f"{format_etat_ligne(p1)}\n{format_etat_ligne(p2)}\n\n"
+                log += f"{format_etat(p1)}\n{format_etat(p2)}\n\n"
 
                 for attaquant in tour_order:
                     defenseur = p1 if attaquant == p2 else p2
@@ -111,15 +112,15 @@ class CombatCommand(commands.Cog):
                         if attaquant["status_duree"] <= 0:
                             attaquant["status"] = None
 
-                    possibles = [
+                    attaques_possibles = [
                         a for a in attaquant["attaques"]
                         if a["cout"] <= attaquant["energie"] and (a["type"] != "ultime" or not a["utilisé"])
                     ]
-                    if not possibles:
+                    if not attaques_possibles:
                         log += f"💤 **{attaquant['nom']}** est à court d'énergie.\n\n"
                         continue
 
-                    attaque = random.choice(possibles)
+                    attaque = random.choice(attaques_possibles)
                     if attaque["type"] == "ultime":
                         attaque["utilisé"] = True
 
@@ -188,15 +189,13 @@ class CombatCommand(commands.Cog):
 
             gagnant = p1 if p1["vie"] > p2["vie"] else p2
             log += f"🏁 Fin du combat, vainqueur : **{gagnant['nom']}** !"
-
             await self.send_embed_log(ctx, log)
 
         except Exception as e:
             print(f"[ERREUR !combat] {e}")
-            await ctx.send("❌ Une erreur est survenue lors de la simulation du combat.")
+            await safe_send(ctx.channel, "❌ Une erreur est survenue lors de la simulation du combat.")
 
     async def send_embed_log(self, ctx, log: str):
-        """Envoie le log dans un embed, tronque si trop long."""
         MAX_EMBED_DESC = 6000
         if len(log) > MAX_EMBED_DESC:
             log = log[:MAX_EMBED_DESC - 50] + "\n...[log tronqué]..."
@@ -206,14 +205,14 @@ class CombatCommand(commands.Cog):
             description=log,
             color=discord.Color.red()
         )
-        await ctx.send(embed=embed)
+        await safe_send(ctx.channel, embed=embed)
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🔌 Setup du Cog
 # ────────────────────────────────────────────────────────────────────────────────
 async def setup(bot: commands.Bot):
-    cog = CombatCommand(bot)
+    cog = Combat(bot)
     for command in cog.get_commands():
         if not hasattr(command, "category"):
-            command.category = "Bleach"
+            command.category = "Général"
     await bot.add_cog(cog)
