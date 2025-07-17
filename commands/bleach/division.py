@@ -16,6 +16,8 @@ from collections import Counter
 import asyncio
 import random  # <-- Ajouté pour tirage aléatoire
 
+from discord_utils import safe_send, safe_edit  # <-- Import des utils
+
 # ────────────────────────────────────────────────────────────────────────────────
 # 📂 Chargement des données JSON
 # ────────────────────────────────────────────────────────────────────────────────
@@ -57,6 +59,7 @@ class Division(commands.Cog):
                 return ["🇦", "🇧", "🇨", "🇩"][index]
 
             q_index = 0
+            message = None
             while q_index < len(questions):
                 q = questions[q_index]
                 desc = ""
@@ -74,10 +77,10 @@ class Division(commands.Cog):
 
                 if q_index == 0:
                     # Envoi initial du message avec la première question
-                    message = await ctx.send(embed=embed)
+                    message = await safe_send(ctx.channel, embed=embed)
                 else:
                     # Edition du message pour les questions suivantes
-                    await message.edit(embed=embed)
+                    await safe_edit(message, embed=embed)
 
                 for emoji, _, _ in emojis:
                     await message.add_reaction(emoji)
@@ -95,7 +98,7 @@ class Division(commands.Cog):
                     selected_traits = next(traits for emoji, _, traits in emojis if emoji == selected_emoji)
                     personality_counter.update(selected_traits)
                 except asyncio.TimeoutError:
-                    await ctx.send("⏱️ Temps écoulé. Test annulé.")
+                    await safe_send(ctx.channel, "⏱️ Temps écoulé. Test annulé.")
                     return
 
                 # Nettoyer les réactions pour la prochaine question
@@ -120,11 +123,11 @@ class Division(commands.Cog):
                 color=discord.Color.green()
             )
             embed_result.set_image(url=f"attachment://{os.path.basename(divisions[best_division]['image'])}")
-            await ctx.send(embed=embed_result)
+            await safe_send(ctx.channel, embed=embed_result)
 
         except Exception as e:
             print(f"[ERREUR division] {e}")
-            await ctx.send("❌ Une erreur est survenue lors du test.")
+            await safe_send(ctx.channel, "❌ Une erreur est survenue lors du test.")
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🔌 Setup du Cog
