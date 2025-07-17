@@ -11,6 +11,7 @@ from discord.ext import commands
 from datetime import datetime, timedelta
 from supabase_client import supabase
 import random
+from discord_utils import safe_send  # <-- Import utilitaire safe_send
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🧠 Cog principal
@@ -35,8 +36,7 @@ class ReiatsuVol(commands.Cog):
         # Récupération des données du voleur (nécessaire pour cooldown)
         voleur_data = supabase.table("reiatsu").select("*").eq("user_id", voleur_id).execute()
         if not voleur_data.data:
-            await ctx.send("⚠️ Données introuvables pour toi.")
-            return
+            return await safe_send(ctx.channel, "⚠️ Données introuvables pour toi.")
         voleur_data = voleur_data.data[0]
 
         voleur_classe = voleur_data.get("classe")
@@ -50,25 +50,22 @@ class ReiatsuVol(commands.Cog):
             if now < prochain_vol:
                 restant = prochain_vol - now
                 j = restant.days
-                h, m = divmod(restant.seconds // 60, 60)
-                await ctx.send(f"⏳ Tu dois encore attendre **{j}j {h}h{m}m** avant de retenter.")
-                return
+                h, rem = divmod(restant.seconds, 3600)
+                m, _ = divmod(rem, 60)
+                return await safe_send(ctx.channel, f"⏳ Tu dois encore attendre **{j}j {h}h{m}m** avant de retenter.")
 
         # Ici cooldown OK => on vérifie la cible
         if cible is None:
-            await ctx.send("ℹ️ Tu dois faire `!!volreiatsu @membre` pour tenter de voler du Reiatsu.")
-            return
+            return await safe_send(ctx.channel, "ℹ️ Tu dois faire `!volreiatsu @membre` pour tenter de voler du Reiatsu.")
         if voleur.id == cible.id:
-            await ctx.send("❌ Tu ne peux pas te voler toi-même.")
-            return
+            return await safe_send(ctx.channel, "❌ Tu ne peux pas te voler toi-même.")
 
         cible_id = str(cible.id)
 
         # 📥 Récupération des données Supabase
         cible_data = supabase.table("reiatsu").select("*").eq("user_id", cible_id).execute()
         if not cible_data.data:
-            await ctx.send("⚠️ Données introuvables pour la cible.")
-            return
+            return await safe_send(ctx.channel, "⚠️ Données introuvables pour la cible.")
         cible_data = cible_data.data[0]
 
         voleur_points = voleur_data.get("points", 0)
@@ -76,11 +73,9 @@ class ReiatsuVol(commands.Cog):
         cible_classe = cible_data.get("classe")
 
         if cible_points == 0:
-            await ctx.send(f"⚠️ {cible.mention} n’a pas de Reiatsu à voler.")
-            return
+            return await safe_send(ctx.channel, f"⚠️ {cible.mention} n’a pas de Reiatsu à voler.")
         if voleur_points == 0:
-            await ctx.send("⚠️ Tu dois avoir au moins **1 point** de Reiatsu pour tenter un vol.")
-            return
+            return await safe_send(ctx.channel, "⚠️ Tu dois avoir au moins **1 point** de Reiatsu pour tenter un vol.")
 
         # 🎲 Calcul du vol
         montant = max(1, cible_points // 10)  # 10%
@@ -103,17 +98,17 @@ class ReiatsuVol(commands.Cog):
             supabase.table("reiatsu").update(payload_voleur).eq("user_id", voleur_id).execute()
 
             if cible_classe == "Illusionniste" and random.random() < 0.5:
-                await ctx.send(f"🩸 {voleur.mention} a volé **{montant}** points à {cible.mention}... mais c'était une illusion, {cible.mention} n'a rien perdu !")
+                await safe_send(ctx.channel, f"🩸 {voleur.mention} a volé **{montant}** points à {cible.mention}... mais c'était une illusion, {cible.mention} n'a rien perdu !")
             else:
                 supabase.table("reiatsu").update({
                     "points": max(0, cible_points - montant)
                 }).eq("user_id", cible_id).execute()
-                await ctx.send(f"🩸 {voleur.mention} a réussi à voler **{montant}** points de Reiatsu à {cible.mention} !")
+                await safe_send(ctx.channel, f"🩸 {voleur.mention} a réussi à voler **{montant}** points de Reiatsu à {cible.mention} !")
 
         else:
             # Échec : seulement mise à jour du cooldown, pas de perte de points ni de transfert au bot
             supabase.table("reiatsu").update(payload_voleur).eq("user_id", voleur_id).execute()
-            await ctx.send(f"😵 {voleur.mention} a tenté de voler {cible.mention}... mais a échoué !")
+            await safe_send(ctx.channel, f"😵 {voleur.mention} a tenté de voler {cible.mention}... mais a échoué !")
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🔌 Setup du Cog
