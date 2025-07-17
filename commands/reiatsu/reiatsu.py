@@ -16,7 +16,7 @@ import time
 from supabase_client import supabase
 import json
 
-from discord_utils import safe_send, safe_respond  # <-- import fonctions anti 429
+from utils.discord_utils import safe_send, safe_respond  # <-- import fonctions anti 429
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🧠 Cog principal
