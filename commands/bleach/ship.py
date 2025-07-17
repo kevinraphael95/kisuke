@@ -14,7 +14,7 @@ import random
 import asyncio  # nécessaire pour les animations
 
 # Import des fonctions sécurisées pour éviter le rate-limit 429
-from discord_utils import safe_send, safe_edit, safe_respond
+from utils.discord_utils import safe_send, safe_edit, safe_respond
 
 # ──────────────────────────────────────────────────────────────
 # 🧮 FONCTION : Calcul du score de compatibilité
