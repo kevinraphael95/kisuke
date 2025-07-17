@@ -83,15 +83,12 @@ class ReactCommand(commands.Cog):
         except Exception as e:
             print(f"⚠️ Erreur lors de la réaction : {e}")
 
-    def cog_load(self):
-        if hasattr(self, "react"):
-            self.react.category = "Général"
-
 # ────────────────────────────────────────────────────────────────────────────────
 # 🔌 Setup du Cog
 # ────────────────────────────────────────────────────────────────────────────────
 async def setup(bot: commands.Bot):
     cog = ReactCommand(bot)
+    for command in cog.get_commands():
+        if not hasattr(command, "category"):
+            command.category = "Général" 
     await bot.add_cog(cog)
-
-
