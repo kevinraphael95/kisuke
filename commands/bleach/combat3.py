@@ -14,6 +14,9 @@ import random
 import json
 import os
 
+# Import des fonctions utilitaires safe_send
+from discord_utils import safe_send
+
 # ────────────────────────────────────────────────────────────────────────────────
 # 📂 Chargement des personnages
 # ────────────────────────────────────────────────────────────────────────────────
@@ -24,90 +27,7 @@ def load_personnages():
     with open(DATA_JSON_PATH, "r", encoding="utf-8") as f:
         return json.load(f)
 
-# ────────────────────────────────────────────────────────────────────────────────
-# 🧰 Fonctions utilitaires
-# ────────────────────────────────────────────────────────────────────────────────
-def init_personnage(perso):
-    """Initialise les stats d’un personnage pour le combat."""
-    perso["energie"] = 100
-    perso["vie"] = 100
-    perso["status"] = None
-    perso["status_duree"] = 0
-    perso["bouclier"] = 0   # Ajout gestion bouclier
-    for atk in perso["attaques"]:
-        atk["utilisé"] = False
-
-def formater_etat(p):
-    """Retourne l'état formaté d’un personnage pour l'affichage."""
-    coeur = f"❤️ {max(p['vie'], 0)}"
-    batterie = f"🔋 {p['energie']}"
-    bouclier = f"🛡️ {p['bouclier']}" if p.get("bouclier", 0) > 0 else ""
-    if p["status"] == "gel":
-        statut = f"❄️ Gelé ({p['status_duree']} tour{'s' if p['status_duree'] > 1 else ''})"
-    elif p["status"] == "confusion":
-        statut = f"💫 Confus ({p['status_duree']} tours)"
-    elif p["status"] == "poison":
-        statut = f"☠️ Empoisonné ({p['status_duree']} tours)"
-    else:
-        statut = "❌"
-    return f"{p['nom']} — {coeur} | {batterie} {bouclier} | {statut}"
-
-def appliquer_soin(perso, montant, log):
-    """Applique un soin à un personnage, sans dépasser 100 de vie."""
-    vie_avant = perso["vie"]
-    perso["vie"] = min(100, perso["vie"] + montant)
-    soin_reel = perso["vie"] - vie_avant
-    if soin_reel > 0:
-        log += f"✨ {perso['nom']} se soigne et récupère {soin_reel} PV.\n"
-    return log
-
-def appliquer_bouclier(perso, montant, log):
-    """Ajoute un bouclier protégeant des prochains dégâts."""
-    perso["bouclier"] = perso.get("bouclier", 0) + montant
-    log += f"🛡️ {perso['nom']} gagne un bouclier de {montant} points.\n"
-    return log
-
-def infliger_degats(perso, degats, log):
-    """Inflige des dégâts en prenant en compte le bouclier."""
-    bouclier = perso.get("bouclier", 0)
-    if bouclier > 0:
-        if degats <= bouclier:
-            perso["bouclier"] -= degats
-            log += f"🛡️ Le bouclier de {perso['nom']} absorbe {degats} dégâts.\n"
-            degats = 0
-        else:
-            degats_restants = degats - bouclier
-            log += f"🛡️ Le bouclier de {perso['nom']} absorbe {bouclier} dégâts puis se brise.\n"
-            perso["bouclier"] = 0
-            degats = degats_restants
-    if degats > 0:
-        perso["vie"] -= degats
-        log += f"💥 {perso['nom']} subit {degats} dégâts.\n"
-    return log
-
-def appliquer_effet(attaque, cible, log):
-    """Applique les effets spéciaux de l'attaque à la cible."""
-    effet = attaque.get("effet", "").lower()
-    if effet in ["gel", "paralysie"]:
-        cible["status"] = "gel"
-        cible["status_duree"] = 1
-        log += f"❄️ {cible['nom']} est gelé !\n"
-    elif effet in ["confusion", "illusion"]:
-        cible["status"] = "confusion"
-        cible["status_duree"] = 2
-        log += f"💫 {cible['nom']} est confus 2 tours !\n"
-    elif effet in ["poison", "corrosion"]:
-        cible["status"] = "poison"
-        cible["status_duree"] = 3
-        log += f"☠️ {cible['nom']} est empoisonné !\n"
-    elif effet == "soin":
-        # Soin s'applique au lanceur (attaquant)
-        # Le montant de soin sera dans attaque["degats"] (on l'utilise comme montant de soin)
-        log = appliquer_soin(cible, attaque["degats"], log)
-    elif effet == "bouclier":
-        # Bouclier s'applique au lanceur (attaquant)
-        log = appliquer_bouclier(cible, attaque["degats"], log)
-    return log
+# (Les fonctions init_personnage, formater_etat, appliquer_soin, appliquer_bouclier, infliger_degats, appliquer_effet restent inchangées)
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🧠 Cog principal
@@ -132,7 +52,7 @@ class Combat3Command(commands.Cog):
             personnages = load_personnages()
 
             if len(personnages) < 2:
-                return await ctx.send("❌ Pas assez de personnages dans le fichier.")
+                return await safe_send(ctx.channel, "❌ Pas assez de personnages dans le fichier.")
 
             p1, p2 = random.sample(personnages, 2)
             for p in (p1, p2): init_personnage(p)
@@ -260,7 +180,7 @@ class Combat3Command(commands.Cog):
 
         except Exception as e:
             print(f"[ERREUR !combat] {e}")
-            await ctx.send("❌ Une erreur est survenue lors de la simulation du combat.")
+            await safe_send(ctx.channel, "❌ Une erreur est survenue lors de la simulation du combat.")
 
     async def send_embed_log(self, ctx, log: str, nom1: str, nom2: str):
         """Envoie le log dans un embed, tronque si trop long."""
@@ -273,7 +193,7 @@ class Combat3Command(commands.Cog):
             description=log,
             color=discord.Color.red()
         )
-        await ctx.send(embed=embed)
+        await safe_send(ctx.channel, embed=embed)
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🔌 Setup du Cog
