@@ -13,42 +13,61 @@ import hashlib
 import random
 import asyncio  # nécessaire pour les animations
 
+# Import des fonctions sécurisées pour éviter le rate-limit 429
+from discord_utils import safe_send, safe_edit, safe_respond
+
+# ──────────────────────────────────────────────────────────────
+# 🧮 FONCTION : Calcul du score de compatibilité
+# ──────────────────────────────────────────────────────────────
+def calculer_score(p1, p2):
+    noms_ordonnes = sorted([p1["nom"], p2["nom"]])
+    clef = f"{noms_ordonnes[0]}+{noms_ordonnes[1]}"
+    hash_bytes = hashlib.md5(clef.encode()).digest()
+    score = int.from_bytes(hash_bytes, 'big') % 101
+
+    if p1.get("genre") != p2.get("genre"):
+        score += 5
+
+    races_p1 = set(p1.get("races", []))
+    races_p2 = set(p2.get("races", []))
+    if not races_p1 & races_p2:
+        score -= 10
+
+    stats1 = list(p1["stats"].values())
+    stats2 = list(p2["stats"].values())
+    avg1 = sum(stats1) / len(stats1)
+    avg2 = sum(stats2) / len(stats2)
+    diff = abs(avg1 - avg2)
+
+    if diff <= 2:
+        score += 5
+    elif diff >= 6:
+        score -= 10
+
+    return max(0, min(score, 100))
+
 # ──────────────────────────────────────────────────────────────
 # 🎛️ VUE INTERACTIVE : Bouton Nouveau Ship
 # ──────────────────────────────────────────────────────────────
 class ShipView(View):
-    def __init__(self, persos):
+    def __init__(self, persos, message=None):
         super().__init__(timeout=60)
         self.persos = persos
+        self.message = message
+
+    async def on_timeout(self):
+        for child in self.children:
+            child.disabled = True
+        if self.message:
+            try:
+                await safe_edit(self.message, view=self)
+            except Exception:
+                pass
 
     @button(label="💘 Nouveau ship", style=discord.ButtonStyle.blurple)
     async def nouveau_ship(self, interaction: discord.Interaction, button: discord.ui.Button):
         p1, p2 = random.sample(self.persos, 2)
-        noms_ordonnes = sorted([p1["nom"], p2["nom"]])
-        clef = f"{noms_ordonnes[0]}+{noms_ordonnes[1]}"
-        hash_bytes = hashlib.md5(clef.encode()).digest()
-        score = int.from_bytes(hash_bytes, 'big') % 101
-
-        if p1.get("genre") != p2.get("genre"):
-            score += 5
-
-        races_p1 = set(p1.get("races", []))
-        races_p2 = set(p2.get("races", []))
-        if not races_p1 & races_p2:
-            score -= 10
-
-        stats1 = list(p1["stats"].values())
-        stats2 = list(p2["stats"].values())
-        avg1 = sum(stats1) / len(stats1)
-        avg2 = sum(stats2) / len(stats2)
-        diff = abs(avg1 - avg2)
-
-        if diff <= 2:
-            score += 5
-        elif diff >= 6:
-            score -= 10
-
-        score = max(0, min(score, 100))
+        score = calculer_score(p1, p2)
 
         if score >= 90:
             reaction = "âmes sœurs 💞"
@@ -101,35 +120,11 @@ class ShipCommand(commands.Cog):
                 persos = json.load(f)
 
             if len(persos) < 2:
-                await ctx.send("❌ Il faut au moins **deux personnages** pour créer une romance.")
+                await safe_send(ctx.channel, "❌ Il faut au moins **deux personnages** pour créer une romance.")
                 return
 
             p1, p2 = random.sample(persos, 2)
-            noms_ordonnes = sorted([p1["nom"], p2["nom"]])
-            clef = f"{noms_ordonnes[0]}+{noms_ordonnes[1]}"
-            hash_bytes = hashlib.md5(clef.encode()).digest()
-            score = int.from_bytes(hash_bytes, 'big') % 101
-
-            if p1.get("genre") != p2.get("genre"):
-                score += 5
-
-            races_p1 = set(p1.get("races", []))
-            races_p2 = set(p2.get("races", []))
-            if not races_p1 & races_p2:
-                score -= 10
-
-            stats1 = list(p1["stats"].values())
-            stats2 = list(p2["stats"].values())
-            avg1 = sum(stats1) / len(stats1)
-            avg2 = sum(stats2) / len(stats2)
-            diff = abs(avg1 - avg2)
-
-            if diff <= 2:
-                score += 5
-            elif diff >= 6:
-                score -= 10
-
-            score = max(0, min(score, 100))
+            score = calculer_score(p1, p2)
 
             if score >= 90:
                 reaction = "âmes sœurs 💞"
@@ -148,10 +143,10 @@ class ShipCommand(commands.Cog):
                 color = discord.Color.blue()
 
             barre = ["⏳", "💞"]
-            loading_msg = await ctx.send("Analyse en cours... " + barre[0])
+            loading_msg = await safe_send(ctx.channel, "Analyse en cours... " + barre[0])
             for emoji in barre[1:]:
                 await asyncio.sleep(1)
-                await loading_msg.edit(content=f"Analyse en cours... {emoji}")
+                await safe_edit(loading_msg, content=f"Analyse en cours... {emoji}")
             await asyncio.sleep(1.5)
 
             embed = discord.Embed(
@@ -168,13 +163,13 @@ class ShipCommand(commands.Cog):
                 embed.set_image(url=p2["image"])
 
             view = ShipView(persos)
-            await loading_msg.edit(content=None, embed=embed, view=view)
+            message = await safe_edit(loading_msg, content=None, embed=embed, view=view)
+            view.message = message  # Permet de gérer le timeout
 
         except FileNotFoundError:
-            await ctx.send("❌ Le fichier `bleach_personnages.json` est introuvable. Impossible de procéder au *shipping*.")
+            await safe_send(ctx.channel, "❌ Le fichier `bleach_personnages.json` est introuvable. Impossible de procéder au *shipping*.")
         except Exception as e:
-            await ctx.send(f"⚠️ Une erreur est survenue : `{e}`")
-
+            await safe_send(ctx.channel, f"⚠️ Une erreur est survenue : `{e}`")
 
 # ────────────────────────────────────────────────
 # 🔌 Chargement automatique du cog
