@@ -147,6 +147,12 @@ async def on_message(message):
         return
 
     prefix = get_prefix(bot, message)
+
+    # ✅ Répondre à la mention directe du bot
+    if bot.user in message.mentions:
+        await safe_send(message.channel, f"👋 Salut {message.author.mention} ! Utilise `{prefix}help` pour voir mes commandes.")
+        return
+
     if not message.content.startswith(prefix):
         return
 
