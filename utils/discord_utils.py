@@ -54,3 +54,16 @@ async def safe_respond(interaction: discord.Interaction, content=None, **kwargs)
             await asyncio.sleep(10)
             return await interaction.response.send_message(content=content, **kwargs)
         raise e
+
+async def safe_reply(ctx_or_message, content=None, **kwargs):
+    """
+    Répond à un message ou un contexte Discord avec gestion du rate-limit (429).
+    """
+    try:
+        return await ctx_or_message.reply(content=content, **kwargs)
+    except HTTPException as e:
+        if e.status == 429:
+            print("[RateLimit] safe_reply() → 429 Too Many Requests. Pause...")
+            await asyncio.sleep(10)
+            return await ctx_or_message.reply(content=content, **kwargs)
+        raise e
