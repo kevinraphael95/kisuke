@@ -94,4 +94,4 @@ async def setup(bot: commands.Bot):
     cog = ReactCommand(bot)
     await bot.add_cog(cog)
 
-    print("✅ Cog chargé : ReactCommand (catégorie = Général)")
+
