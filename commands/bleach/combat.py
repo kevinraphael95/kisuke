@@ -214,5 +214,5 @@ async def setup(bot: commands.Bot):
     cog = Combat(bot)
     for command in cog.get_commands():
         if not hasattr(command, "category"):
-            command.category = "Général"
+            command.category = "Bleach"
     await bot.add_cog(cog)
