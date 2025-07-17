@@ -14,7 +14,8 @@ from discord.ui import View
 import json
 import os
 
-from discord_utils import safe_send, safe_edit  # <-- import utils
+# Import des fonctions sécurisées pour éviter le rate-limit 429
+from utils.discord_utils import safe_send, safe_edit  # <-- import utils
 
 # ──────────────────────────────────────────────────────────
 # 📂 Chargement des données JSON
