@@ -14,7 +14,8 @@ import json
 import random
 import os
 
-from discord_utils import safe_send  # Import fonction utilitaire sécurisée
+# Import des fonctions sécurisées pour éviter le rate-limit 429
+from utils.discord_utils import safe_send  # Import fonction utilitaire sécurisée
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 📂 Chargement des données JSON — personnages Bleach avec emojis
