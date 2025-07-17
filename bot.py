@@ -76,24 +76,25 @@ GIFS_FOLDER = "data/gifs"
 # 🔌 Chargement dynamique des commandes depuis /commands/*
 # ──────────────────────────────────────────────────────────────
 async def load_commands():
-    for category in os.listdir("commands"):
-        cat_path = os.path.join("commands", category)
-        if os.path.isdir(cat_path):
-            for filename in os.listdir(cat_path):
-                if filename.endswith(".py"):
-                    path = f"commands.{category}.{filename[:-3]}"
-                    try:
-                        await bot.load_extension(path)  # ✅ async / await
-                        print(f"✅ Loaded {path}")
-                    except Exception as e:
-                        print(f"❌ Failed to load {path}: {e}")
+    for root, dirs, files in os.walk("commands"):
+        for file in files:
+            if file.endswith(".py"):
+                # Convertir "commands/general/help.py" → "commands.general.help"
+                relative_path = os.path.relpath(os.path.join(root, file), ".")
+                module_path = relative_path.replace(os.path.sep, ".").replace(".py", "")
+                try:
+                    await bot.load_extension(module_path)
+                    print(f"✅ Loaded {module_path}")
+                except Exception as e:
+                    print(f"❌ Failed to load {module_path}: {e}")
 
-    # ⚠️ Charge aussi le Cog heartbeat qui lance la tâche automatiquement
+    # Charger les autres cogs (hors commands/)
     try:
         await bot.load_extension("tasks.heartbeat")
         print("✅ Loaded tasks.heartbeat")
     except Exception as e:
         print(f"❌ Failed to load tasks.heartbeat: {e}")
+
 
 # ──────────────────────────────────────────────────────────────
 # 🔔 On Ready : présence + verrouillage de l’instance
