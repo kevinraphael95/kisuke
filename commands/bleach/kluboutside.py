@@ -14,6 +14,8 @@ from discord.ui import View
 import json
 import os
 
+from discord_utils import safe_send, safe_edit  # <-- import utils
+
 # ──────────────────────────────────────────────────────────
 # 📂 Chargement des données JSON
 # ──────────────────────────────────────────────────────────
@@ -117,16 +119,15 @@ class KlubOutside(commands.Cog):
                 image_path = view._find_image_file("1")
                 if image_path:
                     file = discord.File(image_path, filename=os.path.basename(image_path))
-                    embed.set_image(url=f"attachment://{os.path.basename(image_path)}")
-                    await ctx.send(embed=embed, view=view, file=file)
+                    await safe_send(ctx.channel, embed=embed, view=view, file=file)
                 else:
-                    await ctx.send(embed=embed, view=view)
+                    await safe_send(ctx.channel, embed=embed, view=view)
                 return
 
             # Sinon, afficher question spécifique
             q = questions.get(str(numero))
             if not q:
-                await ctx.send(f"❌ Aucune question trouvée pour le numéro {numero}.")
+                await safe_send(ctx.channel, f"❌ Aucune question trouvée pour le numéro {numero}.")
                 return
 
             embed = discord.Embed(
@@ -142,15 +143,15 @@ class KlubOutside(commands.Cog):
                 if os.path.exists(image_path):
                     file = discord.File(image_path, filename=os.path.basename(image_path))
                     embed.set_image(url=f"attachment://{os.path.basename(image_path)}")
-                    await ctx.send(embed=embed, file=file)
+                    await safe_send(ctx.channel, embed=embed, file=file)
                     return
 
-            await ctx.send(embed=embed)
+            await safe_send(ctx.channel, embed=embed)
 
         except FileNotFoundError:
-            await ctx.send("❌ Le fichier `ko.json` est introuvable.")
+            await safe_send(ctx.channel, "❌ Le fichier `ko.json` est introuvable.")
         except Exception as e:
-            await ctx.send(f"⚠️ Erreur : `{e}`")
+            await safe_send(ctx.channel, f"⚠️ Erreur : `{e}`")
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🔌 Setup du Cog
