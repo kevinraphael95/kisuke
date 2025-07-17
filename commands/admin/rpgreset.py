@@ -8,6 +8,7 @@
 import discord
 from discord.ext import commands
 from supabase_client import supabase
+from utils.discord_utils import safe_send  # fonction anti-429
 
 # ────────────────────────────────────────────────────────────────
 # 📦 COG POUR RÉINITIALISER LA SAUVEGARDE D'UN JOUEUR
@@ -31,17 +32,20 @@ class RPGReset(commands.Cog):
 
         # 🔒 Vérifie si l'utilisateur a le droit de reset un autre joueur
         if cible != ctx.author and not ctx.author.guild_permissions.administrator:
-            await ctx.send("❌ Tu n’as pas la permission de réinitialiser la progression des autres.")
+            await safe_send(ctx, "❌ Tu n’as pas la permission de réinitialiser la progression des autres.")
             return
 
-        # 🗑️ Suppression dans la base Supabase
-        supabase.table("rpg_save").delete().eq("user_id", str(cible.id)).execute()
+        try:
+            # 🗑️ Suppression dans la base Supabase
+            supabase.table("rpg_save").delete().eq("user_id", str(cible.id)).execute()
 
-        # ✅ Confirmation
-        if cible == ctx.author:
-            await ctx.send("🗑️ Ta progression RPG a bien été réinitialisée.")
-        else:
-            await ctx.send(f"🛠️ La progression RPG de {cible.mention} a été **réinitialisée par un administrateur**.")
+            # ✅ Confirmation
+            if cible == ctx.author:
+                await safe_send(ctx, "🗑️ Ta progression RPG a bien été réinitialisée.")
+            else:
+                await safe_send(ctx, f"🛠️ La progression RPG de {cible.mention} a été **réinitialisée par un administrateur**.")
+        except Exception as e:
+            await safe_send(ctx, f"⚠️ Une erreur est survenue lors de la réinitialisation : `{e}`")
 
 # ──────────────────────────────────────────────────────
 # 🔌 CHARGEMENT AUTOMATIQUE DU COG
