@@ -13,7 +13,7 @@ from discord.ext import commands
 from discord.ui import View, Select, Button
 from bot import get_prefix  # 🔧 Fonction utilitaire pour le préfixe
 import math
-from discord_utils import safe_send, safe_edit, safe_respond  # <-- Ajout
+from utils.discord_utils import safe_send, safe_edit, safe_respond  # <-- Ajout
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🎛️ UI — Sélecteur de catégorie
