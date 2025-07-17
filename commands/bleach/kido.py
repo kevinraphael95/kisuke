@@ -14,7 +14,8 @@ import json
 import asyncio
 import os
 
-from discord_utils import safe_send, safe_edit  # <-- Import utils safe_send / safe_edit
+# Import des fonctions sécurisées pour éviter le rate-limit 429
+from utils.discord_utils import safe_send, safe_edit  # <-- Import utils safe_send / safe_edit
 
 # ───────────────────────────────────────────────────
 # 📂 Chargement des données Kidō
