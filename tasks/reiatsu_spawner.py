@@ -14,6 +14,8 @@ from dateutil import parser
 from discord.ext import commands, tasks
 from supabase_client import supabase
 
+from discord_utils import safe_send  # <-- Import fonctions sécurisées
+
 # ──────────────────────────────────────────────────────────────
 # 🔧 COG : ReiatsuSpawner
 # ──────────────────────────────────────────────────────────────
@@ -68,7 +70,7 @@ class ReiatsuSpawner(commands.Cog):
                 description="Cliquez sur la réaction 💠 pour l'absorber.",
                 color=discord.Color.purple()
             )
-            message = await channel.send(embed=embed)
+            message = await safe_send(channel, embed=embed)  # <-- safe_send utilisé ici
             await message.add_reaction("💠")
 
             # 💾 Mise à jour de l'état
@@ -132,9 +134,6 @@ class ReiatsuSpawner(commands.Cog):
                 if bonus5 >= 5:
                     gain = 6
                     bonus5 = 0
-
-                
-                    
         else:
             # Si Super Reiatsu, on ne compte pas dans bonus5
             bonus5 = 0
@@ -159,12 +158,12 @@ class ReiatsuSpawner(commands.Cog):
 
         # Message de confirmation
         if is_super:
-            await channel.send(f"🌟 {user.mention} a absorbé un **Super Reiatsu** et gagné **+{gain}** reiatsu !")
+            await safe_send(channel, f"🌟 {user.mention} a absorbé un **Super Reiatsu** et gagné **+{gain}** reiatsu !")
         else:
             if classe == "Parieur" and gain == 0:
-                await channel.send(f"🎲 {user.mention} a tenté d’absorber un reiatsu mais a raté (passif Parieur) !")
+                await safe_send(channel, f"🎲 {user.mention} a tenté d’absorber un reiatsu mais a raté (passif Parieur) !")
             else:
-                await channel.send(f"💠 {user.mention} a absorbé le Reiatsu et gagné **+{gain}** reiatsu !")
+                await safe_send(channel, f"💠 {user.mention} a absorbé le Reiatsu et gagné **+{gain}** reiatsu !")
 
         # 🔄 Réinitialisation de l’état de spawn
         new_delay = random.randint(1800, 5400)
@@ -180,4 +179,3 @@ class ReiatsuSpawner(commands.Cog):
 # ──────────────────────────────────────────────────────────────
 async def setup(bot: commands.Bot):
     await bot.add_cog(ReiatsuSpawner(bot))
-    print("✅ Cog chargé : ReiatsuSpawner (Spawn + Réactions)")
