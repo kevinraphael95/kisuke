@@ -25,6 +25,7 @@ from dateutil import parser
 # 📦 Modules internes
 # ──────────────────────────────────────────────────────────────
 from supabase_client import supabase
+from discord_utils import safe_send, safe_edit, safe_respond  # <-- import safe utils
 
 # ──────────────────────────────────────────────────────────────
 # 🔧 Initialisation de l’environnement
@@ -153,9 +154,9 @@ async def on_message(message):
                 gifs = [f for f in os.listdir(dossier_gif) if f.endswith((".gif", ".mp4"))]
                 if gifs:
                     chemin = os.path.join(dossier_gif, random.choice(gifs))
-                    await message.channel.send(content=texte, file=discord.File(chemin))
+                    await safe_send(message.channel, content=texte, file=discord.File(chemin))
                     return
-            await message.channel.send(texte)
+            await safe_send(message.channel, content=texte)
             return
 
     # ✅ Nouveau bloc pour réponse si bot est mentionné
@@ -176,7 +177,7 @@ async def on_message(message):
         if bot.user.avatar:
             embed.set_thumbnail(url=bot.user.avatar.url)
         embed.set_footer(text="Zangetsu veille sur toi.")
-        await message.channel.send(embed=embed)
+        await safe_send(message.channel, embed=embed)
         return
 
     # Exécution des commandes classiques
@@ -190,13 +191,13 @@ async def on_message(message):
 async def on_command_error(ctx, error):
     if isinstance(error, commands.CommandOnCooldown):
         retry = round(error.retry_after, 1)
-        await ctx.send(f"⏳ Cette commande est en cooldown. Réessaie dans `{retry}` secondes.")
+        await safe_send(ctx.channel, f"⏳ Cette commande est en cooldown. Réessaie dans `{retry}` secondes.")
     
     elif isinstance(error, commands.MissingPermissions):
-        await ctx.send("❌ Tu n'as pas les permissions pour cette commande.")
+        await safe_send(ctx.channel, "❌ Tu n'as pas les permissions pour cette commande.")
     
     elif isinstance(error, commands.MissingRequiredArgument):
-        await ctx.send("⚠️ Il manque un argument à cette commande.")
+        await safe_send(ctx.channel, "⚠️ Il manque un argument à cette commande.")
     
     elif isinstance(error, commands.CommandNotFound):
         return  # ignore les commandes non reconnues
