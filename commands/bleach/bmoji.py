@@ -13,7 +13,8 @@ from discord.ext import commands
 import json
 import random
 import os
-import asyncio
+
+from discord_utils import safe_send  # Import fonction utilitaire sécurisée
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 📂 Chargement des données JSON — personnages Bleach avec emojis
@@ -24,29 +25,6 @@ def load_characters():
     """Charge la liste des personnages avec leurs emojis depuis le fichier JSON."""
     with open(DATA_JSON_PATH, "r", encoding="utf-8") as f:
         return json.load(f)
-
-# ────────────────────────────────────────────────────────────────────────────────
-# 🛡️ Fonction utilitaire safe_send (anti 429)
-# ────────────────────────────────────────────────────────────────────────────────
-async def safe_send(ctx_or_interaction, *args, **kwargs):
-    """Envoie un message en gérant les erreurs 429 (ratelimit)."""
-    tries = 3
-    for attempt in range(tries):
-        try:
-            if hasattr(ctx_or_interaction, "send"):
-                return await ctx_or_interaction.send(*args, **kwargs)
-            elif hasattr(ctx_or_interaction, "response") and ctx_or_interaction.response.is_done() is False:
-                return await ctx_or_interaction.response.send_message(*args, **kwargs)
-            else:
-                # fallback
-                return await ctx_or_interaction.channel.send(*args, **kwargs)
-        except discord.errors.HTTPException as e:
-            if e.status == 429:
-                await asyncio.sleep(2)
-            else:
-                raise
-    # Si on échoue toujours, ignore
-    return None
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🧠 Cog principal — BMojiCommand
@@ -69,7 +47,7 @@ class BMojiCommand(commands.Cog):
         try:
             personnages = load_characters()
             if not personnages:
-                await safe_send(ctx, "⚠️ Le fichier d'emojis est vide.")
+                await safe_send(ctx.channel, "⚠️ Le fichier d'emojis est vide.")
                 return
 
             personnage = random.choice(personnages)
@@ -77,11 +55,11 @@ class BMojiCommand(commands.Cog):
             emojis = personnage.get("emojis")
 
             if not nom or not emojis:
-                await safe_send(ctx, "❌ Erreur de format dans le fichier JSON.")
+                await safe_send(ctx.channel, "❌ Erreur de format dans le fichier JSON.")
                 return
 
             if len(emojis) < 3:
-                await safe_send(ctx, "⚠️ Pas assez d'emojis pour ce personnage.")
+                await safe_send(ctx.channel, "⚠️ Pas assez d'emojis pour ce personnage.")
                 return
 
             emoji_selection = ''.join(random.sample(emojis, 3))
@@ -92,13 +70,13 @@ class BMojiCommand(commands.Cog):
                 color=discord.Color.orange()
             )
             embed.set_footer(text="Bleach Emoji Challenge")
-            await safe_send(ctx, embed=embed)
+            await safe_send(ctx.channel, embed=embed)
 
         except FileNotFoundError:
-            await safe_send(ctx, "❌ Fichier `bleach_emojis.json` introuvable dans `data/`.")
+            await safe_send(ctx.channel, "❌ Fichier `bleach_emojis.json` introuvable dans `data/`.")
         except Exception as e:
             print(f"[ERREUR bmoji] {e}")
-            await safe_send(ctx, "⚠️ Une erreur est survenue lors de l'exécution de la commande.")
+            await safe_send(ctx.channel, "⚠️ Une erreur est survenue lors de l'exécution de la commande.")
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🔌 Setup du Cog
