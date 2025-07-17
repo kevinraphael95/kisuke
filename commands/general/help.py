@@ -69,7 +69,7 @@ class HelpPaginatorView(View):
         self.parent_view = parent_view
         self.page = 0
         self.per_page = 10
-        self.total_pages = math.ceil(len(self.commands) / self.per_page)
+        self.total_pages = max(1, math.ceil(len(self.commands) / self.per_page))
 
         if self.total_pages > 1:
             self.add_item(PrevButton(self))
@@ -130,6 +130,10 @@ class HelpCommand(commands.Cog):
 
     def __init__(self, bot):
         self.bot = bot
+
+    def get_commands(self):
+        # Cette méthode est appelée dans bot.py, assure-toi qu'elle existe
+        return self.bot.commands
 
     @commands.command(
         name="help",
