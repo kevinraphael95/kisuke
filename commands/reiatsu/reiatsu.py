@@ -16,6 +16,8 @@ import time
 from supabase_client import supabase
 import json
 
+from discord_utils import safe_send, safe_respond  # <-- import fonctions anti 429
+
 # ────────────────────────────────────────────────────────────────────────────────
 # 🧠 Cog principal
 # ────────────────────────────────────────────────────────────────────────────────
@@ -138,7 +140,8 @@ class Reiatsu2Command(commands.Cog):
             color=discord.Color.purple()
         )
         embed.set_footer(text="Réagis avec 📊 pour voir le classement.")
-        msg = await ctx.send(embed=embed)
+
+        msg = await safe_send(ctx.channel, embed=embed)
         await msg.add_reaction("📊")
 
         # 🔁 Écoute de la réaction
@@ -178,8 +181,7 @@ class Reiatsu2Command(commands.Cog):
             description=top_texte,
             color=discord.Color.gold()
         )
-        await ctx.send(embed=embed, reference=original_message)
-
+        await safe_send(ctx.channel, embed=embed, reference=original_message)
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🔌 Setup du Cog
