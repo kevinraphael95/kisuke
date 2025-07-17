@@ -14,6 +14,8 @@ import json
 import asyncio
 import os
 
+from discord_utils import safe_send, safe_edit  # <-- Import utils safe_send / safe_edit
+
 # ───────────────────────────────────────────────────
 # 📂 Chargement des données Kidō
 # ───────────────────────────────────────────────────
@@ -91,18 +93,18 @@ class Kido(commands.Cog):
                     pages.append(embed)
 
                 view = KidoPaginator(ctx, pages)
-                await ctx.send(embed=pages[0], view=view)
+                await safe_send(ctx.channel, embed=pages[0], view=view)
                 return
 
             # ➤ Argument fourni → comportement normal
             type_kido = type_kido.lower()
             if type_kido not in data:
-                await ctx.send(f"❌ Type de Kidō inconnu : `{type_kido}`.")
+                await safe_send(ctx.channel, f"❌ Type de Kidō inconnu : `{type_kido}`.")
                 return
 
             sort = next((k for k in data[type_kido] if k["numero"] == numero), None)
             if not sort:
-                await ctx.send(f"❌ Aucun sort {type_kido} numéro {numero} trouvé.")
+                await safe_send(ctx.channel, f"❌ Aucun sort {type_kido} numéro {numero} trouvé.")
                 return
 
             nom = sort["nom"]
@@ -110,7 +112,7 @@ class Kido(commands.Cog):
             image = sort.get("image")
 
             # ⏳ Animation dramatique
-            loading = await ctx.send(f"🤘 Concentration... (`{type_kido.title()} #{numero}`)")
+            loading = await safe_send(ctx.channel, f"🤘 Concentration... (`{type_kido.title()} #{numero}`)")
             await asyncio.sleep(1.5)
 
             # 📈 Embed final
@@ -123,12 +125,12 @@ class Kido(commands.Cog):
             if image:
                 embed.set_image(url=image)
 
-            await loading.edit(content=None, embed=embed)
+            await safe_edit(loading, content=None, embed=embed)
 
         except FileNotFoundError:
-            await ctx.send("❌ Le fichier `kido.json` est introuvable.")
+            await safe_send(ctx.channel, "❌ Le fichier `kido.json` est introuvable.")
         except Exception as e:
-            await ctx.send(f"⚠️ Erreur : `{e}`")
+            await safe_send(ctx.channel, f"⚠️ Erreur : `{e}`")
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🔌 Setup du Cog
