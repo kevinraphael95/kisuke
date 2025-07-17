@@ -121,5 +121,5 @@ async def setup(bot: commands.Bot):
     cog = NomDeLaCommande(bot)
     for command in cog.get_commands():
         if not hasattr(command, "category"):
-            command.category = "Autre"  # ✅ Défaut = Autre
+            command.category = "Autre" 
     await bot.add_cog(cog)
