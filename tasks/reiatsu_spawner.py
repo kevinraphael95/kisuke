@@ -14,7 +14,7 @@ from dateutil import parser
 from discord.ext import commands, tasks
 from supabase_client import supabase
 
-from discord_utils import safe_send  # <-- Import fonctions sécurisées
+from utils.discord_utils import safe_send  # <-- Import fonctions sécurisées
 
 # ──────────────────────────────────────────────────────────────
 # 🔧 COG : ReiatsuSpawner
