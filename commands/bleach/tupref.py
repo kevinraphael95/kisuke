@@ -13,7 +13,8 @@ from discord.ext import commands
 import json
 import random
 from supabase_client import supabase  # ton client Supabase
-from discord_utils import safe_send  # fonctions utils avec gestion 429
+# Import des fonctions sécurisées pour éviter le rate-limit 429
+from utils.discord_utils import safe_send  # fonctions utils avec gestion 429
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🤔 TU PRÉFÈRES QUI ? - COMMANDE DE VOTE FUN & IMMERSIVE
