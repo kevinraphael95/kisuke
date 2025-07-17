@@ -83,6 +83,9 @@ async def load_commands():
                 relative_path = os.path.relpath(os.path.join(root, file), ".")
                 module_path = relative_path.replace(os.path.sep, ".").replace(".py", "")
                 try:
+                    # D'abord tenter de décharger si déjà chargé (optionnel)
+                    if module_path in bot.extensions:
+                        await bot.unload_extension(module_path)
                     await bot.load_extension(module_path)
                     print(f"✅ Loaded {module_path}")
                 except Exception as e:
@@ -141,81 +144,25 @@ async def on_message(message):
         print(f"⚠️ Erreur lors de la vérification du verrou Supabase : {e}")
         # Si Supabase échoue, on laisse passer quand même
 
+    # Ignore les messages du bot ou d’autres bots
     if message.author.bot:
         return
 
-    contenu = message.content.lower()
-
-    # Réaction auto via mot-clé
-    for mot in REPONSES:
-        if mot in contenu:
-            texte = random.choice(REPONSES[mot])
-            dossier_gif = os.path.join(GIFS_FOLDER, mot)
-            if os.path.exists(dossier_gif):
-                gifs = [f for f in os.listdir(dossier_gif) if f.endswith((".gif", ".mp4"))]
-                if gifs:
-                    chemin = os.path.join(dossier_gif, random.choice(gifs))
-                    await safe_send(message.channel, content=texte, file=discord.File(chemin))
-                    return
-            await safe_send(message.channel, content=texte)
-            return
-
-    # ✅ Nouveau bloc pour réponse si bot est mentionné
-    if (
-        bot.user in message.mentions
-        and len(message.mentions) == 1
-        and message.content.strip().startswith(f"<@{bot.user.id}")
-    ):
-        prefix = get_prefix(bot, message)
-
-        embed = discord.Embed(
-            title="Bleach Bot",
-            description="Bonjour, je suis un bot basé sur l'univers de **Bleach** !\n"
-                        f"Mon préfixe est : `{prefix}`\n\n"
-                        f"📜 Tape `{prefix}help` pour voir toutes les commandes disponibles.",
-            color=discord.Color.orange()
-        )
-        if bot.user.avatar:
-            embed.set_thumbnail(url=bot.user.avatar.url)
-        embed.set_footer(text="Zangetsu veille sur toi.")
-        await safe_send(message.channel, embed=embed)
+    # Parfois les préfixes sont plusieurs, ici fixe
+    prefix = get_prefix(bot, message)
+    if not message.content.startswith(prefix):
+        # On peut éventuellement faire une réponse aux mots clés ici
         return
 
-    # Exécution des commandes classiques
     await bot.process_commands(message)
 
-
 # ──────────────────────────────────────────────────────────────
-# ❗ Gestion des erreurs de commandes
+# 🚀 Lancement du bot
 # ──────────────────────────────────────────────────────────────
-@bot.event
-async def on_command_error(ctx, error):
-    if isinstance(error, commands.CommandOnCooldown):
-        retry = round(error.retry_after, 1)
-        await safe_send(ctx.channel, f"⏳ Cette commande est en cooldown. Réessaie dans `{retry}` secondes.")
-    
-    elif isinstance(error, commands.MissingPermissions):
-        await safe_send(ctx.channel, "❌ Tu n'as pas les permissions pour cette commande.")
-    
-    elif isinstance(error, commands.MissingRequiredArgument):
-        await safe_send(ctx.channel, "⚠️ Il manque un argument à cette commande.")
-    
-    elif isinstance(error, commands.CommandNotFound):
-        return  # ignore les commandes non reconnues
+async def main():
+    await load_commands()
+    await bot.start(TOKEN)
 
-    else:
-        # 🔧 En dev : utile pour voir les autres erreurs
-        raise error
-
-
-# ──────────────────────────────────────────────────────────────
-# 🚀 Lancement
-# ──────────────────────────────────────────────────────────────
 if __name__ == "__main__":
-    keep_alive()
-
-    async def start():
-        await load_commands()
-        await bot.start(TOKEN)
-
-    asyncio.run(start())
+    keep_alive()  # Pour Render.com par exemple
+    asyncio.run(main())
