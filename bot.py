@@ -25,7 +25,7 @@ from dateutil import parser
 # 📦 Modules internes
 # ──────────────────────────────────────────────────────────────
 from supabase_client import supabase
-from discord_utils import safe_send, safe_edit, safe_respond  # <-- import safe utils
+from utils.discord_utils import safe_send, safe_edit, safe_respond  # <-- import safe utils
 
 # ──────────────────────────────────────────────────────────────
 # 🔧 Initialisation de l’environnement
