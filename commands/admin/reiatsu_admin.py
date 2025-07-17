@@ -14,6 +14,7 @@ import random
 from datetime import datetime
 from discord.ext import commands
 from supabase_client import supabase
+from utils.discord_utils import safe_send, safe_reply  # fonctions anti-429
 
 # ──────────────────────────────────────────────────────────────
 # 🔧 COG : ReiatsuAdmin
@@ -46,52 +47,58 @@ class ReiatsuAdmin(commands.Cog):
             color=discord.Color.blurple()
         )
         embed.set_footer(text="Réservé aux administrateurs")
-        await ctx.send(embed=embed)
+        await safe_send(ctx, embed=embed)
 
     # ──────────────────────────────────────────────────────────
     # ⚙️ SOUS-COMMANDE : SET
     # ──────────────────────────────────────────────────────────
     @ReiatsuAdmin.command(name="set")
     async def set_reiatsu(self, ctx: commands.Context):
-        channel_id = ctx.channel.id
-        guild_id = str(ctx.guild.id)
-        now_iso = datetime.utcnow().isoformat()
-        delay = random.randint(1800, 5400)
+        try:
+            channel_id = ctx.channel.id
+            guild_id = str(ctx.guild.id)
+            now_iso = datetime.utcnow().isoformat()
+            delay = random.randint(1800, 5400)
 
-        data = supabase.table("reiatsu_config").select("id").eq("guild_id", guild_id).execute()
-        if data.data:
-            supabase.table("reiatsu_config").update({
-                "channel_id": str(channel_id),
-                "last_spawn_at": now_iso,
-                "delay_minutes": delay,
-                "en_attente": False,
-                "spawn_message_id": None
-            }).eq("guild_id", guild_id).execute()
-        else:
-            supabase.table("reiatsu_config").insert({
-                "guild_id": guild_id,
-                "channel_id": str(channel_id),
-                "last_spawn_at": now_iso,
-                "delay_minutes": delay,
-                "en_attente": False,
-                "spawn_message_id": None
-            }).execute()
+            data = supabase.table("reiatsu_config").select("id").eq("guild_id", guild_id).execute()
+            if data.data:
+                supabase.table("reiatsu_config").update({
+                    "channel_id": str(channel_id),
+                    "last_spawn_at": now_iso,
+                    "delay_minutes": delay,
+                    "en_attente": False,
+                    "spawn_message_id": None
+                }).eq("guild_id", guild_id).execute()
+            else:
+                supabase.table("reiatsu_config").insert({
+                    "guild_id": guild_id,
+                    "channel_id": str(channel_id),
+                    "last_spawn_at": now_iso,
+                    "delay_minutes": delay,
+                    "en_attente": False,
+                    "spawn_message_id": None
+                }).execute()
 
-        await ctx.send(f"✅ Le salon actuel {ctx.channel.mention} est désormais configuré pour le spawn de Reiatsu.")
+            await safe_send(ctx, f"✅ Le salon actuel {ctx.channel.mention} est désormais configuré pour le spawn de Reiatsu.")
+        except Exception as e:
+            await safe_send(ctx, f"❌ Une erreur est survenue lors de la configuration : `{e}`")
 
     # ──────────────────────────────────────────────────────────
     # 🗑️ SOUS-COMMANDE : UNSET
     # ──────────────────────────────────────────────────────────
     @ReiatsuAdmin.command(name="unset")
     async def unset_reiatsu(self, ctx: commands.Context):
-        guild_id = str(ctx.guild.id)
-        res = supabase.table("reiatsu_config").select("id").eq("guild_id", guild_id).execute()
+        try:
+            guild_id = str(ctx.guild.id)
+            res = supabase.table("reiatsu_config").select("id").eq("guild_id", guild_id).execute()
 
-        if res.data:
-            supabase.table("reiatsu_config").delete().eq("guild_id", guild_id).execute()
-            await ctx.send("🗑️ Le salon Reiatsu a été **supprimé** de la configuration.")
-        else:
-            await ctx.send("❌ Aucun salon Reiatsu n’était configuré sur ce serveur.")
+            if res.data:
+                supabase.table("reiatsu_config").delete().eq("guild_id", guild_id).execute()
+                await safe_send(ctx, "🗑️ Le salon Reiatsu a été **supprimé** de la configuration.")
+            else:
+                await safe_send(ctx, "❌ Aucun salon Reiatsu n’était configuré sur ce serveur.")
+        except Exception as e:
+            await safe_send(ctx, f"❌ Une erreur est survenue lors de la suppression : `{e}`")
 
     # ──────────────────────────────────────────────────────────
     # ✨ SOUS-COMMANDE : CHANGE
@@ -99,7 +106,7 @@ class ReiatsuAdmin(commands.Cog):
     @ReiatsuAdmin.command(name="change")
     async def change_reiatsu(self, ctx: commands.Context, member: discord.Member, points: int):
         if points < 0:
-            await ctx.send("❌ Le score Reiatsu doit être un nombre **positif**.")
+            await safe_send(ctx, "❌ Le score Reiatsu doit être un nombre **positif**.")
             return
 
         user_id = str(member.id)
@@ -132,9 +139,9 @@ class ReiatsuAdmin(commands.Cog):
                 text=f"Modifié par {ctx.author.display_name}",
                 icon_url=ctx.author.display_avatar.url
             )
-            await ctx.send(embed=embed)
+            await safe_send(ctx, embed=embed)
         except Exception as e:
-            await ctx.send(f"⚠️ Une erreur est survenue : `{e}`")
+            await safe_send(ctx, f"⚠️ Une erreur est survenue : `{e}`")
 
     # ──────────────────────────────────────────────────────────
     # 💠 SOUS-COMMANDE : SPAWN
@@ -149,8 +156,14 @@ class ReiatsuAdmin(commands.Cog):
             description="Cliquez sur la réaction 💠 pour l'absorber.",
             color=discord.Color.purple()
         )
-        message = await channel.send(embed=embed)
-        await message.add_reaction("💠")
+        message = await safe_send(channel, embed=embed)
+        if message is None:
+            return  # En cas d'erreur d'envoi, on stoppe
+
+        try:
+            await message.add_reaction("💠")
+        except discord.HTTPException:
+            pass  # Ignore si on ne peut pas ajouter la réaction
 
         def check(reaction, user):
             return (
@@ -161,10 +174,11 @@ class ReiatsuAdmin(commands.Cog):
 
         try:
             reaction, user = await self.bot.wait_for("reaction_add", timeout=40.0, check=check)
-            await channel.send(f"💠 {user.mention} a absorbé le Reiatsu !")
+            await safe_send(channel, f"💠 {user.mention} a absorbé le Reiatsu !")
         except asyncio.TimeoutError:
-            await channel.send("⏳ Le Reiatsu s’est dissipé dans l’air... personne ne l’a absorbé.")
-
+            await safe_send(channel, "⏳ Le Reiatsu s’est dissipé dans l’air... personne ne l’a absorbé.")
+        except Exception as e:
+            await safe_send(channel, f"⚠️ Une erreur est survenue lors de l'attente de réaction : `{e}`")
 
 
 # ────────────────────────────────────────────────────────────────────────────────
