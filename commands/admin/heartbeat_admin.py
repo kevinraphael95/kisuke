@@ -10,6 +10,7 @@
 # ────────────────────────────────────────────────────────────────────────────────
 import discord
 from discord.ext import commands
+from utils.discord_utils import safe_send
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🧠 Cog principal
@@ -30,61 +31,44 @@ class HeartbeatAdmin(commands.Cog):
     async def heartbeat(self, ctx: commands.Context, action: str = None, channel: discord.TextChannel = None):
         try:
             if action is None:
-                await ctx.send("❓ Utilisation : `!heartbeat pause|resume|status|set <#salon>|unset`")
+                await safe_send(ctx, "❓ Utilisation : `!heartbeat pause|resume|status|set <#salon>|unset`")
                 return
 
             action = action.lower()
 
-            # ────────────────────────────────────────────────────────────────────────────────
-            # Pause
             if action in ["pause", "p"]:
                 self.supabase.table("bot_settings").upsert({
                     "key": "heartbeat_paused",
                     "value": "true"
                 }).execute()
-                await ctx.send("⏸️ Heartbeat mis en pause.")
+                await safe_send(ctx, "⏸️ Heartbeat mis en pause.")
 
-
-            # ────────────────────────────────────────────────────────────────────────────────
-            # Resume
             elif action in ["resume", "r"]:
                 self.supabase.table("bot_settings").upsert({
                     "key": "heartbeat_paused",
                     "value": "false"
                 }).execute()
-                await ctx.send("▶️ Heartbeat relancé.")
+                await safe_send(ctx, "▶️ Heartbeat relancé.")
 
-
-            # ────────────────────────────────────────────────────────────────────────────────
-            # Status
             elif action in ["status", "stat", "s"]:
                 res = self.supabase.table("bot_settings").select("value").eq("key", "heartbeat_paused").execute()
                 paused = res.data and res.data[0]["value"].lower() == "true"
-                if paused:
-                    await ctx.send("🔴 Le heartbeat est **en pause**.")
-                else:
-                    await ctx.send("🟢 Le heartbeat est **actif**.")
+                status_msg = "🔴 Le heartbeat est **en pause**." if paused else "🟢 Le heartbeat est **actif**."
+                await safe_send(ctx, status_msg)
 
-
-            # ────────────────────────────────────────────────────────────────────────────────
-            # Set salon
             elif action == "set":
                 if channel is None:
-                    await ctx.send("❌ Tu dois mentionner un salon. Exemple : `!heartbeat set #général`")
+                    await safe_send(ctx, "❌ Tu dois mentionner un salon. Exemple : `!heartbeat set #général`")
                     return
                 self.supabase.table("bot_settings").upsert({
                     "key": "heartbeat_channel_id",
                     "value": str(channel.id)
                 }).execute()
-                # Mise à jour dans le cog task si présent
                 heartbeat_cog = self.bot.get_cog("HeartbeatTask")
                 if heartbeat_cog:
                     heartbeat_cog.heartbeat_channel_id = channel.id
-                await ctx.send(f"✅ Salon heartbeat défini : {channel.mention}")
+                await safe_send(ctx, f"✅ Salon heartbeat défini : {channel.mention}")
 
-
-            # ────────────────────────────────────────────────────────────────────────────────
-            # Unset salon
             elif action == "unset":
                 self.supabase.table("bot_settings").upsert({
                     "key": "heartbeat_channel_id",
@@ -93,19 +77,18 @@ class HeartbeatAdmin(commands.Cog):
                 heartbeat_cog = self.bot.get_cog("HeartbeatTask")
                 if heartbeat_cog:
                     heartbeat_cog.heartbeat_channel_id = None
-                await ctx.send("🗑️ Salon heartbeat supprimé.")
+                await safe_send(ctx, "🗑️ Salon heartbeat supprimé.")
 
             else:
-                await ctx.send("❌ Action inconnue. Utilise `pause`, `resume`, `status`, `set`, ou `unset`.")
+                await safe_send(ctx, "❌ Action inconnue. Utilise `pause`, `resume`, `status`, `set`, ou `unset`.")
 
         except Exception as e:
             print(f"[heartbeat:{action}] Erreur : {e}")
-            await ctx.send("❌ Une erreur est survenue lors de l'action heartbeat.")
+            await safe_send(ctx, "❌ Une erreur est survenue lors de l'action heartbeat.")
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🔌 Setup du Cog
 # ────────────────────────────────────────────────────────────────────────────────
-
 async def setup(bot: commands.Bot):
     cog = HeartbeatAdmin(bot)
     for command in cog.get_commands():
