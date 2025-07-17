@@ -16,7 +16,7 @@ from supabase import create_client, Client
 import os
 import json
 
-from discord_utils import safe_send, safe_respond  # <-- import fonctions anti 429
+from utils.discord_utils import safe_send, safe_respond  # <-- import fonctions anti 429
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🔧 Configuration Supabase
