@@ -11,7 +11,7 @@ from discord.ext import commands
 from datetime import datetime, timedelta
 from supabase_client import supabase
 import random
-from discord_utils import safe_send  # <-- Import utilitaire safe_send
+from utils.discord_utils import safe_send  # <-- Import utilitaire safe_send
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🧠 Cog principal
