@@ -11,6 +11,7 @@
 import discord
 from discord.ext import commands, tasks
 from datetime import datetime, timezone
+from discord_utils import safe_send  # <-- Import safe_send
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🧠 Cog principal
@@ -48,7 +49,7 @@ class HeartbeatTask(commands.Cog):
             if channel:
                 try:
                     now = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
-                    await channel.send(f"💓💓 Boom boom ! ({now})")
+                    await safe_send(channel, f"💓💓 Boom boom ! ({now})")  # <-- safe_send ici
                 except Exception as e:
                     print(f"[Heartbeat] Erreur en envoyant le message : {e}")
             else:
