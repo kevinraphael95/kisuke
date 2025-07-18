@@ -1,21 +1,22 @@
 # ────────────────────────────────────────────────────────────────────────────────
-# 📌 puissance4.py — Commande interactive !couleur
-# Objectif : Afficher une couleur aléatoire avec ses codes HEX et RGB dans un embed Discord
-# Catégorie : 🎨 Fun
+# 📌 puissance4.py — Commande interactive !puissance4
+# Objectif : Joue à Puissance 4 contre un joueur ou le bot
+# Catégorie : 🎮 Fun
 # Accès : Public
 # ────────────────────────────────────────────────────────────────────────────────
 
 # ────────────────────────────────────────────────────────────────────────────────
-# 📦 Imports nécessaires
+# 📦 Imports
 # ────────────────────────────────────────────────────────────────────────────────
 import discord
 from discord.ext import commands
 from discord.ui import View, Button
 import random
+import asyncio  # ✅ Ajouté pour le délai du bot
 from utils.discord_utils import safe_send, safe_edit
 
 # ────────────────────────────────────────────────────────────────────────────────
-# 🧩 Classe de jeu Puissance 4
+# 🧩 Classe du jeu
 # ────────────────────────────────────────────────────────────────────────────────
 ROWS = 6
 COLUMNS = 7
@@ -110,13 +111,18 @@ class Puissance4View(View):
                   f"Tour de {next_player.mention} ({PLAYER_TOKENS[self.game.current_turn]})\n{self.game.board_to_string()}"
         await safe_edit(self.message, content=content)
 
-        # Si c'est le tour du bot
+        # ✅ Si c'est le tour du bot, il joue
         if self.game.vs_bot and next_player.bot:
             await self.bot_move()
 
     async def bot_move(self):
-        await discord.utils.sleep_until(discord.utils.utcnow() + discord.utils.timedelta(seconds=1))
+        await asyncio.sleep(1)  # ✅ Pause réaliste (au lieu de discord.utils.sleep_until)
         valid_cols = [i for i in range(COLUMNS) if self.game.is_valid_move(i)]
+        if not valid_cols:
+            self.game.game_over = True
+            await safe_edit(self.message, content=f"🤝 Match nul !\n{self.game.board_to_string()}", view=None)
+            return
+
         col = random.choice(valid_cols)
         row = self.game.drop_piece(col)
 
@@ -135,6 +141,9 @@ class Puissance4View(View):
                   f"Tour de {self.game.players[0].mention} ({PLAYER_TOKENS[0]})\n{self.game.board_to_string()}"
         await safe_edit(self.message, content=content)
 
+# ────────────────────────────────────────────────────────────────────────────────
+# 🧱 Bouton de colonne
+# ────────────────────────────────────────────────────────────────────────────────
 class ColButton(Button):
     def __init__(self, col):
         super().__init__(style=discord.ButtonStyle.primary, label=str(col + 1), row=col // 4)
@@ -144,7 +153,7 @@ class ColButton(Button):
         await self.view.update_board(interaction, self.col)
 
 # ────────────────────────────────────────────────────────────────────────────────
-# 🧠 Cog principal
+# 🧠 Cog
 # ────────────────────────────────────────────────────────────────────────────────
 class Puissance4(commands.Cog):
     """
@@ -160,7 +169,6 @@ class Puissance4(commands.Cog):
         description="Utilisation : !puissance4 [@joueur]"
     )
     async def puissance4(self, ctx: commands.Context, opponent: discord.Member = None):
-        """Lance une partie de Puissance 4."""
         try:
             if opponent and opponent.bot and opponent != ctx.guild.me:
                 await safe_send(ctx.channel, "❌ Tu ne peux pas jouer contre d'autres bots.")
