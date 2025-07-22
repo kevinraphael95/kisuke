@@ -82,8 +82,11 @@ class TacheSelectView(View):
 
 
 
-# -- Séquence emoji --
-async def lancer_emoji(interaction: discord.Interaction):
+# ────────────────────────────────────────────────────────────────────────────────
+# 🔎 Séquence emojis
+# ────────────────────────────────────────────────────────────────────────────────
+
+async def lancer_emoji(interaction):
     pool = ["💀", "🌀", "🔥", "🌪️", "🌟", "🍥", "🍡", "🧊", "❄️", "💨"]
     sequence = random.sample(pool, 3)
     autres = [e for e in pool if e not in sequence]
@@ -91,8 +94,8 @@ async def lancer_emoji(interaction: discord.Interaction):
     random.shuffle(mix)
 
     message = await interaction.followup.send(
-        f"🔁 Reproduis cette séquence **dans l'ordre** en cliquant les réactions : {' → '.join(sequence)}\n"
-        f"Tu as 2 minutes ! Premier qui réussit gagne."
+        f"🔁 Reproduis cette séquence en cliquant les réactions **dans l'ordre** : {' → '.join(sequence)}\n"
+        f"Tu as 2 minutes ! Le premier qui réussit gagne."
     )
 
     for emoji in mix:
@@ -106,31 +109,31 @@ async def lancer_emoji(interaction: discord.Interaction):
     def check(reaction, user):
         if user.bot or reaction.message.id != message.id:
             return False
+
         if user.id not in reponses:
             reponses[user.id] = []
-        attendu_index = len(reponses[user.id])
-        if attendu_index >= len(sequence):
-            return False
-        attendu = sequence[attendu_index]
-        if str(reaction.emoji) == attendu:
+
+        if str(reaction.emoji) == sequence[len(reponses[user.id])]:
             reponses[user.id].append(str(reaction.emoji))
-            return reponses[user.id] == sequence
-        else:
-            reponses[user.id] = []
-            return False
+
+        return reponses[user.id] == sequence
 
     try:
         reaction, user = await interaction.client.wait_for("reaction_add", check=check, timeout=120)
-        await interaction.followup.send(f"✅ Bravo {user.mention}, tu as reproduit la séquence !")
+        await interaction.followup.send(f"✅ Séquence correcte {user.mention} !")
     except asyncio.TimeoutError:
-        await interaction.followup.send("⌛ Personne n'a réussi la séquence.")
+        await interaction.followup.send("⌛ Personne n'a réussi.")
 
-# -- Réflexe rapide --
-async def lancer_reflexe(interaction: discord.Interaction):
-    sequence = ["5️⃣", "4️⃣", "3️⃣", "2️⃣", "1️⃣"]
-    message = await interaction.followup.send("🕒 Clique les réactions **dans l'ordre** : 5️⃣ 4️⃣ 3️⃣ 2️⃣ 1️⃣ — Le plus vite possible !")
+        
 
-    for emoji in sequence:
+# ────────────────────────────────────────────────────────────────────────────────
+# de 5 a 1
+# ────────────────────────────────────────────────────────────────────────────────
+async def lancer_reflexe(interaction):
+    compte = ["5️⃣", "4️⃣", "3️⃣", "2️⃣", "1️⃣"]
+    message = await interaction.followup.send("🕒 Clique les réactions `5️⃣ 4️⃣ 3️⃣ 2️⃣ 1️⃣` **dans l'ordre** le plus vite possible !")
+
+    for emoji in compte:
         await message.add_reaction(emoji)
 
     reponses = {}
@@ -138,148 +141,249 @@ async def lancer_reflexe(interaction: discord.Interaction):
     def check(reaction, user):
         if user.bot or reaction.message.id != message.id:
             return False
+
         if user.id not in reponses:
             reponses[user.id] = []
-        attendu_index = len(reponses[user.id])
-        if attendu_index >= len(sequence):
-            return False
-        if str(reaction.emoji) == sequence[attendu_index]:
+
+        if str(reaction.emoji) == compte[len(reponses[user.id])]:
             reponses[user.id].append(str(reaction.emoji))
-            return reponses[user.id] == sequence
-        else:
-            reponses[user.id] = []
-            return False
+
+        return reponses[user.id] == compte
 
     try:
         reaction, user = await interaction.client.wait_for("reaction_add", check=check, timeout=20)
-        await interaction.followup.send(f"⚡ Réflexe parfait, bravo {user.mention} !")
+        await interaction.followup.send(f"⚡ Réflexe parfait, {user.mention} !")
     except asyncio.TimeoutError:
-        await interaction.followup.send("⌛ Aucun réflexe parfait détecté.")
+        await interaction.followup.send("⌛ Aucun réflexe parfait enregistré.")
 
-# -- Séquence flèches --
-async def lancer_fleche(interaction: discord.Interaction):
+
+
+# ────────────────────────────────────────────────────────────────────────────────
+# 🔎 Code avec les flècches
+# ────────────────────────────────────────────────────────────────────────────────
+async def lancer_fleche(interaction):
     fleches = ["⬅️", "⬆️", "⬇️", "➡️"]
     sequence = [random.choice(fleches) for _ in range(5)]
 
-    affichage = await interaction.followup.send(f"🧭 Mémorise cette séquence : `{' '.join(sequence)}` (5 secondes)")
+    # Afficher la séquence pendant 5 secondes
+    affichage = await interaction.followup.send(
+        f"🧭 Mémorise cette séquence de flèches :\n`{' '.join(sequence)}`\nTu as 5 secondes..."
+    )
     await asyncio.sleep(5)
     await affichage.delete()
 
+    # Message avec réactions
     message = await interaction.followup.send(
-        "🔁 Reproduis la séquence **dans l'ordre** en cliquant les flèches ci-dessous.\n"
-        "Chaque clic correct supprimera l'emoji.\nTu as 30 secondes."
+        "🔁 Reproduis la séquence **dans le bon ordre** en cliquant les flèches ci-dessous.\n"
+        "Chaque clic correct supprime l'emoji correspondant.\nTu as 30 secondes !"
     )
 
-    for f in fleches:
-        await message.add_reaction(f)
+    for emoji in fleches:
+        await message.add_reaction(emoji)
 
     reponses = {}
 
     def check(reaction, user):
         if user.bot or reaction.message.id != message.id:
             return False
+
         if user.id not in reponses:
             reponses[user.id] = []
+
         pos = len(reponses[user.id])
         if pos >= len(sequence):
             return False
+
         attendu = sequence[pos]
         if str(reaction.emoji) == attendu:
             reponses[user.id].append(str(reaction.emoji))
             asyncio.create_task(message.remove_reaction(reaction.emoji, user))
             return len(reponses[user.id]) == len(sequence)
         else:
-            reponses[user.id] = []
+            reponses[user.id] = []  # reset
             return False
 
     try:
         reaction, user = await interaction.client.wait_for("reaction_add", check=check, timeout=30)
-        await interaction.followup.send(f"✅ Bien joué {user.mention}, séquence parfaite !")
+        await interaction.followup.send(f"✅ Séquence parfaite {user.mention} !")
     except asyncio.TimeoutError:
         await interaction.followup.send("⌛ Personne n'a réussi la séquence.")
 
-# -- Infusion Reiatsu --
-async def lancer_infusion(interaction: discord.Interaction):
+# ────────────────────────────────────────────────────────────────────────────────
+# 🔎 Boule bleu devient rouge
+# ────────────────────────────────────────────────────────────────────────────────
+
+async def lancer_infusion(interaction):
     await interaction.followup.send("🔵 Prépare-toi à synchroniser ton Reiatsu...")
 
+    await asyncio.sleep(2)
+
+    # Étapes de remplissage du cercle
     message = await interaction.followup.send("🔵")
-
-    for i in range(1, 4):
+    for _ in range(3):
         await asyncio.sleep(0.6)
-        await message.edit(content="🔵" * (i+1))
+        await message.edit(content="🔵🔵")
+        await asyncio.sleep(0.6)
+        await message.edit(content="🔵🔵🔵")
 
+    # Passage en rouge
     await asyncio.sleep(0.5)
     await message.edit(content="🔴")
 
+    # Délai d’activation de la réaction
     await message.add_reaction("⚡")
-    start = discord.utils.utcnow()
+    start_time = discord.utils.utcnow()
 
     def check(reaction, user):
-        if user.bot or reaction.message.id != message.id:
+        if user.bot:
+            return False
+        if reaction.message.id != message.id:
             return False
         if str(reaction.emoji) != "⚡":
             return False
-        elapsed = (discord.utils.utcnow() - start).total_seconds()
-        return elapsed < 2.0
+        delta = (discord.utils.utcnow() - start_time).total_seconds()
+        return 0.8 <= delta <= 1.2  # ✅ Fenêtre parfaite
 
     try:
         reaction, user = await interaction.client.wait_for("reaction_add", check=check, timeout=2)
-        await interaction.followup.send(f"⚡ Synchronisation réussie, bravo {user.mention} !")
+        await interaction.followup.send(f"✅ {user.mention}, Synchronisation parfaite ! Ton Reiatsu est stable.")
     except asyncio.TimeoutError:
-        await interaction.followup.send("⌛ Trop lent, synchronisation ratée.")
+        await interaction.followup.send("❌ Échec de l’infusion. Reiatsu instable.")
 
-# -- Emoji suspects (9 emojis) --
-async def lancer_emoji9(interaction: discord.Interaction):
-    characters = load_characters()
-    suspects = random.sample(characters, 9)
 
-    emojis = [perso["emoji"] for perso in suspects]
-    noms = [perso["name"] for perso in suspects]
+# ────────────────────────────────────────────────────────────────────────────────
+# 🔎 9 Emojis – Trouve l’intrus
+# ────────────────────────────────────────────────────────────────────────────────
+class EmojiBoutons(discord.ui.View):
+    def __init__(self, vrai_reponse):
+        super().__init__(timeout=15)
+        self.vrai_reponse = vrai_reponse
+        self.repondu = False
 
-    message = await interaction.followup.send(
-        "🕵️‍♂️ Trouve l'intrus parmi ces emojis :\n" +
-        " ".join(emojis) +
-        "\nRéponds avec `!rep <nom>`."
+    @discord.ui.button(label="✅ Oui", style=discord.ButtonStyle.success)
+    async def bouton_vrai(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if self.repondu:
+            return
+        self.repondu = True
+        await self.verifie(interaction, True)
+
+    @discord.ui.button(label="❌ Non", style=discord.ButtonStyle.danger)
+    async def bouton_faux(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if self.repondu:
+            return
+        self.repondu = True
+        await self.verifie(interaction, False)
+
+    async def verifie(self, interaction, reponse):
+        if reponse == self.vrai_reponse:
+            await interaction.response.send_message("✅ Bonne réponse !", ephemeral=True)
+        else:
+            await interaction.response.send_message("❌ Mauvaise réponse !", ephemeral=True)
+        self.stop()
+
+async def lancer_emoji9(interaction):
+    groupes = [
+        ["🍎", "🍅"], ["☁️", "🌥️"], ["☘️", "🍀"], ["🌺", "🌸"], 
+        ["👜", "💼"], ["🌹", "🌷"], ["🤞", "✌️"], ["✊", "👊"], 
+        ["😕", "😐"], ["🌟", "⭐"], ["🦝", "🐨"], ["🔒", "🔓"], 
+        ["🏅", "🥇"], ["🌧️", "🌨️"], ["🐆", "🐅"], ["🙈", "🙊"], 
+        ["🐋", "🐳"], ["🐢", "🐊"]
+    ]
+
+    base, intrus = random.choice(groupes)
+    y_a_intrus = random.choice([True, False])
+
+    if y_a_intrus:
+        emojis = [base] * 9
+        emojis[random.randint(0, 8)] = intrus
+        random.shuffle(emojis)
+    else:
+        emojis = [base] * 9
+
+    ligne = "".join(emojis)
+
+    embed = discord.Embed(
+        title="🔎 Tous identiques ?",
+        description=f"{ligne}\n\nAppuie sur ✅ si **tous** les emojis sont identiques,\n❌ sinon.",
+        color=discord.Color.orange()
     )
 
-    intrus = random.choice(noms)
+    await interaction.followup.send(embed=embed, view=EmojiBoutons(not y_a_intrus))
 
-    def check(m):
-        return m.channel == interaction.channel and m.content.lower().startswith("!rep")
 
-    try:
-        msg = await interaction.client.wait_for("message", check=check, timeout=20)
-        reponse = msg.content[5:].strip().lower()
-        if reponse == intrus.lower():
-            await interaction.followup.send(f"✅ Bravo {msg.author.mention}, c'était bien **{intrus}** l'intrus !")
-        else:
-            await interaction.followup.send(f"❌ Mauvaise réponse {msg.author.mention}, l'intrus était **{intrus}**.")
-    except asyncio.TimeoutError:
-        await interaction.followup.send("⌛ Temps écoulé.")
 
-# -- Bmoji (Devine le perso via emojis) --
-async def lancer_bmoji(interaction: discord.Interaction):
+# ────────────────────────────────────────────────────────────────────────────────
+# 🔎 Bmoji — Devine le personnage à partir des emojis
+# ────────────────────────────────────────────────────────────────────────────────
+async def lancer_bmoji(interaction):
     characters = load_characters()
-    perso = random.choice(characters)
-    emojis = perso.get("emojis", []) or [perso.get("emoji")]
-    if not emojis:
-        emojis = ["❓"]
-    sequence = " ".join(emojis[:4])
+    personnage = random.choice(characters)
+    nom_correct = personnage["nom"]
 
-    await interaction.followup.send(f"🧩 Devine ce personnage : {sequence}\nRéponds avec `!rep <nom>`.")
+    # Sélectionner 3 emojis aléatoires parmi ceux du personnage (sans doublons)
+    emojis = random.sample(personnage["emojis"], k=min(3, len(personnage["emojis"])))
 
-    def check(m):
-        return m.channel == interaction.channel and m.content.lower().startswith("!rep")
+    # Générer 3 autres noms de personnages différents
+    autres = [c["nom"] for c in characters if c["nom"] != nom_correct]
+    distracteurs = random.sample(autres, 3)
+
+    # Mélanger la bonne réponse avec les distracteurs
+    propositions = distracteurs + [nom_correct]
+    random.shuffle(propositions)
+
+    emoji_lettres = ["🇦", "🇧", "🇨", "🇩"]
+    lettre_index = propositions.index(nom_correct)
+    bonne_reaction = emoji_lettres[lettre_index]
+
+
+    # Création de l'embed
+    embed = Embed(
+        title="🔍 Devine le personnage Bleach",
+        description="Quel personnage Bleach est représenté par ces emojis ?",
+        color=0x1abc9c  # couleur turquoise par exemple
+    )
+
+    # Ajouter un champ pour les emojis
+    embed.add_field(
+        name="Emojis",
+        value=' '.join(emojis),
+        inline=False
+    )
+
+    # Ajouter un champ pour les propositions
+    propositions_text = "\n".join(f"{emoji_lettres[i]}: {propositions[i]}" for i in range(4))
+    embed.add_field(
+        name="Choisis ta réponse",
+        value=propositions_text,
+        inline=False
+    )
+
+    # Ajouter une note sur la réaction
+    embed.set_footer(text="Réagis avec 🇦 🇧 🇨 ou 🇩 pour répondre.")
+
+    # Envoyer l'embed
+    message = await interaction.followup.send(embed=embed)
+
+    # Ajout des réactions pour le choix
+    for emoji in emoji_lettres:
+        await message.add_reaction(emoji)
+
+    def check(reaction, user):
+        return (
+            user == interaction.user
+            and reaction.message.id == message.id
+            and str(reaction.emoji) in emoji_lettres
+        )
 
     try:
-        msg = await interaction.client.wait_for("message", check=check, timeout=20)
-        reponse = msg.content[5:].strip().lower()
-        if reponse == perso["name"].lower():
-            await interaction.followup.send(f"✅ Bravo {msg.author.mention}, c'était bien **{perso['name']}** !")
+        reaction, user = await interaction.client.wait_for("reaction_add", check=check, timeout=30)
+        if str(reaction.emoji) == bonne_reaction:
+            await interaction.followup.send(f"✅ Bravo {user.mention}, bonne réponse !")
         else:
-            await interaction.followup.send(f"❌ Mauvaise réponse {msg.author.mention}, c'était **{perso['name']}**.")
+            await interaction.followup.send(f"❌ Désolé {user.mention}, ce n'est pas la bonne réponse.")
     except asyncio.TimeoutError:
-        await interaction.followup.send("⌛ Trop tard pour répondre.")
+        await interaction.followup.send("⌛ Temps écoulé, personne n'a répondu.")
+
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🔧 Commande principale !testtache
