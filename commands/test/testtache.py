@@ -31,8 +31,6 @@ def load_characters():
 # 📋 Liste des tâches disponibles
 # ────────────────────────────────────────────────────────────────────────────────
 TACHES = {
-    "Quiz Bleach": "quiz",
-    "Mot code": "code",
     "Séquence emoji": "emoji",
     "Réflexe rapide": "reflexe",
     "Séquence fléchée": "fleche",
@@ -58,11 +56,7 @@ class TacheSelect(Select):
         await interaction.edit_original_response(content=f"🔧 Tâche sélectionnée : **{task}**", view=None)
 
         # Lancer la tâche correspondante
-        if task == "quiz":
-            await lancer_quiz(interaction)
-        elif task == "code":
-            await lancer_code(interaction)
-        elif task == "emoji":
+        if task == "emoji":
             await lancer_emoji(interaction)
         elif task == "reflexe":
             await lancer_reflexe(interaction)
@@ -86,54 +80,7 @@ class TacheSelectView(View):
 # 🔹 Fonctions des mini-jeux (tâches)
 # ────────────────────────────────────────────────────────────────────────────────
 
-# -- Quiz simple --
-async def lancer_quiz(interaction: discord.Interaction):
-    question = "Quel capitaine a pour zanpakutō Senbonzakura ?"
-    bonne_reponse = "byakuya"
 
-    await interaction.followup.send(f"❓ {question}\nRéponds avec `!rep <ta réponse>`.")
-
-    def check(m):
-        return m.channel == interaction.channel and m.content.lower().startswith("!rep")
-
-    try:
-        msg = await interaction.client.wait_for("message", check=check, timeout=15)
-        reponse = msg.content[5:].strip().lower()
-        if reponse == bonne_reponse:
-            await interaction.followup.send(f"✅ Bonne réponse {msg.author.mention} !")
-        else:
-            await interaction.followup.send(f"❌ Mauvaise réponse {msg.author.mention} ! La bonne réponse était `{bonne_reponse.title()}`.")
-    except asyncio.TimeoutError:
-        await interaction.followup.send("⌛ Temps écoulé, personne n'a répondu.")
-
-# -- Mot code --
-MOTS_CODE = [
-    "hollow", "shinigami", "quincy", "zanpakuto", 
-    "shikai", "bankai", "kido", "shunpo", 
-    "karakura", "vizard", "capitaine", "reiatsu"
-]
-
-async def lancer_code(interaction: discord.Interaction):
-    mot = random.choice(MOTS_CODE)
-    lettres = list(mot)
-    nb_manquants = max(2, len(mot)//3)
-    indices_manquants = random.sample(range(len(lettres)), k=nb_manquants)
-    mot_code = ''.join('_' if i in indices_manquants else c.upper() for i, c in enumerate(lettres))
-
-    await interaction.followup.send(f"🔐 Trouve le mot : `{mot_code}` — Réponds avec `!rep <mot>`")
-
-    def check(m):
-        return m.channel == interaction.channel and m.content.lower().startswith("!rep")
-
-    try:
-        msg = await interaction.client.wait_for("message", check=check, timeout=15)
-        reponse = msg.content[5:].strip().lower()
-        if reponse == mot:
-            await interaction.followup.send(f"✅ Bravo {msg.author.mention}, c'était bien `{mot.upper()}` !")
-        else:
-            await interaction.followup.send(f"❌ Mauvaise réponse {msg.author.mention}, le mot était `{mot.upper()}`.")
-    except asyncio.TimeoutError:
-        await interaction.followup.send("⌛ Trop tard pour répondre.")
 
 # -- Séquence emoji --
 async def lancer_emoji(interaction: discord.Interaction):
