@@ -67,3 +67,23 @@ async def safe_reply(ctx_or_message, content=None, **kwargs):
             await asyncio.sleep(10)
             return await ctx_or_message.reply(content=content, **kwargs)
         raise e
+
+async def safe_add_reaction(message: discord.Message, emoji: str, delay: float = 0.3):
+    """
+    Ajoute une réaction en toute sécurité avec gestion du rate-limit (429).
+    Un petit délai est ajouté entre chaque réaction.
+    """
+    try:
+        await message.add_reaction(emoji)
+        await asyncio.sleep(delay)  # anti-429 : petit cooldown
+    except HTTPException as e:
+        if e.status == 429:
+            print(f"[RateLimit] safe_add_reaction() → 429 sur {emoji}. Pause...")
+            await asyncio.sleep(10)
+            await message.add_reaction(emoji)
+            await asyncio.sleep(delay)
+        else:
+            raise e
+    except Exception as e:
+        print(f"[Erreur] safe_add_reaction() → {e}")
+
