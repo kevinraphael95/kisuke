@@ -32,6 +32,7 @@ class HollowView(View):
 
     @discord.ui.button(label=f"Attaquer ({REIATSU_COST} reiatsu)", style=discord.ButtonStyle.red)
     async def attack_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        # Vérifications rapides avant defer
         if interaction.user.id != self.author_id:
             await interaction.response.send_message("❌ Ce bouton n’est pas pour toi.", ephemeral=True)
             return
@@ -40,43 +41,49 @@ class HollowView(View):
             await interaction.response.send_message("⚠️ Tu as déjà attaqué ce Hollow.", ephemeral=True)
             return
 
+        # Defer immédiat pour prévenir timeout Discord
+        await interaction.response.defer(thinking=True)
+
         user_id = str(interaction.user.id)
 
-        # Récupération du reiatsu
-        resp = supabase.table("reiatsu").select("points").eq("user_id", user_id).execute()
-        if not resp.data:
-            await interaction.response.send_message("❌ Tu n’as pas de Reiatsu enregistré.", ephemeral=True)
-            return
-
-        points = resp.data[0].get("points", 0)
-        if points < REIATSU_COST:
-            await interaction.response.send_message(f"❌ Il te faut {REIATSU_COST} reiatsu pour attaquer.", ephemeral=True)
-            return
-
-        # Mise à jour du reiatsu
-        new_points = points - REIATSU_COST
-        update_resp = supabase.table("reiatsu").update({"points": new_points}).eq("user_id", user_id).execute()
-        if update_resp.error:
-            await interaction.response.send_message("⚠️ Erreur lors de la mise à jour de ton reiatsu.", ephemeral=True)
-            return
-
-        self.attacked = True
-
-        # Répondre à l'interaction
-        await interaction.response.defer()
-
-        await interaction.followup.send(
-            f"🎉 Bravo {interaction.user.display_name}, tu as vaincu le Hollow en dépensant {REIATSU_COST} reiatsu !"
-        )
-
-        # Désactiver le bouton
-        for child in self.children:
-            child.disabled = True
-
         try:
-            await interaction.message.edit(view=self)
+            # Récupération du reiatsu
+            resp = supabase.table("reiatsu").select("points").eq("user_id", user_id).execute()
+            if not resp.data:
+                await interaction.followup.send("❌ Tu n’as pas de Reiatsu enregistré.", ephemeral=True)
+                return
+
+            points = resp.data[0].get("points", 0)
+            if points < REIATSU_COST:
+                await interaction.followup.send(f"❌ Il te faut {REIATSU_COST} reiatsu pour attaquer.", ephemeral=True)
+                return
+
+            # Mise à jour du reiatsu
+            new_points = points - REIATSU_COST
+            update_resp = supabase.table("reiatsu").update({"points": new_points}).eq("user_id", user_id).execute()
+            if update_resp.error:
+                await interaction.followup.send("⚠️ Erreur lors de la mise à jour de ton reiatsu.", ephemeral=True)
+                return
+
+            self.attacked = True
+
+            # Message de succès
+            await interaction.followup.send(
+                f"🎉 Bravo {interaction.user.display_name}, tu as vaincu le Hollow en dépensant {REIATSU_COST} reiatsu !"
+            )
+
+            # Désactiver le bouton pour éviter plusieurs attaques
+            for child in self.children:
+                child.disabled = True
+
+            try:
+                await interaction.message.edit(view=self)
+            except Exception as e:
+                print(f"[ERREUR EDIT MESSAGE] {e}")
+
         except Exception as e:
-            print(f"[ERREUR EDIT MESSAGE] {e}")
+            print(f"[ERREUR SUPABASE OU INTERACTION] {e}")
+            await interaction.followup.send("⚠️ Une erreur inattendue est survenue.", ephemeral=True)
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🧠 Cog principal — HollowCommand
