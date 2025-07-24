@@ -12,7 +12,8 @@ import discord
 from discord.ext import commands
 from discord.ui import View, Button
 import os
-from utils.discord_utils import safe_send  # safe_send si tu veux l'utiliser
+import traceback
+from utils.discord_utils import safe_send
 from supabase_client import supabase
 
 # ────────────────────────────────────────────────────────────────────────────────
@@ -30,9 +31,17 @@ class HollowView(View):
         self.author_id = author_id
         self.attacked = False
 
+    async def on_timeout(self):
+        # Quand le temps est écoulé, on désactive le bouton (même s’il n’a pas été cliqué)
+        for child in self.children:
+            child.disabled = True
+        try:
+            await self.message.edit(view=self)
+        except Exception:
+            pass  # On ignore les erreurs ici, ex : message supprimé
+
     @discord.ui.button(label=f"Attaquer ({REIATSU_COST} reiatsu)", style=discord.ButtonStyle.red)
     async def attack_button(self, interaction: discord.Interaction, button: discord.ui.Button):
-        # Vérifications rapides avant defer
         if interaction.user.id != self.author_id:
             await interaction.response.send_message("❌ Ce bouton n’est pas pour toi.", ephemeral=True)
             return
@@ -41,13 +50,10 @@ class HollowView(View):
             await interaction.response.send_message("⚠️ Tu as déjà attaqué ce Hollow.", ephemeral=True)
             return
 
-        # Defer immédiat pour prévenir timeout Discord
         await interaction.response.defer(thinking=True)
-
         user_id = str(interaction.user.id)
 
         try:
-            # Récupération du reiatsu
             resp = supabase.table("reiatsu").select("points").eq("user_id", user_id).execute()
             if not resp.data:
                 await interaction.followup.send("❌ Tu n’as pas de Reiatsu enregistré.", ephemeral=True)
@@ -58,7 +64,6 @@ class HollowView(View):
                 await interaction.followup.send(f"❌ Il te faut {REIATSU_COST} reiatsu pour attaquer.", ephemeral=True)
                 return
 
-            # Mise à jour du reiatsu
             new_points = points - REIATSU_COST
             update_resp = supabase.table("reiatsu").update({"points": new_points}).eq("user_id", user_id).execute()
             if update_resp.error:
@@ -67,19 +72,24 @@ class HollowView(View):
 
             self.attacked = True
 
-            # Message de succès
             await interaction.followup.send(
                 f"🎉 Bravo {interaction.user.display_name}, tu as vaincu le Hollow en dépensant {REIATSU_COST} reiatsu !"
             )
 
-            # Désactiver le bouton pour éviter plusieurs attaques
             for child in self.children:
                 child.disabled = True
 
             try:
                 await interaction.message.edit(view=self)
+            except discord.NotFound:
+                print("[ERREUR EDIT MESSAGE] Le message original n’existe plus (supprimé ?).")
+            except discord.Forbidden:
+                print("[ERREUR EDIT MESSAGE] Le bot n’a pas les permissions pour modifier ce message.")
+            except discord.HTTPException as http_error:
+                print(f"[ERREUR EDIT MESSAGE] Erreur HTTP lors de la modification du message : {http_error}")
             except Exception as e:
-                print(f"[ERREUR EDIT MESSAGE] {e}")
+                print("[ERREUR EDIT MESSAGE] Erreur inconnue :")
+                traceback.print_exc()
 
         except Exception as e:
             print(f"[ERREUR SUPABASE OU INTERACTION] {e}")
@@ -89,10 +99,6 @@ class HollowView(View):
 # 🧠 Cog principal — HollowCommand
 # ────────────────────────────────────────────────────────────────────────────────
 class HollowCommand(commands.Cog):
-    """
-    Commande !hollow — Apparition d’un Hollow à attaquer avec 50 reiatsu.
-    """
-
     def __init__(self, bot: commands.Bot):
         self.bot = bot
 
@@ -116,7 +122,8 @@ class HollowCommand(commands.Cog):
         embed.set_footer(text="Tu as 60 secondes pour attaquer.")
 
         view = HollowView(author_id=ctx.author.id)
-        await ctx.send(embed=embed, file=file, view=view)
+        message = await ctx.send(embed=embed, file=file, view=view)
+        view.message = message  # Permet de modifier le message après timeout
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🔌 Setup du Cog
