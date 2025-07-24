@@ -69,9 +69,10 @@ class HollowView(View):
             # Mise à jour reiatsu
             new_points = points - REIATSU_COST
             update_resp = supabase.table("reiatsu").update({"points": new_points}).eq("user_id", user_id).execute()
-            if update_resp.error:
+            if not update_resp.data:
                 await interaction.followup.send("⚠️ Erreur lors de la mise à jour de ton reiatsu.", ephemeral=True)
                 return
+
 
             self.attacked = True
 
