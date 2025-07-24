@@ -83,7 +83,8 @@ class HollowView(View):
                 child.disabled = True
 
             try:
-                await interaction.message.edit(view=self)
+                # ✅ Correction ici : utiliser self.message au lieu de interaction.message
+                await self.message.edit(view=self)
             except discord.NotFound:
                 print("[ERREUR EDIT MESSAGE] Le message original n’existe plus (supprimé ?).")
             except discord.Forbidden:
@@ -127,7 +128,7 @@ class HollowCommand(commands.Cog):
 
         view = HollowView(author_id=ctx.author.id)
         message = await ctx.send(embed=embed, file=file, view=view)
-        view.message = message  # Pour pouvoir le modifier dans on_timeout
+        view.message = message  # ✅ Enregistre bien le message original
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🔌 Setup du Cog
