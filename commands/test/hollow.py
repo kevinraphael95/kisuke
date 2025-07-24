@@ -30,15 +30,16 @@ class HollowView(View):
         super().__init__(timeout=60)
         self.author_id = author_id
         self.attacked = False
+        self.message = None  # Défini après enregistrement du message par la commande
 
     async def on_timeout(self):
-        # Quand le temps est écoulé, on désactive le bouton (même s’il n’a pas été cliqué)
         for child in self.children:
             child.disabled = True
-        try:
-            await self.message.edit(view=self)
-        except Exception:
-            pass  # On ignore les erreurs ici, ex : message supprimé
+        if self.message:
+            try:
+                await self.message.edit(view=self)
+            except Exception:
+                pass  # Silence si le message n'existe plus
 
     @discord.ui.button(label=f"Attaquer ({REIATSU_COST} reiatsu)", style=discord.ButtonStyle.red)
     async def attack_button(self, interaction: discord.Interaction, button: discord.ui.Button):
@@ -54,6 +55,7 @@ class HollowView(View):
         user_id = str(interaction.user.id)
 
         try:
+            # Récupération reiatsu
             resp = supabase.table("reiatsu").select("points").eq("user_id", user_id).execute()
             if not resp.data:
                 await interaction.followup.send("❌ Tu n’as pas de Reiatsu enregistré.", ephemeral=True)
@@ -64,6 +66,7 @@ class HollowView(View):
                 await interaction.followup.send(f"❌ Il te faut {REIATSU_COST} reiatsu pour attaquer.", ephemeral=True)
                 return
 
+            # Mise à jour reiatsu
             new_points = points - REIATSU_COST
             update_resp = supabase.table("reiatsu").update({"points": new_points}).eq("user_id", user_id).execute()
             if update_resp.error:
@@ -87,12 +90,13 @@ class HollowView(View):
                 print("[ERREUR EDIT MESSAGE] Le bot n’a pas les permissions pour modifier ce message.")
             except discord.HTTPException as http_error:
                 print(f"[ERREUR EDIT MESSAGE] Erreur HTTP lors de la modification du message : {http_error}")
-            except Exception as e:
+            except Exception:
                 print("[ERREUR EDIT MESSAGE] Erreur inconnue :")
                 traceback.print_exc()
 
-        except Exception as e:
-            print(f"[ERREUR SUPABASE OU INTERACTION] {e}")
+        except Exception:
+            print("[ERREUR SUPABASE OU INTERACTION] Erreur dans attack_button :")
+            traceback.print_exc()
             await interaction.followup.send("⚠️ Une erreur inattendue est survenue.", ephemeral=True)
 
 # ────────────────────────────────────────────────────────────────────────────────
@@ -123,7 +127,7 @@ class HollowCommand(commands.Cog):
 
         view = HollowView(author_id=ctx.author.id)
         message = await ctx.send(embed=embed, file=file, view=view)
-        view.message = message  # Permet de modifier le message après timeout
+        view.message = message  # Pour pouvoir le modifier dans on_timeout
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🔌 Setup du Cog
