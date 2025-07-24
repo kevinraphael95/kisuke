@@ -77,7 +77,7 @@ class HollowView(View):
             self.attacked = True
 
             await interaction.followup.send(
-                f"🎉 Bravo {interaction.user.display_name}, tu as vaincu le Hollow en dépensant {REIATSU_COST} reiatsu !"
+                f"🎉 Bravo {interaction.user.display_name}, tu as vaincu le Hollow en dépensant {REIATSU_COST} reiatsu ! Ça sert à rien mais bravo 🤣🤣🤣"
             )
 
             for child in self.children:
