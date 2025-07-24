@@ -14,6 +14,7 @@ import asyncio
 import json
 import os
 from supabase_client import supabase
+from utils.discord_utils import safe_send, safe_edit, safe_add_reaction  # ✅ Ajout fonctions anti-429
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 📂 Constantes et configuration
@@ -48,7 +49,6 @@ class RPGBleach(commands.Cog):
     async def rpg(self, ctx: commands.Context):
         user_id = str(ctx.author.id)
 
-        # Récupération de la sauvegarde existante
         print(f"[DEBUG] Chargement sauvegarde Supabase pour {user_id}")
         response = supabase.table("rpg_save").select("*").eq("user_id", user_id).execute()
         save = response.data[0] if response.data else None
@@ -57,7 +57,6 @@ class RPGBleach(commands.Cog):
         saved_name = save["character_name"] if save else None
         saved_mission = save["mission"] if save else None
 
-        # Chargement du scénario
         intro = self.scenario.get("intro", {})
         intro_texte = intro.get("texte", "Bienvenue dans la Division Z.")
         missions = self.scenario.get("missions", {})
@@ -65,7 +64,6 @@ class RPGBleach(commands.Cog):
 
         emojis = ["✏️"] + ["1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣"][:len(mission_ids)]
 
-        # Création du menu principal
         embed = discord.Embed(
             title="🔰 RPG Bleach - Division Z",
             description=intro_texte,
@@ -76,27 +74,26 @@ class RPGBleach(commands.Cog):
             mission = missions[key]
             embed.add_field(name=f"{emojis[i + 1]} {mission['titre']}", value=mission["description"], inline=False)
 
-        menu = await ctx.send(embed=embed)
+        menu = await safe_send(ctx, embed=embed)
         for emoji in emojis:
-            await menu.add_reaction(emoji)
+            await safe_add_reaction(menu, emoji)
 
         temp_name = saved_name or None
 
         def check_react(reaction, user):
             return user == ctx.author and reaction.message.id == menu.id and str(reaction.emoji) in emojis
 
-        # Boucle d’attente
         while True:
             try:
                 reaction, _ = await self.bot.wait_for("reaction_add", timeout=300, check=check_react)
             except asyncio.TimeoutError:
-                await ctx.send("⏰ Tu n’as pas réagi à temps.")
+                await safe_send(ctx, content="⏰ Tu n’as pas réagi à temps.")
                 return
 
             emoji = str(reaction.emoji)
 
             if emoji == "✏️":
-                prompt = await ctx.send("📛 Réponds à **ce message** avec le nom de ton personnage (5 minutes).")
+                prompt = await safe_send(ctx, content="📛 Réponds à **ce message** avec le nom de ton personnage (5 minutes).")
 
                 def check_msg(m):
                     return m.author == ctx.author and m.reference and m.reference.message_id == prompt.id
@@ -104,13 +101,13 @@ class RPGBleach(commands.Cog):
                 try:
                     msg = await self.bot.wait_for("message", timeout=300, check=check_msg)
                     temp_name = msg.content.strip()
-                    await ctx.send(f"✅ Ton nom est enregistré : **{temp_name}**")
+                    await safe_send(ctx, content=f"✅ Ton nom est enregistré : **{temp_name}**")
                 except asyncio.TimeoutError:
-                    await ctx.send("⏰ Temps écoulé pour entrer ton nom.")
+                    await safe_send(ctx, content="⏰ Temps écoulé pour entrer ton nom.")
                 continue
 
             if not temp_name:
-                await ctx.send("❗ Choisis ton nom avant de commencer une mission.")
+                await safe_send(ctx, content="❗ Choisis ton nom avant de commencer une mission.")
                 continue
 
             mission_index = emojis.index(emoji) - 1
@@ -121,7 +118,6 @@ class RPGBleach(commands.Cog):
             else:
                 etape_id = missions[mission_id]["start"]
 
-            # Enregistrement Supabase
             upsert = supabase.table("rpg_save").upsert({
                 "user_id": user_id,
                 "username": ctx.author.name,
@@ -131,7 +127,7 @@ class RPGBleach(commands.Cog):
             }, on_conflict=["user_id"]).execute()
 
             if not upsert.data:
-                await ctx.send("⚠️ Erreur lors de la sauvegarde.")
+                await safe_send(ctx, content="⚠️ Erreur lors de la sauvegarde.")
                 return
 
             await self.jouer_etape(ctx, etape_id, temp_name, mission_id)
@@ -140,7 +136,7 @@ class RPGBleach(commands.Cog):
     async def jouer_etape(self, ctx: commands.Context, etape_id: str, nom: str, mission_id: str):
         etape = self.scenario.get(etape_id)
         if not etape:
-            await ctx.send("❌ Étape introuvable.")
+            await safe_send(ctx, content="❌ Étape introuvable.")
             return
 
         texte = etape["texte"].replace("{nom}", nom)
@@ -155,9 +151,9 @@ class RPGBleach(commands.Cog):
             embed.add_field(name=choix["emoji"], value=choix["texte"], inline=False)
             emojis.append(choix["emoji"])
 
-        msg = await ctx.send(embed=embed)
+        msg = await safe_send(ctx, embed=embed)
         for emoji in emojis:
-            await msg.add_reaction(emoji)
+            await safe_add_reaction(msg, emoji)
 
         def check_choix(r, u):
             return u == ctx.author and r.message.id == msg.id and str(r.emoji) in emojis
@@ -165,7 +161,7 @@ class RPGBleach(commands.Cog):
         try:
             reaction, _ = await self.bot.wait_for("reaction_add", timeout=300, check=check_choix)
         except asyncio.TimeoutError:
-            await ctx.send("⏰ Tu n’as pas réagi à temps.")
+            await safe_send(ctx, content="⏰ Tu n’as pas réagi à temps.")
             return
 
         selected = str(reaction.emoji)
@@ -181,7 +177,7 @@ class RPGBleach(commands.Cog):
                 }, on_conflict=["user_id"]).execute()
 
                 if not response.data:
-                    await ctx.send("⚠️ Erreur lors de la sauvegarde.")
+                    await safe_send(ctx, content="⚠️ Erreur lors de la sauvegarde.")
                     return
 
                 await self.jouer_etape(ctx, next_etape, nom, mission_id)
