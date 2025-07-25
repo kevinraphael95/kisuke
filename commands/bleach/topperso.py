@@ -73,7 +73,7 @@ class ClassementBleachView(View):
         )
         for i, perso in enumerate(self.classement):
             if perso:
-                embed.add_field(name=f"#{i + 1}", value=perso['nom'], inline=False)
+                embed.add_field(name="\u200b", value=f"**#{i + 1} — {perso['nom']}**", inline=False)
         await safe_edit(interaction.message, content="Voici ton classement final :", embed=embed, view=None)
         await safe_send(self.ctx.channel, "🔍 Es-tu satisfait de ton top 5 ?", view=ValidationViewBleach(self.ctx.author))
 
