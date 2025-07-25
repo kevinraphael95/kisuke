@@ -71,11 +71,14 @@ class ClassementBleachView(View):
             title="🟢 Ton Top 5 Final des Personnages Bleach",
             color=discord.Color.green()
         )
-        embed.description = "\n".join(
-            f"**#{i + 1} — {perso['nom']}**" for i, perso in enumerate(self.classement) if perso
-        )
+        # Construction du texte avec un seul \n entre chaque entrée, sans espaces inutiles
+        lines = []
+        for i, perso in enumerate(self.classement):
+            if perso:
+                # Pas d'espaces avant/après, juste ligne propre
+                lines.append(f"**#{i + 1} — {perso['nom']}**")
+        embed.description = "\n".join(lines)
 
-        
         await safe_edit(interaction.message, content="Voici ton classement final :", embed=embed, view=None)
         await safe_send(self.ctx.channel, "🔍 Es-tu satisfait de ton top 5 ?", view=ValidationViewBleach(self.ctx.author))
 
