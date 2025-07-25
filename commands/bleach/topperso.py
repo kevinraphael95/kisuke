@@ -71,11 +71,11 @@ class ClassementBleachView(View):
             title="🟢 Ton Top 5 Final des Personnages Bleach",
             color=discord.Color.green()
         )
-        embed.description = "".join(
-            f"**#{i + 1} — {perso['nom']}**\n" for i, perso in enumerate(self.classement) if perso
+        embed.description = "\n".join(
+            f"**#{i + 1} — {perso['nom']}**" for i, perso in enumerate(self.classement) if perso
         )
 
-        )
+        
         await safe_edit(interaction.message, content="Voici ton classement final :", embed=embed, view=None)
         await safe_send(self.ctx.channel, "🔍 Es-tu satisfait de ton top 5 ?", view=ValidationViewBleach(self.ctx.author))
 
