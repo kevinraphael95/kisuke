@@ -1,28 +1,30 @@
 # ────────────────────────────────────────────────────────────────────────────────
 # 📌 hollow.py — Commande interactive !hollow
 # Objectif : Faire apparaître un Hollow, le joueur peut l’attaquer en dépensant 50 reiatsu
-#           et doit accomplir 3 tâches pour le vaincre.
+#           et doit accomplir 3 tâches intégrées pour le vaincre.
 # Catégorie : Hollow
 # Accès : Public
 # ────────────────────────────────────────────────────────────────────────────────
 
-# ────────────────────────────────────────────────────────────────────────────────
-# 📦 Imports nécessaires
-# ────────────────────────────────────────────────────────────────────────────────
 import discord
 from discord.ext import commands
 from discord.ui import View, Button
+from discord import Embed
 import os
-import traceback
 import random
+import traceback
 from utils.discord_utils import safe_send
 from supabase_client import supabase
+import asyncio
+import json
 
-# Import des tâches (elles retournent un booléen True/False)
-from test_taches import (
-    lancer_emoji, lancer_reflexe, lancer_fleche,
-    lancer_infusion, lancer_emoji9, lancer_bmoji
-)
+# ────────────────────────────────────────────────────────────────────────────────
+# 📂 Chargement des personnages (pour bmoji)
+# ────────────────────────────────────────────────────────────────────────────────
+DATA_JSON_PATH = os.path.join("data", "bleach_emojis.json")
+def load_characters():
+    with open(DATA_JSON_PATH, encoding="utf-8") as f:
+        return json.load(f)
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 📂 Constantes
@@ -31,133 +33,295 @@ HOLLOW_IMAGE_PATH = os.path.join("data", "hollows", "hollow0.jpg")
 REIATSU_COST = 50
 
 # ────────────────────────────────────────────────────────────────────────────────
-# 🔧 Fonctions utilitaires de tâche
+# 🔹 Fonctions des mini‑jeux (tâches)
 # ────────────────────────────────────────────────────────────────────────────────
-TACHES_DISPONIBLES = [
-    ("Séquence emoji", lancer_emoji),
-    ("Réflexe rapide", lancer_reflexe),
-    ("Séquence fléchée", lancer_fleche),
-    ("Infusion Reiatsu", lancer_infusion),
-    ("Emoji suspects", lancer_emoji9),
-    ("Devine le perso (bmoji)", lancer_bmoji),
-]
 
-async def lancer_3_taches_différentes(interaction: discord.Interaction) -> bool:
-    """
-    Lance 3 tâches différentes au hasard et renvoie True si toutes sont réussies.
-    """
-    # Choix de 3 tâches distinctes
-    selections = random.sample(TACHES_DISPONIBLES, 3)
-    for i, (nom, fonction) in enumerate(selections, start=1):
-        # Indication de la tâche
-        await interaction.followup.send(f"🧪 Épreuve {i}/3 : **{nom}**", ephemeral=True)
-        try:
-            # Exécution et récupération du résultat
-            resultat = await fonction(interaction)
-        except Exception:
-            traceback.print_exc()
-            resultat = False
+async def lancer_emoji(interaction: discord.Interaction) -> bool:
+    pool = ["💀", "🌀", "🔥", "🌪️", "🌟", "🍥", "🍡", "🧊", "❄️", "💨"]
+    sequence = random.sample(pool, 3)
+    autres = [e for e in pool if e not in sequence]
+    mix = sequence + random.sample(autres, 2)
+    random.shuffle(mix)
 
-        if not resultat:
-            # échec immédiat
-            await interaction.followup.send("❌ Échec d’une épreuve. Le Hollow t’a vaincu...", ephemeral=True)
+    msg = await interaction.followup.send(
+        f"🔁 Reproduis cette séquence : {' → '.join(sequence)}\nTu as 2 minutes !"
+    )
+    for e in mix:
+        try: await msg.add_reaction(e)
+        except: pass
+
+    reponses = {}
+    def check(r, u):
+        if u.bot or r.message.id != msg.id:
+            return False
+        if u.id not in reponses:
+            reponses[u.id] = []
+        idx = len(reponses[u.id])
+        if str(r.emoji) == sequence[idx]:
+            reponses[u.id].append(str(r.emoji))
+        return reponses[u.id] == sequence
+
+    try:
+        reaction, user = await interaction.client.wait_for("reaction_add", check=check, timeout=120)
+        await interaction.followup.send(f"✅ Séquence correcte {user.mention} !", ephemeral=True)
+        return True
+    except asyncio.TimeoutError:
+        await interaction.followup.send("⌛ Personne n'a réussi.", ephemeral=True)
+        return False
+
+async def lancer_reflexe(interaction: discord.Interaction) -> bool:
+    compte = ["5️⃣", "4️⃣", "3️⃣", "2️⃣", "1️⃣"]
+    msg = await interaction.followup.send("🕒 Clique dans l’ordre `5️⃣ 4️⃣ 3️⃣ 2️⃣ 1️⃣` !")
+    for e in compte:
+        await msg.add_reaction(e)
+
+    reponses = {}
+    def check(r, u):
+        if u.bot or r.message.id != msg.id:
+            return False
+        if u.id not in reponses:
+            reponses[u.id] = []
+        idx = len(reponses[u.id])
+        if str(r.emoji) == compte[idx]:
+            reponses[u.id].append(str(r.emoji))
+        return reponses[u.id] == compte
+
+    try:
+        reaction, user = await interaction.client.wait_for("reaction_add", check=check, timeout=20)
+        await interaction.followup.send(f"⚡ Réflexe parfait {user.mention} !", ephemeral=True)
+        return True
+    except asyncio.TimeoutError:
+        await interaction.followup.send("⌛ Aucun réflexe parfait.", ephemeral=True)
+        return False
+
+async def lancer_fleche(interaction: discord.Interaction) -> bool:
+    fleches = ["⬅️", "⬆️", "⬇️", "➡️"]
+    sequence = [random.choice(fleches) for _ in range(5)]
+    tmp = await interaction.followup.send(f"🧭 Mémorise : `{' '.join(sequence)}` (5 s)")
+    await asyncio.sleep(5)
+    await tmp.delete()
+    msg = await interaction.followup.send("🔁 Reproduis la séquence en cliquant :")
+
+    for e in fleches:
+        await msg.add_reaction(e)
+
+    reponses = {}
+    def check(r, u):
+        if u.bot or r.message.id != msg.id:
+            return False
+        if u.id not in reponses:
+            reponses[u.id] = []
+        pos = len(reponses[u.id])
+        if pos >= len(sequence): return False
+        attendu = sequence[pos]
+        if str(r.emoji) == attendu:
+            reponses[u.id].append(str(r.emoji))
+            asyncio.create_task(msg.remove_reaction(r.emoji, u))
+            return len(reponses[u.id]) == len(sequence)
+        else:
+            reponses[u.id] = []
             return False
 
-    # succès de toutes les tâches
-    await interaction.followup.send("✅ Tu as réussi les 3 épreuves !", ephemeral=True)
+    try:
+        reaction, user = await interaction.client.wait_for("reaction_add", check=check, timeout=30)
+        await interaction.followup.send(f"✅ Bien joué {user.mention} !", ephemeral=True)
+        return True
+    except asyncio.TimeoutError:
+        await interaction.followup.send("⌛ Personne n'a réussi.", ephemeral=True)
+        return False
+
+async def lancer_infusion(interaction: discord.Interaction) -> bool:
+    await interaction.followup.send("🔵 Prépare-toi à synchroniser ton Reiatsu...")
+    await asyncio.sleep(2)
+    msg = await interaction.followup.send("🔵")
+    for _ in range(3):
+        await asyncio.sleep(0.6); await msg.edit(content="🔵🔵")
+        await asyncio.sleep(0.6); await msg.edit(content="🔵🔵🔵")
+    await asyncio.sleep(0.5); await msg.edit(content="🔴")
+    await msg.add_reaction("⚡")
+    start = discord.utils.utcnow()
+
+    def check(r, u):
+        if u.bot or r.message.id != msg.id or str(r.emoji) != "⚡":
+            return False
+        delta = (discord.utils.utcnow() - start).total_seconds()
+        return 0.8 <= delta <= 1.2
+
+    try:
+        reaction, user = await interaction.client.wait_for("reaction_add", check=check, timeout=2)
+        await interaction.followup.send(f"✅ Synchronisation parfaite, {user.mention} !", ephemeral=True)
+        return True
+    except asyncio.TimeoutError:
+        await interaction.followup.send("❌ Échec, Reiatsu instable.", ephemeral=True)
+        return False
+
+class EmojiBoutons(discord.ui.View):
+    def __init__(self, vrai: bool):
+        super().__init__(timeout=15)
+        self.vrai = vrai
+        self.repondu = False
+
+    @discord.ui.button(label="✅ Oui", style=discord.ButtonStyle.success)
+    async def oui(self, inter, btn):
+        if self.repondu: return
+        self.repondu = True
+        await self.verifie(inter, True)
+
+    @discord.ui.button(label="❌ Non", style=discord.ButtonStyle.danger)
+    async def non(self, inter, btn):
+        if self.repondu: return
+        self.repondu = True
+        await self.verifie(inter, False)
+
+    async def verifie(self, inter, rep):
+        if rep == self.vrai:
+            await inter.response.send_message("✅ Bonne réponse !", ephemeral=True)
+        else:
+            await inter.response.send_message("❌ Mauvaise réponse.", ephemeral=True)
+        self.stop()
+
+async def lancer_emoji9(interaction: discord.Interaction) -> bool:
+    groupes = [["🍎","🍅"],["☁️","🌥️"],["☘️","🍀"],["🌺","🌸"],
+               ["👜","💼"],["🌹","🌷"],["🤞","✌️"],["✊","👊"],
+               ["😕","😐"],["🌟","⭐"],["🦝","🐨"],["🔒","🔓"],
+               ["🏅","🥇"],["🌧️","🌨️"],["🐆","🐅"],["🙈","🙊"],
+               ["🐋","🐳"],["🐢","🐊"]]
+    base, intrus = random.choice(groupes)
+    has_intrus = random.choice([True, False])
+    emojis = [base]*9
+    if has_intrus:
+        emojis[random.randint(0,8)] = intrus
+    random.shuffle(emojis)
+    ligne = "".join(emojis)
+
+    embed = Embed(title="🔎 Tous identiques ?", description=f"{ligne}\n✅ si oui, ❌ si non", color=discord.Color.orange())
+    view = EmojiBoutons(vrai=(not has_intrus))
+    await interaction.followup.send(embed=embed, view=view)
+    try:
+        await inter.client.wait_for("interaction", timeout=15)
+        return True
+    except asyncio.TimeoutError:
+        return False
+
+async def lancer_bmoji(interaction: discord.Interaction) -> bool:
+    characters = load_characters()
+    pers = random.choice(characters)
+    nom = pers["nom"]
+    emojis = random.sample(pers["emojis"], k=min(3, len(pers["emojis"])))
+    autres = [c["nom"] for c in characters if c["nom"] != nom]
+    distracteurs = random.sample(autres, 3)
+    options = distracteurs + [nom]
+    random.shuffle(options)
+    lettres = ["🇦","🇧","🇨","🇩"]
+    bonne = lettres[options.index(nom)]
+
+    embed = Embed(title="🔍 Devine le perso", description="Emoji➤Perso", color=0x1abc9c)
+    embed.add_field(name="Emojis", value=" ".join(emojis), inline=False)
+    embed.add_field(name="Choix", value="\n".join(f"{lettres[i]}: {options[i]}" for i in range(4)), inline=False)
+    embed.set_footer(text="Réagis 🇦 🇧 🇨 ou 🇩")
+    message = await interaction.followup.send(embed=embed)
+    for e in lettres:
+        await message.add_reaction(e)
+
+    def check(r, u):
+        return u == interaction.user and r.message.id == message.id and str(r.emoji) in lettres
+
+    try:
+        r, u = await interaction.client.wait_for("reaction_add", check=check, timeout=30)
+        if str(r.emoji) == bonne:
+            await interaction.followup.send(f"✅ Bravo {u.mention} !", ephemeral=True)
+            return True
+        else:
+            await interaction.followup.send(f"❌ Mauvaise réponse.", ephemeral=True)
+            return False
+    except asyncio.TimeoutError:
+        await interaction.followup.send("⌛ Temps écoulé.", ephemeral=True)
+        return False
+
+# ────────────────────────────────────────────────────────────────────────────────
+# 🔁 Fonction pour lancer 3 tâches aléatoires
+# ────────────────────────────────────────────────────────────────────────────────
+
+TACHES_DISPONIBLES = [
+    lancer_emoji,
+    lancer_reflexe,
+    lancer_fleche,
+    lancer_infusion,
+    lancer_emoji9,
+    lancer_bmoji,
+]
+
+async def lancer_3_taches_aleatoires(interaction: discord.Interaction) -> bool:
+    for idx, t in enumerate(random.sample(TACHES_DISPONIBLES, 3), 1):
+        await interaction.followup.send(f"🧪 Épreuve {idx}/3…", ephemeral=True)
+        if not await t(interaction):
+            return False
     return True
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🧠 Vue avec bouton d’attaque
 # ────────────────────────────────────────────────────────────────────────────────
+
 class HollowView(View):
     def __init__(self, author_id: int):
         super().__init__(timeout=60)
         self.author_id = author_id
         self.attacked = False
-        self.message = None  # Définie après envoi initial
+        self.message = None
 
     async def on_timeout(self):
-        for child in self.children:
-            child.disabled = True
+        for c in self.children:
+            c.disabled = True
         if self.message:
             try:
                 await self.message.edit(view=self)
-            except Exception:
-                pass  # message supprimé ou autre
+            except:
+                pass
 
     @discord.ui.button(label=f"Attaquer ({REIATSU_COST} reiatsu)", style=discord.ButtonStyle.red)
-    async def attack_button(self, interaction: discord.Interaction, button: discord.ui.Button):
-        # Vérification de l’utilisateur
-        if interaction.user.id != self.author_id:
-            await interaction.response.send_message("❌ Ce bouton n’est pas pour toi.", ephemeral=True)
-            return
+    async def attack(self, inter: discord.Interaction, btn):
+        if inter.user.id != self.author_id:
+            await inter.response.send_message("❌ Ce bouton n’est pas pour toi.", ephemeral=True); return
         if self.attacked:
-            await interaction.response.send_message("⚠️ Tu as déjà attaqué ce Hollow.", ephemeral=True)
-            return
+            await inter.response.send_message("⚠️ Tu as déjà attaqué.", ephemeral=True); return
 
-        # Début de traitement
-        await interaction.response.defer(thinking=True)
-        user_id = str(interaction.user.id)
-
+        await inter.response.defer(thinking=True)
+        uid = str(inter.user.id)
         try:
-            # 1️⃣ Vérification des points
-            resp = supabase.table("reiatsu").select("points").eq("user_id", user_id).execute()
-            if not resp.data:
-                await interaction.followup.send("❌ Tu n’as pas de Reiatsu enregistré.", ephemeral=True)
-                return
-            points = resp.data[0].get("points", 0)
-            if points < REIATSU_COST:
-                await interaction.followup.send(f"❌ Il te faut {REIATSU_COST} reiatsu pour attaquer.", ephemeral=True)
-                return
+            resp = supabase.table("reiatsu").select("points").eq("user_id", uid).execute()
+            if not resp.data or resp.data[0].get("points", 0) < REIATSU_COST:
+                await inter.followup.send(f"❌ Il faut {REIATSU_COST} points de reiatsu.", ephemeral=True); return
 
-            # 2️⃣ Déduction de reiatsu
-            new_points = points - REIATSU_COST
-            upd = supabase.table("reiatsu").update({"points": new_points}).eq("user_id", user_id).execute()
+            new = resp.data[0]["points"] - REIATSU_COST
+            upd = supabase.table("reiatsu").update({"points": new}).eq("user_id", uid).execute()
             if not upd.data:
-                await interaction.followup.send("⚠️ Erreur lors de la mise à jour de ton reiatsu.", ephemeral=True)
-                return
+                await inter.followup.send("⚠️ Erreur mise à jour reiatsu.", ephemeral=True); return
 
             self.attacked = True
-            await interaction.followup.send(
-                f"💥 {interaction.user.display_name} engage le combat contre le Hollow !", ephemeral=True
-            )
+            await inter.followup.send(f"💥 Combat lancé !", ephemeral=True)
 
-            # 3️⃣ Lancement des 3 tâches
-            victoire = await lancer_3_taches_différentes(interaction)
-
-            # 4️⃣ Message final
-            if victoire:
-                await interaction.followup.send(
-                    f"🎉 Bravo {interaction.user.display_name}, tu as vaincu le Hollow !", ephemeral=True
-                )
+            ok = await lancer_3_taches_aleatoires(inter)
+            if ok:
+                await inter.followup.send(f"🎉 {inter.user.display_name}, tu as vaincu le Hollow !", ephemeral=True)
             else:
-                await interaction.followup.send(
-                    f"💀 Le Hollow t’a submergé. Retente ta chance plus tard !", ephemeral=True
-                )
+                await inter.followup.send(f"💀 {inter.user.display_name}, tu as été vaincu…", ephemeral=True)
 
-            # 5️⃣ Désactivation du bouton
-            for child in self.children:
-                child.disabled = True
+            for c in self.children: c.disabled = True
             if self.message:
                 await self.message.edit(view=self)
-
         except Exception:
-            print("[ERREUR SUPABASE OU INTERACTION] attack_button :")
             traceback.print_exc()
-            await interaction.followup.send("⚠️ Une erreur inattendue est survenue.", ephemeral=True)
+            await inter.followup.send("⚠️ Échec inattendu.", ephemeral=True)
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🧠 Cog principal — HollowCommand
 # ────────────────────────────────────────────────────────────────────────────────
+
 class HollowCommand(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
 
-    @commands.command(
-        name="hollow",
-        help="Fais apparaître un Hollow à attaquer en dépensant 50 reiatsu."
-    )
+    @commands.command(name="hollow", help="Fais apparaître un Hollow à attaquer")
     @commands.cooldown(rate=1, per=10, type=commands.BucketType.user)
     async def hollow(self, ctx: commands.Context):
         if not os.path.isfile(HOLLOW_IMAGE_PATH):
@@ -165,17 +329,17 @@ class HollowCommand(commands.Cog):
             return
 
         file = discord.File(HOLLOW_IMAGE_PATH, filename="hollow.jpg")
-        embed = discord.Embed(
-            title="👹 Un Hollow est apparu !",
-            description=f"Attaque-le en dépensant {REIATSU_COST} Reiatsu et réussis 3 tâches pour le vaincre.",
-            color=discord.Color.dark_red()
-        )
+        embed = Embed(title="👹 Un Hollow est apparu !",
+                      description=f"Attaque-le pour {REIATSU_COST} reiatsu et réussis 3 tâches.",
+                      color=discord.Color.dark_red())
         embed.set_image(url="attachment://hollow.jpg")
         embed.set_footer(text="Tu as 60 secondes pour cliquer sur Attaquer.")
-
         view = HollowView(author_id=ctx.author.id)
-        message = await ctx.send(embed=embed, file=file, view=view)
-        view.message = message  # Enregistrement du message pour la vue
+        msg = await ctx.send(embed=embed, file=file, view=view)
+        view.message = msg
+
+
+
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🔌 Setup du Cog
