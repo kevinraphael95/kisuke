@@ -251,12 +251,25 @@ TACHES_DISPONIBLES = [
     lancer_bmoji,
 ]
 
-async def lancer_3_taches_aleatoires(interaction: discord.Interaction) -> bool:
-    for idx, t in enumerate(random.sample(TACHES_DISPONIBLES, 3), 1):
-        await interaction.followup.send(f"🧪 Épreuve {idx}/3…", ephemeral=True)
-        if not await t(interaction):
+async def lancer_3_taches_aleatoires(interaction: discord.Interaction, message: discord.Message) -> bool:
+    taches = random.sample(TACHES_DISPONIBLES, 3)
+    embed = message.embeds[0]
+    for idx, tache in enumerate(taches, 1):
+        embed.description = f"🧪 Épreuve {idx}/3 en cours..."
+        await message.edit(embed=embed)
+
+        ok = await tache(interaction)
+        if not ok:
+            embed.description = f"💀 {interaction.user.display_name} a été vaincu par le Hollow..."
+            embed.color = discord.Color.darker_gray()
+            await message.edit(embed=embed)
             return False
+
+    embed.description = f"🎉 {interaction.user.display_name} a vaincu le Hollow avec succès !"
+    embed.color = discord.Color.green()
+    await message.edit(embed=embed)
     return True
+
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🧠 Vue avec bouton d’attaque
@@ -298,13 +311,10 @@ class HollowView(View):
                 await inter.followup.send("⚠️ Erreur mise à jour reiatsu.", ephemeral=True); return
 
             self.attacked = True
-            await inter.followup.send(f"💥 Combat lancé !", ephemeral=True)
+            await inter.followup.send("💥 Combat lancé !", ephemeral=True)
 
-            ok = await lancer_3_taches_aleatoires(inter)
-            if ok:
-                await inter.followup.send(f"🎉 {inter.user.display_name}, tu as vaincu le Hollow !", ephemeral=True)
-            else:
-                await inter.followup.send(f"💀 {inter.user.display_name}, tu as été vaincu…", ephemeral=True)
+            ok = await lancer_3_taches_aleatoires(inter, self.message)
+            # (Plus besoin d'envoyer de message après, c’est géré dans la fonction)
 
             for c in self.children: c.disabled = True
             if self.message:
