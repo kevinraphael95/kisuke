@@ -253,23 +253,38 @@ TACHES_DISPONIBLES = [
 
 async def lancer_3_taches_aleatoires(interaction: discord.Interaction, message: discord.Message, embed: discord.Embed) -> bool:
     taches = random.sample(TACHES_DISPONIBLES, 3)
+
     for idx, tache in enumerate(taches, 1):
-        embed.description = f"⚔️ Combat contre le Hollow...\n🧪 Épreuve {idx}/3 en cours..."
+        embed.description = (
+            f"⚔️ {interaction.user.display_name} affronte le Hollow !\n\n"
+            f"🧪 Épreuve {idx}/3 en cours..."
+        )
         embed.set_footer(text=f"Épreuve {idx}/3")
         await message.edit(embeds=[embed])
 
         success = await tache(interaction)
+        await asyncio.sleep(1.5)
+
         if not success:
-            embed.description = f"💀 Tu as échoué à l’épreuve {idx}/3."
+            embed.description = (
+                f"❌ Épreuve {idx}/3 échouée par {interaction.user.display_name}.\n\n"
+                f"💀 Le Hollow n'a pas été vaincu."
+            )
             embed.set_footer(text="Défaite…")
             await message.edit(embeds=[embed])
             return False
 
-        embed.description = f"✅ Épreuve {idx}/3 réussie !"
+        embed.description = (
+            f"✅ Épreuve {idx}/3 réussie par {interaction.user.display_name} !\n\n"
+            f"Prépare-toi pour la suite..."
+        )
+        embed.set_footer(text=f"Épreuve {idx}/3 réussie")
         await message.edit(embeds=[embed])
-        await asyncio.sleep(1.2)
+        await asyncio.sleep(1.5)
 
-    embed.description = f"🎉 Toutes les épreuves ont été réussies !"
+    embed.description = (
+        f"🎉 Toutes les épreuves ont été réussies par {interaction.user.display_name} !"
+    )
     embed.set_footer(text="Victoire !")
     await message.edit(embeds=[embed])
     return True
