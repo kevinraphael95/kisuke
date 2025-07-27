@@ -1,5 +1,5 @@
 # ────────────────────────────────────────────────────────────────────────────────
-# 📌 Echo.py — Commande interactive !Echo
+# 📌 echo.py — Commande interactive !echo
 # Objectif : Répéter ton message avec un effet écho rigolo et exagéré
 # Catégorie : Général
 # Accès : Public
@@ -23,46 +23,45 @@ class EchoModal(Modal):
 
     async def callback(self, interaction: discord.Interaction):
         texte = self.children[0].value
-        Echo = Echo_transform(texte)
-        # Réponse modale correcte obligatoire (interaction.response.send_message)
-        await interaction.response.send_message(f"🔊 **Echo** :\n{Echo}", ephemeral=True)
+        echo = echo_transform(texte)
+        await interaction.response.send_message(f"🔊 **Echo** :\n{echo}", ephemeral=True)
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🧠 Fonction qui transforme le texte en effet écho exagéré
 # ────────────────────────────────────────────────────────────────────────────────
-def Echo_transform(text: str) -> str:
+def echo_transform(text: str) -> str:
     words = text.split()
-    Echo_parts = []
+    echo_parts = []
     for w in words:
         w_low = w.lower()
-        Echo_parts.append(w_low)
-        Echo_parts.append(w_low[:max(1,len(w)//2)].lower())
-        Echo_parts.append(w.upper() + "!!!")
-    return "… ".join(Echo_parts)
+        echo_parts.append(w_low)
+        echo_parts.append(w_low[:max(1,len(w)//2)])
+        echo_parts.append(w.upper() + "!!!")
+    return "… ".join(echo_parts)
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🧠 Cog principal
 # ────────────────────────────────────────────────────────────────────────────────
 class EchoCog(commands.Cog):
     """
-    Commande !Echo — Répète ton texte avec un effet écho exagéré et rigolo
+    Commande !echo — Répète ton texte avec un effet écho exagéré et rigolo
     """
 
     def __init__(self, bot: commands.Bot):
         self.bot = bot
 
     @commands.command(
-        name="Echo",
+        name="echo",
         help="Fais un écho exagéré de ton message.",
         description="Ouvre un formulaire pour saisir un texte, puis te le renvoie en mode écho rigolo."
     )
-    async def Echo(self, ctx: commands.Context):
+    async def echo(self, ctx: commands.Context):
         """Commande principale qui ouvre un modal pour saisir le texte."""
         try:
             modal = EchoModal()
             await ctx.send_modal(modal)
         except Exception as e:
-            print(f"[ERREUR Echo] {e}")
+            print(f"[ERREUR echo] {e}")
             await safe_send(ctx.channel, "❌ Une erreur est survenue lors de l'ouverture du formulaire.")
 
 # ────────────────────────────────────────────────────────────────────────────────
