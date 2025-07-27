@@ -19,6 +19,29 @@ import json
 from utils.discord_utils import safe_send, safe_respond  # <-- import fonctions anti 429
 
 # ────────────────────────────────────────────────────────────────────────────────
+# 👁️ View avec bouton pour voir le classement
+# ────────────────────────────────────────────────────────────────────────────────
+class ClassementView(discord.ui.View):
+    def __init__(self, author_id: int, parent_cog):
+        super().__init__(timeout=30)
+        self.author_id = author_id
+        self.parent_cog = parent_cog
+
+    @discord.ui.button(label="📊 Voir le classement", style=discord.ButtonStyle.blurple)
+    async def show_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if interaction.user.id != self.author_id:
+            await interaction.response.send_message("❌ Ce bouton ne t'appartient pas.", ephemeral=True)
+            return
+
+        await interaction.response.defer()
+        ctx = await self.parent_cog.bot.get_context(interaction)
+        await self.parent_cog.show_leaderboard(ctx, original_message=interaction.message)
+
+        button.disabled = True
+        await interaction.message.edit(view=self)
+
+
+# ────────────────────────────────────────────────────────────────────────────────
 # 🧠 Cog principal
 # ────────────────────────────────────────────────────────────────────────────────
 class Reiatsu2Command(commands.Cog):
