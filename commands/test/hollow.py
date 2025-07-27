@@ -1,6 +1,6 @@
 # ────────────────────────────────────────────────────────────────────────────────
 # 📌 hollow.py — Commande interactive !hollow
-# Objectif : Faire apparaître un Hollow, le joueur peut l’attaquer en dépensant 50 reiatsu
+# Objectif : Faire apparaître un Hollow, le joueur peut l’attaquer en dépensant 1 reiatsu
 #           et doit accomplir 3 tâches intégrées pour le vaincre.
 # Catégorie : Hollow
 # Accès : Public
@@ -77,16 +77,22 @@ class HollowView(View):
             embed.description = f"⚔️ {inter.user.display_name} attaque le Hollow !\nRéussis 3 épreuves pour le vaincre."
             embed.clear_fields()
             embed.set_footer(text="Combat en cours...")
+            embed.add_field(name="Épreuves", value="⏳ Chargement des épreuves...", inline=False)
             await safe_edit(self.message, embeds=[embed], view=self)
 
             # 🧪 Lancer les 3 épreuves une à une
+            resultat = []
             victoire = True
+
             for i in range(3):
                 nom, fonction = get_random_task()
                 success = await fonction(inter, embed=embed, index=i + 1)
-                victoire = victoire and success
+                symbole = "✅" if success else "❌"
+                resultat.append(f"**Épreuve {i + 1} :** {nom} {symbole}")
+                embed.set_field_at(0, name="Épreuves", value="\n".join(resultat), inline=False)
                 await safe_edit(self.message, embeds=[embed], view=self)
                 await asyncio.sleep(1)
+                victoire = victoire and success
 
             # 🏁 Embed final de résultat
             result_embed = Embed(
@@ -128,8 +134,6 @@ class HollowCommand(commands.Cog):
         view = HollowView(author_id=ctx.author.id)
         msg = await ctx.send(embed=embed, file=file, view=view)
         view.message = msg
-
-
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🔌 Setup du Cog
