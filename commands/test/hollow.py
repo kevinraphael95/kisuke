@@ -95,7 +95,7 @@ class HollowView(View):
             await self.message.edit(embeds=[embed], view=self)
 
             # Lancer les 3 tâches aléatoires via utils.taches
-            success = await taches.lancer_3_taches_aleatoires(inter, self.message, embed)
+            success = await lancer_3_taches(inter)
 
             # Embed résultat final
             result_embed = discord.Embed(
