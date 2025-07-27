@@ -251,12 +251,29 @@ TACHES_DISPONIBLES = [
     lancer_bmoji,
 ]
 
-async def lancer_3_taches_aleatoires(interaction: discord.Interaction) -> bool:
-    for idx, t in enumerate(random.sample(TACHES_DISPONIBLES, 3), 1):
-        await interaction.followup.send(f"🧪 Épreuve {idx}/3…", ephemeral=True)
-        if not await t(interaction):
+async def lancer_3_taches_aleatoires(interaction: discord.Interaction, message: discord.Message, embed: discord.Embed) -> bool:
+    taches = random.sample(TACHES_DISPONIBLES, 3)
+    for idx, tache in enumerate(taches, 1):
+        embed.description = f"⚔️ Combat contre le Hollow...\n🧪 Épreuve {idx}/3 en cours..."
+        embed.set_footer(text=f"Épreuve {idx}/3")
+        await message.edit(embeds=[embed])
+
+        success = await tache(interaction)
+        if not success:
+            embed.description = f"💀 Tu as échoué à l’épreuve {idx}/3."
+            embed.set_footer(text="Défaite…")
+            await message.edit(embeds=[embed])
             return False
+
+        embed.description = f"✅ Épreuve {idx}/3 réussie !"
+        await message.edit(embeds=[embed])
+        await asyncio.sleep(1.2)
+
+    embed.description = f"🎉 Toutes les épreuves ont été réussies !"
+    embed.set_footer(text="Victoire !")
+    await message.edit(embeds=[embed])
     return True
+
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🧠 Vue avec bouton d’attaque
@@ -287,6 +304,7 @@ class HollowView(View):
 
         await inter.response.defer(thinking=True)
         uid = str(inter.user.id)
+
         try:
             resp = supabase.table("reiatsu").select("points").eq("user_id", uid).execute()
             if not resp.data or resp.data[0].get("points", 0) < REIATSU_COST:
@@ -298,20 +316,27 @@ class HollowView(View):
                 await inter.followup.send("⚠️ Erreur mise à jour reiatsu.", ephemeral=True); return
 
             self.attacked = True
-            await inter.followup.send(f"💥 Combat lancé !", ephemeral=True)
 
-            ok = await lancer_3_taches_aleatoires(inter)
-            if ok:
-                await inter.followup.send(f"🎉 {inter.user.display_name}, tu as vaincu le Hollow !", ephemeral=True)
-            else:
-                await inter.followup.send(f"💀 {inter.user.display_name}, tu as été vaincu…", ephemeral=True)
+            embed = self.message.embeds[0]
+            embed.description = f"⚔️ {inter.user.display_name} attaque le Hollow...\nPrépare-toi aux épreuves !"
+            embed.set_footer(text="Combat en cours")
+            await self.message.edit(embeds=[embed], view=self)
 
-            for c in self.children: c.disabled = True
-            if self.message:
-                await self.message.edit(view=self)
+            success = await lancer_3_taches_aleatoires(inter, self.message, embed)
+
+            result_embed = discord.Embed(
+                title="🎯 Résultat du combat",
+                description="🎉 Tu as vaincu le Hollow !" if success else "💀 Tu as échoué à vaincre le Hollow.",
+                color=discord.Color.green() if success else discord.Color.red()
+            )
+            result_embed.set_footer(text=f"Combat de {inter.user.display_name}")
+
+            await self.message.edit(embeds=[embed, result_embed], view=self)
+
         except Exception:
             traceback.print_exc()
             await inter.followup.send("⚠️ Échec inattendu.", ephemeral=True)
+
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🧠 Cog principal — HollowCommand
