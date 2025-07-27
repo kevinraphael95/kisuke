@@ -1,5 +1,5 @@
 # ────────────────────────────────────────────────────────────────────────────────
-# 📌 echo.py — Commande interactive !echo
+# 📌 echo.py — Commande interactive !echo (version sans modal)
 # Objectif : Répéter ton message avec un effet écho rigolo et exagéré
 # Catégorie : Général
 # Accès : Public
@@ -10,21 +10,7 @@
 # ────────────────────────────────────────────────────────────────────────────────
 import discord
 from discord.ext import commands
-from discord.ui import Modal, InputText
-from utils.discord_utils import safe_send  # safe_respond remplacé car modal doit répondre avec interaction.response
-
-# ────────────────────────────────────────────────────────────────────────────────
-# 🎛️ Modal pour saisir le texte à échochamberiser
-# ────────────────────────────────────────────────────────────────────────────────
-class EchoModal(Modal):
-    def __init__(self):
-        super().__init__(title="Echo Chamber")
-        self.add_item(InputText(label="Écris ton texte ici", style=discord.InputTextStyle.short, max_length=100))
-
-    async def callback(self, interaction: discord.Interaction):
-        texte = self.children[0].value
-        echo = echo_transform(texte)
-        await interaction.response.send_message(f"🔊 **Echo** :\n{echo}", ephemeral=True)
+from utils.discord_utils import safe_send
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🧠 Fonction qui transforme le texte en effet écho exagéré
@@ -53,16 +39,23 @@ class EchoCog(commands.Cog):
     @commands.command(
         name="echo",
         help="Fais un écho exagéré de ton message.",
-        description="Ouvre un formulaire pour saisir un texte, puis te le renvoie en mode écho rigolo."
+        description="Demande un texte puis te le renvoie en mode écho rigolo."
     )
     async def echo(self, ctx: commands.Context):
-        """Commande principale qui ouvre un modal pour saisir le texte."""
+        """Commande principale qui demande un texte et renvoie l'écho."""
+        await safe_send(ctx.channel, "✍️ Écris ton texte à échochamberiser (tu as 60 secondes).")
+
+        def check(m: discord.Message):
+            return m.author == ctx.author and m.channel == ctx.channel
+
         try:
-            modal = EchoModal()
-            await ctx.send_modal(modal)
-        except Exception as e:
-            print(f"[ERREUR echo] {e}")
-            await safe_send(ctx.channel, "❌ Une erreur est survenue lors de l'ouverture du formulaire.")
+            msg = await self.bot.wait_for('message', check=check, timeout=60)
+        except asyncio.TimeoutError:
+            await safe_send(ctx.channel, "⌛ Temps écoulé. Veuillez réessayer la commande.")
+            return
+
+        echo = echo_transform(msg.content)
+        await safe_send(ctx.channel, f"🔊 **Echo** :\n{echo}")
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🔌 Setup du Cog
