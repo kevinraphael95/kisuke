@@ -19,7 +19,7 @@ from utils.discord_utils import safe_send, safe_edit
 from supabase_client import supabase
 import asyncio
 
-from utils.taches import get_random_task  # 🧩 Récupérer une tâche aléatoire
+from utils.taches import lancer_3_taches  # 🧩 Récupérer une tâche aléatoire
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 📂 Constantes
@@ -81,18 +81,12 @@ class HollowView(View):
             await safe_edit(self.message, embeds=[embed], view=self)
 
             # 🧪 Lancer les 3 épreuves une à une
-            resultat = []
-            victoire = True
+            # ➕ Définir une fonction de mise à jour de l’embed
+            async def update_embed(e):
+                await safe_edit(self.message, embeds=[e], view=self)
 
-            for i in range(3):
-                nom, fonction = get_random_task()
-                success = await fonction(inter, embed=embed, index=i + 1)
-                symbole = "✅" if success else "❌"
-                resultat.append(f"**Épreuve {i + 1} :** {nom} {symbole}")
-                embed.set_field_at(0, name="Épreuves", value="\n".join(resultat), inline=False)
-                await safe_edit(self.message, embeds=[embed], view=self)
-                await asyncio.sleep(1)
-                victoire = victoire and success
+            # 🚀 Lancer les 3 épreuves avec mise à jour dynamique
+            victoire = await lancer_3_taches(inter, embed, update_embed)
 
             # 🏁 Embed final de résultat
             result_embed = Embed(
