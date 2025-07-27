@@ -36,9 +36,9 @@ class ClassementView(discord.ui.View):
         await interaction.response.defer()
         ctx = await self.parent_cog.bot.get_context(interaction)
         await self.parent_cog.show_leaderboard(ctx, original_message=interaction.message)
-        self.clear_items()
-        await interaction.message.edit(view=self)
 
+        button.disabled = True
+        await interaction.message.edit(view=self)
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🧠 Cog principal
@@ -162,7 +162,6 @@ class Reiatsu2Command(commands.Cog):
             color=discord.Color.purple()
         )
         msg = await safe_send(ctx.channel, embed=embed, view=ClassementView(ctx.author.id, self))
-
 
     async def show_leaderboard(self, ctx: commands.Context, original_message=None):
         # 📦 Requête : Top 10 joueurs avec uniquement username
