@@ -25,7 +25,7 @@ from utils import taches  # Import des mini-jeux et fonctions utilitaires
 # 📂 Constantes
 # ──────────────────────────────────────────────────
 HOLLOW_IMAGE_PATH = os.path.join("data", "hollows", "hollow0.jpg")
-REIATSU_COST = 50  # Coût reiatsu fixe
+REIATSU_COST = 1  # Coût reiatsu
 
 # ──────────────────────────────────────────────────
 # 🧠 Vue avec bouton d’attaque
