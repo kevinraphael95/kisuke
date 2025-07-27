@@ -1,7 +1,6 @@
 # ────────────────────────────────────────────────────────────────────────────────
-# 📌 reiatsu.py — Commande interactive !reiatsu avec bouton classement
-# Objectif : Affiche le score Reiatsu d’un membre, le salon de spawn et le temps restant,
-#           avec un bouton pour afficher le classement (Top 10).
+# 📌 reiatsu.py — Commande interactive !reiatsu
+# Objectif : Affiche le score Reiatsu d’un membre, le salon de spawn et le temps restant
 # Catégorie : Reiatsu
 # Accès : Public
 # ────────────────────────────────────────────────────────────────────────────────
@@ -11,51 +10,20 @@
 # ────────────────────────────────────────────────────────────────────────────────
 import discord
 from discord.ext import commands
-from discord.ui import View, Button
 from dateutil import parser
 from datetime import datetime, timedelta
 import time
 from supabase_client import supabase
 import json
 
-from utils.discord_utils import safe_send, safe_edit  # Utilisation safe_send & safe_edit
-
-# ────────────────────────────────────────────────────────────────────────────────
-# 🎛️ Vue avec bouton pour afficher le classement
-# ────────────────────────────────────────────────────────────────────────────────
-class LeaderboardView(View):
-    def __init__(self, bot: commands.Bot, ctx: commands.Context):
-        super().__init__(timeout=120)
-        self.bot = bot
-        self.ctx = ctx
-
-        # Bouton pour afficher le classement
-        self.add_item(Button(label="📊 Voir classement", style=discord.ButtonStyle.primary, custom_id="btn_leaderboard"))
-
-    @discord.ui.button(label="📊 Voir classement", style=discord.ButtonStyle.primary, custom_id="btn_leaderboard")
-    async def leaderboard_button(self, interaction: discord.Interaction, button: Button):
-        # Vérifie que la personne qui clique est celle qui a lancé la commande
-        if interaction.user != self.ctx.author:
-            await interaction.response.send_message("❌ Ce bouton n'est pas pour toi.", ephemeral=True)
-            return
-
-        await interaction.response.defer()  # ACK la réponse
-
-        # Appelle la fonction pour afficher le classement
-        await Reiatsu2Command.show_leaderboard(self.bot.get_cog("Reiatsu2Command"), self.ctx, interaction)
-
-        # Désactive le bouton après clic
-        for item in self.children:
-            item.disabled = True
-        await interaction.message.edit(view=self)
+from utils.discord_utils import safe_send, safe_respond  # <-- import fonctions anti 429
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🧠 Cog principal
 # ────────────────────────────────────────────────────────────────────────────────
 class Reiatsu2Command(commands.Cog):
     """
-    Commande !reiatsu — Affiche ton score de Reiatsu, le salon et le temps avant le prochain spawn,
-    avec un bouton pour afficher le classement.
+    Commande !reiatsu — Affiche ton score de Reiatsu, le salon et le temps avant le prochain spawn.
     """
 
     def __init__(self, bot: commands.Bot):
@@ -156,7 +124,7 @@ class Reiatsu2Command(commands.Cog):
                     else:
                         temps_text = "Un Reiatsu 💠 peut apparaître **à tout moment** !"
 
-        # 📋 Création de l'embed principal
+        # 📋 Création de l'embed
         embed = discord.Embed(
             title="__**💠 Profil**__",
             description=(
@@ -171,15 +139,26 @@ class Reiatsu2Command(commands.Cog):
             ),
             color=discord.Color.purple()
         )
-        embed.set_footer(text="Clique sur le bouton ci-dessous pour voir le classement.")
+        embed.set_footer(text="Réagis avec 📊 pour voir le classement.")
 
-        # Crée la vue avec le bouton
-        view = LeaderboardView(self.bot, ctx)
+        msg = await safe_send(ctx.channel, embed=embed)
+        await msg.add_reaction("📊")
 
-        # Envoie le message avec embed + vue
-        await safe_send(ctx.channel, embed=embed, view=view)
+        # 🔁 Écoute de la réaction
+        def check(reaction, user_check):
+            return (
+                reaction.message.id == msg.id and
+                str(reaction.emoji) == "📊" and
+                user_check == ctx.author
+            )
 
-    async def show_leaderboard(self, ctx: commands.Context, interaction: discord.Interaction):
+        try:
+            await self.bot.wait_for("reaction_add", check=check, timeout=30)
+            await self.show_leaderboard(ctx, original_message=msg)
+        except Exception:
+            pass  # Timeout ou autre erreur : on ignore
+
+    async def show_leaderboard(self, ctx: commands.Context, original_message=None):
         # 📦 Requête : Top 10 joueurs avec uniquement username
         leaderboard_resp = supabase.table("reiatsu") \
             .select("username, points") \
@@ -199,13 +178,10 @@ class Reiatsu2Command(commands.Cog):
         # 🖼️ Embed du classement
         embed = discord.Embed(
             title="📊 Top 10 des utilisateurs avec le plus de Reiatsu",
-            description=top_texte or "Aucun utilisateur trouvé.",
+            description=top_texte,
             color=discord.Color.gold()
         )
-
-        # Répond en éditant le message original de l'interaction, avec l'embed du classement
-        await interaction.followup.send(embed=embed, ephemeral=True)
-
+        await safe_send(ctx.channel, embed=embed, reference=original_message)
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🔌 Setup du Cog
