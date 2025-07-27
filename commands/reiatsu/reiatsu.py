@@ -19,6 +19,28 @@ import json
 from utils.discord_utils import safe_send, safe_respond  # <-- import fonctions anti 429
 
 # ────────────────────────────────────────────────────────────────────────────────
+# 🔘 View : Bouton pour afficher le classement
+# ────────────────────────────────────────────────────────────────────────────────
+class ClassementView(discord.ui.View):
+    def __init__(self, author_id: int, parent_cog):
+        super().__init__(timeout=30)
+        self.author_id = author_id
+        self.parent_cog = parent_cog
+
+    @discord.ui.button(label="📊 Voir le classement", style=discord.ButtonStyle.blurple)
+    async def show(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if interaction.user.id != self.author_id:
+            await interaction.response.send_message("❌ Ce bouton ne t'appartient pas.", ephemeral=True)
+            return
+
+        await interaction.response.defer()
+        ctx = await self.parent_cog.bot.get_context(interaction)
+        await self.parent_cog.show_leaderboard(ctx, original_message=interaction.message)
+        self.clear_items()
+        await interaction.message.edit(view=self)
+
+
+# ────────────────────────────────────────────────────────────────────────────────
 # 🧠 Cog principal
 # ────────────────────────────────────────────────────────────────────────────────
 class Reiatsu2Command(commands.Cog):
@@ -139,24 +161,8 @@ class Reiatsu2Command(commands.Cog):
             ),
             color=discord.Color.purple()
         )
-        embed.set_footer(text="Réagis avec 📊 pour voir le classement.")
+        msg = await safe_send(ctx.channel, embed=embed, view=ClassementView(ctx.author.id, self))
 
-        msg = await safe_send(ctx.channel, embed=embed)
-        await msg.add_reaction("📊")
-
-        # 🔁 Écoute de la réaction
-        def check(reaction, user_check):
-            return (
-                reaction.message.id == msg.id and
-                str(reaction.emoji) == "📊" and
-                user_check == ctx.author
-            )
-
-        try:
-            await self.bot.wait_for("reaction_add", check=check, timeout=30)
-            await self.show_leaderboard(ctx, original_message=msg)
-        except Exception:
-            pass  # Timeout ou autre erreur : on ignore
 
     async def show_leaderboard(self, ctx: commands.Context, original_message=None):
         # 📦 Requête : Top 10 joueurs avec uniquement username
