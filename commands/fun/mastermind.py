@@ -1,6 +1,6 @@
 # ────────────────────────────────────────────────────────────────────────────────
-# 🧠 mastermind.py — Commande interactive !mastermind
-# Objectif : Deviner une combinaison secrète de 4 couleurs avec indices
+# 📌 mastermind.py — Commande interactive !mastermind
+# Objectif : Jouer à Mastermind contre le bot avec 6 couleurs d'emojis
 # Catégorie : Autre
 # Accès : Public
 # ────────────────────────────────────────────────────────────────────────────────
@@ -12,169 +12,144 @@ import discord
 from discord.ext import commands
 from discord.ui import View, Button
 import random
+
 from utils.discord_utils import safe_send, safe_edit, safe_respond
 
 # ────────────────────────────────────────────────────────────────────────────────
-# 🎨 Constantes du jeu
+# 🎨 Constantes
 # ────────────────────────────────────────────────────────────────────────────────
 COLORS = ["🔴", "🟡", "🟢", "🔵", "🟣", "🟠"]
-MAX_ATTEMPTS = 12
+MAX_TURNS = 12
+CODE_LENGTH = 4
+
+# 🔴 = bonne couleur à la bonne place
+# ⚪ = bonne couleur à la mauvaise place
+# ❌ = couleur absente
 
 # ────────────────────────────────────────────────────────────────────────────────
-# 🎛️ UI — Vue du Mastermind
+# 🧩 Classe de jeu Mastermind
 # ────────────────────────────────────────────────────────────────────────────────
-class MastermindView(View):
-    def __init__(self, bot, author: discord.User):
-        super().__init__(timeout=180)
-        self.bot = bot
-        self.author = author
-        self.code = [random.choice(COLORS) for _ in range(4)]
-        self.current_guess = []
-        self.attempts = []
+class MastermindGame:
+    def __init__(self):
+        self.secret_code = [random.choice(COLORS) for _ in range(CODE_LENGTH)]
+        self.turns = []
         self.finished = False
-        for emoji in COLORS:
-            self.add_item(ColorButton(self, emoji))
-        self.add_item(ValidateButton(self))
-        self.add_item(ClearButton(self))
 
-    def format_attempts(self):
-        lines = []
-        for guess, result in self.attempts:
-            line = f"{' '.join(guess)} ➜ {' '.join(result)}"
-            lines.append(line)
-        return "\n".join(lines) if lines else "Aucune tentative encore."
-
-    def compute_feedback(self, guess):
+    def evaluate_guess(self, guess):
         result = []
-        code_copy = self.code.copy()
-        guess_copy = guess.copy()
+        code_copy = self.secret_code[:]
+        guess_copy = guess[:]
 
-        # 🔴 Bon endroit
-        for i in range(4):
-            if guess[i] == code_copy[i]:
+        # 🔴 Exact match
+        for i in range(CODE_LENGTH):
+            if guess_copy[i] == code_copy[i]:
                 result.append("🔴")
-                code_copy[i] = None
-                guess_copy[i] = None
+                code_copy[i] = guess_copy[i] = None
 
-        # ⚪ Mauvais endroit
-        for i in range(4):
+        # ⚪ Right color, wrong position
+        for i in range(CODE_LENGTH):
             if guess_copy[i] and guess_copy[i] in code_copy:
                 result.append("⚪")
                 code_copy[code_copy.index(guess_copy[i])] = None
+                guess_copy[i] = None
 
-        # ❌ Mauvaise couleur
-        result += ["❌"] * (4 - len(result))
+        # ❌ Absent color
+        result += ["❌"] * (CODE_LENGTH - len(result))
+
         return result
 
-    async def update_message(self, interaction: discord.Interaction):
-        embed = discord.Embed(
-            title="🎯 Mastermind",
-            description=f"Devine la combinaison secrète de 4 couleurs parmi :\n{' '.join(COLORS)}",
-            color=discord.Color.dark_purple()
-        )
-        embed.add_field(name="Tes tentatives", value=self.format_attempts(), inline=False)
-        embed.set_footer(text=f"Essai {len(self.attempts)}/{MAX_ATTEMPTS}")
-        await safe_edit(interaction.message, embed=embed, view=self)
-
 # ────────────────────────────────────────────────────────────────────────────────
-# 🟦 Bouton de couleur
+# 🎛️ UI — Vue interactive du Mastermind
 # ────────────────────────────────────────────────────────────────────────────────
-class ColorButton(Button):
-    def __init__(self, parent_view: MastermindView, emoji: str):
-        super().__init__(emoji=emoji, style=discord.ButtonStyle.secondary)
-        self.parent_view = parent_view
-        self.emoji_used = emoji
+class MastermindView(View):
+    def __init__(self, bot, game, interaction):
+        super().__init__(timeout=300)
+        self.bot = bot
+        self.game = game
+        self.interaction = interaction
+        self.current_guess = []
+        self.update_buttons()
 
-    async def callback(self, interaction: discord.Interaction):
-        if interaction.user != self.parent_view.author:
-            return await safe_respond(interaction, "❌ Ce jeu ne t'appartient pas.", ephemeral=True)
-        if self.parent_view.finished:
-            return
-        if len(self.parent_view.current_guess) >= 4:
-            return await safe_respond(interaction, "⚠️ Tu as déjà choisi 4 couleurs.", ephemeral=True)
-        self.parent_view.current_guess.append(self.emoji_used)
-        await self.parent_view.update_message(interaction)
+    def update_buttons(self):
+        self.clear_items()
+        for color in COLORS:
+            self.add_item(ColorButton(color, self))
+        if len(self.current_guess) > 0:
+            self.add_item(Button(label="🗑️", style=discord.ButtonStyle.danger, custom_id="reset"))
+        if len(self.current_guess) == CODE_LENGTH:
+            self.add_item(Button(label="✅ Valider", style=discord.ButtonStyle.success, custom_id="validate"))
 
-# ────────────────────────────────────────────────────────────────────────────────
-# ✅ Bouton valider
-# ────────────────────────────────────────────────────────────────────────────────
-class ValidateButton(Button):
-    def __init__(self, parent_view: MastermindView):
-        super().__init__(label="Valider", style=discord.ButtonStyle.success)
-        self.parent_view = parent_view
+    async def interaction_check(self, interaction: discord.Interaction) -> bool:
+        return interaction.user.id == self.interaction.user.id
 
-    async def callback(self, interaction: discord.Interaction):
-        if interaction.user != self.parent_view.author:
-            return await safe_respond(interaction, "❌ Ce jeu ne t'appartient pas.", ephemeral=True)
-        if self.parent_view.finished:
-            return
-        if len(self.parent_view.current_guess) != 4:
-            return await safe_respond(interaction, "⚠️ Il te faut 4 couleurs.", ephemeral=True)
+    async def on_timeout(self):
+        await safe_edit(self.interaction.message, content="⏱️ Temps écoulé ! Partie annulée.", embed=None, view=None)
 
-        result = self.parent_view.compute_feedback(self.parent_view.current_guess)
-        self.parent_view.attempts.append((self.parent_view.current_guess.copy(), result))
-        self.parent_view.current_guess = []
-
-        if result == ["🔴"] * 4:
-            self.parent_view.finished = True
-            await safe_edit(interaction.message, embed=discord.Embed(
-                title="🏆 Bravo !",
-                description=f"Tu as trouvé la combinaison secrète !\n{' '.join(self.parent_view.code)}",
-                color=discord.Color.green()
-            ), view=None)
-        elif len(self.parent_view.attempts) >= MAX_ATTEMPTS:
-            self.parent_view.finished = True
-            await safe_edit(interaction.message, embed=discord.Embed(
-                title="💀 Perdu...",
-                description=f"Tu as épuisé tes essais.\nLa bonne combinaison était : {' '.join(self.parent_view.code)}",
-                color=discord.Color.red()
-            ), view=None)
+    async def handle_interaction(self, interaction: discord.Interaction):
+        if interaction.data["custom_id"] == "reset":
+            self.current_guess.clear()
+        elif interaction.data["custom_id"] == "validate":
+            result = self.game.evaluate_guess(self.current_guess)
+            self.game.turns.append((self.current_guess.copy(), result))
+            self.current_guess.clear()
+            if result.count("🔴") == CODE_LENGTH:
+                self.game.finished = True
+                await self.show_result(victory=True)
+                return
+            elif len(self.game.turns) >= MAX_TURNS:
+                self.game.finished = True
+                await self.show_result(victory=False)
+                return
         else:
-            await self.parent_view.update_message(interaction)
+            if len(self.current_guess) < CODE_LENGTH:
+                self.current_guess.append(interaction.data["custom_id"])
 
-# ────────────────────────────────────────────────────────────────────────────────
-# 🔄 Bouton effacer
-# ────────────────────────────────────────────────────────────────────────────────
-class ClearButton(Button):
-    def __init__(self, parent_view: MastermindView):
-        super().__init__(label="Effacer", style=discord.ButtonStyle.danger)
-        self.parent_view = parent_view
+        self.update_buttons()
+        await safe_edit(interaction.message, embed=self.get_embed(), view=self)
+        await interaction.response.defer()
+
+    def get_embed(self):
+        embed = discord.Embed(title="🎯 Mastermind - Trouve la combinaison !", color=discord.Color.purple())
+        for i, (guess, result) in enumerate(self.game.turns):
+            embed.add_field(name=f"Essai {i+1}", value=f"{' '.join(guess)} ➜ {' '.join(result)}", inline=False)
+        if not self.game.finished:
+            embed.add_field(name="Essai en cours", value="➤ " + " ".join(self.current_guess) + " _" * (CODE_LENGTH - len(self.current_guess)), inline=False)
+        embed.set_footer(text=f"{len(self.game.turns)}/{MAX_TURNS} essais")
+        return embed
+
+    async def show_result(self, victory: bool):
+        msg = "🏆 Bravo ! Tu as trouvé la combinaison secrète !" if victory else f"❌ Perdu ! La combinaison était : {' '.join(self.game.secret_code)}"
+        await safe_edit(self.interaction.message, content=msg, embed=None, view=None)
+
+class ColorButton(Button):
+    def __init__(self, color, view: MastermindView):
+        super().__init__(label=color, style=discord.ButtonStyle.secondary, emoji=color, custom_id=color)
+        self.view_ref = view
 
     async def callback(self, interaction: discord.Interaction):
-        if interaction.user != self.parent_view.author:
-            return await safe_respond(interaction, "❌ Ce jeu ne t'appartient pas.", ephemeral=True)
-        if self.parent_view.finished:
-            return
-        self.parent_view.current_guess = []
-        await self.parent_view.update_message(interaction)
+        await self.view_ref.handle_interaction(interaction)
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🧠 Cog principal
 # ────────────────────────────────────────────────────────────────────────────────
 class Mastermind(commands.Cog):
     """
-    Commande !mastermind — Devine une combinaison secrète avec des emojis
+    Commande !mastermind — Joue à Mastermind contre le bot
     """
-
     def __init__(self, bot: commands.Bot):
         self.bot = bot
 
     @commands.command(
         name="mastermind",
-        help="Joue au Mastermind contre le bot !",
-        description="Jeu de Mastermind classique en emojis (🔴🟡🟢🔵🟣🟠)."
+        help="Joue au jeu du Mastermind contre le bot.",
+        description="Devine la combinaison secrète de 4 couleurs. 12 tentatives maximum."
     )
     async def mastermind(self, ctx: commands.Context):
-        """Commande principale pour jouer au Mastermind."""
+        """Commande principale Mastermind."""
         try:
-            view = MastermindView(self.bot, ctx.author)
-            embed = discord.Embed(
-                title="🎯 Mastermind",
-                description=f"Devine la combinaison secrète de 4 couleurs parmi :\n{' '.join(COLORS)}",
-                color=discord.Color.dark_purple()
-            )
-            embed.set_footer(text=f"Essai 0/{MAX_ATTEMPTS}")
-            await safe_send(ctx.channel, embed=embed, view=view)
+            game = MastermindGame()
+            view = MastermindView(self.bot, game, ctx)
+            await safe_send(ctx.channel, content=f"🎲 {ctx.author.mention} commence une partie de Mastermind !", embed=view.get_embed(), view=view)
         except Exception as e:
             print(f"[ERREUR mastermind] {e}")
             await safe_send(ctx.channel, "❌ Une erreur est survenue lors du lancement du jeu.")
