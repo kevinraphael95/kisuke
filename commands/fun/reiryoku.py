@@ -12,6 +12,7 @@ import discord
 from discord.ext import commands, tasks
 from discord.ui import View, Button
 import random
+from utils.discord_utils import safe_send, safe_edit, safe_respond
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🎮 Vue interactive Reiryoku
@@ -52,7 +53,6 @@ class ReiryokuView(View):
         if not self.running or self.result_shown:
             return
 
-        # Animation des flux
         self.level_1 += self.direction_1
         self.level_2 += self.direction_2
 
@@ -62,7 +62,7 @@ class ReiryokuView(View):
             self.direction_2 *= -1
 
         if self.message:
-            await self.message.edit(embed=self.build_embed(), view=self)
+            await safe_edit(self.message, embed=self.build_embed(), view=self)
 
     async def stop_loop(self):
         self.running = False
@@ -92,7 +92,7 @@ class ReiryokuView(View):
             ),
             color=color
         )
-        await interaction.response.edit_message(embed=embed, view=None)
+        await safe_respond(interaction, embed=embed, view=None)
 
 # ────────────────────────────────────────────────────────────────────────────────
 # ✋ Bouton "Canaliser"
@@ -104,7 +104,7 @@ class CanaliserButton(Button):
 
     async def callback(self, interaction: discord.Interaction):
         if interaction.user != self.view_ref.author:
-            return await interaction.response.send_message("⛔ Ce jeu ne t'appartient pas.", ephemeral=True)
+            return await safe_respond(interaction, content="⛔ Ce jeu ne t'appartient pas.", ephemeral=True)
 
         await self.view_ref.show_result(interaction)
 
@@ -127,8 +127,9 @@ class Reiryoku(commands.Cog):
     async def reiryoku(self, ctx: commands.Context):
         view = ReiryokuView(ctx.author)
         embed = view.build_embed()
-        msg = await ctx.send(embed=embed, view=view)
+        msg = await safe_send(ctx, embed=embed, view=view)
         view.message = msg
+
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🔌 Setup du Cog
