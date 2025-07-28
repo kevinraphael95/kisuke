@@ -12,7 +12,7 @@ import discord
 from discord.ext import commands
 from discord.ui import View, Button
 import random
-from utils.discord_utils import safe_send, safe_edit, safe_respond
+from utils.discord_utils import safe_send, safe_edit
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🎨 Définition des couleurs disponibles
@@ -29,13 +29,15 @@ class MastermindView(View):
         super().__init__(timeout=180)
         self.author = author
         self.code = [random.choice(COLORS) for _ in range(CODE_LENGTH)]
-        self.attempts = []  # [(proposition, feedback)]
+        self.attempts = []  # liste de tuples (proposition, feedback)
         self.current_guess = []
         self.message = None
         self.result_shown = False
 
+        # Ajout boutons couleurs
         for color in COLORS:
             self.add_item(ColorButton(color, self))
+        # Bouton valider et reset
         self.add_item(ValidateButton(self))
         self.add_item(ClearButton(self))
 
@@ -49,8 +51,16 @@ class MastermindView(View):
             ),
             color=discord.Color.blue()
         )
-        embed.add_field(name="🧪 Tentatives", value="\n".join(self.format_attempts()) or "Aucune tentative.", inline=False)
-        embed.add_field(name="🧵 Proposition en cours", value="".join(self.current_guess) or "_Vide_", inline=False)
+        embed.add_field(
+            name="🧪 Tentatives",
+            value="\n".join(self.format_attempts()) or "Aucune tentative.",
+            inline=False
+        )
+        embed.add_field(
+            name="🧵 Proposition en cours",
+            value="".join(self.current_guess) or "_Vide_",
+            inline=False
+        )
         embed.set_footer(text=f"Tu as {MAX_ATTEMPTS - len(self.attempts)} essais restants.")
         return embed
 
@@ -58,24 +68,24 @@ class MastermindView(View):
         return [f"{''.join(guess)} → {''.join(feedback)}" for guess, feedback in self.attempts]
 
     def generate_feedback(self, guess):
+        # Implémentation stricte du Mastermind
         feedback = []
         code_copy = self.code[:]
         guess_copy = guess[:]
 
-        # Marquage des positions traitées
         matched_code = [False] * CODE_LENGTH
         matched_guess = [False] * CODE_LENGTH
 
-        # Étape 1 : 🔴 bonne couleur et bonne position
+        # Étape 1 : 🔴 (bonne couleur + bonne position)
         for i in range(CODE_LENGTH):
             if guess[i] == code_copy[i]:
                 feedback.append("🔴")
                 matched_code[i] = True
                 matched_guess[i] = True
             else:
-                feedback.append(None)  # Placeholder pour garder la position
+                feedback.append(None)
 
-        # Étape 2 : ⚪ bonne couleur mauvaise position
+        # Étape 2 : ⚪ (bonne couleur, mauvaise position)
         for i in range(CODE_LENGTH):
             if feedback[i] is None:
                 for j in range(CODE_LENGTH):
@@ -85,13 +95,13 @@ class MastermindView(View):
                         matched_guess[i] = True
                         break
 
-        # Étape 3 : ❌ couleur absente
+        # Étape 3 : ❌ (couleur absente)
         for i in range(CODE_LENGTH):
             if feedback[i] is None:
                 feedback[i] = "❌"
 
+        # IMPORTANT : on ne trie PAS le feedback pour conserver l'ordre d'origine (logique Mastermind)
         return feedback
-
 
     async def update_message(self):
         if self.message and not self.result_shown:
@@ -115,6 +125,7 @@ class MastermindView(View):
             return
 
         await self.update_message()
+        await interaction.response.defer()  # pour éviter timeout d'interaction
 
     async def show_result(self, interaction: discord.Interaction, win: bool):
         self.stop()
@@ -123,7 +134,8 @@ class MastermindView(View):
             description=f"La combinaison était : {' '.join(self.code)}",
             color=discord.Color.green() if win else discord.Color.red()
         )
-        await interaction.followup.send(embed=result_embed, ephemeral=False)
+        # Envoi du résultat en followup
+        await interaction.response.send_message(embed=result_embed, ephemeral=False)
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🟦 Boutons de couleur
@@ -143,6 +155,7 @@ class ColorButton(Button):
 
         self.view_ref.current_guess.append(self.color)
         await self.view_ref.update_message()
+        await interaction.response.defer()  # éviter timeout d'interaction
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🗑️ Bouton Reset
@@ -158,6 +171,7 @@ class ClearButton(Button):
 
         self.view_ref.current_guess.clear()
         await self.view_ref.update_message()
+        await interaction.response.defer()
 
 # ────────────────────────────────────────────────────────────────────────────────
 # ✅ Bouton Valider
