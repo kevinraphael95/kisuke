@@ -59,25 +59,29 @@ class MastermindView(View):
 
     def generate_feedback(self, guess):
         feedback = []
-        code_copy = self.code[:]
-        guess_copy = guess[:]
+        code_unused = []
+        guess_unused = []
 
-        # 🔴 bonne couleur, bonne position
-        for i in range(CODE_LENGTH):
-            if guess[i] == code_copy[i]:
+        # Première passe : 🔴 bonne couleur, bonne position
+        for g, c in zip(guess, self.code):
+            if g == c:
                 feedback.append("🔴")
-                guess_copy[i] = None
-                code_copy[i] = None
+            else:
+                code_unused.append(c)
+                guess_unused.append(g)
 
-        # ⚪ bonne couleur, mauvaise position
-        for i in range(CODE_LENGTH):
-            if guess_copy[i] and guess_copy[i] in code_copy:
+        # Deuxième passe : ⚪ bonne couleur, mauvaise position
+        for g in guess_unused:
+            if g in code_unused:
                 feedback.append("⚪")
-                code_copy[code_copy.index(guess_copy[i])] = None
-                guess_copy[i] = None
+                code_unused.remove(g)
+            else:
+                feedback.append("❌")
 
-        # ❌ couleur absente
-        feedback += ["❌"] * (CODE_LENGTH - len(feedback))
+        # On remplit pour que le feedback fasse toujours 4 symboles
+        while len(feedback) < CODE_LENGTH:
+            feedback.append("❌")
+
         return feedback
 
     async def update_message(self):
