@@ -10,34 +10,33 @@
 # ────────────────────────────────────────────────────────────────────────────────
 import discord
 from discord.ext import commands
-from discord.ui import View, Button
+from discord.ui import View, Button, Select
 import random
 from utils.discord_utils import safe_send, safe_edit
 
 # ────────────────────────────────────────────────────────────────────────────────
-# 🎨 Définition des couleurs disponibles
+# 🎨 Définition des constantes et couleurs
 # ────────────────────────────────────────────────────────────────────────────────
 COLORS = ["🟥", "🟦", "🟩", "🟨", "🟪", "🟧"]
 MAX_ATTEMPTS = 12
-CODE_LENGTH = 4
 
 # ────────────────────────────────────────────────────────────────────────────────
-# 🎮 Vue interactive Mastermind
+# 🎮 Vue interactive Mastermind (avec menu de difficulté)
 # ────────────────────────────────────────────────────────────────────────────────
 class MastermindView(View):
-    def __init__(self, author: discord.User):
+    def __init__(self, author: discord.User, code_length: int, corrupted: bool = False):
         super().__init__(timeout=180)
         self.author = author
-        self.code = [random.choice(COLORS) for _ in range(CODE_LENGTH)]
-        self.attempts = []  # liste de tuples (proposition, feedback)
+        self.code_length = code_length
+        self.corrupted = corrupted
+        self.code = [random.choice(COLORS) for _ in range(code_length)]
+        self.attempts = []
         self.current_guess = []
         self.message = None
         self.result_shown = False
 
-        # Ajout boutons couleurs
         for color in COLORS:
             self.add_item(ColorButton(color, self))
-        # Bouton valider et reset
         self.add_item(ValidateButton(self))
         self.add_item(ClearButton(self))
 
@@ -65,19 +64,22 @@ class MastermindView(View):
         return embed
 
     def format_attempts(self):
-        return [f"{''.join(guess)} → {''.join(feedback)}" for guess, feedback in self.attempts]
+        lines = []
+        for guess, feedback in self.attempts:
+            if self.corrupted:
+                corrupted_feedback = [symbol if random.random() > 0.5 else "💀" for symbol in feedback]
+                lines.append(f"{''.join(guess)} → {''.join(corrupted_feedback)}")
+            else:
+                lines.append(f"{''.join(guess)} → {''.join(feedback)}")
+        return lines
 
     def generate_feedback(self, guess):
-        # Implémentation stricte du Mastermind
         feedback = []
         code_copy = self.code[:]
-        guess_copy = guess[:]
+        matched_code = [False] * self.code_length
+        matched_guess = [False] * self.code_length
 
-        matched_code = [False] * CODE_LENGTH
-        matched_guess = [False] * CODE_LENGTH
-
-        # Étape 1 : 🔴 (bonne couleur + bonne position)
-        for i in range(CODE_LENGTH):
+        for i in range(self.code_length):
             if guess[i] == code_copy[i]:
                 feedback.append("🔴")
                 matched_code[i] = True
@@ -85,22 +87,19 @@ class MastermindView(View):
             else:
                 feedback.append(None)
 
-        # Étape 2 : ⚪ (bonne couleur, mauvaise position)
-        for i in range(CODE_LENGTH):
+        for i in range(self.code_length):
             if feedback[i] is None:
-                for j in range(CODE_LENGTH):
+                for j in range(self.code_length):
                     if not matched_code[j] and not matched_guess[i] and guess[i] == code_copy[j]:
                         feedback[i] = "⚪"
                         matched_code[j] = True
                         matched_guess[i] = True
                         break
 
-        # Étape 3 : ❌ (couleur absente)
-        for i in range(CODE_LENGTH):
+        for i in range(self.code_length):
             if feedback[i] is None:
                 feedback[i] = "❌"
 
-        # IMPORTANT : on ne trie PAS le feedback pour conserver l'ordre d'origine (logique Mastermind)
         return feedback
 
     async def update_message(self):
@@ -125,29 +124,27 @@ class MastermindView(View):
             return
 
         await self.update_message()
-        await interaction.response.defer()  # pour éviter timeout d'interaction
+        await interaction.response.defer()
 
     async def show_result(self, interaction: discord.Interaction, win: bool):
         self.result_shown = True
         for item in self.children:
-            item.disabled = True  # Désactive tous les boutons
-
+            item.disabled = True
         embed = self.build_embed()
         result_embed = discord.Embed(
             title="🎉 Gagné !" if win else "💀 Perdu !",
             description=f"La combinaison était : {' '.join(self.code)}",
             color=discord.Color.green() if win else discord.Color.red()
         )
-
         await safe_edit(self.message, embed=embed, view=self)
-        await interaction.followup.send(embed=result_embed, ephemeral=False)
+        await interaction.followup.send(embed=result_embed)
 
 # ────────────────────────────────────────────────────────────────────────────────
-# 🟦 Boutons de couleur
+# 🔳 Boutons de couleur
 # ────────────────────────────────────────────────────────────────────────────────
 class ColorButton(Button):
     def __init__(self, color: str, view: MastermindView):
-        super().__init__(label=color, style=discord.ButtonStyle.secondary, emoji=color)
+        super().__init__(style=discord.ButtonStyle.secondary, emoji=color)
         self.color = color
         self.view_ref = view
 
@@ -155,12 +152,12 @@ class ColorButton(Button):
         if interaction.user != self.view_ref.author:
             return await interaction.response.send_message("⛔ Ce jeu ne t'appartient pas.", ephemeral=True)
 
-        if len(self.view_ref.current_guess) >= CODE_LENGTH:
-            return await interaction.response.send_message("❗ Tu as déjà sélectionné 4 couleurs.", ephemeral=True)
+        if len(self.view_ref.current_guess) >= self.view_ref.code_length:
+            return await interaction.response.send_message("❗ Tu as déjà sélectionné assez de couleurs.", ephemeral=True)
 
         self.view_ref.current_guess.append(self.color)
         await self.view_ref.update_message()
-        await interaction.response.defer()  # éviter timeout d'interaction
+        await interaction.response.defer()
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🗑️ Bouton Reset
@@ -190,33 +187,50 @@ class ValidateButton(Button):
         if interaction.user != self.view_ref.author:
             return await interaction.response.send_message("⛔ Ce jeu ne t'appartient pas.", ephemeral=True)
 
-        if len(self.view_ref.current_guess) != CODE_LENGTH:
-            return await interaction.response.send_message("⚠️ Il faut choisir 4 couleurs pour valider.", ephemeral=True)
+        if len(self.view_ref.current_guess) != self.view_ref.code_length:
+            return await interaction.response.send_message("⚠️ Tu dois entrer une combinaison complète.", ephemeral=True)
 
         await self.view_ref.make_attempt(interaction)
 
 # ────────────────────────────────────────────────────────────────────────────────
-# 🧠 Cog principal
+# 🧠 Cog principal avec menu de difficulté
 # ────────────────────────────────────────────────────────────────────────────────
 class Mastermind(commands.Cog):
-    """
-    Commande !mastermind — Devine la combinaison de couleurs du bot
-    """
-
     def __init__(self, bot: commands.Bot):
         self.bot = bot
 
-    @commands.command(
-        name="mastermind", aliases=["mm"],
-        help="Jouer au jeu du Mastermind contre le bot.",
-        description="Devine la combinaison secrète de 4 couleurs parmi 6."
-    )
+    @commands.command(name="mastermind", aliases=["mm"], help="Jouer au Mastermind")
     async def mastermind(self, ctx: commands.Context):
-        """Commande principale pour lancer Mastermind."""
-        view = MastermindView(ctx.author)
-        embed = view.build_embed()
-        msg = await safe_send(ctx, embed=embed, view=view)
-        view.message = msg
+        options = [
+            discord.SelectOption(label="Facile", description="3 couleurs", value="3"),
+            discord.SelectOption(label="Normal", description="4 couleurs", value="4"),
+            discord.SelectOption(label="Difficile", description="5 couleurs", value="5"),
+            discord.SelectOption(label="Cauchemar", description="8 à 10 couleurs, feedback corrompu", value="cauchemar")
+        ]
+
+        async def select_callback(interaction: discord.Interaction):
+            if interaction.user != ctx.author:
+                return await interaction.response.send_message("Ce menu ne t'est pas destiné.", ephemeral=True)
+
+            value = interaction.data["values"][0]
+            if value == "cauchemar":
+                code_length = random.randint(8, 10)
+                corrupted = True
+            else:
+                code_length = int(value)
+                corrupted = False
+
+            view = MastermindView(ctx.author, code_length, corrupted)
+            embed = view.build_embed()
+            msg = await safe_send(ctx, embed=embed, view=view)
+            view.message = msg
+
+        select = Select(placeholder="Choisis la difficulté", options=options)
+        select.callback = select_callback
+        view = View()
+        view.add_item(select)
+
+        await ctx.send("Choisis ton niveau de difficulté :", view=view)
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🔌 Setup du Cog
