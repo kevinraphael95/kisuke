@@ -62,33 +62,36 @@ class MastermindView(View):
         code_copy = self.code[:]
         guess_copy = guess[:]
 
-        # Marqueurs de position traitée
-        used_code = [False] * CODE_LENGTH
-        used_guess = [False] * CODE_LENGTH
+        # Marquage des positions traitées
+        matched_code = [False] * CODE_LENGTH
+        matched_guess = [False] * CODE_LENGTH
 
-        # Première passe : 🔴 bonne couleur, bonne position
+        # Étape 1 : 🔴 bonne couleur et bonne position
         for i in range(CODE_LENGTH):
-            if guess[i] == self.code[i]:
+            if guess[i] == code_copy[i]:
                 feedback.append("🔴")
-                used_code[i] = True
-                used_guess[i] = True
+                matched_code[i] = True
+                matched_guess[i] = True
+            else:
+                feedback.append(None)  # Placeholder pour garder la position
 
-        # Deuxième passe : ⚪ bonne couleur, mauvaise position
+        # Étape 2 : ⚪ bonne couleur mauvaise position
         for i in range(CODE_LENGTH):
-            if not used_guess[i]:
+            if feedback[i] is None:
                 for j in range(CODE_LENGTH):
-                    if not used_code[j] and guess[i] == self.code[j]:
-                        feedback.append("⚪")
-                        used_code[j] = True
-                        used_guess[i] = True
+                    if not matched_code[j] and not matched_guess[i] and guess[i] == code_copy[j]:
+                        feedback[i] = "⚪"
+                        matched_code[j] = True
+                        matched_guess[i] = True
                         break
 
-        # Troisième passe : ❌ couleur absente
+        # Étape 3 : ❌ couleur absente
         for i in range(CODE_LENGTH):
-            if not used_guess[i]:
-                feedback.append("❌")
+            if feedback[i] is None:
+                feedback[i] = "❌"
 
         return feedback
+
 
     async def update_message(self):
         if self.message and not self.result_shown:
