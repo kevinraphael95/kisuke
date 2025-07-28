@@ -1,6 +1,6 @@
 # ────────────────────────────────────────────────────────────────────────────────
-# 📌 mastermind.py — Commande interactive !mastermind
-# Objectif : Jouer au Mastermind contre le bot, via des boutons colorés
+# 📌 Mastermind2.py — Commande interactive !Mastermind2
+# Objectif : Jouer au Mastermind2 contre le bot, via des boutons colorés
 # Catégorie : Jeux
 # Accès : Public
 # ────────────────────────────────────────────────────────────────────────────────
@@ -20,9 +20,9 @@ from utils.discord_utils import safe_send, safe_edit
 COLORS = ["🟥", "🟦", "🟩", "🟨", "🟪", "🟧"]
 
 # ────────────────────────────────────────────────────────────────────────────────
-# 🎮 Vue interactive Mastermind
+# 🎮 Vue interactive Mastermind2
 # ────────────────────────────────────────────────────────────────────────────────
-class MastermindView2(View):
+class Mastermind2View2(View):
     def __init__(self, author: discord.User, code_length: int, corruption: bool):
         super().__init__(timeout=180)
         self.author = author
@@ -42,7 +42,7 @@ class MastermindView2(View):
 
     def build_embed(self) -> discord.Embed:
         embed = discord.Embed(
-            title="🎯 Mastermind — Trouve la combinaison !",
+            title="🎯 Mastermind2 — Trouve la combinaison !",
             description=(
                 "🔴 : bonne couleur, bonne position\n"
                 "⚪ : bonne couleur, mauvaise position\n"
@@ -130,7 +130,7 @@ class MastermindView2(View):
 # 🟦 Boutons de couleur
 # ────────────────────────────────────────────────────────────────────────────────
 class ColorButton(Button):
-    def __init__(self, color: str, view: MastermindView2):
+    def __init__(self, color: str, view: Mastermind2View2):
         super().__init__(label=color, style=discord.ButtonStyle.secondary, emoji=color)
         self.color = color
         self.view_ref = view
@@ -150,7 +150,7 @@ class ColorButton(Button):
 # 🗑️ Bouton Reset
 # ────────────────────────────────────────────────────────────────────────────────
 class ClearButton(Button):
-    def __init__(self, view: MastermindView2):
+    def __init__(self, view: Mastermind2View2):
         super().__init__(emoji="🗑️", style=discord.ButtonStyle.danger)
         self.view_ref = view
 
@@ -166,7 +166,7 @@ class ClearButton(Button):
 # ✅ Bouton Valider
 # ────────────────────────────────────────────────────────────────────────────────
 class ValidateButton(Button):
-    def __init__(self, view: MastermindView2):
+    def __init__(self, view: Mastermind2View2):
         super().__init__(emoji="✅", style=discord.ButtonStyle.success)
         self.view_ref = view
 
@@ -202,7 +202,7 @@ class DifficultyButton(Button):
         if interaction.user != self.view.author:
             return await interaction.response.send_message("Ce menu ne t'est pas destiné.", ephemeral=True)
 
-        view = MastermindView2(interaction.user, self.code_length, self.corruption)
+        view = Mastermind2View2(interaction.user, self.code_length, self.corruption)
         embed = view.build_embed()
         await interaction.response.edit_message(embed=embed, view=view)
         view.message = interaction.message
@@ -210,22 +210,28 @@ class DifficultyButton(Button):
 # ────────────────────────────────────────────────────────────────────────────────
 # 🧠 Cog principal
 # ────────────────────────────────────────────────────────────────────────────────
-class Mastermind(commands.Cog):
+class Mastermind2(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
 
-    @commands.command(name="mastermind", aliases=["mm"], help="Jouer au Mastermind.", description="Devine la combinaison de couleurs.")
-    async def mastermind(self, ctx: commands.Context):
+    @commands.command(name="Mastermind2", aliases=["mm2"], help="Jouer au Mastermind2.", description="Devine la combinaison de couleurs.")
+    async def Mastermind2(self, ctx: commands.Context):
         view = DifficultyView(ctx.author)
         embed = discord.Embed(
-            title="🎮 Choisis la difficulté du Mastermind",
+            title="🎮 Choisis la difficulté du Mastermind2",
             description="Clique sur un bouton ci-dessous :",
             color=discord.Color.orange()
         )
         await safe_send(ctx, embed=embed, view=view)
 
+
+
 # ────────────────────────────────────────────────────────────────────────────────
 # 🔌 Setup du Cog
 # ────────────────────────────────────────────────────────────────────────────────
 async def setup(bot: commands.Bot):
-    await bot.add_cog(Mastermind(bot))
+    cog = Mastermind22(bot)
+    for command in cog.get_commands():
+        if not hasattr(command, "category"):
+            command.category = "Fun"
+    await bot.add_cog(cog)
