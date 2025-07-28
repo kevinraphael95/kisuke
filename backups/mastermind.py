@@ -1,5 +1,3 @@
-Rien compris JE VEUX QUE CA mAcrhe c QUE CA marche QuAnD QUE CA macr marche qQUND JE DONNE LA REPONSE REPONSE
-
 # ────────────────────────────────────────────────────────────────────────────────
 # 📌 mastermind.py — Commande interactive !mastermind
 # Objectif : Jouer au Mastermind contre le bot, via des boutons colorés
