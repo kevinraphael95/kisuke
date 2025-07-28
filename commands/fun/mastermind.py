@@ -12,7 +12,7 @@ import discord
 from discord.ext import commands
 from discord.ui import View, Button
 import random
-from utils.discord_utils import safe_send, safe_edit, safe_respond
+from utils.discord_utils import safe_send, safe_edit
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🎨 Définition des couleurs disponibles
@@ -62,20 +62,17 @@ class MastermindView(View):
         code_copy = self.code[:]
         guess_copy = guess[:]
 
-        # Marquage des positions traitées
         matched_code = [False] * CODE_LENGTH
         matched_guess = [False] * CODE_LENGTH
 
-        # Étape 1 : 🔴 bonne couleur et bonne position
         for i in range(CODE_LENGTH):
             if guess[i] == code_copy[i]:
                 feedback.append("🔴")
                 matched_code[i] = True
                 matched_guess[i] = True
             else:
-                feedback.append(None)  # Placeholder pour garder la position
+                feedback.append(None)
 
-        # Étape 2 : ⚪ bonne couleur mauvaise position
         for i in range(CODE_LENGTH):
             if feedback[i] is None:
                 for j in range(CODE_LENGTH):
@@ -85,13 +82,11 @@ class MastermindView(View):
                         matched_guess[i] = True
                         break
 
-        # Étape 3 : ❌ couleur absente
         for i in range(CODE_LENGTH):
             if feedback[i] is None:
                 feedback[i] = "❌"
 
         return feedback
-
 
     async def update_message(self):
         if self.message and not self.result_shown:
@@ -115,6 +110,7 @@ class MastermindView(View):
             return
 
         await self.update_message()
+        await interaction.response.defer()  # ✅ évite "This interaction failed"
 
     async def show_result(self, interaction: discord.Interaction, win: bool):
         self.stop()
@@ -123,6 +119,7 @@ class MastermindView(View):
             description=f"La combinaison était : {' '.join(self.code)}",
             color=discord.Color.green() if win else discord.Color.red()
         )
+        await interaction.response.defer()
         await interaction.followup.send(embed=result_embed, ephemeral=False)
 
 # ────────────────────────────────────────────────────────────────────────────────
@@ -143,6 +140,7 @@ class ColorButton(Button):
 
         self.view_ref.current_guess.append(self.color)
         await self.view_ref.update_message()
+        await interaction.response.defer()  # ✅ interaction absorbée proprement
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🗑️ Bouton Reset
@@ -158,6 +156,7 @@ class ClearButton(Button):
 
         self.view_ref.current_guess.clear()
         await self.view_ref.update_message()
+        await interaction.response.defer()
 
 # ────────────────────────────────────────────────────────────────────────────────
 # ✅ Bouton Valider
@@ -180,10 +179,7 @@ class ValidateButton(Button):
 # 🧠 Cog principal
 # ────────────────────────────────────────────────────────────────────────────────
 class Mastermind(commands.Cog):
-    """
-    Commande !mastermind — Devine la combinaison de couleurs du bot
-    """
-
+    """Commande !mastermind — Devine la combinaison de couleurs du bot"""
     def __init__(self, bot: commands.Bot):
         self.bot = bot
 
