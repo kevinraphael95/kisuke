@@ -32,6 +32,7 @@ class MastermindView(View):
         self.attempts = []  # [(proposition, feedback)]
         self.current_guess = []
         self.message = None
+        self.result_shown = False
 
         for color in COLORS:
             self.add_item(ColorButton(color, self))
@@ -39,7 +40,15 @@ class MastermindView(View):
         self.add_item(ClearButton(self))
 
     def build_embed(self) -> discord.Embed:
-        embed = discord.Embed(title="🎯 Mastermind — Trouve la combinaison !", color=discord.Color.blue())
+        embed = discord.Embed(
+            title="🎯 Mastermind — Trouve la combinaison !",
+            description=(
+                "🔴 : bonne couleur, bonne position\n"
+                "⚪ : bonne couleur, mauvaise position\n"
+                "❌ : couleur absente"
+            ),
+            color=discord.Color.blue()
+        )
         embed.add_field(name="🧪 Tentatives", value="\n".join(self.format_attempts()) or "Aucune tentative.", inline=False)
         embed.add_field(name="🧵 Proposition en cours", value="".join(self.current_guess) or "_Vide_", inline=False)
         embed.set_footer(text=f"Tu as {MAX_ATTEMPTS - len(self.attempts)} essais restants.")
@@ -72,7 +81,7 @@ class MastermindView(View):
         return feedback
 
     async def update_message(self):
-        if self.message:
+        if self.message and not self.result_shown:
             embed = self.build_embed()
             await safe_edit(self.message, embed=embed, view=self)
 
@@ -83,18 +92,25 @@ class MastermindView(View):
         self.current_guess.clear()
 
         if guess == self.code:
-            embed = discord.Embed(title="🎉 Gagné !", description=f"Tu as trouvé la combinaison : {' '.join(self.code)}", color=discord.Color.green())
-            self.stop()
-            await safe_edit(self.message, embed=embed, view=None)
+            self.result_shown = True
+            await self.show_result(interaction, win=True)
             return
 
         if len(self.attempts) >= MAX_ATTEMPTS:
-            embed = discord.Embed(title="💀 Perdu !", description=f"La combinaison était : {' '.join(self.code)}", color=discord.Color.red())
-            self.stop()
-            await safe_edit(self.message, embed=embed, view=None)
+            self.result_shown = True
+            await self.show_result(interaction, win=False)
             return
 
         await self.update_message()
+
+    async def show_result(self, interaction: discord.Interaction, win: bool):
+        self.stop()
+        result_embed = discord.Embed(
+            title="🎉 Gagné !" if win else "💀 Perdu !",
+            description=f"La combinaison était : {' '.join(self.code)}",
+            color=discord.Color.green() if win else discord.Color.red()
+        )
+        await interaction.followup.send(embed=result_embed, ephemeral=False)
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🟦 Boutons de couleur
@@ -169,8 +185,6 @@ class Mastermind(commands.Cog):
         embed = view.build_embed()
         msg = await safe_send(ctx, embed=embed, view=view)
         view.message = msg
-
-
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🔌 Setup du Cog
