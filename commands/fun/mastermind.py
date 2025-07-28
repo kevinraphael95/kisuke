@@ -59,28 +59,34 @@ class MastermindView(View):
 
     def generate_feedback(self, guess):
         feedback = []
-        code_unused = []
-        guess_unused = []
+        code_copy = self.code[:]
+        guess_copy = guess[:]
+
+        # Marqueurs de position traitée
+        used_code = [False] * CODE_LENGTH
+        used_guess = [False] * CODE_LENGTH
 
         # Première passe : 🔴 bonne couleur, bonne position
-        for g, c in zip(guess, self.code):
-            if g == c:
+        for i in range(CODE_LENGTH):
+            if guess[i] == self.code[i]:
                 feedback.append("🔴")
-            else:
-                code_unused.append(c)
-                guess_unused.append(g)
+                used_code[i] = True
+                used_guess[i] = True
 
         # Deuxième passe : ⚪ bonne couleur, mauvaise position
-        for g in guess_unused:
-            if g in code_unused:
-                feedback.append("⚪")
-                code_unused.remove(g)
-            else:
-                feedback.append("❌")
+        for i in range(CODE_LENGTH):
+            if not used_guess[i]:
+                for j in range(CODE_LENGTH):
+                    if not used_code[j] and guess[i] == self.code[j]:
+                        feedback.append("⚪")
+                        used_code[j] = True
+                        used_guess[i] = True
+                        break
 
-        # On remplit pour que le feedback fasse toujours 4 symboles
-        while len(feedback) < CODE_LENGTH:
-            feedback.append("❌")
+        # Troisième passe : ❌ couleur absente
+        for i in range(CODE_LENGTH):
+            if not used_guess[i]:
+                feedback.append("❌")
 
         return feedback
 
@@ -179,7 +185,7 @@ class Mastermind(commands.Cog):
         self.bot = bot
 
     @commands.command(
-        name="mastermind",
+        name="mastermind", aliases=["mm"],
         help="Jouer au jeu du Mastermind contre le bot.",
         description="Devine la combinaison secrète de 4 couleurs parmi 6."
     )
