@@ -128,14 +128,19 @@ class MastermindView(View):
         await interaction.response.defer()  # pour éviter timeout d'interaction
 
     async def show_result(self, interaction: discord.Interaction, win: bool):
-        self.stop()
+        self.result_shown = True
+        for item in self.children:
+            item.disabled = True  # Désactive tous les boutons
+
+        embed = self.build_embed()
         result_embed = discord.Embed(
             title="🎉 Gagné !" if win else "💀 Perdu !",
             description=f"La combinaison était : {' '.join(self.code)}",
             color=discord.Color.green() if win else discord.Color.red()
         )
-        # Envoi du résultat en followup
-        await interaction.response.send_message(embed=result_embed, ephemeral=False)
+
+        await safe_edit(self.message, embed=embed, view=self)
+        await interaction.followup.send(embed=result_embed, ephemeral=False)
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🟦 Boutons de couleur
