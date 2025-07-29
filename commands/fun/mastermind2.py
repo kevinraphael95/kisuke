@@ -103,6 +103,12 @@ class Mastermind2View2(View):
         self.attempts.append((guess, feedback))
         self.current_guess.clear()
 
+        # ✅ Vérifie si la réponse est 100% correcte (autant de 🔴 que la longueur du code)
+        if feedback.count("🔴") == self.code_length:
+            self.result_shown = True
+            await self.show_result(interaction, win=True)
+            return
+
         if guess == self.code:
             self.result_shown = True
             await self.show_result(interaction, win=True)
