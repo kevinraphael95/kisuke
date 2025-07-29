@@ -116,15 +116,21 @@ class Mastermind2View2(View):
         await self.update_message()
         await interaction.response.defer()
 
-    async def show_result(self, interaction: discord.Interaction, win: bool):
-        self.stop()
-        result_embed = discord.Embed(
-            title="🎉 Gagné !" if win else "💀 Perdu !",
-            description=f"La combinaison était : {' '.join(self.code)}",
-            color=discord.Color.green() if win else discord.Color.red()
-        )
-        await interaction.response.defer()
-        await interaction.followup.send(embed=result_embed, ephemeral=False)
+        async def show_result(self, interaction: discord.Interaction, win: bool):
+            self.stop()
+
+            result_text = "🎉 Tu as trouvé la combinaison !" if win else "💀 Tu as échoué..."
+            color = discord.Color.green() if win else discord.Color.red()
+
+            embed = self.build_embed()
+            embed.add_field(
+                name="🏁 Résultat final",
+                value=f"{result_text}\n🔐 Code : {' '.join(self.code)}",
+                inline=False
+            )
+            embed.color = color  # Change la couleur de l'embed
+
+            await interaction.response.edit_message(embed=embed, view=None)
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🟦 Boutons de couleur
