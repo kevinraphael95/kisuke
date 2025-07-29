@@ -103,12 +103,6 @@ class Mastermind2View2(View):
         self.attempts.append((guess, feedback))
         self.current_guess.clear()
 
-        # ✅ Vérifie si la réponse est 100% correcte (autant de 🔴 que la longueur du code)
-        if feedback.count("🔴") == self.code_length:
-            self.result_shown = True
-            await self.show_result(interaction, win=True)
-            return
-
         if guess == self.code:
             self.result_shown = True
             await self.show_result(interaction, win=True)
@@ -122,21 +116,15 @@ class Mastermind2View2(View):
         await self.update_message()
         await interaction.response.defer()
 
-        async def show_result(self, interaction: discord.Interaction, win: bool):
-            self.stop()
-
-            result_text = "🎉 Tu as trouvé la combinaison !" if win else "💀 Tu as échoué..."
-            color = discord.Color.green() if win else discord.Color.red()
-
-            embed = self.build_embed()
-            embed.add_field(
-                name="🏁 Résultat final",
-                value=f"{result_text}\n🔐 Code : {' '.join(self.code)}",
-                inline=False
-            )
-            embed.color = color  # Change la couleur de l'embed
-
-            await interaction.response.edit_message(embed=embed, view=None)
+    async def show_result(self, interaction: discord.Interaction, win: bool):
+        self.stop()
+        result_embed = discord.Embed(
+            title="🎉 Gagné !" if win else "💀 Perdu !",
+            description=f"La combinaison était : {' '.join(self.code)}",
+            color=discord.Color.green() if win else discord.Color.red()
+        )
+        await interaction.response.defer()
+        await interaction.followup.send(embed=result_embed, ephemeral=False)
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🟦 Boutons de couleur
@@ -203,7 +191,7 @@ class DifficultyView(View):
         self.add_item(DifficultyButton("Facile", 3, False))
         self.add_item(DifficultyButton("Normal", 4, False))
         self.add_item(DifficultyButton("Difficile", 5, False))
-        self.add_item(DifficultyButton("Cauchemar", 8, True))
+        self.add_item(DifficultyButton("Cauchemar", random.randint(8, 10), True))
 
 class DifficultyButton(Button):
     def __init__(self, label, code_length, corruption):
