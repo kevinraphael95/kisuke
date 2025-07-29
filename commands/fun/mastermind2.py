@@ -131,7 +131,6 @@ class Mastermind2View2(View):
 # ────────────────────────────────────────────────────────────────────────────────
 class ColorButton(Button):
     def __init__(self, color: str, view: Mastermind2View2):
-        super().__init__(label=color, style=discord.ButtonStyle.secondary, emoji=color)
         self.color = color
         self.view_ref = view
 
