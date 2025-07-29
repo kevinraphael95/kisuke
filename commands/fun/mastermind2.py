@@ -191,7 +191,7 @@ class DifficultyView(View):
         self.add_item(DifficultyButton("Facile", 3, False))
         self.add_item(DifficultyButton("Normal", 4, False))
         self.add_item(DifficultyButton("Difficile", 5, False))
-        self.add_item(DifficultyButton("Cauchemar", random.randint(8, 10), True))
+        self.add_item(DifficultyButton("Cauchemar", 8, True))
 
 class DifficultyButton(Button):
     def __init__(self, label, code_length, corruption):
