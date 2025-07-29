@@ -116,15 +116,27 @@ class Mastermind2View2(View):
         await self.update_message()
         await interaction.response.defer()
 
-    async def show_result(self, interaction: discord.Interaction, win: bool):
-        self.stop()
-        result_embed = discord.Embed(
-            title="🎉 Gagné !" if win else "💀 Perdu !",
-            description=f"La combinaison était : {' '.join(self.code)}",
-            color=discord.Color.green() if win else discord.Color.red()
-        )
-        await interaction.response.defer()
-        await interaction.followup.send(embed=result_embed, ephemeral=False)
+        async def show_result(self, interaction: discord.Interaction, win: bool):
+            self.stop()
+
+            result = "🎉 Victoire !" if win else "💀 Défaite..."
+            color = discord.Color.green() if win else discord.Color.red()
+
+            embed = discord.Embed(
+                title="🎯 Mastermind2 — Résultat final",
+                description=(
+                    "🔴 : bonne couleur, bonne position\n"
+                    "⚪ : bonne couleur, mauvaise position\n"
+                    "❌ : couleur absente\n\n"
+                    f"**{result}**\n"
+                    f"La combinaison était : {' '.join(self.code)}"
+                ),
+                color=color
+            )
+            embed.add_field(name="🧪 Tentatives", value="\n".join(self.format_attempts()) or "Aucune tentative.", inline=False)
+            embed.set_footer(text="Fin de la partie.")
+            await safe_edit(self.message, embed=embed, view=None)
+
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🟦 Boutons de couleur
