@@ -131,8 +131,10 @@ class Mastermind2View2(View):
 # ────────────────────────────────────────────────────────────────────────────────
 class ColorButton(Button):
     def __init__(self, color: str, view: Mastermind2View2):
+        super().__init__(style=discord.ButtonStyle.secondary, emoji=color)
         self.color = color
         self.view_ref = view
+
 
     async def callback(self, interaction: discord.Interaction):
         if interaction.user != self.view_ref.author:
