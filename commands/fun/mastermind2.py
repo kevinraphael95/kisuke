@@ -1,5 +1,3 @@
-pas compris je veux le  jeu veux je veux que je veux le la commande la je veux que le message de résultat  je veux  je veux le message de résultat de le résultat victoire ou défaite je veux dans un nouveau field à la fin de l'embed ?
-
 # ────────────────────────────────────────────────────────────────────────────────
 # 📌 Mastermind2.py — Commande interactive !Mastermind2
 # Objectif : Jouer au Mastermind2 contre le bot, via des boutons colorés
