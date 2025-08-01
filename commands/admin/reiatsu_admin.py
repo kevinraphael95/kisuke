@@ -30,7 +30,7 @@ class ReiatsuAdmin(commands.Cog):
         name="reiatsuadmin",
         aliases=["rtsa"],
         invoke_without_command=True,
-        help="Commande admin pour gérer le Reiatsu : set, unset, change, spawn."
+        help="(Admin) Gère le Reiatsu : set, unset, change, spawn."
     )
     @commands.has_permissions(administrator=True)
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
