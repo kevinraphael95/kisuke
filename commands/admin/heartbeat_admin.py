@@ -23,7 +23,7 @@ class HeartbeatAdmin(commands.Cog):
     @commands.command(
         name="heartbeat",
         aliases=["hb"],
-        help="Commande admin pour gérer le heartbeat : pause, resume, status, set, unset.",
+        help="(Admin) Gère le heartbeat : pause, resume, status, set, unset.",
         description="Gère le heartbeat automatique (pause, relance, statut, salon)."
     )
     @commands.has_permissions(administrator=True)
