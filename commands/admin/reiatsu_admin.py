@@ -53,6 +53,7 @@ class ReiatsuAdmin(commands.Cog):
     # ⚙️ SOUS-COMMANDE : SET
     # ──────────────────────────────────────────────────────────
     @ReiatsuAdmin.command(name="set")
+    @commands.has_permissions(administrator=True)
     async def set_reiatsu(self, ctx: commands.Context):
         try:
             channel_id = ctx.channel.id
@@ -87,6 +88,7 @@ class ReiatsuAdmin(commands.Cog):
     # 🗑️ SOUS-COMMANDE : UNSET
     # ──────────────────────────────────────────────────────────
     @ReiatsuAdmin.command(name="unset")
+    @commands.has_permissions(administrator=True)
     async def unset_reiatsu(self, ctx: commands.Context):
         try:
             guild_id = str(ctx.guild.id)
@@ -104,6 +106,7 @@ class ReiatsuAdmin(commands.Cog):
     # ✨ SOUS-COMMANDE : CHANGE
     # ──────────────────────────────────────────────────────────
     @ReiatsuAdmin.command(name="change")
+    @commands.has_permissions(administrator=True)
     async def change_reiatsu(self, ctx: commands.Context, member: discord.Member, points: int):
         if points < 0:
             await safe_send(ctx, "❌ Le score Reiatsu doit être un nombre **positif**.")
@@ -147,6 +150,7 @@ class ReiatsuAdmin(commands.Cog):
     # 💠 SOUS-COMMANDE : SPAWN
     # ──────────────────────────────────────────────────────────
     @ReiatsuAdmin.command(name="spawn")
+    @commands.has_permissions(administrator=True)
     @commands.cooldown(rate=1, per=3, type=commands.BucketType.user)  # ⏱️ Anti-spam : 3 sec
     async def spawn_reiatsu(self, ctx: commands.Context):
         channel = ctx.channel  # Le spawn se fait dans le salon courant
