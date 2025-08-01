@@ -49,8 +49,25 @@ class ReiatsuSpawner(commands.Cog):
             en_attente = conf.get("en_attente", False)
             delay = conf.get("delay_minutes") or 1800
 
-            if not channel_id or en_attente:
+            if not channel_id:
                 continue
+
+            # Si en_attente est True depuis plus de 5 minutes → débloque automatiquement
+            if en_attente:
+                last_spawn_str = conf.get("last_spawn_at")
+                if last_spawn_str:
+                    elapsed = int(time.time()) - int(parser.parse(last_spawn_str).timestamp())
+                    if elapsed > 300:
+                        print(f"[REIATSU] Déblocage forcé pour {guild_id} après {elapsed}s.")
+                        supabase.table("reiatsu_config").update({
+                            "en_attente": False,
+                            "spawn_message_id": None
+                        }).eq("guild_id", guild_id).execute()
+                    else:
+                        continue
+                else:
+                    continue
+
 
             last_spawn_str = conf.get("last_spawn_at")
             should_spawn = not last_spawn_str or (
