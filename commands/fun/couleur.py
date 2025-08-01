@@ -47,7 +47,8 @@ class CouleurView(discord.ui.View):
 
         try:
             new_embed = self.generer_embed()
-            await safe_edit(interaction, embed=new_embed, view=self)
+            await safe_edit(interaction.message, embed=new_embed, view=self)
+            await interaction.response.defer()
         except Exception as e:
             await safe_edit(interaction, content=f"❌ Erreur : {e}", view=None)
 
