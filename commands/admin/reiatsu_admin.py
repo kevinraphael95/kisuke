@@ -59,10 +59,10 @@ class ReiatsuAdmin(commands.Cog):
             channel_id = str(ctx.channel.id)
             guild_id = str(ctx.guild.id)
             now_iso = datetime.utcnow().isoformat()
-            delay = random.randint(30, 90)  # délai en minutes (tu peux ajuster)
+            delay = random.randint(30, 60)  # délai en minutes (ajusté à 30-60)
 
             # Vérifier si configuration existe déjà
-            data = supabase.table("reiatsu_config").select("id").eq("guild_id", guild_id).execute()
+            data = supabase.table("reiatsu_config").select("*").eq("guild_id", guild_id).execute()
             if data.data:
                 # Mise à jour de la config
                 supabase.table("reiatsu_config").update({
@@ -95,7 +95,7 @@ class ReiatsuAdmin(commands.Cog):
     async def unset_reiatsu(self, ctx: commands.Context):
         try:
             guild_id = str(ctx.guild.id)
-            res = supabase.table("reiatsu_config").select("id").eq("guild_id", guild_id).execute()
+            res = supabase.table("reiatsu_config").select("*").eq("guild_id", guild_id).execute()
             if res.data:
                 supabase.table("reiatsu_config").delete().eq("guild_id", guild_id).execute()
                 await safe_send(ctx, "🗑️ Le salon Reiatsu a été **supprimé** de la configuration.")
