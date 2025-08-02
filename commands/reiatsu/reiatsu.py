@@ -191,3 +191,4 @@ async def setup(bot: commands.Bot):
     for command in cog.get_commands():
         command.category = "Reiatsu"
     await bot.add_cog(cog)
+                
