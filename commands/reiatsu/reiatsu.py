@@ -138,7 +138,46 @@ class Reiatsu2Command(commands.Cog):
                 f"• ⏳ Temps avant apparition : {temps_text}"
             ),
             color=discord.Color.purple()
-eurs avec le plus de Reiatsu",
+        )
+        embed.set_footer(text="Réagis avec 📊 pour voir le classement.")
+
+        msg = await safe_send(ctx.channel, embed=embed)
+        await msg.add_reaction("📊")
+
+        # 🔁 Écoute de la réaction
+        def check(reaction, user_check):
+            return (
+                reaction.message.id == msg.id and
+                str(reaction.emoji) == "📊" and
+                user_check == ctx.author
+            )
+
+        try:
+            await self.bot.wait_for("reaction_add", check=check, timeout=30)
+            await self.show_leaderboard(ctx, original_message=msg)
+        except Exception:
+            pass  # Timeout ou autre erreur : on ignore
+
+    async def show_leaderboard(self, ctx: commands.Context, original_message=None):
+        # 📦 Requête : Top 10 joueurs avec uniquement username
+        leaderboard_resp = supabase.table("reiatsu") \
+            .select("username, points") \
+            .order("points", desc=True) \
+            .limit(10) \
+            .execute()
+
+        leaderboard = leaderboard_resp.data if leaderboard_resp.data else []
+
+        # 📄 Formatage du classement
+        top_texte = ""
+        for i, entry in enumerate(leaderboard, start=1):
+            name = entry.get("username", "Inconnu")
+            points = entry["points"]
+            top_texte += f"**#{i}** — {name} : {points} pts\n"
+
+        # 🖼️ Embed du classement
+        embed = discord.Embed(
+            title="📊 Top 10 des utilisateurs avec le plus de Reiatsu",
             description=top_texte,
             color=discord.Color.gold()
         )
@@ -152,5 +191,3 @@ async def setup(bot: commands.Bot):
     for command in cog.get_commands():
         command.category = "Reiatsu"
     await bot.add_cog(cog)
-
-    
