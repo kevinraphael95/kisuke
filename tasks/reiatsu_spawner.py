@@ -11,6 +11,7 @@ import time
 from datetime import datetime
 from dateutil import parser
 from discord.ext import commands, tasks
+
 from supabase_client import supabase
 from utils.discord_utils import safe_send, safe_add_reaction
 
@@ -30,12 +31,10 @@ class ReiatsuSpawner(commands.Cog):
     # ──────────────────────────────────────────────────────────
     @tasks.loop(seconds=60)
     async def spawn_loop(self):
-        await self.bot.wait_until_ready()
         if not getattr(self.bot, "is_main_instance", True):
             return
 
         now = int(time.time())
-
         try:
             configs = supabase.table("reiatsu_config").select("*").execute()
         except Exception as e:
@@ -48,13 +47,19 @@ class ReiatsuSpawner(commands.Cog):
             en_attente = conf.get("en_attente", False)
             delay = (conf.get("delay_minutes") or 30) * 60
             last_spawn_str = conf.get("last_spawn_at")
-            last_spawn = parser.parse(last_spawn_str).timestamp() if last_spawn_str else 0
-            temps_ecoule = now - int(last_spawn)
 
+            try:
+                last_spawn = parser.parse(last_spawn_str).timestamp() if last_spawn_str else 0
+            except Exception as e:
+                print(f"[Supabase] Erreur parsing last_spawn_at pour {guild_id} : {e}")
+                last_spawn = 0
+
+            temps_ecoule = now - int(last_spawn)
             if not channel_id:
+                print(f"[Reiatsu] Channel ID manquant pour {guild_id}")
                 continue
 
-            # 🚨 Forçage du spawn si bloqué (message "un reiatsu va bientôt apparaître" bloqué +5 min)
+            # 🚨 Forçage du spawn si bloqué (message bloqué +5 min)
             if en_attente and temps_ecoule > 5 * 60:
                 print(f"[Reiatsu] Blocage détecté — Forçage du spawn pour {guild_id}")
                 en_attente = False
@@ -65,13 +70,19 @@ class ReiatsuSpawner(commands.Cog):
                     }).eq("guild_id", guild_id).execute()
                 except Exception as e:
                     print(f"[Supabase] Erreur reset en_attente : {e}")
-                # on continue vers le spawn forcé
+                # on laisse continuer le spawn
 
-            if en_attente or temps_ecoule < delay:
+            if en_attente:
+                print(f"[Reiatsu] en_attente=True pour {guild_id}, skip.")
+                continue
+
+            if temps_ecoule < delay:
+                print(f"[Reiatsu] Trop tôt pour spawn {guild_id} ({temps_ecoule}s / {delay}s)")
                 continue
 
             channel = self.bot.get_channel(int(channel_id))
             if not channel:
+                print(f"[Reiatsu] Channel introuvable pour {guild_id} : {channel_id}")
                 continue
 
             embed = discord.Embed(
@@ -84,7 +95,7 @@ class ReiatsuSpawner(commands.Cog):
                 message = await safe_send(channel, embed=embed)
                 await safe_add_reaction(message, "💠")
             except Exception as e:
-                print(f"[Erreur] Envoi ou réaction du Reiatsu : {e}")
+                print(f"[Discord] Erreur envoi ou réaction du Reiatsu : {e}")
                 continue
 
             try:
@@ -95,6 +106,10 @@ class ReiatsuSpawner(commands.Cog):
                 }).eq("guild_id", guild_id).execute()
             except Exception as e:
                 print(f"[Supabase] Erreur update spawn : {e}")
+
+    @spawn_loop.before_loop
+    async def before_spawn_loop(self):
+        await self.bot.wait_until_ready()
 
     # ──────────────────────────────────────────────────────────
     # 🎯 ÉVÉNEMENT : Réaction au spawn
@@ -115,14 +130,12 @@ class ReiatsuSpawner(commands.Cog):
             return
 
         conf = conf_data.data[0]
-
         if not conf.get("en_attente") or str(payload.message_id) != conf.get("spawn_message_id"):
             return
 
         guild = self.bot.get_guild(payload.guild_id)
         channel = guild.get_channel(payload.channel_id)
         user = guild.get_member(payload.user_id)
-
         if not channel or not user:
             return
 
@@ -159,7 +172,6 @@ class ReiatsuSpawner(commands.Cog):
             bonus5 = 0
 
         new_total = current_points + gain
-
         try:
             if user_data.data:
                 supabase.table("reiatsu").update({
