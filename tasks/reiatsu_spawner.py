@@ -14,7 +14,7 @@ from dateutil import parser
 from discord.ext import commands, tasks
 from supabase_client import supabase
 
-from utils.discord_utils import safe_send  # <-- Import fonctions sécurisées
+from utils.discord_utils import safe_send, safe_add_reaction  # <-- Import fonctions sécurisées
 
 # ──────────────────────────────────────────────────────────────
 # 🔧 COG : ReiatsuSpawner
@@ -40,14 +40,18 @@ class ReiatsuSpawner(commands.Cog):
 
         now = int(time.time())
 
-        # 📦 Récupère la config des serveurs
-        configs = supabase.table("reiatsu_config").select("*").execute()
+        try:
+            # 📦 Récupère la config des serveurs
+            configs = supabase.table("reiatsu_config").select("*").execute()
+        except Exception as e:
+            print(f"[Supabase] Erreur récupération config : {e}")
+            return
 
         for conf in configs.data:
             guild_id = conf["guild_id"]
             channel_id = conf.get("channel_id")
             en_attente = conf.get("en_attente", False)
-            delay = conf.get("delay_minutes") or 1800
+            delay = (conf.get("delay_minutes") or 30) * 60  # 💡 minutes → secondes
 
             if not channel_id or en_attente:
                 continue
@@ -70,15 +74,22 @@ class ReiatsuSpawner(commands.Cog):
                 description="Cliquez sur la réaction 💠 pour l'absorber.",
                 color=discord.Color.purple()
             )
-            message = await safe_send(channel, embed=embed)  # <-- safe_send utilisé ici
-            await message.add_reaction("💠")
+            try:
+                message = await safe_send(channel, embed=embed)
+                await safe_add_reaction(message, "💠")
+            except Exception as e:
+                print(f"[Erreur] Envoi ou réaction du Reiatsu : {e}")
+                continue
 
             # 💾 Mise à jour de l'état
-            supabase.table("reiatsu_config").update({
-                "en_attente": True,
-                "last_spawn_at": datetime.utcnow().isoformat(),
-                "spawn_message_id": str(message.id)
-            }).eq("guild_id", guild_id).execute()
+            try:
+                supabase.table("reiatsu_config").update({
+                    "en_attente": True,
+                    "last_spawn_at": datetime.utcnow().isoformat(),
+                    "spawn_message_id": str(message.id)
+                }).eq("guild_id", guild_id).execute()
+            except Exception as e:
+                print(f"[Supabase] Erreur update spawn : {e}")
 
     # ──────────────────────────────────────────────────────────
     # 🎯 ÉVÉNEMENT : Réaction au spawn
@@ -89,7 +100,13 @@ class ReiatsuSpawner(commands.Cog):
             return
 
         guild_id = str(payload.guild_id)
-        conf_data = supabase.table("reiatsu_config").select("*").eq("guild_id", guild_id).execute()
+
+        try:
+            conf_data = supabase.table("reiatsu_config").select("*").eq("guild_id", guild_id).execute()
+        except Exception as e:
+            print(f"[Supabase] Erreur récupération conf : {e}")
+            return
+
         if not conf_data.data:
             return
 
@@ -108,8 +125,13 @@ class ReiatsuSpawner(commands.Cog):
         gain = 100 if is_super else 1
 
         user_id = str(user.id)
-        # Récupère classe, points et bonus5
-        user_data = supabase.table("reiatsu").select("classe", "points", "bonus5").eq("user_id", user_id).execute()
+
+        try:
+            user_data = supabase.table("reiatsu").select("classe", "points", "bonus5").eq("user_id", user_id).execute()
+        except Exception as e:
+            print(f"[Supabase] Erreur récupération reiatsu : {e}")
+            return
+
         if user_data.data:
             classe = user_data.data[0].get("classe")
             current_points = user_data.data[0]["points"]
@@ -124,39 +146,44 @@ class ReiatsuSpawner(commands.Cog):
             if classe == "Absorbeur":
                 gain += 5
             elif classe == "Parieur":
-                if random.random() < 0.5:
-                    gain = 0
-                else:
-                    gain = random.randint(5, 12)
-            # Passif Travailleur
-            if classe == "Travailleur":
+                gain = 0 if random.random() < 0.5 else random.randint(5, 12)
+            elif classe == "Travailleur":
                 bonus5 += 1
                 if bonus5 >= 5:
                     gain = 6
                     bonus5 = 0
         else:
-            # Si Super Reiatsu, on ne compte pas dans bonus5
-            bonus5 = 0
+            bonus5 = 0  # Super reiatsu ne compte pas pour le passif Travailleur
 
         new_total = current_points + gain
 
-        # Mise à jour ou insertion avec mise à jour bonus5
-        if user_data.data:
-            supabase.table("reiatsu").update({
-                "points": new_total,
-                "bonus5": bonus5
-            }).eq("user_id", user_id).execute()
-        else:
-            supabase.table("reiatsu").insert({
-                "user_id": user_id,
-                "username": user.name,
-                "points": gain,
-                "classe": "Travailleur",
-                "bonus5": 1
-            }).execute()
+        # 💾 Mise à jour des données
+        try:
+            if user_data.data:
+                supabase.table("reiatsu").update({
+                    "points": new_total,
+                    "bonus5": bonus5,
+                    "username": user.name  # 🔄 Mise à jour nom
+                }).eq("user_id", user_id).execute()
+            else:
+                supabase.table("reiatsu").insert({
+                    "user_id": user_id,
+                    "username": user.name,
+                    "points": gain,
+                    "classe": "Travailleur",
+                    "bonus5": 1
+                }).execute()
+        except Exception as e:
+            print(f"[Supabase] Erreur mise à jour utilisateur : {e}")
 
+        # ✅ Suppression des réactions (anti double-clic)
+        try:
+            msg = await channel.fetch_message(payload.message_id)
+            await msg.clear_reactions()
+        except Exception as e:
+            print(f"[Discord] Erreur suppression réactions : {e}")
 
-        # Message de confirmation
+        # 📣 Message de confirmation
         if is_super:
             await safe_send(channel, f"🌟 {user.mention} a absorbé un **Super Reiatsu** et gagné **+{gain}** reiatsu !")
         else:
@@ -166,12 +193,15 @@ class ReiatsuSpawner(commands.Cog):
                 await safe_send(channel, f"💠 {user.mention} a absorbé le Reiatsu et gagné **+{gain}** reiatsu !")
 
         # 🔄 Réinitialisation de l’état de spawn
-        new_delay = random.randint(1800, 5400)
-        supabase.table("reiatsu_config").update({
-            "en_attente": False,
-            "spawn_message_id": None,
-            "delay_minutes": new_delay
-        }).eq("guild_id", guild_id).execute()
+        try:
+            new_delay = random.randint(30, 90)  # minutes
+            supabase.table("reiatsu_config").update({
+                "en_attente": False,
+                "spawn_message_id": None,
+                "delay_minutes": new_delay
+            }).eq("guild_id", guild_id).execute()
+        except Exception as e:
+            print(f"[Supabase] Erreur reset config : {e}")
 
 
 # ──────────────────────────────────────────────────────────────
