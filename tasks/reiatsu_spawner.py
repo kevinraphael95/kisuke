@@ -34,14 +34,12 @@ class ReiatsuSpawner(commands.Cog):
     async def spawn_loop(self):
         await self.bot.wait_until_ready()
 
-        # 🔒 Ne fait tourner la tâche que sur l'instance principale
         if not getattr(self.bot, "is_main_instance", True):
             return
 
         now = int(time.time())
 
         try:
-            # 📦 Récupère la config des serveurs
             configs = supabase.table("reiatsu_config").select("*").execute()
         except Exception as e:
             print(f"[Supabase] Erreur récupération config : {e}")
@@ -51,29 +49,32 @@ class ReiatsuSpawner(commands.Cog):
             guild_id = conf["guild_id"]
             channel_id = conf.get("channel_id")
             en_attente = conf.get("en_attente", False)
-            delay = (conf.get("delay_minutes") or 30) * 60  # 💡 minutes → secondes
+            delay = (conf.get("delay_minutes") or 30) * 60
+            last_spawn_str = conf.get("last_spawn_at")
+            last_spawn = parser.parse(last_spawn_str).timestamp() if last_spawn_str else 0
+            temps_ecoule = now - int(last_spawn)
 
-            if not channel_id or en_attente:
+            if not channel_id:
                 continue
 
-            last_spawn_str = conf.get("last_spawn_at")
-            should_spawn = not last_spawn_str or (
-                now - int(parser.parse(last_spawn_str).timestamp()) >= delay
-            )
+            # 🚨 Si bloqué depuis plus de 5 minutes, on force un nouveau spawn
+            if en_attente and temps_ecoule > 5 * 60:
+                print(f"[Reiatsu] Blocage détecté — Forçage du spawn pour le serveur {guild_id}")
+                en_attente = False  # On ignore en_attente et continue
 
-            if not should_spawn:
+            if en_attente or temps_ecoule < delay:
                 continue
 
             channel = self.bot.get_channel(int(channel_id))
             if not channel:
                 continue
 
-            # ✨ Envoie du message de spawn
             embed = discord.Embed(
                 title="💠 Un Reiatsu sauvage apparaît !",
                 description="Cliquez sur la réaction 💠 pour l'absorber.",
                 color=discord.Color.purple()
             )
+
             try:
                 message = await safe_send(channel, embed=embed)
                 await safe_add_reaction(message, "💠")
@@ -81,7 +82,6 @@ class ReiatsuSpawner(commands.Cog):
                 print(f"[Erreur] Envoi ou réaction du Reiatsu : {e}")
                 continue
 
-            # 💾 Mise à jour de l'état
             try:
                 supabase.table("reiatsu_config").update({
                     "en_attente": True,
@@ -90,6 +90,7 @@ class ReiatsuSpawner(commands.Cog):
                 }).eq("guild_id", guild_id).execute()
             except Exception as e:
                 print(f"[Supabase] Erreur update spawn : {e}")
+
 
     # ──────────────────────────────────────────────────────────
     # 🎯 ÉVÉNEMENT : Réaction au spawn
