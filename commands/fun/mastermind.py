@@ -62,7 +62,7 @@ class Mastermind2View2(View):
     # 🔧 Génère dynamiquement l'embed contenant l'état du jeu
     def build_embed(self) -> discord.Embed:
         embed = discord.Embed(
-            title="🎯 Mastermind2 — Trouve la combinaison !",
+            title="🎯 Mastermind — Trouve la combinaison !",
             description=(
                 "🔴 : bonne couleur, bonne position\n"
                 "⚪ : bonne couleur, mauvaise position\n"
