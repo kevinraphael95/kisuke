@@ -57,10 +57,17 @@ class ReiatsuSpawner(commands.Cog):
             if not channel_id:
                 continue
 
-            # 🚨 Si bloqué depuis plus de 5 minutes, on force un nouveau spawn
+            # 🚨 Si bloqué depuis plus de 5 minutes, on force le spawn et reset en_attente
             if en_attente and temps_ecoule > 5 * 60:
                 print(f"[Reiatsu] Blocage détecté — Forçage du spawn pour le serveur {guild_id}")
-                en_attente = False  # On ignore en_attente et continue
+                try:
+                    supabase.table("reiatsu_config").update({
+                        "en_attente": False,
+                        "spawn_message_id": None
+                    }).eq("guild_id", guild_id).execute()
+                except Exception as e:
+                    print(f"[Supabase] Erreur forçage du reset en_attente : {e}")
+                en_attente = False  # on continue le spawn juste après
 
             if en_attente or temps_ecoule < delay:
                 continue
