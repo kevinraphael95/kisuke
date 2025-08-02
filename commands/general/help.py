@@ -36,6 +36,7 @@ class HelpCategorySelect(Select):
         super().__init__(placeholder="Sélectionne une catégorie", options=options)
 
     async def callback(self, interaction: discord.Interaction):
+        await interaction.response.defer()  # ✅ Accuse réception pour éviter le "échec de l'interaction"
         selected_cat = self.values[0]
         commands_in_cat = self.parent_view.categories[selected_cat]
         commands_in_cat.sort(key=lambda c: c.name)
@@ -98,6 +99,7 @@ class PrevButton(Button):
         self.paginator = paginator
 
     async def callback(self, interaction: discord.Interaction):
+        await interaction.response.defer()  # ✅ Accuse réception pour éviter le "échec de l'interaction"
         if self.paginator.page > 0:
             self.paginator.page -= 1
             await safe_edit(
@@ -112,6 +114,7 @@ class NextButton(Button):
         self.paginator = paginator
 
     async def callback(self, interaction: discord.Interaction):
+        await interaction.response.defer()  # ✅ Accuse réception pour éviter le "échec de l'interaction"
         if self.paginator.page < self.paginator.total_pages - 1:
             self.paginator.page += 1
             await safe_edit(
