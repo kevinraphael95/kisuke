@@ -25,7 +25,9 @@ class ReiatsuSpawner(commands.Cog):
     @tasks.loop(seconds=60)
     async def spawn_loop(self):
         print("🔄 Tick spawn_loop")
+
         if not getattr(self.bot, "is_main_instance", True):
+            print("[DEBUG] ❌ Pas l'instance principale")
             return
 
         now = int(time.time())
@@ -54,6 +56,7 @@ class ReiatsuSpawner(commands.Cog):
                 last_spawn = 0
 
             temps_ecoule = now - int(last_spawn)
+            print(f"[DEBUG] Guild {guild_id} → Temps écoulé : {temps_ecoule}s / Delay : {delay}s")
 
             if en_attente and temps_ecoule > 300:
                 print(f"[Reiatsu] 🧨 Blocage détecté pour {guild_id} → forçage")
@@ -85,12 +88,17 @@ class ReiatsuSpawner(commands.Cog):
                 color=discord.Color.purple()
             )
 
-            try:
-                message = await safe_send(channel, embed=embed)
-                await safe_add_reaction(message, "💠")
-                print(f"[Reiatsu] ✅ Spawn envoyé dans {guild_id}")
-            except Exception as e:
-                print(f"[Discord] ❌ Erreur envoi ou ajout réaction : {e}")
+            for attempt in range(5):  # On tente jusqu'à 5 fois en boucle
+                try:
+                    message = await safe_send(channel, embed=embed)
+                    await safe_add_reaction(message, "💠")
+                    print(f"[Reiatsu] ✅ Spawn envoyé dans {guild_id} (Tentative {attempt+1})")
+                    break
+                except Exception as e:
+                    print(f"[Discord] ❌ Tentative {attempt+1} échouée : {e}")
+                    await asyncio.sleep(3)  # petit délai avant retry
+            else:
+                print(f"[Reiatsu] ❌ Échec total des tentatives de spawn pour {guild_id}")
                 continue
 
             try:
@@ -106,6 +114,24 @@ class ReiatsuSpawner(commands.Cog):
     @spawn_loop.before_loop
     async def before_spawn_loop(self):
         await self.bot.wait_until_ready()
+        print("[DEBUG] spawn_loop prêt à démarrer")
+
+    @commands.command()
+    @commands.has_permissions(administrator=True)
+    async def force_reiatsu(self, ctx):
+        """Force manuellement le spawn d’un Reiatsu dans ce salon."""
+        channel = ctx.channel
+        embed = discord.Embed(
+            title="💠 Un Reiatsu sauvage apparaît (FORCÉ) !",
+            description="Cliquez sur la réaction 💠 pour l'absorber.",
+            color=discord.Color.red()
+        )
+        try:
+            message = await safe_send(channel, embed=embed)
+            await safe_add_reaction(message, "💠")
+            await ctx.send("✅ Reiatsu spawné avec succès (manuel).")
+        except Exception as e:
+            await ctx.send(f"❌ Erreur : {e}")
 
     # 🎯 ÉVÉNEMENT : Réaction au spawn
     @commands.Cog.listener()
@@ -114,6 +140,7 @@ class ReiatsuSpawner(commands.Cog):
             return
 
         guild_id = str(payload.guild_id)
+
         try:
             conf_data = supabase.table("reiatsu_config").select("*").eq("guild_id", guild_id).execute()
         except Exception as e:
@@ -124,6 +151,7 @@ class ReiatsuSpawner(commands.Cog):
             return
 
         conf = conf_data.data[0]
+
         if not conf.get("en_attente") or str(payload.message_id) != conf.get("spawn_message_id"):
             return
 
