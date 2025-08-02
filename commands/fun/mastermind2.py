@@ -248,7 +248,7 @@ class Mastermind2(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
 
-    @commands.command(name="mastermind2", aliases=["mm2"], help="Jouer au Mastermind2.", description="Devine la combinaison de couleurs.")
+    @commands.command(name="mastermind", aliases=["mm"], help="Jouer au Mastermind.", description="Devine la combinaison de couleurs.")
     async def mastermind2(self, ctx: commands.Context):
         view = DifficultyView(ctx.author)
         embed = discord.Embed(
