@@ -1,9 +1,10 @@
 # ────────────────────────────────────────────────────────────────
 # 📌 kluboutside.py — Commande interactive !kluboutside / !ko
-# Objectif : Afficher une question Klub Outside par numéro ou lister toutes les questions avec pagination
+# Objectif : Afficher une question Klub Outside par numéro, aléatoire ou paginer toutes
 # Catégorie : Bleach
 # Accès : Public
 # ──────────────────────────────────────────────────────────
+
 
 # ──────────────────────────────────────────────────────────
 # 📦 Imports nécessaires
@@ -13,9 +14,9 @@ from discord.ext import commands
 from discord.ui import View
 import json
 import os
+import random  # ← Ajouté
 
-# Import des fonctions sécurisées pour éviter le rate-limit 429
-from utils.discord_utils import safe_send, safe_edit  # <-- import utils
+from utils.discord_utils import safe_send, safe_edit  # Utils anti rate-limit
 
 # ──────────────────────────────────────────────────────────
 # 📂 Chargement des données JSON
@@ -28,7 +29,7 @@ def load_data():
         return json.load(f)
 
 # ──────────────────────────────────────────────────────────
-# 🎛️ UI — Pagination interactive pour les questions KO
+# 🎛️ UI — Pagination interactive
 # ──────────────────────────────────────────────────────────
 class KlubPaginator(View):
     def __init__(self, ctx, data):
@@ -86,78 +87,67 @@ class KlubPaginator(View):
 # 🧠 Cog principal
 # ──────────────────────────────────────────────────────────
 class KlubOutside(commands.Cog):
-    """
-    Commande !kluboutside — Affiche une question Klub Outside par numéro ou l'ensemble des questions
-    """
     def __init__(self, bot: commands.Bot):
         self.bot = bot
 
     @commands.command(
         name="kluboutside",
         aliases=["ko"],
-        help="📓 Affiche une question Klub Outside par son numéro, ou pagine toutes si aucun numéro n'est donné.",
-        description="Utilisation : `!ko [numéro]`"
+        help="📓 Affiche une question Klub Outside par son numéro, aléatoire ou pagine toutes.",
+        description="Utilisation : `!ko`, `!ko <numéro>`, `!ko random`"
     )
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
-    async def kluboutside(self, ctx: commands.Context, numero: int = None):
+    async def kluboutside(self, ctx: commands.Context, *, argument: str = None):
         try:
             data = load_data()
             questions = data.get("Questions", {})
+            keys = list(questions.keys())
 
-            # Si aucun argument : pagination
-            if numero is None:
-                view = KlubPaginator(ctx, data)
-                embed = discord.Embed(
-                    title=f"📓 Question Klub Outside n°1",
-                    color=discord.Color.dark_green()
-                )
-                question = questions.get("1")
-                embed.add_field(name="📅 Date", value=question.get("date", "?"), inline=False)
-                embed.add_field(name="❓ Question", value=question.get("question", "?"), inline=False)
-                embed.add_field(name="💬 Réponse", value=question.get("réponse", "?"), inline=False)
-                embed.set_footer(text=f"1 / {len(questions)}")
-
-                image_path = view._find_image_file("1")
-                if image_path:
-                    file = discord.File(image_path, filename=os.path.basename(image_path))
-                    await safe_send(ctx.channel, embed=embed, view=view, file=file)
-                else:
-                    await safe_send(ctx.channel, embed=embed, view=view)
+            # Déterminer l'index de départ
+            if argument is None:
+                start_index = 0
+            elif argument.lower() == "random":
+                start_index = random.randint(0, len(keys) - 1)
+            elif argument.isdigit():
+                numero = argument
+                if numero not in keys:
+                    await safe_send(ctx.channel, f"❌ Aucune question trouvée pour le numéro {numero}.")
+                    return
+                start_index = keys.index(numero)
+            else:
+                await safe_send(ctx.channel, f"❌ Argument non reconnu : `{argument}`. Utilise un numéro ou `random`.")
                 return
 
-            # Sinon, afficher question spécifique
-            q = questions.get(str(numero))
-            if not q:
-                await safe_send(ctx.channel, f"❌ Aucune question trouvée pour le numéro {numero}.")
-                return
+            # Lancer la vue de pagination depuis l'index choisi
+            view = KlubPaginator(ctx, data)
+            view.index = start_index
+            key = view.keys[start_index]
+            question = questions[key]
 
             embed = discord.Embed(
-                title=f"📓 Question Klub Outside n°{numero}",
-                color=discord.Color.green()
+                title=f"📓 Question Klub Outside n°{key}",
+                color=discord.Color.dark_green()
             )
-            embed.add_field(name="📅 Date", value=q.get("date", "?"), inline=False)
-            embed.add_field(name="❓ Question", value=q.get("question", "?"), inline=False)
-            embed.add_field(name="💬 Réponse", value=q.get("réponse", "?"), inline=False)
+            embed.add_field(name="📅 Date", value=question.get("date", "?"), inline=False)
+            embed.add_field(name="❓ Question", value=question.get("question", "?"), inline=False)
+            embed.add_field(name="💬 Réponse", value=question.get("réponse", "?"), inline=False)
+            embed.set_footer(text=f"{start_index+1} / {len(view.keys)}")
 
-            for ext in ["png", "jpg", "jpeg", "webp"]:
-                image_path = os.path.join(KO_IMAGE_DIR, f"ko{numero}.{ext}")
-                if os.path.exists(image_path):
-                    file = discord.File(image_path, filename=os.path.basename(image_path))
-                    embed.set_image(url=f"attachment://{os.path.basename(image_path)}")
-                    await safe_send(ctx.channel, embed=embed, file=file)
-                    return
-
-            await safe_send(ctx.channel, embed=embed)
+            image_path = view._find_image_file(key)
+            if image_path:
+                file = discord.File(image_path, filename=os.path.basename(image_path))
+                await safe_send(ctx.channel, embed=embed, view=view, file=file)
+            else:
+                await safe_send(ctx.channel, embed=embed, view=view)
 
         except FileNotFoundError:
             await safe_send(ctx.channel, "❌ Le fichier `ko.json` est introuvable.")
         except Exception as e:
             await safe_send(ctx.channel, f"⚠️ Erreur : `{e}`")
 
-
-# ────────────────────────────────────────────────
-# 🔌 Chargement automatique du cog
-# ────────────────────────────────────────────────
+# ──────────────────────────────────────────────────────────
+# 🔌 Chargement du cog
+# ──────────────────────────────────────────────────────────
 async def setup(bot):
     cog = KlubOutside(bot)
     for command in cog.get_commands():
