@@ -1,36 +1,27 @@
 # ────────────────────────────────────────────────────────────────────────────────
 # 📌 hollow.py — Commande interactive !hollow
-# Objectif : Faire apparaître un Hollow, le joueur peut l’attaquer en dépensant 1 reiatsu
-#           et doit accomplir 3 tâches intégrées pour le vaincre.
+# Objectif : Faire apparaître un Hollow, attaquer (1 reiatsu), réussir 3 tâches.
 # Catégorie : Hollow
 # Accès : Public
 # ────────────────────────────────────────────────────────────────────────────────
 
-# ────────────────────────────────────────────────────────────────────────────────
-# 📦 Imports nécessaires
-# ────────────────────────────────────────────────────────────────────────────────
+# 📦 Imports
 import discord
 from discord.ext import commands
-from discord.ui import View
+from discord.ui import View, Button
 from discord import Embed
 import os
 import traceback
 from utils.discord_utils import safe_send, safe_edit
 from supabase_client import supabase
+from utils.taches import lancer_3_taches
 import asyncio
 
-from utils.taches import lancer_3_taches  # 🧩 Récupérer une tâche aléatoire
-
-# ────────────────────────────────────────────────────────────────────────────────
 # 📂 Constantes
-# ────────────────────────────────────────────────────────────────────────────────
 HOLLOW_IMAGE_PATH = os.path.join("data", "hollows", "hollow0.jpg")
 REIATSU_COST = 1
 
-# ──────────────────────────────────────────────────
-# 🧠 Vue avec bouton d’attaque
-# ──────────────────────────────────────────────────
-
+# 🎮 Vue avec bouton d’attaque
 class HollowView(View):
     def __init__(self, author_id: int):
         super().__init__(timeout=60)
@@ -47,10 +38,10 @@ class HollowView(View):
             except:
                 pass
 
-    @discord.ui.button(label=f"Attaquer (1 reiatsu)", style=discord.ButtonStyle.red)
-    async def attack(self, inter: discord.Interaction, btn):
+    @discord.ui.button(label="⚔️ Attaquer (1 reiatsu)", style=discord.ButtonStyle.danger)
+    async def attack(self, inter: discord.Interaction, btn: Button):
         if inter.user.id != self.author_id:
-            await inter.response.send_message("❌ Ce bouton n’est pas pour toi.", ephemeral=True)
+            await inter.response.send_message("❌ Ce bouton ne t'est pas destiné.", ephemeral=True)
             return
         if self.attacked:
             await inter.response.send_message("⚠️ Tu as déjà attaqué.", ephemeral=True)
@@ -60,52 +51,49 @@ class HollowView(View):
         uid = str(inter.user.id)
 
         try:
-            # 🔋 Vérifier le reiatsu
+            # 🔋 Vérification du reiatsu
             resp = supabase.table("reiatsu").select("points").eq("user_id", uid).execute()
-            if not resp.data or resp.data[0].get("points", 0) < REIATSU_COST:
-                await inter.followup.send("❌ Tu n’as pas assez de reiatsu.", ephemeral=True)
+            points = resp.data[0]["points"] if resp.data else 0
+
+            if points < REIATSU_COST:
+                await inter.followup.send("❌ Tu n'as pas assez de reiatsu.", ephemeral=True)
                 return
 
-            # 🔻 Déduire le reiatsu
-            new_points = resp.data[0]["points"] - REIATSU_COST
-            supabase.table("reiatsu").update({"points": new_points}).eq("user_id", uid).execute()
-
+            # 🔻 Déduction
+            supabase.table("reiatsu").update({"points": points - REIATSU_COST}).eq("user_id", uid).execute()
             self.attacked = True
 
-            # ⚔️ Modifier l’embed de départ
-            embed = self.message.embeds[0]
-            embed.description = f"⚔️ {inter.user.display_name} attaque le Hollow !\nRéussis 3 épreuves pour le vaincre."
-            embed.clear_fields()
+            # 📄 Préparation de l’embed de combat
+            embed = Embed(
+                title="👹 Combat contre le Hollow",
+                description=f"⚔️ {inter.user.display_name} dépense 1 reiatsu pour affronter le Hollow !\n\nRéussis les 3 épreuves pour le vaincre.",
+                color=discord.Color.orange()
+            )
+            embed.set_image(url="attachment://hollow.jpg")
             embed.set_footer(text="Combat en cours...")
             embed.add_field(name="Épreuves", value="⏳ Chargement des épreuves...", inline=False)
             await safe_edit(self.message, embeds=[embed], view=self)
 
-            # 🧪 Lancer les 3 épreuves une à une
-            # ➕ Définir une fonction de mise à jour de l’embed
+            # 🧪 Lancement des épreuves
             async def update_embed(e):
                 await safe_edit(self.message, embeds=[e], view=self)
 
-            # 🚀 Lancer les 3 épreuves avec mise à jour dynamique
             victoire = await lancer_3_taches(inter, embed, update_embed)
 
-            # 🏁 Embed final de résultat
-            result_embed = Embed(
+            # 🏁 Résultat
+            result = Embed(
                 title="🎯 Résultat du combat",
                 description="🎉 Tu as vaincu le Hollow !" if victoire else "💀 Tu as échoué à vaincre le Hollow.",
                 color=discord.Color.green() if victoire else discord.Color.red()
             )
-            result_embed.set_footer(text=f"Combat de {inter.user.display_name}")
-
-            await safe_edit(self.message, embeds=[embed, result_embed], view=self)
+            result.set_footer(text=f"Combat de {inter.user.display_name}")
+            await safe_edit(self.message, embeds=[embed, result], view=self)
 
         except Exception:
             traceback.print_exc()
             await inter.followup.send("⚠️ Une erreur est survenue pendant le combat.", ephemeral=True)
 
-# ──────────────────────────────────────────────────
-# 🧠 Cog principal — HollowCommand
-# ──────────────────────────────────────────────────
-
+# 🧠 Cog principal
 class HollowCommand(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
@@ -120,23 +108,19 @@ class HollowCommand(commands.Cog):
         file = discord.File(HOLLOW_IMAGE_PATH, filename="hollow.jpg")
         embed = Embed(
             title="👹 Un Hollow est apparu !",
-            description=f"Attaque-le pour {REIATSU_COST} reiatsu et réussis 3 tâches.",
+            description=f"Appuie sur **Attaquer** pour dépenser {REIATSU_COST} reiatsu et tenter de le vaincre.",
             color=discord.Color.dark_red()
         )
         embed.set_image(url="attachment://hollow.jpg")
         embed.set_footer(text="Tu as 60 secondes pour cliquer sur Attaquer.")
+
         view = HollowView(author_id=ctx.author.id)
         msg = await ctx.send(embed=embed, file=file, view=view)
         view.message = msg
 
-
-# ────────────────────────────────────────────────────────────────────────────────
 # 🔌 Setup du Cog
-# ────────────────────────────────────────────────────────────────────────────────
 async def setup(bot: commands.Bot):
     cog = HollowCommand(bot)
     for command in cog.get_commands():
-        command.category = "Test"
+        command.category = "Hollow"
     await bot.add_cog(cog)
-
-
