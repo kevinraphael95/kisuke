@@ -58,7 +58,7 @@ class KlubPaginator(View):
             embed.set_image(url=f"attachment://{os.path.basename(image)}")
             await interaction.response.edit_message(embed=embed, view=self, attachments=[file])
         else:
-            await interaction.response.edit_message(embed=embed, view=self)
+            await interaction.response.edit_message(embed=embed, view=self, attachments=[])
 
     def _find_image_file(self, key):
         for ext in ["png", "jpg", "jpeg", "webp"]:
