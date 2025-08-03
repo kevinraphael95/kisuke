@@ -82,6 +82,13 @@ class KlubPaginator(View):
             self.index += 1
             await self.send_embed(interaction)
 
+    @discord.ui.button(label="🔀 Aléatoire", style=discord.ButtonStyle.primary)
+    async def random_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if interaction.user != self.ctx.author:
+            return await interaction.response.send_message("❌ Tu ne peux pas interagir avec ceci.", ephemeral=True)
+        self.index = random.randint(0, len(self.keys) - 1)
+        await self.send_embed(interaction)
+
 # ──────────────────────────────────────────────────────────
 # 🧠 Cog principal
 # ──────────────────────────────────────────────────────────
