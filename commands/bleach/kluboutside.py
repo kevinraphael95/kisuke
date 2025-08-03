@@ -135,6 +135,7 @@ class KlubOutside(commands.Cog):
 
             image_path = view._find_image_file(key)
             if image_path:
+                embed.set_image(url=f"attachment://{os.path.basename(image_path)}")
                 file = discord.File(image_path, filename=os.path.basename(image_path))
                 await safe_send(ctx.channel, embed=embed, view=view, file=file)
             else:
