@@ -3,12 +3,18 @@
 # Objectif : Mini-jeux interactifs affichés dynamiquement dans un embed unique
 # ────────────────────────────────────────────────────────────────────────────────
 
+# ────────────────────────────────────────────────────────────────────────────────
+# 📦 Imports nécessaires
+# ────────────────────────────────────────────────────────────────────────────────
 import discord
 import random
 import asyncio
 import json
 import os
 
+# ────────────────────────────────────────────────────────────────────────────────
+# 📂 Chargement des données JSON (exemple)
+# ────────────────────────────────────────────────────────────────────────────────
 DATA_JSON_PATH = os.path.join("data", "bleach_emojis.json")
 
 def load_characters():
@@ -17,7 +23,7 @@ def load_characters():
         return json.load(f)
 
 # ────────────────────────────────────────────────────────────────────────────────
-# 🔹 Fonctions des mini-jeux — version embed dynamique
+# 🔹 Fonctions des mini-jeux — version avec boutons
 # Chaque fonction prend :
 # - interaction : discord.Interaction
 # - embed : discord.Embed (à modifier)
@@ -33,105 +39,103 @@ async def lancer_emoji(interaction, embed, update_embed, num):
     mix = sequence + random.sample(autres, 2)
     random.shuffle(mix)
 
-    msg = await interaction.channel.send(f"🔁 Reproduis cette séquence : {' → '.join(sequence)} (2 min)")
+    class EmojiButton(discord.ui.Button):
+        def __init__(self, emoji):
+            super().__init__(style=discord.ButtonStyle.secondary, emoji=emoji)
+            self.emoji_val = emoji
+
+        async def callback(self, interaction_button):
+            if interaction_button.user != interaction.user:
+                return
+            if len(view.reponses) < len(sequence) and self.emoji_val == sequence[len(view.reponses)]:
+                view.reponses.append(self.emoji_val)
+                if len(view.reponses) == len(sequence):
+                    view.stop()
+            else:
+                view.reponses.clear()
+
+    view = discord.ui.View(timeout=120)
     for e in mix:
-        try:
-            await msg.add_reaction(e)
-        except Exception:
-            pass
+        view.add_item(EmojiButton(e))
+    view.reponses = []
 
-    reponses = []
+    await interaction.response.send_message(f"🔁 Reproduis cette séquence : {' → '.join(sequence)}", view=view)
+    await view.wait()
 
-    def check(r, u):
-        if u.bot or r.message.id != msg.id or u != interaction.user:
-            return False
-        if len(reponses) >= len(sequence):
-            return False
-        if str(r.emoji) == sequence[len(reponses)]:
-            reponses.append(str(r.emoji))
-            return True
-        return False
-
-    try:
-        await interaction.client.wait_for("reaction_add", check=check, timeout=120)
-        if reponses == sequence:
-            embed.add_field(name=f"Épreuve {num}", value="✅ Séquence réussie", inline=False)
-            await update_embed(embed)
-            return True
-        else:
-            raise asyncio.TimeoutError()
-    except asyncio.TimeoutError:
-        embed.add_field(name=f"Épreuve {num}", value="❌ Échec de la séquence", inline=False)
-        await update_embed(embed)
-        return False
+    success = view.reponses == sequence
+    msg = "✅ Séquence réussie" if success else "❌ Échec de la séquence"
+    embed.add_field(name=f"Épreuve {num}", value=msg, inline=False)
+    await update_embed(embed)
+    return success
 
 async def lancer_reflexe(interaction, embed, update_embed, num):
     compte = ["5️⃣", "4️⃣", "3️⃣", "2️⃣", "1️⃣"]
-    msg = await interaction.channel.send("🕒 Clique dans l’ordre : `5️⃣ 4️⃣ 3️⃣ 2️⃣ 1️⃣`")
+
+    class ReflexeButton(discord.ui.Button):
+        def __init__(self, emoji):
+            super().__init__(style=discord.ButtonStyle.secondary, emoji=emoji)
+            self.emoji_val = emoji
+
+        async def callback(self, interaction_button):
+            if interaction_button.user != interaction.user:
+                return
+            if len(view.reponses) < len(compte) and self.emoji_val == compte[len(view.reponses)]:
+                view.reponses.append(self.emoji_val)
+                if len(view.reponses) == len(compte):
+                    view.stop()
+            else:
+                view.reponses.clear()
+
+    view = discord.ui.View(timeout=20)
     for e in compte:
-        await msg.add_reaction(e)
+        view.add_item(ReflexeButton(e))
+    view.reponses = []
 
-    reponses = []
+    await interaction.response.send_message("🕒 Clique dans l’ordre : `5️⃣ 4️⃣ 3️⃣ 2️⃣ 1️⃣`", view=view)
+    await view.wait()
 
-    def check(r, u):
-        if u.bot or r.message.id != msg.id or u != interaction.user:
-            return False
-        if len(reponses) >= len(compte):
-            return False
-        if str(r.emoji) == compte[len(reponses)]:
-            reponses.append(str(r.emoji))
-            return True
-        return False
-
-    try:
-        await interaction.client.wait_for("reaction_add", check=check, timeout=20)
-        if reponses == compte:
-            embed.add_field(name=f"Épreuve {num}", value="⚡ Réflexe réussi", inline=False)
-            await update_embed(embed)
-            return True
-        else:
-            raise asyncio.TimeoutError()
-    except asyncio.TimeoutError:
-        embed.add_field(name=f"Épreuve {num}", value="❌ Échec du réflexe", inline=False)
-        await update_embed(embed)
-        return False
+    success = view.reponses == compte
+    msg = "⚡ Réflexe réussi" if success else "❌ Échec du réflexe"
+    embed.add_field(name=f"Épreuve {num}", value=msg, inline=False)
+    await update_embed(embed)
+    return success
 
 async def lancer_fleche(interaction, embed, update_embed, num):
     fleches = ["⬅️", "⬆️", "⬇️", "➡️"]
     sequence = [random.choice(fleches) for _ in range(5)]
+
     tmp = await interaction.channel.send(f"🧭 Mémorise : `{' '.join(sequence)}` (5 s)")
     await asyncio.sleep(5)
     await tmp.delete()
-    msg = await interaction.channel.send("🔁 Reproduis la séquence :")
+
+    class FlecheButton(discord.ui.Button):
+        def __init__(self, emoji):
+            super().__init__(style=discord.ButtonStyle.secondary, emoji=emoji)
+            self.emoji_val = emoji
+
+        async def callback(self, interaction_button):
+            if interaction_button.user != interaction.user:
+                return
+            if len(view.reponses) < len(sequence) and self.emoji_val == sequence[len(view.reponses)]:
+                view.reponses.append(self.emoji_val)
+                if len(view.reponses) == len(sequence):
+                    view.stop()
+            else:
+                view.reponses.clear()
+
+    view = discord.ui.View(timeout=30)
     for e in fleches:
-        await msg.add_reaction(e)
+        view.add_item(FlecheButton(e))
+    view.reponses = []
 
-    reponses = []
+    await interaction.channel.send("🔁 Reproduis la séquence :", view=view)
+    await view.wait()
 
-    def check(r, u):
-        if u.bot or r.message.id != msg.id or u != interaction.user:
-            return False
-        if len(reponses) >= len(sequence):
-            return False
-        if str(r.emoji) == sequence[len(reponses)]:
-            reponses.append(str(r.emoji))
-            return True
-        # mauvaise réaction réinitialise les réponses
-        reponses.clear()
-        return False
-
-    try:
-        await interaction.client.wait_for("reaction_add", check=check, timeout=30)
-        if reponses == sequence:
-            embed.add_field(name=f"Épreuve {num}", value="✅ Séquence fléchée réussie", inline=False)
-            await update_embed(embed)
-            return True
-        else:
-            raise asyncio.TimeoutError()
-    except asyncio.TimeoutError:
-        embed.add_field(name=f"Épreuve {num}", value="❌ Séquence incorrecte", inline=False)
-        await update_embed(embed)
-        return False
+    success = view.reponses == sequence
+    msg = "✅ Séquence fléchée réussie" if success else "❌ Séquence incorrecte"
+    embed.add_field(name=f"Épreuve {num}", value=msg, inline=False)
+    await update_embed(embed)
+    return success
 
 async def lancer_infusion(interaction, embed, update_embed, num):
     await interaction.channel.send("🔵 Prépare-toi à synchroniser ton Reiatsu...")
@@ -144,30 +148,42 @@ async def lancer_infusion(interaction, embed, update_embed, num):
         await msg.edit(content="🔵🔵🔵")
     await asyncio.sleep(0.5)
     await msg.edit(content="🔴")
-    await msg.add_reaction("⚡")
+
+    bouton = discord.ui.Button(style=discord.ButtonStyle.danger, emoji="⚡")
+    view = discord.ui.View(timeout=2)
+    view.add_item(bouton)
+    event = asyncio.Event()
+
+    def bouton_callback(inter_button):
+        if inter_button.user == interaction.user:
+            now = discord.utils.utcnow()
+            delta = (now - start).total_seconds()
+            if 0.8 <= delta <= 1.2:
+                view.success = True
+            else:
+                view.success = False
+            event.set()
+
+    bouton.callback = bouton_callback
     start = discord.utils.utcnow()
 
-    def check(r, u):
-        if u.bot or r.message.id != msg.id or str(r.emoji) != "⚡" or u != interaction.user:
-            return False
-        delta = (discord.utils.utcnow() - start).total_seconds()
-        # Réaction entre 0.8 et 1.2s
-        return 0.8 <= delta <= 1.2
-
+    await msg.edit(content="🔴 Cliquez ⚡ maintenant", view=view)
     try:
-        await interaction.client.wait_for("reaction_add", check=check, timeout=2)
-        embed.add_field(name=f"Épreuve {num}", value="✅ Synchronisation réussie", inline=False)
-        await update_embed(embed)
-        return True
+        await asyncio.wait_for(event.wait(), timeout=2)
     except asyncio.TimeoutError:
-        embed.add_field(name=f"Épreuve {num}", value="❌ Synchronisation ratée", inline=False)
-        await update_embed(embed)
-        return False
+        view.success = False
+
+    msg_res = "✅ Synchronisation réussie" if view.success else "❌ Synchronisation ratée"
+    embed.add_field(name=f"Épreuve {num}", value=msg_res, inline=False)
+    await update_embed(embed)
+    return view.success
 
 async def lancer_emoji9(interaction, embed, update_embed, num):
-    groupes = [["🍎","🍅"],["☁️","🌥️"],["☘️","🍀"],["🌺","🌸"],["👜","💼"],["🌹","🌷"],
-               ["🤞","✌️"],["✊","👊"],["😕","😐"],["🌟","⭐"],["🦝","🐨"],["🔒","🔓"],
-               ["🏅","🥇"],["🌧️","🌨️"],["🐆","🐅"],["🙈","🙊"],["🐋","🐳"],["🐢","🐊"]]
+    groupes = [
+        ["🍎","🍅"],["☁️","🌥️"],["☘️","🍀"],["🌺","🌸"],["👜","💼"],["🌹","🌷"],
+        ["🤞","✌️"],["✊","👊"],["😕","😐"],["🌟","⭐"],["🦝","🐨"],["🔒","🔓"],
+        ["🏅","🥇"],["🌧️","🌨️"],["🐆","🐅"],["🙈","🙊"],["🐋","🐳"],["🐢","🐊"]
+    ]
     base, intrus = random.choice(groupes)
     has_intrus = random.choice([True, False])
     emojis = [base]*9
@@ -176,22 +192,30 @@ async def lancer_emoji9(interaction, embed, update_embed, num):
     random.shuffle(emojis)
     ligne = "".join(emojis)
 
-    await interaction.channel.send(f"🔎 {ligne}\nRéponds avec ✅ si tous identiques, ❌ sinon.")
+    class ChoixButton(discord.ui.Button):
+        def __init__(self, label):
+            super().__init__(label=label, style=discord.ButtonStyle.primary)
 
-    def check(r, u):
-        return u == interaction.user and r.message.channel == interaction.channel and str(r.emoji) in ["✅", "❌"]
+        async def callback(self, inter_button):
+            if inter_button.user != interaction.user:
+                return
+            choix = self.label
+            success = (choix == "✅" and not has_intrus) or (choix == "❌" and has_intrus)
+            view.success = success
+            view.stop()
 
-    try:
-        r, u = await interaction.client.wait_for("reaction_add", check=check, timeout=15)
-        success = (str(r.emoji) == "✅" and not has_intrus) or (str(r.emoji) == "❌" and has_intrus)
-        msg = "✅ Bonne réponse" if success else "❌ Mauvaise réponse"
-        embed.add_field(name=f"Épreuve {num}", value=msg, inline=False)
-        await update_embed(embed)
-        return success
-    except asyncio.TimeoutError:
-        embed.add_field(name=f"Épreuve {num}", value="⌛ Temps écoulé", inline=False)
-        await update_embed(embed)
-        return False
+    view = discord.ui.View(timeout=15)
+    view.add_item(ChoixButton("✅"))
+    view.add_item(ChoixButton("❌"))
+    view.success = False
+
+    await interaction.response.send_message(f"🔎 {ligne}\nTous identiques ? (✅ oui / ❌ non)", view=view)
+    await view.wait()
+
+    msg = "✅ Bonne réponse" if view.success else "❌ Mauvaise réponse"
+    embed.add_field(name=f"Épreuve {num}", value=msg, inline=False)
+    await update_embed(embed)
+    return view.success
 
 async def lancer_bmoji(interaction, embed, update_embed, num):
     characters = load_characters()
@@ -204,27 +228,31 @@ async def lancer_bmoji(interaction, embed, update_embed, num):
     lettres = ["🇦", "🇧", "🇨", "🇩"]
     bonne = lettres[options.index(nom)]
 
-    desc = " ".join(emojis) + "\n"
-    desc += "\n".join(f"{lettres[i]} : {options[i]}" for i in range(4))
-    msg = await interaction.channel.send(f"🔍 Devine le perso :\n{desc}")
+    desc = " ".join(emojis) + "\n" + "\n".join(f"{lettres[i]} : {options[i]}" for i in range(4))
 
-    for e in lettres:
-        await msg.add_reaction(e)
+    class PersoButton(discord.ui.Button):
+        def __init__(self, emoji, idx):
+            super().__init__(emoji=emoji, style=discord.ButtonStyle.secondary)
+            self.idx = idx
 
-    def check(r, u):
-        return u == interaction.user and r.message.id == msg.id and str(r.emoji) in lettres
+        async def callback(self, inter_button):
+            if inter_button.user != interaction.user:
+                return
+            view.success = (lettres[self.idx] == bonne)
+            view.stop()
 
-    try:
-        r, u = await interaction.client.wait_for("reaction_add", check=check, timeout=30)
-        success = (str(r.emoji) == bonne)
-        msg = "✅ Bonne réponse" if success else "❌ Mauvaise réponse"
-        embed.add_field(name=f"Épreuve {num}", value=msg, inline=False)
-        await update_embed(embed)
-        return success
-    except asyncio.TimeoutError:
-        embed.add_field(name=f"Épreuve {num}", value="⌛ Temps écoulé", inline=False)
-        await update_embed(embed)
-        return False
+    view = discord.ui.View(timeout=30)
+    for i in range(4):
+        view.add_item(PersoButton(lettres[i], i))
+    view.success = False
+
+    await interaction.response.send_message(f"🔍 Devine le perso :\n{desc}", view=view)
+    await view.wait()
+
+    msg = "✅ Bonne réponse" if view.success else "❌ Mauvaise réponse"
+    embed.add_field(name=f"Épreuve {num}", value=msg, inline=False)
+    await update_embed(embed)
+    return view.success
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🔁 Lancer 3 épreuves aléatoires dans le même embed
@@ -240,9 +268,11 @@ TACHES = [
 ]
 
 async def lancer_3_taches(interaction, embed, update_embed):
-    """Lance 3 épreuves aléatoires dans le même embed.
+    """
+    Lance 3 épreuves aléatoires dans le même embed.
     Met à jour l'embed via update_embed après chaque épreuve.
-    Retourne True si toutes réussies, False dès la première échec."""
+    Retourne True si toutes réussies, False dès la première échec.
+    """
     choisies = random.sample(TACHES, 3)
     for i, tache in enumerate(choisies, start=1):
         success = await tache(interaction, embed, update_embed, i)
