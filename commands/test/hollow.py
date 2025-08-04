@@ -122,5 +122,5 @@ class HollowCommand(commands.Cog):
 async def setup(bot: commands.Bot):
     cog = HollowCommand(bot)
     for command in cog.get_commands():
-        command.category = "Hollow"
+        command.category = "Test"
     await bot.add_cog(cog)
