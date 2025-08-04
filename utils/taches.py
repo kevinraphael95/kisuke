@@ -43,7 +43,6 @@ async def lancer_emoji(interaction, embed, update_embed, num):
         def __init__(self, emoji):
             super().__init__(style=discord.ButtonStyle.secondary, emoji=emoji)
             self.emoji_val = emoji
-
         async def callback(self, interaction_button):
             if interaction_button.user != interaction.user:
                 return
@@ -68,6 +67,7 @@ async def lancer_emoji(interaction, embed, update_embed, num):
     await update_embed(embed)
     return success
 
+
 async def lancer_reflexe(interaction, embed, update_embed, num):
     compte = ["5️⃣", "4️⃣", "3️⃣", "2️⃣", "1️⃣"]
 
@@ -75,7 +75,6 @@ async def lancer_reflexe(interaction, embed, update_embed, num):
         def __init__(self, emoji):
             super().__init__(style=discord.ButtonStyle.secondary, emoji=emoji)
             self.emoji_val = emoji
-
         async def callback(self, interaction_button):
             if interaction_button.user != interaction.user:
                 return
@@ -100,10 +99,10 @@ async def lancer_reflexe(interaction, embed, update_embed, num):
     await update_embed(embed)
     return success
 
+
 async def lancer_fleche(interaction, embed, update_embed, num):
     fleches = ["⬅️", "⬆️", "⬇️", "➡️"]
     sequence = [random.choice(fleches) for _ in range(5)]
-
     tmp = await interaction.channel.send(f"🧭 Mémorise : `{' '.join(sequence)}` (5 s)")
     await asyncio.sleep(5)
     await tmp.delete()
@@ -112,7 +111,6 @@ async def lancer_fleche(interaction, embed, update_embed, num):
         def __init__(self, emoji):
             super().__init__(style=discord.ButtonStyle.secondary, emoji=emoji)
             self.emoji_val = emoji
-
         async def callback(self, interaction_button):
             if interaction_button.user != interaction.user:
                 return
@@ -137,6 +135,7 @@ async def lancer_fleche(interaction, embed, update_embed, num):
     await update_embed(embed)
     return success
 
+
 async def lancer_infusion(interaction, embed, update_embed, num):
     await interaction.channel.send("🔵 Prépare-toi à synchroniser ton Reiatsu...")
     await asyncio.sleep(2)
@@ -152,6 +151,7 @@ async def lancer_infusion(interaction, embed, update_embed, num):
     bouton = discord.ui.Button(style=discord.ButtonStyle.danger, emoji="⚡")
     view = discord.ui.View(timeout=2)
     view.add_item(bouton)
+
     event = asyncio.Event()
 
     def bouton_callback(inter_button):
@@ -166,8 +166,8 @@ async def lancer_infusion(interaction, embed, update_embed, num):
 
     bouton.callback = bouton_callback
     start = discord.utils.utcnow()
-
     await msg.edit(content="🔴 Cliquez ⚡ maintenant", view=view)
+
     try:
         await asyncio.wait_for(event.wait(), timeout=2)
     except asyncio.TimeoutError:
@@ -177,6 +177,7 @@ async def lancer_infusion(interaction, embed, update_embed, num):
     embed.add_field(name=f"Épreuve {num}", value=msg_res, inline=False)
     await update_embed(embed)
     return view.success
+
 
 async def lancer_emoji9(interaction, embed, update_embed, num):
     groupes = [
@@ -195,7 +196,6 @@ async def lancer_emoji9(interaction, embed, update_embed, num):
     class ChoixButton(discord.ui.Button):
         def __init__(self, label):
             super().__init__(label=label, style=discord.ButtonStyle.primary)
-
         async def callback(self, inter_button):
             if inter_button.user != interaction.user:
                 return
@@ -217,6 +217,7 @@ async def lancer_emoji9(interaction, embed, update_embed, num):
     await update_embed(embed)
     return view.success
 
+
 async def lancer_bmoji(interaction, embed, update_embed, num):
     characters = load_characters()
     pers = random.choice(characters)
@@ -227,14 +228,12 @@ async def lancer_bmoji(interaction, embed, update_embed, num):
     random.shuffle(options)
     lettres = ["🇦", "🇧", "🇨", "🇩"]
     bonne = lettres[options.index(nom)]
-
     desc = " ".join(emojis) + "\n" + "\n".join(f"{lettres[i]} : {options[i]}" for i in range(4))
 
     class PersoButton(discord.ui.Button):
         def __init__(self, emoji, idx):
             super().__init__(emoji=emoji, style=discord.ButtonStyle.secondary)
             self.idx = idx
-
         async def callback(self, inter_button):
             if inter_button.user != interaction.user:
                 return
@@ -257,7 +256,6 @@ async def lancer_bmoji(interaction, embed, update_embed, num):
 # ────────────────────────────────────────────────────────────────────────────────
 # 🔁 Lancer 3 épreuves aléatoires dans le même embed
 # ────────────────────────────────────────────────────────────────────────────────
-
 TACHES = [
     lancer_emoji,
     lancer_reflexe,
