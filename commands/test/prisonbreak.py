@@ -38,13 +38,16 @@ class EscapePrisonView(View):
         self.ctx = ctx
         self.bot = bot
         self.grid = [[EMPTY for _ in range(GRID_SIZE)] for _ in range(GRID_SIZE)]
+
         for (x,y) in WALLS:
             self.grid[y][x] = WALL
+
         self.player_pos = START_POS
         self.guard_pos = (GRID_SIZE//2, GRID_SIZE//2)
         self.grid[self.player_pos[1]][self.player_pos[0]] = PLAYER
         self.grid[self.guard_pos[1]][self.guard_pos[0]] = GUARD
         self.grid[EXIT_POS[1]][EXIT_POS[0]] = EXIT
+
         self.message = None
         self.game_over = False
 
@@ -91,6 +94,7 @@ class EscapePrisonView(View):
             await safe_edit(self.message, content=f"💥 Oh non {self.ctx.author.mention}, tu as été attrapé par le gardien !\n\n{self.render_grid()}", view=None)
         self.stop()
 
+
 class MoveButton(discord.ui.Button):
     def __init__(self, emoji, move):
         super().__init__(style=discord.ButtonStyle.primary, emoji=emoji)
@@ -98,6 +102,7 @@ class MoveButton(discord.ui.Button):
 
     async def callback(self, interaction: discord.Interaction):
         view: EscapePrisonView = self.view
+
         if view.game_over:
             await interaction.response.send_message("Le jeu est terminé.", ephemeral=True)
             return
@@ -144,7 +149,6 @@ class PrisonEscape(commands.Cog):
     """
     Commande !escape_prison — Mini-jeu d'évasion dans une grille
     """
-
     def __init__(self, bot: commands.Bot):
         self.bot = bot
 
