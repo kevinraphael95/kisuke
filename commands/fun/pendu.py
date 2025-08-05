@@ -20,23 +20,24 @@ from utils.discord_utils import safe_send, safe_edit, safe_respond  # ✅ Utilis
 # ────────────────────────────────────────────────────────────────────────────────
 # 🧠 Fonctions utilitaires
 # ────────────────────────────────────────────────────────────────────────────────
-API_URL = "https://trouve-mot.fr/api/random"
+API_URL = "https://trouve-mot.fr/api/categorie/19/1"  # Catégorie ANIMAUX (1 mot)
 
-PENDU_STAGES = [
+PENDU_ASCII = [
     "`     \n     \n     \n     \n     \n=========`",
-    "`     +\n     |\n     |\n     |\n     |\n=========`",
-    "` +---+\n     |   |\n         |\n         |\n         |\n=========`",
-    "` +---+\n     |   |\n     O   |\n         |\n         |\n=========`",
-    "` +---+\n     |   |\n     O   |\n     |   |\n         |\n=========`",
-    "` +---+\n     |   |\n     O   |\n    /|\\  |\n         |\n=========`",
-    "` +---+\n     |   |\n     O   |\n    /|\\  |\n    / \\  |\n=========`",
+    "`     +---+\n     |   |\n         |\n         |\n         |\n     =========`",
+    "`     +---+\n     |   |\n     O   |\n         |\n         |\n     =========`",
+    "`     +---+\n     |   |\n     O   |\n     |   |\n         |\n     =========`",
+    "`     +---+\n     |   |\n     O   |\n    /|   |\n         |\n     =========`",
+    "`     +---+\n     |   |\n     O   |\n    /|\  |\n         |\n     =========`",
+    "`     +---+\n     |   |\n     O   |\n    /|\  |\n    /    |\n     =========`",
+    "`     +---+\n     |   |\n     O   |\n    /|\  |\n    / \  |\n     =========`",
 ]
 
 async def fetch_random_word():
     async with aiohttp.ClientSession() as session:
         async with session.get(API_URL) as resp:
             data = await resp.json()
-            return data[0]["name"].lower()
+            return data[0]["name"].lower()  # ex: "souris"
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🎮 UI — Vue du pendu avec lettres en boutons
@@ -48,32 +49,30 @@ class PenduView(View):
         self.mot = mot
         self.trouve = set()
         self.rate = set()
-        self.max_erreurs = 6
+        self.max_erreurs = 7
         self.message = None
         self.update_buttons()
 
     def update_buttons(self):
         self.clear_items()
         for i, lettre in enumerate("ABCDEFGHIJKLMNOPQRSTUVWXYZ"):
-            style = discord.ButtonStyle.success if lettre.lower() in self.trouve else (
-                discord.ButtonStyle.danger if lettre.lower() in self.rate else discord.ButtonStyle.secondary
-            )
-            self.add_item(PenduButton(self, lettre, style, lettre.lower() in self.trouve | self.rate))
+            disabled = lettre.lower() in self.trouve or lettre.lower() in self.rate
+            row = i // 5
+            self.add_item(PenduButton(self, lettre, disabled, row=row))
 
     def get_display_word(self):
         return " ".join([l if l in self.trouve else "_" for l in self.mot])
 
-    def get_pendu_status(self):
-        erreurs = len(self.rate)
-        pendu_dessin = PENDU_STAGES[erreurs]
-        lettres_tentees = ", ".join(sorted(self.trouve | self.rate)).upper() or "Aucune"
+    def get_pendu_ascii(self):
+        return PENDU_ASCII[min(len(self.rate), self.max_erreurs)]
 
+    def get_pendu_status(self):
         return (
-            f"🕹️ **Pendu** — Trouve le mot caché !\n\n"
-            f"{pendu_dessin}\n\n"
-            f"**Mot :** `{self.get_display_word()}`\n"
-            f"**Erreurs :** {erreurs} / {self.max_erreurs}\n"
-            f"**Lettres tentées :** {lettres_tentees}"
+            f"🕹️ **Jeu du Pendu**\n"
+            f"{self.get_pendu_ascii()}\n\n"
+            f"🔤 Mot : `{self.get_display_word()}`\n"
+            f"❌ Erreurs : `{len(self.rate)} / {self.max_erreurs}`\n"
+            f"📛 Lettres tentées : `{', '.join(sorted(self.trouve | self.rate)) or 'Aucune'}`"
         )
 
     async def process_letter(self, interaction: discord.Interaction, lettre: str):
@@ -89,7 +88,7 @@ class PenduView(View):
         if all(l in self.trouve for l in set(self.mot)):
             await safe_edit(
                 self.message,
-                content=f"🎉 **Bravo !** Tu as deviné le mot : `{self.mot}`",
+                content=f"🎉 Bravo {interaction.user.mention} ! Tu as deviné le mot : `{self.mot}`",
                 view=None
             )
             self.stop()
@@ -98,7 +97,7 @@ class PenduView(View):
         if len(self.rate) >= self.max_erreurs:
             await safe_edit(
                 self.message,
-                content=f"💀 **Partie terminée !** Le mot était : `{self.mot}`",
+                content=f"💀 Partie terminée ! Le mot était : `{self.mot}`",
                 view=None
             )
             self.stop()
@@ -112,8 +111,8 @@ class PenduView(View):
         )
 
 class PenduButton(Button):
-    def __init__(self, view: PenduView, lettre: str, style, disabled: bool):
-        super().__init__(label=lettre, style=style, disabled=disabled)
+    def __init__(self, view: PenduView, lettre: str, disabled: bool, row: int = 0):
+        super().__init__(label=lettre, style=discord.ButtonStyle.secondary, disabled=disabled, row=row)
         self.lettre = lettre
         self.view_ref = view
 
