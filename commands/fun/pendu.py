@@ -11,7 +11,7 @@
 import discord
 from discord.ext import commands
 import aiohttp
-from utils.discord_utils import safe_send  # ✅ Utilisation safe_
+from utils.discord_utils import safe_send, safe_edit  # ✅ Utilisation safe_
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🎲 Classe PenduGame - logique du jeu
@@ -42,17 +42,21 @@ class PenduGame:
     def get_pendu_ascii(self) -> str:
         return PENDU_ASCII[min(len(self.rate), MAX_ERREURS)]
 
-    def get_status_message(self) -> str:
+    def get_lettres_tentees(self) -> str:
         lettres_tentees = sorted(self.trouve | self.rate)
-        lettres_str = ", ".join(lettres_tentees) if lettres_tentees else "Aucune"
-        return (
-            f"🕹️ **Jeu du Pendu**\n"
-            f"{self.get_pendu_ascii()}\n\n"
-            f"🔤 Mot : `{self.get_display_word()}`\n"
-            f"❌ Erreurs : `{len(self.rate)} / {MAX_ERREURS}`\n"
-            f"📛 Lettres tentées : `{lettres_str}`\n\n"
-            f"✉️ Propose une lettre en répondant simplement par un message contenant UNE lettre."
+        return ", ".join(lettres_tentees) if lettres_tentees else "Aucune"
+
+    def create_embed(self) -> discord.Embed:
+        embed = discord.Embed(
+            title="🕹️ Jeu du Pendu",
+            description=f"```\n{self.get_pendu_ascii()}\n```",
+            color=discord.Color.blue()
         )
+        embed.add_field(name="Mot", value=f"`{self.get_display_word()}`", inline=False)
+        embed.add_field(name="Erreurs", value=f"`{len(self.rate)} / {MAX_ERREURS}`", inline=False)
+        embed.add_field(name="Lettres tentées", value=f"`{self.get_lettres_tentees()}`", inline=False)
+        embed.set_footer(text="✉️ Propose une lettre en répondant par un message contenant UNE lettre.")
+        return embed
 
     def propose_lettre(self, lettre: str):
         lettre = lettre.lower()
@@ -86,7 +90,7 @@ class Pendu(commands.Cog):
 
     def __init__(self, bot: commands.Bot):
         self.bot = bot
-        self.games = {}  # dict user_id -> PenduGame
+        self.games = {}  # dict user_id -> dict {game: PenduGame, message: discord.Message}
 
     @commands.command(
         name="pendu",
@@ -104,8 +108,9 @@ class Pendu(commands.Cog):
             return
 
         game = PenduGame(mot)
-        self.games[ctx.author.id] = game
-        await safe_send(ctx.channel, game.get_status_message())
+        embed = game.create_embed()
+        message = await safe_send(ctx.channel, embed=embed)
+        self.games[ctx.author.id] = {"game": game, "message": message}
 
     async def _fetch_random_word(self) -> str | None:
         url = "https://trouve-mot.fr/api/categorie/19/1"  # Animaux
@@ -124,36 +129,44 @@ class Pendu(commands.Cog):
         if message.author.bot or not message.guild:
             return
 
-        game = self.games.get(message.author.id)
-        if not game:
+        user_data = self.games.get(message.author.id)
+        if not user_data:
             return
 
         content = message.content.strip().lower()
         if len(content) != 1 or not content.isalpha():
             return  # On attend une seule lettre
 
+        game: PenduGame = user_data["game"]
         resultat = game.propose_lettre(content)
+
         if resultat is None:
             # Lettre déjà proposée
             await safe_send(message.channel, f"❌ Lettre `{content}` déjà proposée.", delete_after=5)
             await message.delete()
             return
 
+        # Mise à jour de l'embed dans le même message
+        embed = game.create_embed()
+        try:
+            await safe_edit(user_data["message"], embed=embed)
+        except discord.NotFound:
+            # Message supprimé, on supprime la partie
+            del self.games[message.author.id]
+            await safe_send(message.channel, "❌ Partie annulée car le message du jeu a été supprimé.")
+            return
+
+        await message.delete()
+
         if resultat == "gagne":
             await safe_send(message.channel, f"🎉 Bravo {message.author.mention}, tu as deviné le mot `{game.mot}` !")
             del self.games[message.author.id]
-            await message.delete()
             return
 
         if resultat == "perdu":
             await safe_send(message.channel, f"💀 Partie terminée ! Le mot était `{game.mot}`.")
             del self.games[message.author.id]
-            await message.delete()
             return
-
-        # Partie continue
-        await safe_send(message.channel, game.get_status_message())
-        await message.delete()
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🔌 Setup du Cog
@@ -162,5 +175,5 @@ async def setup(bot: commands.Bot):
     cog = Pendu(bot)
     for command in cog.get_commands():
         if not hasattr(command, "category"):
-            command.category = "Général"
+            command.category = "Fun"
     await bot.add_cog(cog)
