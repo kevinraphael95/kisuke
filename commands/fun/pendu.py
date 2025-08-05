@@ -1,6 +1,6 @@
 # ────────────────────────────────────────────────────────────────────────────────
 # 📌 pendu.py — Commande interactive !pendu
-# Objectif : Jeu du pendu avec mot aléatoire depuis l’API trouve-mot.fr
+# Objectif : Mini-jeu de pendu avec mots aléatoires depuis trouve-mot.fr
 # Catégorie : Fun
 # Accès : Public
 # ────────────────────────────────────────────────────────────────────────────────
@@ -14,124 +14,142 @@ from discord.ui import View, Button
 import aiohttp
 import random
 import asyncio
+
 from utils.discord_utils import safe_send, safe_edit, safe_respond  # ✅ Utilisation des safe_
 
 # ────────────────────────────────────────────────────────────────────────────────
-# 🔠 Fonction utilitaire — Récupérer un mot depuis l'API
+# 🧠 Fonctions utilitaires
 # ────────────────────────────────────────────────────────────────────────────────
-async def get_random_word():
-    try:
-        async with aiohttp.ClientSession() as session:
-            async with session.get("https://trouve-mot.fr/api/random/1") as resp:
-                if resp.status == 200:
-                    data = await resp.json()
-                    return data[0]["name"].lower()
-    except Exception as e:
-        print(f"[ERREUR API pendu] {e}")
-    return None
+API_URL = "https://trouve-mot.fr/api/random"
+
+PENDU_STAGES = [
+    "`     \n     \n     \n     \n     \n=========`",
+    "`     +\n     |\n     |\n     |\n     |\n=========`",
+    "` +---+\n     |   |\n         |\n         |\n         |\n=========`",
+    "` +---+\n     |   |\n     O   |\n         |\n         |\n=========`",
+    "` +---+\n     |   |\n     O   |\n     |   |\n         |\n=========`",
+    "` +---+\n     |   |\n     O   |\n    /|\\  |\n         |\n=========`",
+    "` +---+\n     |   |\n     O   |\n    /|\\  |\n    / \\  |\n=========`",
+]
+
+async def fetch_random_word():
+    async with aiohttp.ClientSession() as session:
+        async with session.get(API_URL) as resp:
+            data = await resp.json()
+            return data[0]["name"].lower()
 
 # ────────────────────────────────────────────────────────────────────────────────
-# 🎮 UI — Vue du jeu du pendu
+# 🎮 UI — Vue du pendu avec lettres en boutons
 # ────────────────────────────────────────────────────────────────────────────────
 class PenduView(View):
-    def __init__(self, mot_secret):
-        super().__init__(timeout=120)
-        self.mot_secret = mot_secret
-        self.lettres_trouvees = set()
-        self.mauvaises_lettres = set()
-        self.nb_erreurs = 0
+    def __init__(self, bot, mot):
+        super().__init__(timeout=180)
+        self.bot = bot
+        self.mot = mot
+        self.trouve = set()
+        self.rate = set()
         self.max_erreurs = 6
         self.message = None
+        self.update_buttons()
 
-    async def interaction_check(self, interaction: discord.Interaction) -> bool:
-        return True  # tout le monde peut participer
+    def update_buttons(self):
+        self.clear_items()
+        for i, lettre in enumerate("ABCDEFGHIJKLMNOPQRSTUVWXYZ"):
+            style = discord.ButtonStyle.success if lettre.lower() in self.trouve else (
+                discord.ButtonStyle.danger if lettre.lower() in self.rate else discord.ButtonStyle.secondary
+            )
+            self.add_item(PenduButton(self, lettre, style, lettre.lower() in self.trouve | self.rate))
 
-    async def envoyer_etat(self, interaction: discord.Interaction):
-        etat_mot = " ".join([l if l in self.lettres_trouvees else "_" for l in self.mot_secret])
-        pendu_visuel = [
-            "\n😃\n",
-            "\n😐\n",
-            "\n🙁\n",
-            "\n☹️\n",
-            "\n😣\n",
-            "\n😭\n",
-            "\n💀\n"
-        ][self.nb_erreurs]
+    def get_display_word(self):
+        return " ".join([l if l in self.trouve else "_" for l in self.mot])
 
-        content = f"```Mot : {etat_mot}\nErreurs : {self.nb_erreurs}/{self.max_erreurs}{pendu_visuel}```"
-        if self.message:
-            await safe_edit(self.message, content=content, view=self)
-        else:
-            self.message = await safe_send(interaction.channel, content, view=self)
+    def get_pendu_status(self):
+        erreurs = len(self.rate)
+        pendu_dessin = PENDU_STAGES[erreurs]
+        lettres_tentees = ", ".join(sorted(self.trouve | self.rate)).upper() or "Aucune"
 
-        if "_" not in etat_mot:
-            await safe_edit(self.message, content=f"✅ Bien joué ! Le mot était **{self.mot_secret}**.", view=None)
-            self.stop()
-        elif self.nb_erreurs >= self.max_erreurs:
-            await safe_edit(self.message, content=f"❌ Perdu ! Le mot était **{self.mot_secret}**.", view=None)
-            self.stop()
+        return (
+            f"🕹️ **Pendu** — Trouve le mot caché !\n\n"
+            f"{pendu_dessin}\n\n"
+            f"**Mot :** `{self.get_display_word()}`\n"
+            f"**Erreurs :** {erreurs} / {self.max_erreurs}\n"
+            f"**Lettres tentées :** {lettres_tentees}"
+        )
 
-    @discord.ui.button(label="Lettre", style=discord.ButtonStyle.primary, custom_id="pendu_lettre")
-    async def demander_lettre(self, interaction: discord.Interaction, button: Button):
-        await interaction.response.send_modal(LettreModal(self))
-
-# ────────────────────────────────────────────────────────────────────────────────
-# ⌨️ Modal — Demander une lettre au joueur
-# ────────────────────────────────────────────────────────────────────────────────
-class LettreModal(discord.ui.Modal, title="Propose une lettre"):
-    lettre = discord.ui.TextInput(label="Lettre", placeholder="Une seule lettre", max_length=1)
-
-    def __init__(self, parent_view: PenduView):
-        super().__init__()
-        self.parent_view = parent_view
-
-    async def on_submit(self, interaction: discord.Interaction):
-        lettre = self.lettre.value.lower()
-        if not lettre.isalpha():
-            await safe_respond(interaction, "❌ Entre une **lettre valide**.")
+    async def process_letter(self, interaction: discord.Interaction, lettre: str):
+        lettre = lettre.lower()
+        if lettre in self.trouve or lettre in self.rate:
             return
 
-        if lettre in self.parent_view.lettres_trouvees or lettre in self.parent_view.mauvaises_lettres:
-            await safe_respond(interaction, "⚠️ Lettre déjà proposée.")
+        if lettre in self.mot:
+            self.trouve.add(lettre)
+        else:
+            self.rate.add(lettre)
+
+        if all(l in self.trouve for l in set(self.mot)):
+            await safe_edit(
+                self.message,
+                content=f"🎉 **Bravo !** Tu as deviné le mot : `{self.mot}`",
+                view=None
+            )
+            self.stop()
             return
 
-        if lettre in self.parent_view.mot_secret:
-            self.parent_view.lettres_trouvees.add(lettre)
-        else:
-            self.parent_view.mauvaises_lettres.add(lettre)
-            self.parent_view.nb_erreurs += 1
+        if len(self.rate) >= self.max_erreurs:
+            await safe_edit(
+                self.message,
+                content=f"💀 **Partie terminée !** Le mot était : `{self.mot}`",
+                view=None
+            )
+            self.stop()
+            return
 
-        await self.parent_view.envoyer_etat(interaction)
+        self.update_buttons()
+        await safe_edit(
+            self.message,
+            content=self.get_pendu_status(),
+            view=self
+        )
+
+class PenduButton(Button):
+    def __init__(self, view: PenduView, lettre: str, style, disabled: bool):
+        super().__init__(label=lettre, style=style, disabled=disabled)
+        self.lettre = lettre
+        self.view_ref = view
+
+    async def callback(self, interaction: discord.Interaction):
+        await self.view_ref.process_letter(interaction, self.lettre)
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🧠 Cog principal
 # ────────────────────────────────────────────────────────────────────────────────
 class Pendu(commands.Cog):
     """
-    Commande !pendu — Devine un mot lettre par lettre
+    Commande !pendu — Mini-jeu du pendu avec lettres en boutons
     """
-    def __init__(self, bot: commands.Bot):
+    def __init__(self, bot):
         self.bot = bot
 
     @commands.command(
         name="pendu",
-        help="Jeu du pendu (devine un mot).",
-        description="Jeu du pendu avec un mot aléatoire."
+        help="Lance une partie de pendu.",
+        description="Joue au pendu avec un mot aléatoire."
     )
-    async def pendu(self, ctx: commands.Context):
-        """Commande principale du jeu du pendu."""
-        mot = await get_random_word()
-        if not mot:
-            await safe_send(ctx.channel, "❌ Impossible de récupérer un mot.")
-            return
-
-        view = PenduView(mot)
-        await view.envoyer_etat(ctx)
+    async def pendu(self, ctx):
+        """Commande principale pour jouer au pendu."""
+        try:
+            mot = await fetch_random_word()
+            view = PenduView(self.bot, mot)
+            msg = await safe_send(ctx.channel, view.get_pendu_status(), view=view)
+            view.message = msg
+        except Exception as e:
+            print(f"[ERREUR pendu] {e}")
+            await safe_send(ctx.channel, "❌ Une erreur est survenue pendant la partie.")
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🔌 Setup du Cog
 # ────────────────────────────────────────────────────────────────────────────────
-async def setup(bot: commands.Bot):
+async def setup(bot):
     cog = Pendu(bot)
     for command in cog.get_commands():
         if not hasattr(command, "category"):
