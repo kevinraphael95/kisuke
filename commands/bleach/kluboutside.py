@@ -21,7 +21,7 @@ from utils.discord_utils import safe_send, safe_edit  # Utils anti rate-limit
 # 📂 Chargement des données JSON
 # ──────────────────────────────────────────────────────────
 KO_DATA_PATH = os.path.join("data", "ko.json")
-KO_IMAGE_DIR = os.path.join("data", "koimages")
+KO_IMAGE_DIR = os.path.join("data", "images", "kluboutside")
 
 def load_data():
     with open(KO_DATA_PATH, "r", encoding="utf-8") as f:
