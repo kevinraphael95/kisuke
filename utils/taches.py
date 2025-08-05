@@ -3,9 +3,6 @@
 # Objectif : Mini-jeux interactifs affichés dynamiquement dans un embed unique
 # ────────────────────────────────────────────────────────────────────────────────
 
-# ────────────────────────────────────────────────────────────────────────────────
-# 📦 Imports nécessaires
-# ────────────────────────────────────────────────────────────────────────────────
 import discord
 import random
 import asyncio
@@ -13,23 +10,16 @@ import json
 import os
 
 # ────────────────────────────────────────────────────────────────────────────────
-# 📂 Chargement des données JSON (exemple)
+# 📂 Chargement des données JSON
 # ────────────────────────────────────────────────────────────────────────────────
 DATA_JSON_PATH = os.path.join("data", "bleach_emojis.json")
 
 def load_characters():
-    """Charge les personnages depuis le fichier JSON."""
     with open(DATA_JSON_PATH, encoding="utf-8") as f:
         return json.load(f)
 
 # ────────────────────────────────────────────────────────────────────────────────
-# 🔹 Fonctions des mini-jeux — version avec boutons
-# Chaque fonction prend :
-# - interaction : discord.Interaction
-# - embed : discord.Embed (à modifier)
-# - update_embed : fonction async pour éditer l’embed dans le message
-# - num : numéro de l’épreuve (affiché dans l’embed)
-# Retourne True si réussite, False sinon.
+# 🔹 Fonctions des mini-jeux
 # ────────────────────────────────────────────────────────────────────────────────
 
 async def lancer_emoji(interaction, embed, update_embed, num):
@@ -43,9 +33,7 @@ async def lancer_emoji(interaction, embed, update_embed, num):
         def __init__(self, emoji):
             super().__init__(style=discord.ButtonStyle.secondary, emoji=emoji)
             self.emoji_val = emoji
-        async def callback(self, interaction_button):
-            if interaction_button.user != interaction.user:
-                return
+        async def callback(self, inter_button):
             if len(view.reponses) < len(sequence) and self.emoji_val == sequence[len(view.reponses)]:
                 view.reponses.append(self.emoji_val)
                 if len(view.reponses) == len(sequence):
@@ -53,13 +41,17 @@ async def lancer_emoji(interaction, embed, update_embed, num):
             else:
                 view.reponses.clear()
 
-    view = discord.ui.View(timeout=120)
+    if not interaction.response.is_done():
+        await interaction.response.defer()
+
+    view = discord.ui.View(timeout=30)
+    view.reponses = []
+    view.interaction_check = lambda i: i.user.id == interaction.user.id
+
     for e in mix:
         view.add_item(EmojiButton(e))
-    view.reponses = []
 
-    msg = await interaction.followup.send(f"🔁 Reproduis cette séquence : {' → '.join(sequence)}", view=view)
-    view.message = msg
+    await interaction.followup.send(f"🔁 Reproduis cette séquence : {' → '.join(sequence)}", view=view)
     await view.wait()
 
     success = view.reponses == sequence
@@ -76,9 +68,7 @@ async def lancer_reflexe(interaction, embed, update_embed, num):
         def __init__(self, emoji):
             super().__init__(style=discord.ButtonStyle.secondary, emoji=emoji)
             self.emoji_val = emoji
-        async def callback(self, interaction_button):
-            if interaction_button.user != interaction.user:
-                return
+        async def callback(self, inter_button):
             if len(view.reponses) < len(compte) and self.emoji_val == compte[len(view.reponses)]:
                 view.reponses.append(self.emoji_val)
                 if len(view.reponses) == len(compte):
@@ -86,13 +76,17 @@ async def lancer_reflexe(interaction, embed, update_embed, num):
             else:
                 view.reponses.clear()
 
+    if not interaction.response.is_done():
+        await interaction.response.defer()
+
     view = discord.ui.View(timeout=20)
+    view.reponses = []
+    view.interaction_check = lambda i: i.user.id == interaction.user.id
+
     for e in compte:
         view.add_item(ReflexeButton(e))
-    view.reponses = []
 
-    msg = await interaction.followup.send("🕒 Clique dans l’ordre : `5️⃣ 4️⃣ 3️⃣ 2️⃣ 1️⃣`", view=view)
-    view.message = msg
+    await interaction.followup.send("🕒 Clique dans l’ordre : `5️⃣ 4️⃣ 3️⃣ 2️⃣ 1️⃣`", view=view)
     await view.wait()
 
     success = view.reponses == compte
@@ -113,9 +107,7 @@ async def lancer_fleche(interaction, embed, update_embed, num):
         def __init__(self, emoji):
             super().__init__(style=discord.ButtonStyle.secondary, emoji=emoji)
             self.emoji_val = emoji
-        async def callback(self, interaction_button):
-            if interaction_button.user != interaction.user:
-                return
+        async def callback(self, inter_button):
             if len(view.reponses) < len(sequence) and self.emoji_val == sequence[len(view.reponses)]:
                 view.reponses.append(self.emoji_val)
                 if len(view.reponses) == len(sequence):
@@ -123,12 +115,17 @@ async def lancer_fleche(interaction, embed, update_embed, num):
             else:
                 view.reponses.clear()
 
+    if not interaction.response.is_done():
+        await interaction.response.defer()
+
     view = discord.ui.View(timeout=30)
+    view.reponses = []
+    view.interaction_check = lambda i: i.user.id == interaction.user.id
+
     for e in fleches:
         view.add_item(FlecheButton(e))
-    view.reponses = []
 
-    await interaction.channel.send("🔁 Reproduis la séquence :", view=view)
+    await interaction.followup.send("🔁 Reproduis la séquence :", view=view)
     await view.wait()
 
     success = view.reponses == sequence
@@ -157,16 +154,15 @@ async def lancer_infusion(interaction, embed, update_embed, num):
     event = asyncio.Event()
 
     def bouton_callback(inter_button):
-        if inter_button.user == interaction.user:
+        if inter_button.user.id == interaction.user.id:
             now = discord.utils.utcnow()
             delta = (now - start).total_seconds()
-            if 0.8 <= delta <= 1.2:
-                view.success = True
-            else:
-                view.success = False
+            view.success = 0.8 <= delta <= 1.2
             event.set()
 
     bouton.callback = bouton_callback
+    view.success = False
+
     start = discord.utils.utcnow()
     await msg.edit(content="🔴 Cliquez ⚡ maintenant", view=view)
 
@@ -199,20 +195,21 @@ async def lancer_emoji9(interaction, embed, update_embed, num):
         def __init__(self, label):
             super().__init__(label=label, style=discord.ButtonStyle.primary)
         async def callback(self, inter_button):
-            if inter_button.user != interaction.user:
-                return
             choix = self.label
-            success = (choix == "✅" and not has_intrus) or (choix == "❌" and has_intrus)
-            view.success = success
+            view.success = (choix == "✅" and not has_intrus) or (choix == "❌" and has_intrus)
             view.stop()
 
+    if not interaction.response.is_done():
+        await interaction.response.defer()
+
     view = discord.ui.View(timeout=15)
+    view.success = False
+    view.interaction_check = lambda i: i.user.id == interaction.user.id
+
     view.add_item(ChoixButton("✅"))
     view.add_item(ChoixButton("❌"))
-    view.success = False
 
-    msg = await interaction.followup.send(f"🔎 {ligne}\nTous identiques ? (✅ oui / ❌ non)", view=view)
-    view.message = msg
+    await interaction.followup.send(f"🔎 {ligne}\nTous identiques ? (✅ oui / ❌ non)", view=view)
     await view.wait()
 
     msg = "✅ Bonne réponse" if view.success else "❌ Mauvaise réponse"
@@ -238,18 +235,20 @@ async def lancer_bmoji(interaction, embed, update_embed, num):
             super().__init__(emoji=emoji, style=discord.ButtonStyle.secondary)
             self.idx = idx
         async def callback(self, inter_button):
-            if inter_button.user != interaction.user:
-                return
             view.success = (lettres[self.idx] == bonne)
             view.stop()
 
+    if not interaction.response.is_done():
+        await interaction.response.defer()
+
     view = discord.ui.View(timeout=30)
+    view.success = False
+    view.interaction_check = lambda i: i.user.id == interaction.user.id
+
     for i in range(4):
         view.add_item(PersoButton(lettres[i], i))
-    view.success = False
 
-    msg = await interaction.followup.send(f"🔍 Devine le perso :\n{desc}", view=view)
-    view.message = msg
+    await interaction.followup.send(f"🔍 Devine le perso :\n{desc}", view=view)
     await view.wait()
 
     msg = "✅ Bonne réponse" if view.success else "❌ Mauvaise réponse"
@@ -260,6 +259,7 @@ async def lancer_bmoji(interaction, embed, update_embed, num):
 # ────────────────────────────────────────────────────────────────────────────────
 # 🔁 Lancer 3 épreuves aléatoires dans le même embed
 # ────────────────────────────────────────────────────────────────────────────────
+
 TACHES = [
     lancer_emoji,
     lancer_reflexe,
@@ -270,11 +270,6 @@ TACHES = [
 ]
 
 async def lancer_3_taches(interaction, embed, update_embed):
-    """
-    Lance 3 épreuves aléatoires dans le même embed.
-    Met à jour l'embed via update_embed après chaque épreuve.
-    Retourne True si toutes réussies, False dès la première échec.
-    """
     choisies = random.sample(TACHES, 3)
     for i, tache in enumerate(choisies, start=1):
         success = await tache(interaction, embed, update_embed, i)
