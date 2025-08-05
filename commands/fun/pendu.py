@@ -35,9 +35,12 @@ PENDU_ASCII = [
 
 async def fetch_random_word():
     async with aiohttp.ClientSession() as session:
-        async with session.get(API_URL) as resp:
+        async with session.get("https://trouve-mot.fr/api/random") as resp:
+            if resp.status != 200:
+                raise Exception(f"Erreur API: {resp.status}")
             data = await resp.json()
-            return data[0]["name"].lower()  # ex: "souris"
+            return data[0]["name"].lower()
+
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🎮 UI — Vue du pendu avec lettres en boutons
