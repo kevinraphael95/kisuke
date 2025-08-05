@@ -58,7 +58,8 @@ async def lancer_emoji(interaction, embed, update_embed, num):
         view.add_item(EmojiButton(e))
     view.reponses = []
 
-    await interaction.followup.send(f"🔁 Reproduis cette séquence : {' → '.join(sequence)}", view=view)
+    msg = await interaction.followup.send(f"🔁 Reproduis cette séquence : {' → '.join(sequence)}", view=view)
+    view.message = msg
     await view.wait()
 
     success = view.reponses == sequence
@@ -90,7 +91,8 @@ async def lancer_reflexe(interaction, embed, update_embed, num):
         view.add_item(ReflexeButton(e))
     view.reponses = []
 
-    await interaction.followup.send("🕒 Clique dans l’ordre : `5️⃣ 4️⃣ 3️⃣ 2️⃣ 1️⃣`", view=view)
+    msg = await interaction.followup.send("🕒 Clique dans l’ordre : `5️⃣ 4️⃣ 3️⃣ 2️⃣ 1️⃣`", view=view)
+    view.message = msg
     await view.wait()
 
     success = view.reponses == compte
@@ -209,7 +211,8 @@ async def lancer_emoji9(interaction, embed, update_embed, num):
     view.add_item(ChoixButton("❌"))
     view.success = False
 
-    await interaction.followup.send(f"🔎 {ligne}\nTous identiques ? (✅ oui / ❌ non)", view=view)
+    msg = await interaction.followup.send(f"🔎 {ligne}\nTous identiques ? (✅ oui / ❌ non)", view=view)
+    view.message = msg
     await view.wait()
 
     msg = "✅ Bonne réponse" if view.success else "❌ Mauvaise réponse"
@@ -245,7 +248,8 @@ async def lancer_bmoji(interaction, embed, update_embed, num):
         view.add_item(PersoButton(lettres[i], i))
     view.success = False
 
-    await interaction.followup.send(f"🔍 Devine le perso :\n{desc}", view=view)
+    msg = await interaction.followup.send(f"🔍 Devine le perso :\n{desc}", view=view)
+    view.message = msg
     await view.wait()
 
     msg = "✅ Bonne réponse" if view.success else "❌ Mauvaise réponse"
