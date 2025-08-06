@@ -5,7 +5,9 @@
 # Accès : Public
 # ────────────────────────────────────────────────────────────────────────────────
 
+# ────────────────────────────────────────────────────────────────────────────────
 # 📦 Imports
+# ────────────────────────────────────────────────────────────────────────────────
 import discord
 from discord.ext import commands
 from discord.ui import View, Button
@@ -14,43 +16,24 @@ import os
 import traceback
 from utils.discord_utils import safe_send, safe_edit
 from supabase_client import supabase
-from utils.taches import TACHES_DISPONIBLES
+from utils.taches import lancer_3_taches
 import asyncio
-import random
 
+# ────────────────────────────────────────────────────────────────────────────────
 # 📂 Constantes
-HOLLOW_IMAGE_PATH = os.path.join("data", "hollows", "hollow0.jpg")
+# ────────────────────────────────────────────────────────────────────────────────
+HOLLOW_IMAGE_PATH = os.path.join("data", "images", "hollows", "hollow0.jpg")
 REIATSU_COST = 1
 
-# 🧪 Lancer les 3 tâches dans un seul embed (champ "Tâche en cours" dynamique)
-async def lancer_3_taches_dans_embed(interaction: discord.Interaction, embed: discord.Embed, message: discord.Message) -> bool:
-    taches = random.sample(TACHES_DISPONIBLES, 3)
-    for idx, tache in enumerate(taches, 1):
-        embed.set_field_at(
-            1,
-            name="Tâche en cours",
-            value=f"🧪 Épreuve {idx}/3 en cours...",
-            inline=False
-        )
-        await safe_edit(message, embed=embed)
-        await asyncio.sleep(1)
-        reussi = await tache(interaction)
-        if not reussi:
-            embed.set_field_at(1, name="Tâche en cours", value="❌ Tu as échoué. Le Hollow s’enfuit !", inline=False)
-            await safe_edit(message, embed=embed)
-            return False
-    embed.set_field_at(1, name="Tâche en cours", value="🎉 Tu as vaincu le Hollow !", inline=False)
-    await safe_edit(message, embed=embed)
-    return True
-
+# ────────────────────────────────────────────────────────────────────────────────
 # 🎮 Vue avec bouton d’attaque
+# ────────────────────────────────────────────────────────────────────────────────
 class HollowView(View):
-    def __init__(self, author_id: int, embed: discord.Embed):
+    def __init__(self, author_id: int):
         super().__init__(timeout=60)
         self.author_id = author_id
         self.attacked = False
         self.message = None
-        self.embed = embed
 
     async def on_timeout(self):
         for c in self.children:
@@ -86,26 +69,39 @@ class HollowView(View):
             supabase.table("reiatsu").update({"points": points - REIATSU_COST}).eq("user_id", uid).execute()
             self.attacked = True
 
-            # 🎯 Mise à jour de l’embed avec les champs de combat
-            self.embed.description = f"⚔️ {inter.user.display_name} dépense 1 reiatsu pour affronter le Hollow !\n\nRéussis les 3 épreuves pour le vaincre."
-            self.embed.set_footer(text="Combat en cours...")
-            self.embed.set_field_at(0, name="Épreuves", value="Tu devras réussir 3 tâches aléatoires. Bonne chance !", inline=False)
-            self.embed.add_field(name="Tâche en cours", value="⏳ Préparation de l’épreuve...", inline=False)
-            await safe_edit(self.message, embed=self.embed, view=self)
+            # 📄 Préparation de l’embed de combat
+            embed = Embed(
+                title="👹 Combat contre le Hollow",
+                description=f"⚔️ {inter.user.display_name} dépense 1 reiatsu pour affronter le Hollow !\n\nRéussis les 3 épreuves pour le vaincre.",
+                color=discord.Color.orange()
+            )
+            embed.set_image(url="attachment://hollow.jpg")
+            embed.set_footer(text="Combat en cours...")
+            embed.add_field(name="Épreuves", value="⏳ Chargement des épreuves...", inline=False)
+            await safe_edit(self.message, embeds=[embed], view=self)
 
             # 🧪 Lancement des épreuves
-            victoire = await lancer_3_taches_dans_embed(inter, self.embed, self.message)
+            async def update_embed(e):
+                await safe_edit(self.message, embeds=[e], view=self)
 
-            # 🔒 Désactiver le bouton
-            for c in self.children:
-                c.disabled = True
-            await safe_edit(self.message, view=self)
+            victoire = await lancer_3_taches(inter, embed, update_embed)
+
+            # 🏁 Résultat
+            result = Embed(
+                title="🎯 Résultat du combat",
+                description="🎉 Tu as vaincu le Hollow !" if victoire else "💀 Tu as échoué à vaincre le Hollow.",
+                color=discord.Color.green() if victoire else discord.Color.red()
+            )
+            result.set_footer(text=f"Combat de {inter.user.display_name}")
+            await safe_edit(self.message, embeds=[embed, result], view=self)
 
         except Exception:
             traceback.print_exc()
             await inter.followup.send("⚠️ Une erreur est survenue pendant le combat.", ephemeral=True)
 
+# ────────────────────────────────────────────────────────────────────────────────
 # 🧠 Cog principal
+# ────────────────────────────────────────────────────────────────────────────────
 class HollowCommand(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
@@ -125,15 +121,16 @@ class HollowCommand(commands.Cog):
         )
         embed.set_image(url="attachment://hollow.jpg")
         embed.set_footer(text="Tu as 60 secondes pour cliquer sur Attaquer.")
-        embed.add_field(name="Épreuves", value="Appuie sur le bouton pour commencer.", inline=False)
 
-        view = HollowView(author_id=ctx.author.id, embed=embed)
+        view = HollowView(author_id=ctx.author.id)
         msg = await ctx.send(embed=embed, file=file, view=view)
         view.message = msg
 
+# ────────────────────────────────────────────────────────────────────────────────
 # 🔌 Setup du Cog
+# ────────────────────────────────────────────────────────────────────────────────
 async def setup(bot: commands.Bot):
     cog = HollowCommand(bot)
     for command in cog.get_commands():
-        command.category = "Hollow"
+        command.category = "Test"
     await bot.add_cog(cog)
