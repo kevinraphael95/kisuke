@@ -271,28 +271,23 @@ TACHES = [
 
 async def lancer_3_taches(interaction, embed, update_embed):
     """
-    Lance 3 tâches aléatoires et met à jour dynamiquement un seul champ 'Épreuves'.
-    Retourne True si toutes les épreuves sont réussies, False sinon.
+    Lance 3 tâches aléatoires et affiche dynamiquement l’épreuve en cours
+    dans un champ unique 'Épreuve en cours' de l'embed.
     """
-    taches = [lancer_emoji, lancer_reflexe, lancer_fleche]
-    random.shuffle(taches)
+    taches_disponibles = TACHES.copy()
+    random.shuffle(taches_disponibles)
+    selection = taches_disponibles[:3]
+    success_global = True
 
-    resultats = []
-    embed.clear_fields()
-    embed.add_field(name="Épreuves", value="🔸 Préparation des épreuves...", inline=False)
-    await update_embed(embed)
-
-    for i, tache in enumerate(taches, start=1):
-        reussite = await tache(interaction, embed=None, update_embed=None, num=i)
-
-        txt = f"**Épreuve {i} :** {'✅ Réussie' if reussite else '❌ Échouée'}"
-        resultats.append(txt)
-
-        # Mise à jour du champ unique
-        embed.set_field_at(0, name="Épreuves", value="\n".join(resultats), inline=False)
+    for i, tache in enumerate(selection):
+        embed.set_field_at(0, name="Épreuve en cours", value=f"🔹 Épreuve {i+1} en cours...", inline=False)
         await update_embed(embed)
-
-        if not reussite:
+        try:
+            result = await tache(interaction, embed, update_embed, i+1)
+        except Exception:
+            result = False
+        if not result:
+            success_global = False
             break
 
-    return all("✅" in ligne for ligne in resultats)
+    return success_global
