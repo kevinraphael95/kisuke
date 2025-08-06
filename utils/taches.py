@@ -271,32 +271,28 @@ TACHES = [
 
 async def lancer_3_taches(interaction, embed, update_embed):
     """
-    Lance 3 épreuves aléatoires dans le même embed.
-    Met à jour l'embed via update_embed après chaque épreuve.
-    Retourne True si toutes réussies, False dès la première ratée.
+    Lance 3 tâches aléatoires et met à jour dynamiquement un seul champ 'Épreuves'.
+    Retourne True si toutes les épreuves sont réussies, False sinon.
     """
-    epreuves = random.sample(TACHES, 3)
+    taches = [lancer_emoji, lancer_reflexe, lancer_fleche]
+    random.shuffle(taches)
 
-    for i, tache in enumerate(epreuves, start=1):
-        # Ajoute le champ "Épreuve en cours" juste après l'image
-        embed_fields = embed.fields
-        for field in embed_fields:
-            if field.name == "Épreuve en cours":
-                embed.remove_field(embed_fields.index(field))
-        embed.add_field(name="Épreuve en cours", value=f"Épreuve {i} en cours...", inline=False)
+    resultats = []
+    embed.clear_fields()
+    embed.add_field(name="Épreuves", value="🔸 Préparation des épreuves...", inline=False)
+    await update_embed(embed)
+
+    for i, tache in enumerate(taches, start=1):
+        reussite = await tache(interaction, embed=None, update_embed=None, num=i)
+
+        txt = f"**Épreuve {i} :** {'✅ Réussie' if reussite else '❌ Échouée'}"
+        resultats.append(txt)
+
+        # Mise à jour du champ unique
+        embed.set_field_at(0, name="Épreuves", value="\n".join(resultats), inline=False)
         await update_embed(embed)
 
-        success = await tache(interaction, embed, update_embed, i)
+        if not reussite:
+            break
 
-        # Supprimer le champ "Épreuve en cours" après la tâche
-        embed_fields = embed.fields
-        for field in embed_fields:
-            if field.name == "Épreuve en cours":
-                embed.remove_field(embed_fields.index(field))
-
-        await update_embed(embed)
-
-        if not success:
-            return False
-
-    return True
+    return all("✅" in ligne for ligne in resultats)
