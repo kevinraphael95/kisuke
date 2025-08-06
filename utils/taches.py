@@ -156,7 +156,7 @@ async def lancer_infusion(interaction, embed, update_embed, num):
 
     event = asyncio.Event()
 
-    def bouton_callback(inter_button):
+    async def bouton_callback(inter_button):
         if inter_button.user == interaction.user:
             now = discord.utils.utcnow()
             delta = (now - start).total_seconds()
@@ -165,6 +165,7 @@ async def lancer_infusion(interaction, embed, update_embed, num):
             else:
                 view.success = False
             event.set()
+            await inter_button.response.defer()
 
     bouton.callback = bouton_callback
     start = discord.utils.utcnow()
@@ -211,92 +212,101 @@ async def lancer_emoji9(interaction, embed, update_embed, num):
     view.add_item(ChoixButton("❌"))
     view.success = False
 
-    msg = await interaction.followup.send(f"🔎 {ligne}\nTous identiques ? (✅ oui / ❌ non)", view=view)
-    view.message = msg
+    await interaction.followup.send(f"🧐 Trouve l'intrus ?\n{ligne}", view=view)
     await view.wait()
 
-    msg = "✅ Bonne réponse" if view.success else "❌ Mauvaise réponse"
-    embed.add_field(name=f"Épreuve {num}", value=msg, inline=False)
+    msg_res = "✅ Bonne réponse !" if view.success else "❌ Mauvaise réponse"
+    embed.add_field(name=f"Épreuve {num}", value=msg_res, inline=False)
     await update_embed(embed)
     return view.success
 
 
-async def lancer_bmoji(interaction, embed, update_embed, num):
-    characters = load_characters()
-    pers = random.choice(characters)
-    nom = pers["nom"]
-    emojis = random.sample(pers["emojis"], k=min(3, len(pers["emojis"])))
-    distracteurs = random.sample([c["nom"] for c in characters if c["nom"] != nom], 3)
-    options = distracteurs + [nom]
-    random.shuffle(options)
-    lettres = ["🇦", "🇧", "🇨", "🇩"]
-    bonne = lettres[options.index(nom)]
-    desc = " ".join(emojis) + "\n" + "\n".join(f"{lettres[i]} : {options[i]}" for i in range(4))
+async def lancer_nim(interaction, embed, update_embed, num):
+    tas = [1,3,5,7]
 
-    class PersoButton(discord.ui.Button):
-        def __init__(self, emoji, idx):
-            super().__init__(emoji=emoji, style=discord.ButtonStyle.secondary)
-            self.idx = idx
-        async def callback(self, inter_button):
-            if inter_button.user != interaction.user:
+    class NimView(discord.ui.View):
+        def __init__(self):
+            super().__init__(timeout=60)
+            self.tas = tas.copy()
+            self.game_over = False
+            self.winner = None
+
+        def render(self):
+            lines = []
+            for i, t in enumerate(self.tas):
+                lines.append(f"**Tas {i+1}** : " + "●"*t)
+            return "\n".join(lines)
+
+        async def update_message(self, interaction):
+            content = f"NIM — C'est ton tour, {interaction.user.mention}.\n\n{self.render()}"
+            await interaction.response.edit_message(content=content, view=self)
+
+        @discord.ui.button(label="Tas 1 - Retirer 1", style=discord.ButtonStyle.secondary)
+        async def tas1(self, button, interaction):
+            await self.jouer(interaction, 0, 1)
+
+        @discord.ui.button(label="Tas 1 - Retirer 2", style=discord.ButtonStyle.secondary)
+        async def tas1b(self, button, interaction):
+            await self.jouer(interaction, 0, 2)
+
+        @discord.ui.button(label="Tas 2 - Retirer 1", style=discord.ButtonStyle.secondary)
+        async def tas2(self, button, interaction):
+            await self.jouer(interaction, 1, 1)
+
+        @discord.ui.button(label="Tas 2 - Retirer 2", style=discord.ButtonStyle.secondary)
+        async def tas2b(self, button, interaction):
+            await self.jouer(interaction, 1, 2)
+
+        @discord.ui.button(label="Tas 3 - Retirer 1", style=discord.ButtonStyle.secondary)
+        async def tas3(self, button, interaction):
+            await self.jouer(interaction, 2, 1)
+
+        @discord.ui.button(label="Tas 3 - Retirer 2", style=discord.ButtonStyle.secondary)
+        async def tas3b(self, button, interaction):
+            await self.jouer(interaction, 2, 2)
+
+        @discord.ui.button(label="Tas 4 - Retirer 1", style=discord.ButtonStyle.secondary)
+        async def tas4(self, button, interaction):
+            await self.jouer(interaction, 3, 1)
+
+        @discord.ui.button(label="Tas 4 - Retirer 2", style=discord.ButtonStyle.secondary)
+        async def tas4b(self, button, interaction):
+            await self.jouer(interaction, 3, 2)
+
+        async def jouer(self, interaction, tas_index, nombre):
+            if interaction.user != interaction.message.interaction.user:
+                await interaction.response.defer()
                 return
-            view.success = (lettres[self.idx] == bonne)
-            view.stop()
+            if self.tas[tas_index] < nombre:
+                await interaction.response.defer()
+                return
+            self.tas[tas_index] -= nombre
+            if sum(self.tas) == 0:
+                self.game_over = True
+                self.winner = interaction.user
+                self.stop()
+                await interaction.response.edit_message(content=f"🎉 {interaction.user.mention} a gagné le NIM !", view=None)
+            else:
+                await self.update_message(interaction)
 
-    view = discord.ui.View(timeout=30)
-    for i in range(4):
-        view.add_item(PersoButton(lettres[i], i))
-    view.success = False
-
-    msg = await interaction.followup.send(f"🔍 Devine le perso :\n{desc}", view=view)
-    view.message = msg
+    view = NimView()
+    await interaction.followup.send("🎲 Jeu du NIM : retirez 1 ou 2 jetons d’un tas à votre tour.", view=view)
     await view.wait()
-
-    msg = "✅ Bonne réponse" if view.success else "❌ Mauvaise réponse"
-    embed.add_field(name=f"Épreuve {num}", value=msg, inline=False)
+    success = getattr(view, "winner", None) == interaction.user
+    msg_res = "✅ Tu as gagné !" if success else "❌ Tu as perdu ou abandonné."
+    embed.add_field(name=f"Épreuve {num}", value=msg_res, inline=False)
     await update_embed(embed)
-    return view.success
+    return success
 
 # ────────────────────────────────────────────────────────────────────────────────
-# 🔁 Lancer 3 épreuves aléatoires dans le même embed
+# 🔹 Liste des épreuves disponibles (nom, fonction)
 # ────────────────────────────────────────────────────────────────────────────────
+
 TACHES = [
-    lancer_emoji,
-    lancer_reflexe,
-    lancer_fleche,
-    lancer_infusion,
-    lancer_emoji9,
-    lancer_bmoji,
+    ("Emoji", lancer_emoji),
+    ("Réflexe", lancer_reflexe),
+    ("Flèche", lancer_fleche),
+    ("Infusion", lancer_infusion),
+    ("Emoji 9", lancer_emoji9),
+    ("NIM", lancer_nim),
 ]
-
-async def lancer_3_taches(interaction, embed, update_embed):
-    """
-    Lance 3 épreuves aléatoires dans le même embed.
-    Met à jour l'embed via update_embed après chaque épreuve.
-    Retourne True si toutes réussies, False dès la première ratée.
-    """
-    epreuves = random.sample(TACHES, 3)
-
-    for i, tache in enumerate(epreuves, start=1):
-        # Ajoute le champ "Épreuve en cours" juste après l'image
-        embed_fields = embed.fields
-        for field in embed_fields:
-            if field.name == "Épreuve en cours":
-                embed.remove_field(embed_fields.index(field))
-        embed.add_field(name="Épreuve en cours", value=f"Épreuve {i} en cours...", inline=False)
-        await update_embed(embed)
-
-        success = await tache(interaction, embed, update_embed, i)
-
-        # Supprimer le champ "Épreuve en cours" après la tâche
-        embed_fields = embed.fields
-        for field in embed_fields:
-            if field.name == "Épreuve en cours":
-                embed.remove_field(embed_fields.index(field))
-
-        await update_embed(embed)
-
-        if not success:
-            return False
-
-    return True
