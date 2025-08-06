@@ -273,11 +273,30 @@ async def lancer_3_taches(interaction, embed, update_embed):
     """
     Lance 3 épreuves aléatoires dans le même embed.
     Met à jour l'embed via update_embed après chaque épreuve.
-    Retourne True si toutes réussies, False dès la première échec.
+    Retourne True si toutes réussies, False dès la première ratée.
     """
-    choisies = random.sample(TACHES, 3)
-    for i, tache in enumerate(choisies, start=1):
+    epreuves = random.sample(TACHES, 3)
+
+    for i, tache in enumerate(epreuves, start=1):
+        # Ajoute le champ "Épreuve en cours" juste après l'image
+        embed_fields = embed.fields
+        for field in embed_fields:
+            if field.name == "Épreuve en cours":
+                embed.remove_field(embed_fields.index(field))
+        embed.add_field(name="Épreuve en cours", value=f"Épreuve {i} en cours...", inline=False)
+        await update_embed(embed)
+
         success = await tache(interaction, embed, update_embed, i)
+
+        # Supprimer le champ "Épreuve en cours" après la tâche
+        embed_fields = embed.fields
+        for field in embed_fields:
+            if field.name == "Épreuve en cours":
+                embed.remove_field(embed_fields.index(field))
+
+        await update_embed(embed)
+
         if not success:
             return False
+
     return True
