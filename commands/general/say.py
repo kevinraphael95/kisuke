@@ -11,7 +11,7 @@
 import discord
 from discord import app_commands
 from discord.ext import commands
-from utils.discord_utils import safe_send, safe_respond  # ✅ Utilisation des safe_
+from utils.discord_utils import safe_send, safe_respond, safe_delete  # ✅ Utilisation des safe_
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🧠 Cog principal
@@ -38,12 +38,14 @@ class Say(commands.Cog):
     # 🔹 Commande PREFIX
     @commands.command(name="say")
     async def prefix_say(self, ctx: commands.Context, *, message: str):
-        """Commande préfixe qui fait répéter un message."""
+        """Commande préfixe qui fait répéter un message, puis tente de supprimer la commande d'origine."""
         try:
             await safe_send(ctx.channel, message)
+            await safe_delete(ctx.message)
         except Exception as e:
             print(f"[ERREUR !say] {e}")
             await safe_send(ctx.channel, "❌ Une erreur est survenue en répétant le message.")
+
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🔌 Setup du Cog
