@@ -87,3 +87,51 @@ async def safe_add_reaction(message: discord.Message, emoji: str, delay: float =
     except Exception as e:
         print(f"[Erreur] safe_add_reaction() → {e}")
 
+
+
+async def safe_followup(interaction: discord.Interaction, content=None, **kwargs):
+    """
+    Envoie un message de suivi avec gestion du rate-limit (429).
+    """
+    try:
+        return await interaction.followup.send(content=content, **kwargs)
+    except HTTPException as e:
+        if e.status == 429:
+            print("[RateLimit] safe_followup() → 429 Too Many Requests. Pause...")
+            await asyncio.sleep(10)
+            return await interaction.followup.send(content=content, **kwargs)
+        raise e
+
+async def safe_delete(message: discord.Message, delay: float = 0):
+    """
+    Supprime un message Discord avec gestion du rate-limit (429).
+    """
+    try:
+        await message.delete(delay=delay)
+    except HTTPException as e:
+        if e.status == 429:
+            print("[RateLimit] safe_delete() → 429 Too Many Requests. Pause...")
+            await asyncio.sleep(10)
+            await message.delete(delay=delay)
+        else:
+            raise e
+    except Exception as e:
+        print(f"[Erreur] safe_delete() → {e}")
+
+async def safe_clear_reactions(message: discord.Message):
+    """
+    Supprime toutes les réactions d’un message avec gestion du rate-limit (429).
+    """
+    try:
+        await message.clear_reactions()
+    except HTTPException as e:
+        if e.status == 429:
+            print("[RateLimit] safe_clear_reactions() → 429 Too Many Requests. Pause...")
+            await asyncio.sleep(10)
+            await message.clear_reactions()
+        else:
+            raise e
+    except Exception as e:
+        print(f"[Erreur] safe_clear_reactions() → {e}")
+
+
