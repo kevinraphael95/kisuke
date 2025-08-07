@@ -25,10 +25,7 @@ class Say(commands.Cog):
         self.bot = bot
 
     # 🔹 Commande SLASH
-    @app_commands.command(
-        name="say",
-        description="Le bot répète le message donné."
-    )
+    @app_commands.command(name="say", description="Le bot répète le message donné.")
     @app_commands.describe(message="Message à faire répéter")
     async def slash_say(self, interaction: discord.Interaction, message: str):
         """Commande slash principale qui fait répéter un message."""
