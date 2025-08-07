@@ -1,6 +1,6 @@
 # ────────────────────────────────────────────────────────────────────────────────
-# 📌 say.py — Commande interactive /say
-# Objectif : Faire répéter un message par le bot en slash command
+# 📌 say.py — Commande interactive /say et !say
+# Objectif : Faire répéter un message par le bot
 # Catégorie : Général
 # Accès : Public
 # ────────────────────────────────────────────────────────────────────────────────
@@ -18,12 +18,13 @@ from utils.discord_utils import safe_send, safe_respond  # ✅ Utilisation des s
 # ────────────────────────────────────────────────────────────────────────────────
 class Say(commands.Cog):
     """
-    Commande /say — Faire répéter un message par le bot (slash)
+    Commande /say et !say — Faire répéter un message par le bot
     """
 
     def __init__(self, bot: commands.Bot):
         self.bot = bot
 
+    # 🔹 Commande SLASH
     @app_commands.command(
         name="say",
         description="Le bot répète le message donné."
@@ -33,10 +34,19 @@ class Say(commands.Cog):
         """Commande slash principale qui fait répéter un message."""
         try:
             await safe_send(interaction.channel, message)
-            await safe_respond(interaction, "Message envoyé !", ephemeral=True)
         except Exception as e:
             print(f"[ERREUR /say] {e}")
             await safe_respond(interaction, "❌ Une erreur est survenue en répétant le message.", ephemeral=True)
+
+    # 🔹 Commande PREFIX
+    @commands.command(name="say")
+    async def prefix_say(self, ctx: commands.Context, *, message: str):
+        """Commande préfixe qui fait répéter un message."""
+        try:
+            await safe_send(ctx.channel, message)
+        except Exception as e:
+            print(f"[ERREUR !say] {e}")
+            await safe_send(ctx.channel, "❌ Une erreur est survenue en répétant le message.")
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🔌 Setup du Cog
