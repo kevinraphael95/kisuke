@@ -14,7 +14,7 @@ import asyncio
 import json
 import os
 from supabase_client import supabase
-from utils.discord_utils import safe_send, safe_edit, safe_add_reaction  # ✅ Ajout fonctions anti-429
+from utils.discord_utils import safe_send, safe_edit, safe_add_reaction, safe_clear_reactions  # ajout safe_clear_reactions
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 📂 Constantes et configuration
@@ -92,6 +92,12 @@ class RPGBleach(commands.Cog):
 
             emoji = str(reaction.emoji)
 
+            # Enlever la réaction utilisateur pour garder l'interface propre
+            try:
+                await menu.remove_reaction(emoji, ctx.author)
+            except:
+                pass  # Ignore erreur si pas possible (permissions)
+
             if emoji == "✏️":
                 prompt = await safe_send(ctx, content="📛 Réponds à **ce message** avec le nom de ton personnage (5 minutes).")
 
@@ -130,57 +136,87 @@ class RPGBleach(commands.Cog):
                 await safe_send(ctx, content="⚠️ Erreur lors de la sauvegarde.")
                 return
 
-            await self.jouer_etape(ctx, etape_id, temp_name, mission_id)
+            await self.jouer_etape(ctx, etape_id, temp_name, mission_id, menu)
             return
 
-    async def jouer_etape(self, ctx: commands.Context, etape_id: str, nom: str, mission_id: str):
+    async def jouer_etape(self, ctx: commands.Context, etape_id: str, nom: str, mission_id: str, msg: discord.Message):
         etape = self.scenario.get(etape_id)
         if not etape:
             await safe_send(ctx, content="❌ Étape introuvable.")
             return
 
-        texte = etape["texte"].replace("{nom}", nom)
-        embed = discord.Embed(
-            title=f"🧭 Mission : {self.scenario['missions'][mission_id]['titre']}",
-            description=texte,
-            color=discord.Color.dark_purple()
-        )
+        while True:
+            texte = etape["texte"].replace("{nom}", nom)
+            embed = discord.Embed(
+                title=f"🧭 Mission : {self.scenario['missions'][mission_id]['titre']}",
+                description=texte,
+                color=discord.Color.dark_purple()
+            )
 
-        emojis = []
-        for choix in etape.get("choix", []):
-            embed.add_field(name=choix["emoji"], value=choix["texte"], inline=False)
-            emojis.append(choix["emoji"])
+            emojis = []
+            for choix in etape.get("choix", []):
+                embed.add_field(name=choix["emoji"], value=choix["texte"], inline=False)
+                emojis.append(choix["emoji"])
 
-        msg = await safe_send(ctx, embed=embed)
-        for emoji in emojis:
-            await safe_add_reaction(msg, emoji)
+            # Edit le même message avec le nouvel embed
+            await safe_edit(msg, embed=embed)
 
-        def check_choix(r, u):
-            return u == ctx.author and r.message.id == msg.id and str(r.emoji) in emojis
+            # Clear les réactions précédentes
+            try:
+                await msg.clear_reactions()
+            except:
+                pass
 
-        try:
-            reaction, _ = await self.bot.wait_for("reaction_add", timeout=300, check=check_choix)
-        except asyncio.TimeoutError:
-            await safe_send(ctx, content="⏰ Tu n’as pas réagi à temps.")
-            return
+            # Ajouter les réactions pour les choix
+            for emoji in emojis:
+                await safe_add_reaction(msg, emoji)
 
-        selected = str(reaction.emoji)
-        for choix in etape["choix"]:
-            if choix["emoji"] == selected:
-                next_etape = choix["suivant"]
-                response = supabase.table("rpg_save").upsert({
-                    "user_id": str(ctx.author.id),
-                    "username": ctx.author.name,
-                    "character_name": nom,
-                    "mission": mission_id,
-                    "etape": next_etape
-                }, on_conflict=["user_id"]).execute()
+            def check_choix(r, u):
+                return u == ctx.author and r.message.id == msg.id and str(r.emoji) in emojis
 
-                if not response.data:
-                    await safe_send(ctx, content="⚠️ Erreur lors de la sauvegarde.")
-                    return
+            try:
+                reaction, _ = await self.bot.wait_for("reaction_add", timeout=300, check=check_choix)
+            except asyncio.TimeoutError:
+                await safe_send(ctx, content="⏰ Tu n’as pas réagi à temps.")
+                return
 
-                await self.jouer_etape(ctx, next_etape, nom, mission_id)
+            selected = str(reaction.emoji)
+
+            # Retirer la réaction de l'utilisateur pour garder propre
+            try:
+                await msg.remove_reaction(selected, ctx.author)
+            except:
+                pass
+
+            # Trouver la prochaine étape correspondant au choix
+            next_etape = None
+            for choix in etape["choix"]:
+                if choix["emoji"] == selected:
+                    next_etape = choix["suivant"]
+                    break
+
+            if next_etape is None:
+                await safe_send(ctx, content="❌ Choix invalide.")
+                return
+
+            # Sauvegarde mise à jour
+            response = supabase.table("rpg_save").upsert({
+                "user_id": str(ctx.author.id),
+                "username": ctx.author.name,
+                "character_name": nom,
+                "mission": mission_id,
+                "etape": next_etape
+            }, on_conflict=["user_id"]).execute()
+
+            if not response.data:
+                await safe_send(ctx, content="⚠️ Erreur lors de la sauvegarde.")
+                return
+
+            # Charge la prochaine étape pour la boucle
+            etape_id = next_etape
+            etape = self.scenario.get(etape_id)
+            if not etape:
+                await safe_send(ctx, content="🎉 Fin de la mission ou étape inconnue.")
                 return
 
 # ────────────────────────────────────────────────────────────────────────────────
