@@ -125,6 +125,10 @@ async def on_ready():
         # Chargement du spawner Reiatsu
         await bot.load_extension("tasks.reiatsu_spawner")
         print("✅ Spawner Reiatsu chargé.")
+        
+        # synchronisation des commandes slash
+        await bot.tree.sync()
+        print("✅ Slash commands synchronisées")
     except Exception as e:
         print(f"⚠️ Impossible de se connecter à Supabase : {e}")
         print("🔓 Aucune gestion de verrou — le bot démarre quand même.")
@@ -170,3 +174,4 @@ async def main():
 if __name__ == "__main__":
     keep_alive()
     asyncio.run(main())
+
