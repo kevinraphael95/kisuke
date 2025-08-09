@@ -59,51 +59,43 @@ class ReiatsuVol(commands.Cog):
     # Méthode commune pour gérer vol
     # --------------------------
     async def process_steal(self, ctx_or_inter, cible, is_slash: bool):
-        # Récupération de l'auteur
+        # Fonction interne pour envoyer réponse simple ou embed
+        async def respond(message=None, *, embed=None, ephemeral=False):
+            if is_slash:
+                await safe_respond(ctx_or_inter, message, embed=embed, ephemeral=ephemeral)
+            else:
+                if embed:
+                    await safe_send(ctx_or_inter.channel, embed=embed)
+                else:
+                    await safe_send(ctx_or_inter.channel, message)
+
+        # Récupération de l'auteur et channel
         if is_slash:
             user = ctx_or_inter.user
-            channel = ctx_or_inter.channel
         else:
             user = ctx_or_inter.author
-            channel = ctx_or_inter.channel
 
         user_id = str(user.id)
 
-        # Verification cible
+        # Vérification cible
         if cible is None:
-            msg = "ℹ️ Tu dois mentionner un membre cible (ex: @membre)."
-            if is_slash:
-                return await safe_respond(ctx_or_inter, msg, ephemeral=True)
-            else:
-                return await safe_send(channel, msg)
+            return await respond("ℹ️ Tu dois mentionner un membre cible (ex: @membre).", ephemeral=True)
 
         if user.id == cible.id:
-            msg = "❌ Tu ne peux pas te voler toi-même."
-            if is_slash:
-                return await safe_respond(ctx_or_inter, msg, ephemeral=True)
-            else:
-                return await safe_send(channel, msg)
+            return await respond("❌ Tu ne peux pas te voler toi-même.", ephemeral=True)
 
         cible_id = str(cible.id)
 
         # Récupération données voleur
         voleur_data_resp = supabase.table("reiatsu").select("*").eq("user_id", user_id).execute()
         if not voleur_data_resp.data:
-            msg = "⚠️ Données introuvables pour toi."
-            if is_slash:
-                return await safe_respond(ctx_or_inter, msg, ephemeral=True)
-            else:
-                return await safe_send(channel, msg)
+            return await respond("⚠️ Données introuvables pour toi.", ephemeral=True)
         voleur_data = voleur_data_resp.data[0]
 
         # Récupération données cible
         cible_data_resp = supabase.table("reiatsu").select("*").eq("user_id", cible_id).execute()
         if not cible_data_resp.data:
-            msg = "⚠️ Données introuvables pour la cible."
-            if is_slash:
-                return await safe_respond(ctx_or_inter, msg, ephemeral=True)
-            else:
-                return await safe_send(channel, msg)
+            return await respond("⚠️ Données introuvables pour la cible.", ephemeral=True)
         cible_data = cible_data_resp.data[0]
 
         now = datetime.utcnow()
@@ -120,11 +112,7 @@ class ReiatsuVol(commands.Cog):
                 j = restant.days
                 h, rem = divmod(restant.seconds, 3600)
                 m, _ = divmod(rem, 60)
-                msg = f"⏳ Tu dois encore attendre **{j}j {h}h{m}m** avant de retenter."
-                if is_slash:
-                    return await safe_respond(ctx_or_inter, msg, ephemeral=True)
-                else:
-                    return await safe_send(channel, msg)
+                return await respond(f"⏳ Tu dois encore attendre **{j}j {h}h{m}m** avant de retenter.", ephemeral=True)
 
         voleur_points = voleur_data.get("points", 0)
         cible_points = cible_data.get("points", 0)
@@ -132,18 +120,10 @@ class ReiatsuVol(commands.Cog):
 
         # Vérifications points
         if cible_points == 0:
-            msg = f"⚠️ {cible.mention} n’a pas de Reiatsu à voler."
-            if is_slash:
-                return await safe_respond(ctx_or_inter, msg, ephemeral=True)
-            else:
-                return await safe_send(channel, msg)
+            return await respond(f"⚠️ {cible.mention} n’a pas de Reiatsu à voler.", ephemeral=True)
 
         if voleur_points == 0:
-            msg = "⚠️ Tu dois avoir au moins **1 point** de Reiatsu pour tenter un vol."
-            if is_slash:
-                return await safe_respond(ctx_or_inter, msg, ephemeral=True)
-            else:
-                return await safe_send(channel, msg)
+            return await respond("⚠️ Tu dois avoir au moins **1 point** de Reiatsu pour tenter un vol.", ephemeral=True)
 
         # Calcul vol
         montant = max(1, cible_points * 5 // 100)  # 5%
@@ -155,7 +135,6 @@ class ReiatsuVol(commands.Cog):
         else:
             succes = random.random() < 0.25  # 25%
 
-        # Payload voleur (cooldown + points si succès)
         payload_voleur = {"last_steal_attempt": now.isoformat()}
         embed = discord.Embed(color=discord.Color.purple())
         embed.set_author(name=f"Vol de Reiatsu - {user.display_name}", icon_url=user.display_avatar.url)
@@ -168,7 +147,6 @@ class ReiatsuVol(commands.Cog):
                 contenu = f"🩸 {user.mention} a volé **{montant}** points à {cible.mention}... mais c'était une illusion, {cible.mention} n'a rien perdu !"
                 embed.description = contenu
             else:
-                # Déduire points cible
                 supabase.table("reiatsu").update({
                     "points": max(0, cible_points - montant)
                 }).eq("user_id", cible_id).execute()
@@ -180,11 +158,8 @@ class ReiatsuVol(commands.Cog):
             contenu = f"😵 {user.mention} a tenté de voler {cible.mention}... mais a échoué !"
             embed.description = contenu
 
-        # Envoi embed
-        if is_slash:
-            await safe_respond(ctx_or_inter, embed=embed)
-        else:
-            await safe_send(channel, embed=embed)
+        return await respond(embed=embed)
+
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🔌 Setup du Cog
