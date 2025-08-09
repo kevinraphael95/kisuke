@@ -1,7 +1,7 @@
 # ────────────────────────────────────────────────────────────────────────────────
-# 📌 volreiatsu.py — Commande interactive volreiatsu (préfixe + slash)
-# Objectif : Voler 10% du Reiatsu d’un autre joueur avec 25% (40% si voleur) de réussite.
-# Catégorie : VAACT
+# 📌 reiatsuvol.py — Commande !reiatsuvol + /reiatsuvol avec logique commune
+# Objectif : Permet de voler du Reiatsu à un autre membre (avec cooldown et chance)
+# Catégorie : Reiatsu
 # Accès : Public
 # ────────────────────────────────────────────────────────────────────────────────
 
@@ -12,142 +12,169 @@ import discord
 from discord.ext import commands
 from discord import app_commands
 from datetime import datetime, timedelta
-from supabase_client import supabase
+from dateutil import parser
 import random
-from utils.discord_utils import safe_send  # <-- Utilitaire safe_send
+
+from supabase_client import supabase
+from utils.discord_utils import safe_send, safe_respond
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🧠 Cog principal
 # ────────────────────────────────────────────────────────────────────────────────
-class ReiatsuVol(commands.Cog):
+class ReiatsuVolCog(commands.Cog):
     """
-    Commande volreiatsu — Tente de voler 10% du Reiatsu d’un autre joueur (25% ou 40% si classe voleur)
-    Fonctionne en commande préfixée et en slash command.
+    Commande !reiatsuvol et /reiatsuvol — Permet de voler du Reiatsu à un autre membre,
+    avec cooldown et chance d'échec.
     """
+
     def __init__(self, bot: commands.Bot):
         self.bot = bot
 
-    # Commande préfixée
-    @commands.command(
-        name="reiatsuvol",
-        aliases=["rtsv", "volreiatsu", "vrts"],
-        help="💠 Tente de voler 10% du Reiatsu d’un autre membre. 25% de réussite (40% si Voleur). Cooldown : 24h."
-    )
-    async def volreiatsu_prefix(self, ctx: commands.Context, cible: discord.Member = None):
-        await self._volreiatsu_logic(ctx, cible, is_slash=False)
+    # ────────────────
+    # Fonction interne commune
+    # ────────────────
+    async def process_steal(self, ctx, author: discord.Member, target: discord.Member):
+        """
+        Logique commune pour voler du Reiatsu, utilisée par la commande préfixe et slash.
+        """
+        if target == author:
+            await safe_respond(ctx, "❌ Tu ne peux pas te voler toi-même !")
+            return
 
-    # Commande slash
-    @app_commands.command(
-        name="volreiatsu",
-        description="Tente de voler 10% du Reiatsu d’un autre membre. 25% de réussite (40% si Voleur). Cooldown : 24h."
-    )
-    @app_commands.describe(cible="Le membre à qui tu souhaites voler du Reiatsu")
-    async def volreiatsu_slash(self, interaction: discord.Interaction, cible: discord.Member):
-        await self._volreiatsu_logic(interaction, cible, is_slash=True)
-
-    # Logique commune pour les 2 types de commandes
-    async def _volreiatsu_logic(self, ctx_or_inter, cible: discord.Member, is_slash: bool):
-        # Définition du channel et auteur selon type d'interaction
-        if is_slash:
-            channel = ctx_or_inter.channel
-            voleur = ctx_or_inter.user
-        else:
-            channel = ctx_or_inter.channel
-            voleur = ctx_or_inter.author
-
-        voleur_id = str(voleur.id)
+        user_id = str(author.id)
+        cible_id = str(target.id)
 
         # Récupération données voleur
-        voleur_data = supabase.table("reiatsu").select("*").eq("user_id", voleur_id).execute()
-        if not voleur_data.data:
-            await safe_send(channel, "⚠️ Données introuvables pour toi.")
-            return
-        voleur_data = voleur_data.data[0]
-
-        voleur_classe = voleur_data.get("classe")
-        voleur_cd = voleur_data.get("steal_cd", 24)
-        now = datetime.utcnow()
-        dernier_vol_str = voleur_data.get("last_steal_attempt")
-
-        # Gestion cooldown
-        if dernier_vol_str:
-            dernier_vol = datetime.fromisoformat(dernier_vol_str)
-            prochain_vol = dernier_vol + timedelta(hours=voleur_cd)
-            if now < prochain_vol:
-                restant = prochain_vol - now
-                j = restant.days
-                h, rem = divmod(restant.seconds, 3600)
-                m, _ = divmod(rem, 60)
-                await safe_send(channel, f"⏳ Tu dois encore attendre **{j}j {h}h{m}m** avant de retenter.")
-                return
-
-        # Vérification cible
-        if cible is None:
-            await safe_send(channel, "ℹ️ Tu dois mentionner un membre pour tenter de voler du Reiatsu.")
-            return
-        if voleur.id == cible.id:
-            await safe_send(channel, "❌ Tu ne peux pas te voler toi-même.")
-            return
-
-        cible_id = str(cible.id)
+        voleur_resp = supabase.table("reiatsu") \
+            .select("points, classe, last_steal_attempt, steal_cd") \
+            .eq("user_id", user_id).execute()
+        voleur = voleur_resp.data[0] if voleur_resp.data else None
 
         # Récupération données cible
-        cible_data = supabase.table("reiatsu").select("*").eq("user_id", cible_id).execute()
-        if not cible_data.data:
-            await safe_send(channel, "⚠️ Données introuvables pour la cible.")
-            return
-        cible_data = cible_data.data[0]
+        cible_resp = supabase.table("reiatsu") \
+            .select("points") \
+            .eq("user_id", cible_id).execute()
+        cible_data = cible_resp.data[0] if cible_resp.data else None
 
-        voleur_points = voleur_data.get("points", 0)
-        cible_points = cible_data.get("points", 0)
-        cible_classe = cible_data.get("classe")
-
-        if cible_points == 0:
-            await safe_send(channel, f"⚠️ {cible.mention} n’a pas de Reiatsu à voler.")
+        if voleur is None:
+            await safe_respond(ctx, "❌ Tu n'as pas encore de points de Reiatsu. Commence à en gagner avant de voler !")
             return
-        if voleur_points == 0:
-            await safe_send(channel, "⚠️ Tu dois avoir au moins **1 point** de Reiatsu pour tenter un vol.")
+        if cible_data is None:
+            await safe_respond(ctx, f"❌ {target.display_name} n'a pas encore de points de Reiatsu.")
             return
 
-        # Calcul du vol
-        montant = max(1, cible_points // 10)  # 10%
-        if voleur_classe == "Voleur" and random.random() < 0.5:  # 50% chance double gain
-            montant *= 2
+        points_voleur = voleur.get("points", 0)
+        points_cible = cible_data.get("points", 0)
+        classe = voleur.get("classe")
+        last_steal_str = voleur.get("last_steal_attempt")
+        steal_cd = voleur.get("steal_cd")
 
-        succes_chance = 0.40 if voleur_classe == "Voleur" else 0.25
-        succes = random.random() < succes_chance
-
-        # Préparation update voleur cooldown + points éventuels
-        payload_voleur = {"last_steal_attempt": now.isoformat()}
-
-        if succes:
-            # Succès : ajout points voleur
-            payload_voleur["points"] = voleur_points + montant
-            supabase.table("reiatsu").update(payload_voleur).eq("user_id", voleur_id).execute()
-
-            # Effet Illusionniste
-            if cible_classe == "Illusionniste" and random.random() < 0.5:
-                await safe_send(channel, f"🩸 {voleur.mention} a volé **{montant}** points à {cible.mention}... mais c'était une illusion, {cible.mention} n'a rien perdu !")
+        # Défaut cooldown selon classe si pas défini
+        if steal_cd is None:
+            if classe == "Voleur":
+                steal_cd = 19
             else:
-                # Retrait points cible
-                supabase.table("reiatsu").update({
-                    "points": max(0, cible_points - montant)
-                }).eq("user_id", cible_id).execute()
-                await safe_send(channel, f"🩸 {voleur.mention} a réussi à voler **{montant}** points de Reiatsu à {cible.mention} !")
-        else:
-            # Échec : maj cooldown seulement
-            supabase.table("reiatsu").update(payload_voleur).eq("user_id", voleur_id).execute()
-            await safe_send(channel, f"😵 {voleur.mention} a tenté de voler {cible.mention}... mais a échoué !")
+                steal_cd = 24
+            supabase.table("reiatsu").update({"steal_cd": steal_cd}).eq("user_id", user_id).execute()
 
-        # Si slash interaction, on doit répondre ou defer (ici on répond par safe_send donc pas besoin defer)
+        # Calcul cooldown restant
+        cooldown_restant = 0
+        if last_steal_str:
+            last_steal = parser.parse(last_steal_str)
+            now = datetime.utcnow()
+            fin_cooldown = last_steal + timedelta(hours=steal_cd)
+            if now < fin_cooldown:
+                cooldown_restant = (fin_cooldown - now).total_seconds()
+
+        if cooldown_restant > 0:
+            h, m = divmod(int(cooldown_restant // 60), 60)
+            await safe_respond(ctx, f"⏳ Tu dois attendre encore **{h}h{m}m** avant de pouvoir voler à nouveau.")
+            return
+
+        if points_cible <= 0:
+            await safe_respond(ctx, f"❌ {target.display_name} n’a aucun Reiatsu à te voler.")
+            return
+
+        # Chance succès (75%)
+        if random.random() > 0.75:
+            # Échec, mise à jour cooldown quand même
+            supabase.table("reiatsu").update({"last_steal_attempt": datetime.utcnow().isoformat()}) \
+                .eq("user_id", user_id).execute()
+            await safe_respond(ctx, f"❌ Tentative de vol échouée contre {target.display_name} ! Sois plus prudent la prochaine fois.")
+            return
+
+        # Calcul Reiatsu volé (10% à 30%)
+        vol_pts = max(1, int(points_cible * random.uniform(0.10, 0.30)))
+
+        # Mise à jour en base
+        new_points_voleur = points_voleur + vol_pts
+        new_points_cible = points_cible - vol_pts
+
+        supabase.table("reiatsu").update({
+            "points": new_points_voleur,
+            "last_steal_attempt": datetime.utcnow().isoformat()
+        }).eq("user_id", user_id).execute()
+
+        supabase.table("reiatsu").update({
+            "points": new_points_cible
+        }).eq("user_id", cible_id).execute()
+
+        # Embed résultat
+        embed = discord.Embed(
+            title="💠 Vol de Reiatsu réussi !",
+            description=(
+                f"Tu as volé **{vol_pts}** points de Reiatsu à {target.display_name}.\n"
+                f"• Ton nouveau total : **{new_points_voleur}** pts\n"
+                f"• Total de {target.display_name} : **{new_points_cible}** pts\n\n"
+                f"⏳ Cooldown vol : {steal_cd} heures"
+            ),
+            color=discord.Color.purple()
+        )
+        await safe_send(ctx.channel, embed=embed)
+
+    # ────────────────
+    # Commande préfixe !reiatsuvol
+    # ────────────────
+    @commands.command(
+        name="reiatsuvol",
+        aliases=["rvol"],
+        help="💠 Voler du Reiatsu à un membre (cooldown 20-24h selon classe).",
+        description="Vol du Reiatsu à un autre membre avec chance d'échec et cooldown."
+    )
+    async def reiatsuvol(self, ctx: commands.Context, cible: discord.Member = None):
+        if cible is None:
+            await safe_respond(ctx, "❌ Tu dois mentionner un membre dont tu veux voler le Reiatsu.")
+            return
+        await self.process_steal(ctx, ctx.author, cible)
+
+    # ────────────────
+    # Commande slash /reiatsuvol
+    # ────────────────
+    @app_commands.command(
+        name="reiatsuvol",
+        description="Voler du Reiatsu à un membre (cooldown 20-24h selon classe)."
+    )
+    @app_commands.describe(membre="Membre dont tu veux voler le Reiatsu")
+    async def slash_reiatsuvol(self, interaction: discord.Interaction, membre: discord.Member):
+        await self.process_steal(interaction, interaction.user, membre)
+
+    # ────────────────
+    # Enregistrement de la commande slash dans le groupe
+    # ────────────────
+    @commands.Cog.listener()
+    async def on_ready(self):
+        # Ajout de la commande slash (si pas déjà ajoutée)
+        try:
+            self.bot.tree.add_command(self.slash_reiatsuvol)
+            await self.bot.tree.sync()
+        except Exception:
+            pass
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🔌 Setup du Cog
 # ────────────────────────────────────────────────────────────────────────────────
 async def setup(bot: commands.Bot):
-    cog = ReiatsuVol(bot)
-    bot.tree.add_command(cog.volreiatsu_slash)  # Ajout commande slash
+    cog = ReiatsuVolCog(bot)
     for command in cog.get_commands():
-        if not hasattr(command, "category"):
-            command.category = "Reiatsu"
+        command.category = "Reiatsu"
     await bot.add_cog(cog)
