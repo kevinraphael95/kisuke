@@ -1,5 +1,5 @@
 # ────────────────────────────────────────────────────────────────────────────────
-# 📌 reiatsu.py — Commande interactive !reiatsu
+# 📌 reiatsu.py — Commande interactive !reiatsu /reiatsu
 # Objectif : Affiche le score Reiatsu d’un membre, le salon de spawn et le temps restant
 # Catégorie : Reiatsu
 # Accès : Public
@@ -10,36 +10,53 @@
 # ────────────────────────────────────────────────────────────────────────────────
 import discord
 from discord.ext import commands
+from discord import app_commands
 from dateutil import parser
 from datetime import datetime, timedelta
 import time
 from supabase_client import supabase
 import json
 
-from utils.discord_utils import safe_send, safe_respond  # <-- import fonctions anti 429
+from utils.discord_utils import safe_send  # <-- import fonctions anti 429
+
+# ────────────────────────────────────────────────────────────────────────────────
+# 🎯 Boutons interactifs
+# ────────────────────────────────────────────────────────────────────────────────
+class ReiatsuView(discord.ui.View):
+    """
+    Boutons interactifs pour la commande Reiatsu.
+    """
+    def __init__(self, author: discord.Member):
+        super().__init__(timeout=None)  # View persistante
+        self.author = author
+
+    @discord.ui.button(label="📊 Classement", style=discord.ButtonStyle.primary, custom_id="reiatsu:classement")
+    async def classement_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        # Autoriser seulement l'auteur du message
+        if interaction.user != self.author:
+            return await interaction.response.send_message("❌ Tu ne peux pas utiliser ce bouton.", ephemeral=True)
+
+        # ⚠️ Ici, à compléter avec la logique réelle de classement
+        await interaction.response.send_message("📊 Classement Reiatsu : (à coder)", ephemeral=True)
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🧠 Cog principal
 # ────────────────────────────────────────────────────────────────────────────────
 class Reiatsu2Command(commands.Cog):
     """
-    Commande !reiatsu — Affiche ton score de Reiatsu, le salon et le temps avant le prochain spawn.
+    Commande !reiatsu ou /reiatsu — Affiche ton score de Reiatsu, le salon et le temps avant le prochain spawn.
     """
 
     def __init__(self, bot: commands.Bot):
         self.bot = bot
 
-    @commands.command(
-        name="reiatsu",
-        aliases=["rts"],
-        help="💠 Affiche le score de Reiatsu d’un membre (ou soi-même).",
-        description="Affiche le score, le salon de spawn et le temps restant avant le prochain Reiatsu."
-    )
-    @commands.cooldown(rate=1, per=3, type=commands.BucketType.user)
-    async def reiatsu(self, ctx: commands.Context, member: discord.Member = None):
-        user = member or ctx.author
+    # ────────────────────────────────────────────────────────────────────────────────
+    # ♻️ Fonction interne commune
+    # ────────────────────────────────────────────────────────────────────────────────
+    async def _reiatsu_core(self, channel, author, guild, target_user):
+        user = target_user or author
         user_id = str(user.id)
-        guild_id = str(ctx.guild.id) if ctx.guild else None
+        guild_id = str(guild.id) if guild else None
 
         # 📦 Requête : Données joueur
         user_data = supabase.table("reiatsu") \
@@ -53,7 +70,7 @@ class Reiatsu2Command(commands.Cog):
         last_steal_str = data.get("last_steal_attempt")
         steal_cd = data.get("steal_cd")
 
-        # 🔁 Chargement des infos de la classe (si elle existe)
+        # 🔁 Chargement des infos de la classe
         with open("data/classes.json", "r", encoding="utf-8") as f:
             CLASSES = json.load(f)
 
@@ -67,7 +84,7 @@ class Reiatsu2Command(commands.Cog):
         else:
             classe_text = "Aucune classe sélectionnée.\nUtilise la commande `!classe` pour en choisir une."
 
-        # 📦 Gestion du cooldown dynamique
+        # 📦 Cooldown vol
         cooldown_text = "Disponible ✅"
         if classe_nom and steal_cd is None:
             steal_cd = 19 if classe_nom == "Voleur" else 24
@@ -83,23 +100,20 @@ class Reiatsu2Command(commands.Cog):
                 h, m = divmod(minutes_total, 60)
                 cooldown_text = f"{restant.days}j {h}h{m}m" if restant.days else f"{h}h{m}m"
 
-        # 📦 Requête : Configuration serveur
-        config = None
+        # 📦 Config serveur
         salon_text = "❌"
         temps_text = "❌"
-
-        if ctx.guild:
+        if guild:
             config_data = supabase.table("reiatsu_config") \
                 .select("*") \
                 .eq("guild_id", guild_id) \
                 .execute()
             config = config_data.data[0] if config_data.data else None
 
-            # 🛠️ Préparation des infos config
             salon_text = "❌ Aucun salon configuré"
             temps_text = "⚠️ Inconnu"
             if config:
-                salon = ctx.guild.get_channel(int(config["channel_id"])) if config.get("channel_id") else None
+                salon = guild.get_channel(int(config["channel_id"])) if config.get("channel_id") else None
                 salon_text = salon.mention if salon else "⚠️ Salon introuvable"
                 if config.get("en_attente"):
                     channel_id = config.get("channel_id")
@@ -124,7 +138,7 @@ class Reiatsu2Command(commands.Cog):
                     else:
                         temps_text = "Un Reiatsu 💠 peut apparaître **à tout moment** !"
 
-        # 📋 Création de l'embed
+        # 📋 Embed
         embed = discord.Embed(
             title="__**💠 Profil**__",
             description=(
@@ -139,49 +153,36 @@ class Reiatsu2Command(commands.Cog):
             ),
             color=discord.Color.purple()
         )
-        embed.set_footer(text="Réagis avec 📊 pour voir le classement.")
+        embed.set_footer(text="Utilise les boutons ci-dessous pour interagir.")
 
-        msg = await safe_send(ctx.channel, embed=embed)
-        await msg.add_reaction("📊")
+        # ✅ Envoi avec bouton
+        view = ReiatsuView(author)
+        await safe_send(channel, embed=embed, view=view)
 
-        # 🔁 Écoute de la réaction
-        def check(reaction, user_check):
-            return (
-                reaction.message.id == msg.id and
-                str(reaction.emoji) == "📊" and
-                user_check == ctx.author
-            )
+    # ────────────────────────────────────────────────────────────────────────────────
+    # ⌨️ Commande préfixe
+    # ────────────────────────────────────────────────────────────────────────────────
+    @commands.command(
+        name="reiatsu",
+        aliases=["rts"],
+        help="💠 Affiche le score de Reiatsu d’un membre (ou soi-même).",
+        description="Affiche le score, le salon de spawn et le temps restant avant le prochain Reiatsu."
+    )
+    @commands.cooldown(rate=1, per=3, type=commands.BucketType.user)
+    async def reiatsu(self, ctx: commands.Context, member: discord.Member = None):
+        await self._reiatsu_core(ctx.channel, ctx.author, ctx.guild, member)
 
-        try:
-            await self.bot.wait_for("reaction_add", check=check, timeout=30)
-            await self.show_leaderboard(ctx, original_message=msg)
-        except Exception:
-            pass  # Timeout ou autre erreur : on ignore
-
-    async def show_leaderboard(self, ctx: commands.Context, original_message=None):
-        # 📦 Requête : Top 10 joueurs avec uniquement username
-        leaderboard_resp = supabase.table("reiatsu") \
-            .select("username, points") \
-            .order("points", desc=True) \
-            .limit(10) \
-            .execute()
-
-        leaderboard = leaderboard_resp.data if leaderboard_resp.data else []
-
-        # 📄 Formatage du classement
-        top_texte = ""
-        for i, entry in enumerate(leaderboard, start=1):
-            name = entry.get("username", "Inconnu")
-            points = entry["points"]
-            top_texte += f"**#{i}** — {name} : {points} pts\n"
-
-        # 🖼️ Embed du classement
-        embed = discord.Embed(
-            title="📊 Top 10 des utilisateurs avec le plus de Reiatsu",
-            description=top_texte,
-            color=discord.Color.gold()
-        )
-        await safe_send(ctx.channel, embed=embed, reference=original_message)
+    # ────────────────────────────────────────────────────────────────────────────────
+    # 💬 Commande slash
+    # ────────────────────────────────────────────────────────────────────────────────
+    @app_commands.command(
+        name="reiatsu",
+        description="💠 Affiche le score de Reiatsu d’un membre (ou soi-même)."
+    )
+    @app_commands.describe(member="Membre dont voir le score (optionnel)")
+    async def reiatsu_slash(self, interaction: discord.Interaction, member: discord.Member = None):
+        await interaction.response.defer()
+        await self._reiatsu_core(interaction.channel, interaction.user, interaction.guild, member)
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🔌 Setup du Cog
