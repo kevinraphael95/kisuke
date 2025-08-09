@@ -36,13 +36,13 @@ class ReiatsuView(discord.ui.View):
         if interaction.user != self.author:
             return await interaction.response.send_message("❌ Tu ne peux pas utiliser ce bouton.", ephemeral=True)
 
-        # ⚠️ À compléter : récupérer et afficher le classement Reiatsu
+      
         # Exemple simple : top 5 des utilisateurs par points
 
         classement_data = supabase.table("reiatsu") \
             .select("user_id, points") \
             .order("points", desc=True) \
-            .limit(5) \
+            .limit(10) \
             .execute()
 
         if not classement_data.data:
