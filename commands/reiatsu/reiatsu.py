@@ -59,7 +59,7 @@ class ReiatsuView(discord.ui.View):
             description += f"**{i}. {name}** — {points} points\n"
 
         embed = discord.Embed(
-            title="📊 Top 5 Reiatsu",
+            title="📊 Classement Reiatsu",
             description=description,
             color=discord.Color.purple()
         )
