@@ -30,9 +30,9 @@ class ReiatsuVolCog(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
 
-    # ────────────────
+    # ────────────────────────────────────────────────────────────────────────────────
     # Fonction interne commune
-    # ────────────────
+    # ────────────────────────────────────────────────────────────────────────────────
     async def process_steal(self, ctx, author: discord.Member, target: discord.Member):
         """
         Logique commune pour voler du Reiatsu, utilisée par la commande préfixe et slash.
@@ -132,9 +132,9 @@ class ReiatsuVolCog(commands.Cog):
         )
         await safe_send(ctx.channel, embed=embed)
 
-    # ────────────────
+    # ────────────────────────────────────────────────────────────────────────────────
     # Commande préfixe !reiatsuvol
-    # ────────────────
+    # ────────────────────────────────────────────────────────────────────────────────
     @commands.command(
         name="reiatsuvol",
         aliases=["rvol"],
