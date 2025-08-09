@@ -36,8 +36,34 @@ class ReiatsuView(discord.ui.View):
         if interaction.user != self.author:
             return await interaction.response.send_message("❌ Tu ne peux pas utiliser ce bouton.", ephemeral=True)
 
-        # ⚠️ Ici, à compléter avec la logique réelle de classement
-        await interaction.response.send_message("📊 Classement Reiatsu : (à coder)", ephemeral=True)
+        # ⚠️ À compléter : récupérer et afficher le classement Reiatsu
+        # Exemple simple : top 5 des utilisateurs par points
+
+        classement_data = supabase.table("reiatsu") \
+            .select("user_id, points") \
+            .order("points", desc=True) \
+            .limit(5) \
+            .execute()
+
+        if not classement_data.data:
+            return await interaction.response.send_message("Aucun classement disponible pour le moment.", ephemeral=True)
+
+        classement = classement_data.data
+
+        description = ""
+        for i, entry in enumerate(classement, start=1):
+            user_id = int(entry["user_id"])
+            points = entry["points"]
+            user = interaction.guild.get_member(user_id) if interaction.guild else None
+            name = user.display_name if user else f"Utilisateur ({user_id})"
+            description += f"**{i}. {name}** — {points} points\n"
+
+        embed = discord.Embed(
+            title="📊 Top 5 Reiatsu",
+            description=description,
+            color=discord.Color.purple()
+        )
+        await interaction.response.send_message(embed=embed)
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🧠 Cog principal
