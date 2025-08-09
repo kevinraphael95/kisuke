@@ -31,7 +31,7 @@ class ReiatsuVolCog(commands.Cog):
         self.bot = bot
 
     # ────────────────────────────────────────────────────────────────────────────────
-    # Fonction interne commune
+    # Fonction interne commune : gestion du vol
     # ────────────────────────────────────────────────────────────────────────────────
     async def process_steal(self, ctx, author: discord.Member, target: discord.Member):
         """
