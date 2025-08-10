@@ -1,12 +1,12 @@
 # ────────────────────────────────────────────────────────────────────────────────
-## 📌 steamkey.py — Commande interactive !steamkey
+# 📌 steamkey.py — Commande interactive !steamkey
 # Objectif : Tenter de gagner une clé Steam contre des Reiatsu
 # Catégorie : Reiatsu
 # Accès : Public
 # ────────────────────────────────────────────────────────────────────────────────
 
 # ────────────────────────────────────────────────────────────────────────────────
-## 📦 Imports nécessaires
+# 📦 Imports nécessaires
 # ────────────────────────────────────────────────────────────────────────────────
 import discord
 from discord.ext import commands
@@ -17,17 +17,16 @@ from discord_utils import safe_send, safe_respond
 import os
 
 # ────────────────────────────────────────────────────────────────────────────────
-## 📂 CONSTANTES
+# 📂 CONSTANTES
 # ────────────────────────────────────────────────────────────────────────────────
 REIATSU_COST = 50
 WIN_CHANCE = 0.01  # 1%
-
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY")
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 # ────────────────────────────────────────────────────────────────────────────────
-## 🧠 Cog SteamKey
+# 🧠 Cog SteamKey
 # ────────────────────────────────────────────────────────────────────────────────
 class SteamKey(commands.Cog):
     def __init__(self, bot):
@@ -51,7 +50,6 @@ class SteamKey(commands.Cog):
                     return await safe_send(ctx_or_interaction, msg)
 
             reiatsu_amount = response.data["reiatsu"]
-
             if reiatsu_amount < REIATSU_COST:
                 msg = f"❌ Il vous faut **{REIATSU_COST} Reiatsu** pour tenter votre chance."
                 if is_slash:
@@ -74,7 +72,6 @@ class SteamKey(commands.Cog):
                         return await safe_send(ctx_or_interaction, msg)
 
                 key = key_data.data[0]
-
                 # Suppression de la clé
                 supabase.table("steam_keys").delete().eq("id", key["id"]).execute()
 
@@ -86,11 +83,11 @@ class SteamKey(commands.Cog):
                 )
                 embed.add_field(name="🔑 Clé Steam", value=f"||{key['steam_key']}||", inline=False)
                 embed.add_field(name="🔗 Page Steam", value=key["steam_url"], inline=False)
-
                 if is_slash:
                     return await safe_respond(ctx_or_interaction, embed=embed)
                 else:
                     return await safe_send(ctx_or_interaction, embed=embed)
+
             else:
                 # Embed défaite
                 embed = discord.Embed(
@@ -126,7 +123,7 @@ class SteamKey(commands.Cog):
         await self._steamkey_logic(interaction, interaction.user.id, is_slash=True)
 
 # ────────────────────────────────────────────────────────────────────────────────
-## 🔌 Setup du Cog
+# 🔌 Setup du Cog
 # ────────────────────────────────────────────────────────────────────────────────
 async def setup(bot: commands.Bot):
     cog = SteamKey(bot)
@@ -134,5 +131,4 @@ async def setup(bot: commands.Bot):
         if not hasattr(command, "category"):
             command.category = "Reiatsu"
     await bot.add_cog(cog)
-
 
