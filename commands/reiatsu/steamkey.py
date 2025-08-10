@@ -100,6 +100,7 @@ class SteamKey(commands.Cog):
                     return await safe_respond(ctx_or_interaction, embed=embed)
                 else:
                     return await safe_send(ctx_or_interaction, embed=embed)
+
         except Exception as e:
             msg = f"❌ Une erreur est survenue : `{e}`"
             if is_slash:
