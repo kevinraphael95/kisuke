@@ -99,6 +99,9 @@ class Reiatsu(commands.Cog):
         await self._steamkey_logic(interaction, interaction.user.id, is_slash=True)
 
 
-async def setup(bot):
-    await bot.add_
-cog(Reiatsu(bot))
+async def setup(bot: commands.Bot):
+    cog = ReiatsuVol(bot)
+    for command in cog.get_commands():
+        if not hasattr(command, "category"):
+            command.category = "Reiatsu"
+    await bot.add_cog(cog)
