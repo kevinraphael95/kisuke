@@ -20,7 +20,7 @@ SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY")
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
-class Reiatsu(commands.Cog):
+class SteamKey(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
@@ -100,7 +100,7 @@ class Reiatsu(commands.Cog):
 
 
 async def setup(bot: commands.Bot):
-    cog = ReiatsuVol(bot)
+    cog = SteamKey(bot)
     for command in cog.get_commands():
         if not hasattr(command, "category"):
             command.category = "Reiatsu"
