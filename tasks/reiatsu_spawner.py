@@ -8,6 +8,7 @@
 import discord
 import random
 import time
+import asyncio
 from datetime import datetime
 from dateutil import parser
 from discord.ext import commands, tasks
@@ -16,33 +17,52 @@ from utils.discord_utils import safe_send  # <-- Import fonctions sécurisées
 
 
 # ──────────────────────────────────────────────────────────────
-# 🎮 VIEW : Bouton pour absorber le Reiatsu
+# 🎮 VIEW : Bouton pour absorber le Reiatsu (avec defer + followup)
 # ──────────────────────────────────────────────────────────────
 class AbsorberButtonView(discord.ui.View):
     def __init__(self, bot, guild_id, spawn_message_id):
-        super().__init__(timeout=None)  # Pas de timeout auto
+        super().__init__(timeout=None)  # Pas de timeout automatique
         self.bot = bot
-        self.guild_id = guild_id
-        self.spawn_message_id = spawn_message_id
+        self.guild_id = str(guild_id)
+        self.spawn_message_id = str(spawn_message_id) if spawn_message_id is not None else None
 
     @discord.ui.button(label="Absorber", style=discord.ButtonStyle.blurple, emoji="💠")
     async def absorber_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        # Empêche le bot de cliquer sur son propre bouton
         if interaction.user.id == self.bot.user.id:
             return
 
-        # Récupère config serveur
-        conf_data = supabase.table("reiatsu_config").select("*").eq("guild_id", str(self.guild_id)).execute()
+        # ACK rapide pour éviter "Interaction failed"
+        await interaction.response.defer(thinking=True)
+
+        # Récupère config serveur (exécuté dans un thread pour éviter blocage)
+        conf_data = await asyncio.to_thread(
+            lambda: supabase.table("reiatsu_config").select("*").eq("guild_id", self.guild_id).execute()
+        )
         if not conf_data.data:
+            await interaction.followup.send("❌ Configuration du serveur introuvable.", ephemeral=True)
             return
         conf = conf_data.data[0]
 
-        if not conf.get("en_attente") or str(self.spawn_message_id) != conf.get("spawn_message_id"):
+        # Vérifie que le spawn est toujours valide
+        if not conf.get("en_attente") or str(self.spawn_message_id) != str(conf.get("spawn_message_id")):
+            # désactive le bouton si possible
+            for item in self.children:
+                item.disabled = True
+            try:
+                await interaction.message.edit(view=self)
+            except Exception:
+                pass
+            await interaction.followup.send("❌ Ce Reiatsu n'est plus disponible.", ephemeral=True)
             return
 
-        guild = self.bot.get_guild(self.guild_id)
-        user = guild.get_member(interaction.user.id)
-        channel = guild.get_channel(interaction.channel_id)
+        # Infos utiles
+        guild = self.bot.get_guild(int(self.guild_id))
+        user = interaction.user  # utiliser l'utilisateur de l'interaction
+        channel = interaction.channel  # canal de l'interaction
+
         if not channel or not user:
+            await interaction.followup.send("❌ Erreur interne : canal ou membre introuvable.", ephemeral=True)
             return
 
         # 🎲 Détermine si c'est un Super Reiatsu (1%)
@@ -50,8 +70,10 @@ class AbsorberButtonView(discord.ui.View):
         gain = 100 if is_super else 1
         user_id = str(user.id)
 
-        # Récupère classe, points et bonus5
-        user_data = supabase.table("reiatsu").select("classe", "points", "bonus5").eq("user_id", user_id).execute()
+        # Récupère classe, points et bonus5 (thread)
+        user_data = await asyncio.to_thread(
+            lambda: supabase.table("reiatsu").select("classe", "points", "bonus5").eq("user_id", user_id).execute()
+        )
         if user_data.data:
             classe = user_data.data[0].get("classe")
             current_points = user_data.data[0]["points"]
@@ -80,46 +102,56 @@ class AbsorberButtonView(discord.ui.View):
 
         new_total = current_points + gain
 
-        # Mise à jour Supabase
+        # Mise à jour ou insertion (thread)
         if user_data.data:
-            supabase.table("reiatsu").update({
-                "points": new_total,
-                "bonus5": bonus5
-            }).eq("user_id", user_id).execute()
+            await asyncio.to_thread(
+                lambda: supabase.table("reiatsu").update({
+                    "points": new_total,
+                    "bonus5": bonus5
+                }).eq("user_id", user_id).execute()
+            )
         else:
-            supabase.table("reiatsu").insert({
-                "user_id": user_id,
-                "username": user.name,
-                "points": gain,
-                "classe": "Travailleur",
-                "bonus5": 1
-            }).execute()
+            await asyncio.to_thread(
+                lambda: supabase.table("reiatsu").insert({
+                    "user_id": user_id,
+                    "username": user.name,
+                    "points": gain,
+                    "classe": "Travailleur",
+                    "bonus5": 1
+                }).execute()
+            )
 
-        # Message de confirmation
+        # Message de confirmation — utiliser followup (après defer)
         if is_super:
-            await safe_send(channel, f"🌟 {user.mention} a absorbé un **Super Reiatsu** et gagné **+{gain}** reiatsu !")
+            await interaction.followup.send(f"🌟 {user.mention} a absorbé un **Super Reiatsu** et gagné **+{gain}** reiatsu !")
         else:
             if classe == "Parieur" and gain == 0:
-                await safe_send(channel, f"🎲 {user.mention} a tenté d’absorber un reiatsu mais a raté (passif Parieur) !")
+                await interaction.followup.send(f"🎲 {user.mention} a tenté d’absorber un reiatsu mais a raté (passif Parieur) !")
             else:
-                await safe_send(channel, f"💠 {user.mention} a absorbé le Reiatsu et gagné **+{gain}** reiatsu !")
+                await interaction.followup.send(f"💠 {user.mention} a absorbé le Reiatsu et gagné **+{gain}** reiatsu !")
 
-        # 🔄 Réinitialisation état
+        # 🔄 Réinitialisation état (thread)
         new_delay = random.randint(1800, 5400)
-        supabase.table("reiatsu_config").update({
-            "en_attente": False,
-            "spawn_message_id": None,
-            "delay_minutes": new_delay
-        }).eq("guild_id", str(self.guild_id)).execute()
+        await asyncio.to_thread(
+            lambda: supabase.table("reiatsu_config").update({
+                "en_attente": False,
+                "spawn_message_id": None,
+                "delay_minutes": new_delay
+            }).eq("guild_id", self.guild_id).execute()
+        )
 
-        # Désactivation bouton
+        # Désactivation du bouton visible
         for item in self.children:
             item.disabled = True
-        await interaction.response.edit_message(view=self)
+        try:
+            await interaction.message.edit(view=self)
+        except Exception:
+            # si l'édition échoue, on ignore (mais on a déjà ack et envoyé la followup)
+            pass
 
 
 # ──────────────────────────────────────────────────────────────
-# 🔧 COG : ReiatsuSpawner
+# 🔧 COG : ReiatsuSpawner (spawn_loop envoie View)
 # ──────────────────────────────────────────────────────────────
 class ReiatsuSpawner(commands.Cog):
     def __init__(self, bot: commands.Bot):
@@ -173,12 +205,18 @@ class ReiatsuSpawner(commands.Cog):
             )
 
             view = AbsorberButtonView(self.bot, guild_id, None)
-            message = await safe_send(channel, embed=embed, view=view)
+
+            # safe_send peut ne pas accepter 'view' selon ton wrapper — fallback géré
+            try:
+                message = await safe_send(channel, embed=embed, view=view)
+            except TypeError:
+                # si safe_send n'accepte pas view, utiliser channel.send directement
+                message = await channel.send(embed=embed, view=view)
 
             # Ajoute l'ID du message à la View
             view.spawn_message_id = message.id
 
-            # 💾 Mise à jour état
+            # 💾 Mise à jour état (non bloquant rapide)
             supabase.table("reiatsu_config").update({
                 "en_attente": True,
                 "last_spawn_at": datetime.utcnow().isoformat(),
@@ -195,4 +233,7 @@ async def setup(bot: commands.Bot):
 
 
 
-    await bot.add_cog(ReiatsuSpawner(bot))
+
+
+
+
