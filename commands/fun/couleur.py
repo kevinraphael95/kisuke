@@ -1,5 +1,5 @@
 # ────────────────────────────────────────────────────────────────────────────────
-# 📌 couleur.py — Commande interactive !couleur
+# 📌 couleur.py — Commande interactive !couleur et /couleur
 # Objectif : Afficher une couleur aléatoire avec ses codes HEX et RGB dans un embed Discord
 # Catégorie : 🎨 Fun
 # Accès : Public
@@ -10,9 +10,9 @@
 # ────────────────────────────────────────────────────────────────────────────────
 import random
 import discord
+from discord import app_commands
 from discord.ext import commands
-
-from utils.discord_utils import safe_send, safe_edit  # ✅ Sécurité anti-429
+from utils.discord_utils import safe_send, safe_edit, safe_respond  # ✅ Utilisation des safe_
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🧩 Vue interactive avec bouton "Nouvelle couleur"
@@ -30,7 +30,6 @@ class CouleurView(discord.ui.View):
         b = code_hex & 0xFF
         rgb_str = f"({r}, {g}, {b})"
         image_url = f"https://dummyimage.com/700x200/{code_hex:06x}/{code_hex:06x}.png&text=+"
-
         embed = discord.Embed(
             title="🌈 Couleur aléatoire",
             description=f"🔹 **Code HEX** : `{hex_str}`\n🔸 **Code RGB** : `{rgb_str}`",
@@ -44,7 +43,6 @@ class CouleurView(discord.ui.View):
         if interaction.user != self.author:
             await interaction.response.send_message("❌ Tu ne peux pas utiliser ce bouton.", ephemeral=True)
             return
-
         try:
             new_embed = self.generer_embed()
             await safe_edit(interaction.message, embed=new_embed, view=self)
@@ -57,27 +55,51 @@ class CouleurView(discord.ui.View):
 # ────────────────────────────────────────────────────────────────────────────────
 class CouleurCommand(commands.Cog):
     """
-    Commande !couleur — Génère et affiche une couleur aléatoire avec codes HEX et RGB.
+    Commande !couleur et /couleur — Génère et affiche une couleur aléatoire avec codes HEX et RGB.
     """
 
     def __init__(self, bot: commands.Bot):
         self.bot = bot
 
+    # ────────────────────────────────────────────────────────────────────────────
+    # 🔹 Commande SLASH
+    # ────────────────────────────────────────────────────────────────────────────
+    @app_commands.command(
+        name="couleur",
+        description="Affiche une couleur aléatoire avec un aperçu visuel et ses codes HEX & RGB."
+    )
+    async def slash_couleur(self, interaction: discord.Interaction):
+        """Commande slash principale qui génère une couleur aléatoire."""
+        try:
+            await interaction.response.defer()
+            view = CouleurView(interaction.user)
+            embed = view.generer_embed()
+            embed.timestamp = interaction.created_at
+            await safe_send(interaction.channel, embed=embed, view=view)
+            await interaction.delete_original_response()
+        except Exception as e:
+            print(f"[ERREUR /couleur] {e}")
+            await safe_respond(interaction, "❌ Une erreur est survenue lors de la génération de la couleur.", ephemeral=True)
+
+    # ────────────────────────────────────────────────────────────────────────────
+    # 🔹 Commande PREFIX
+    # ────────────────────────────────────────────────────────────────────────────
     @commands.command(
         name="couleur",
         help="🎨 Affiche une couleur aléatoire avec ses codes HEX et RGB.",
         description="Affiche une couleur aléatoire avec un aperçu visuel et ses codes HEX & RGB."
     )
     @commands.cooldown(rate=1, per=3, type=commands.BucketType.user)
-    async def couleur(self, ctx: commands.Context):
-        """Commande principale générant une couleur aléatoire."""
+    async def prefix_couleur(self, ctx: commands.Context):
+        """Commande préfixe qui génère une couleur aléatoire."""
         try:
             view = CouleurView(ctx.author)
             embed = view.generer_embed()
             embed.timestamp = ctx.message.created_at
             await safe_send(ctx, embed=embed, view=view)
         except Exception as e:
-            await safe_send(ctx, f"❌ Une erreur est survenue : `{e}`")
+            print(f"[ERREUR !couleur] {e}")
+            await safe_send(ctx, "❌ Une erreur est survenue lors de la génération de la couleur.")
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🔌 Setup du Cog
