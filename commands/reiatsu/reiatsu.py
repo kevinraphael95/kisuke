@@ -16,6 +16,7 @@ from datetime import datetime, timedelta
 import time
 from supabase_client import supabase
 import json
+
 from utils.discord_utils import safe_send  # <-- import fonctions anti 429
 
 # ────────────────────────────────────────────────────────────────────────────────
@@ -26,29 +27,29 @@ class ReiatsuView(discord.ui.View):
     Boutons interactifs pour la commande Reiatsu.
     """
     def __init__(self, author: discord.Member):
-        # Timeout fixé à 2 minutes comme demandé
-        super().__init__(timeout=120)
+        super().__init__(timeout=None)  # View persistante
         self.author = author
-
-    async def interaction_check(self, interaction: discord.Interaction) -> bool:
-        # Limiter l'utilisation du bouton à l'auteur uniquement
-        if interaction.user != self.author:
-            await interaction.response.send_message("❌ Tu ne peux pas utiliser ce bouton.", ephemeral=True)
-            return False
-        return True
 
     @discord.ui.button(label="📊 Classement", style=discord.ButtonStyle.primary, custom_id="reiatsu:classement")
     async def classement_button(self, interaction: discord.Interaction, button: discord.ui.Button):
-        # Récupération top 10
+        # Autoriser seulement l'auteur du message
+        if interaction.user != self.author:
+            return await interaction.response.send_message("❌ Tu ne peux pas utiliser ce bouton.", ephemeral=True)
+
+      
+        # Exemple simple : top 5 des utilisateurs par points
+
         classement_data = supabase.table("reiatsu") \
             .select("user_id, points") \
             .order("points", desc=True) \
             .limit(10) \
             .execute()
+
         if not classement_data.data:
             return await interaction.response.send_message("Aucun classement disponible pour le moment.", ephemeral=True)
 
         classement = classement_data.data
+
         description = ""
         for i, entry in enumerate(classement, start=1):
             user_id = int(entry["user_id"])
@@ -71,6 +72,7 @@ class Reiatsu2Command(commands.Cog):
     """
     Commande !reiatsu ou /reiatsu — Affiche ton score de Reiatsu, le salon et le temps avant le prochain spawn.
     """
+
     def __init__(self, bot: commands.Bot):
         self.bot = bot
 
@@ -139,7 +141,6 @@ class Reiatsu2Command(commands.Cog):
             if config:
                 salon = guild.get_channel(int(config["channel_id"])) if config.get("channel_id") else None
                 salon_text = salon.mention if salon else "⚠️ Salon introuvable"
-
                 if config.get("en_attente"):
                     channel_id = config.get("channel_id")
                     msg_id = config.get("spawn_message_id")
@@ -180,7 +181,7 @@ class Reiatsu2Command(commands.Cog):
         )
         embed.set_footer(text="Utilise les boutons ci-dessous pour interagir.")
 
-        # ✅ Envoi avec bouton (timeout 2 min)
+        # ✅ Envoi avec bouton
         view = ReiatsuView(author)
         await safe_send(channel, embed=embed, view=view)
 
@@ -206,7 +207,7 @@ class Reiatsu2Command(commands.Cog):
     )
     @app_commands.describe(member="Membre dont voir le score (optionnel)")
     async def reiatsu_slash(self, interaction: discord.Interaction, member: discord.Member = None):
-        await interaction.response.defer()  # cache automatiquement le thinking
+        await interaction.response.defer()
         await self._reiatsu_core(interaction.channel, interaction.user, interaction.guild, member)
 
 # ────────────────────────────────────────────────────────────────────────────────
