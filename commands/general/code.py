@@ -45,6 +45,14 @@ class CodeCommand(commands.Cog):
     @commands.cooldown(rate=1, per=3, type=commands.BucketType.user)
     async def code(self, ctx: commands.Context):
         """Commande préfixe pour afficher le lien vers le code."""
+        try:
+            await ctx.message.delete()  # Supprime le message de la commande
+        except discord.Forbidden:
+            # Pas les permissions, on ignore
+            pass
+        except Exception as e:
+            print(f"[ERREUR suppression message !code] {e}")
+
         await self._send_code_link(ctx.channel)
 
     # ────────────────────────────────────────────────────────────────────────────
@@ -66,4 +74,3 @@ async def setup(bot: commands.Bot):
         if not hasattr(command, "category"):
             command.category = "Général"
     await bot.add_cog(cog)
-    
