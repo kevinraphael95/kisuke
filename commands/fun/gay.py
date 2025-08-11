@@ -142,11 +142,14 @@ class GayCommand(commands.Cog):
         self.bot.tree.add_command(self.slash_gay, guild=guild)
         # Pour déploiement global, utilise : self.bot.tree.add_command(self.slash_gay)
 
+
+
 # ────────────────────────────────────────────────────────────────────────────────
 # 🔌 Setup du Cog
 # ────────────────────────────────────────────────────────────────────────────────
 async def setup(bot: commands.Bot):
     cog = GayCommand(bot)
     for command in cog.get_commands():
-        command.category = "Fun"
+        if not hasattr(command, "category"):
+            command.category = "Fun"
     await bot.add_cog(cog)
