@@ -1,5 +1,5 @@
 # ────────────────────────────────────────────────────────────────────────────────
-# 📌 gay.py — Commande interactive !gay
+# 📌 gay.py — Commande interactive !gay / /gay
 # Objectif : Calcule un taux de gaytitude fixe et fun pour un utilisateur Discord
 # Catégorie : 🌈 Fun
 # Accès : Public
@@ -19,20 +19,37 @@ from utils.discord_utils import safe_send  # ✅ Envoi sécurisé
 # ────────────────────────────────────────────────────────────────────────────────
 class GayCommand(commands.Cog):
     """
-    Commande !gay — Calcule un taux de gaytitude fixe et fun pour un utilisateur Discord
+    Commande !gay / /gay — Calcule un taux de gaytitude fixe et fun pour un utilisateur Discord
     """
 
     def __init__(self, bot):
         self.bot = bot
 
+    # ────────────────────────────────────────────────────────────────────────────────
+    # Commande prefixée !gay
+    # ────────────────────────────────────────────────────────────────────────────────
     @commands.command(
         name="gay",
         help="🌈 Calcule ton taux de gaytitude fixe et fun."
     )
     @commands.cooldown(rate=1, per=3, type=commands.BucketType.user)  # ⏱️ Anti-spam
     async def gay(self, ctx, member: discord.Member = None):
-        member = member or ctx.author
+        await self._send_gay_embed(ctx, member or ctx.author)
 
+    # ────────────────────────────────────────────────────────────────────────────────
+    # Commande slash /gay
+    # ────────────────────────────────────────────────────────────────────────────────
+    @commands.slash_command(
+        name="gay",
+        description="🌈 Calcule ton taux de gaytitude fixe et fun."
+    )
+    async def slash_gay(self, ctx: discord.ApplicationContext, member: discord.Member = None):
+        await self._send_gay_embed(ctx, member or ctx.user)
+
+    # ────────────────────────────────────────────────────────────────────────────────
+    # Méthode interne commune d'envoi de l'embed
+    # ────────────────────────────────────────────────────────────────────────────────
+    async def _send_gay_embed(self, ctx, member):
         # 🔒 Score fixe basé sur le hash de l’ID utilisateur
         user_id = str(member.id).encode()
         hash_val = hashlib.md5(user_id).digest()
@@ -120,8 +137,11 @@ class GayCommand(commands.Cog):
         embed.add_field(name="📈 Niveau", value=bar, inline=False)
         embed.set_footer(text="✨ C’est scientifique. Enfin presque.")
 
-        # 📤 Envoi de l'embed
-        await safe_send(ctx.channel, embed=embed)
+        # 📤 Envoi de l'embed, gestion des contextes (slash ou prefix)
+        if isinstance(ctx, commands.Context):
+            await safe_send(ctx.channel, embed=embed)
+        else:  # ApplicationContext (slash)
+            await ctx.respond(embed=embed, ephemeral=False)
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🔌 Setup du Cog
