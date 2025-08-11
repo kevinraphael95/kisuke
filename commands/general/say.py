@@ -68,7 +68,7 @@ class Say(commands.Cog):
     async def prefix_say(self, ctx: commands.Context, *, message: str):
         """
         Commande préfixe qui fait répéter un message.
-        Utilise `--embed` ou `-e` pour envoyer dans un embed.
+        Utilise embed en premier argument pour envoyer dans un embed.
         """
         words = message.split(maxsplit=1)
         if words[0].lower() == "embed":
