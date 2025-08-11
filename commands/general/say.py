@@ -70,10 +70,12 @@ class Say(commands.Cog):
         Commande préfixe qui fait répéter un message.
         Utilise `--embed` ou `-e` pour envoyer dans un embed.
         """
-        embed = False
-        if message.endswith("--embed") or message.endswith("-e"):
+        words = message.split(maxsplit=1)
+        if words[0].lower() == "embed":
             embed = True
-            message = message.rsplit(" ", 1)[0]  # on retire le flag
+            message = words[1] if len(words) > 1 else ""
+        else:
+            embed = False
 
         try:
             await self._say_message(ctx.channel, message, embed)
