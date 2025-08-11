@@ -59,8 +59,16 @@ class PizzaView(View):
 
     @button(label="🍕 Nouvelle pizza", style=discord.ButtonStyle.green)
     async def nouvelle_pizza(self, interaction: discord.Interaction, button: discord.ui.Button):
-        embed = _generate_pizza_embed(self.data)
-        await safe_edit(interaction.message, embed=embed, view=self)
+        try:
+            embed = _generate_pizza_embed(self.data)
+            # Utiliser safe_edit avec interaction.message
+            await safe_edit(interaction.message, embed=embed, view=self)
+            # On doit répondre à l'interaction pour éviter le délai "Interaction failed"
+            await interaction.response.defer()  # Juste acknowledge, pas de message
+        except Exception as e:
+            print(f"[ERREUR bouton pizza] {e}")
+            # En cas d'erreur, on répond avec un message visible
+            await interaction.response.send_message("❌ Erreur lors de la génération de la pizza.", ephemeral=True)
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🧠 Cog principal
@@ -99,6 +107,7 @@ class PizzaAleatoire(commands.Cog):
             data = load_data()
             embed = _generate_pizza_embed(data)
             view = PizzaView(data)
+            # Ici on répond à l'interaction en envoyant le message
             await safe_send(interaction, embed=embed, view=view)
         except Exception as e:
             print(f"[ERREUR pizza slash] {e}")
@@ -113,5 +122,3 @@ async def setup(bot: commands.Bot):
         if not hasattr(command, "category"):
             command.category = "Fun"
     await bot.add_cog(cog)
-
-
