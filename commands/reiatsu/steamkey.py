@@ -45,7 +45,8 @@ class SteamKeyView(View):
     @discord.ui.button(label=f"Miser {REIATSU_COST} Reiatsu", style=discord.ButtonStyle.green)
     async def bet_button(self, interaction: discord.Interaction, button: Button):
         button.disabled = True
-        await safe_edit(interaction.message, view=self)
+        # Correction ici : utiliser interaction.response.edit_message
+        await interaction.response.edit_message(view=self)
         self.value = True
         self.stop()
 
@@ -199,5 +200,3 @@ async def setup(bot: commands.Bot):
         if not hasattr(command, "category"):
             command.category = "Reiatsu"
     await bot.add_cog(cog)
-
-
