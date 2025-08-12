@@ -34,7 +34,7 @@ class SteamKeyView(View):
     def __init__(self, author_id: int):
         super().__init__(timeout=120)
         self.author_id = author_id
-        self.value = None
+        self.value = None  # Pour savoir si pari validé
 
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
         if interaction.user.id != self.author_id:
@@ -44,8 +44,9 @@ class SteamKeyView(View):
 
     @discord.ui.button(label=f"Miser {REIATSU_COST} Reiatsu", style=discord.ButtonStyle.green)
     async def bet_button(self, interaction: discord.Interaction, button: Button):
+        # On bloque le bouton immédiatement
         button.disabled = True
-        # C'est ici la correction majeure : on répond avec edit_message via interaction.response
+        # On répond à l'interaction par un update du message (édition avec vue mise à jour)
         await interaction.response.edit_message(view=self)
         self.value = True
         self.stop()
@@ -153,14 +154,19 @@ class SteamKey(commands.Cog):
             await interaction.response.defer()
             view = await self._send_menu(interaction.channel, interaction.user.id)
             await view.wait()
+
             if view.value:
+                # Le pari a été validé, on lance la tentative de gain
                 await self._try_win_key(interaction)
             else:
-                # Timeout, on désactive les boutons
+                # Timeout : on désactive boutons et on informe
                 for child in view.children:
                     child.disabled = True
-                await safe_edit(await interaction.original_response(), view=view)
+                # Edit du message initial (via interaction.original_response)
+                msg = await interaction.original_response()
+                await safe_edit(msg, view=view)
                 await safe_respond(interaction, "⏰ Temps écoulé, la mise a été annulée.", ephemeral=True)
+
         except Exception as e:
             print(f"[ERREUR /steamkey] {e}")
             await safe_respond(interaction, "❌ Une erreur est survenue.", ephemeral=True)
@@ -168,13 +174,14 @@ class SteamKey(commands.Cog):
     # ────────────────────────────────────────────────────────────────────────────
     # 🔹 Commande PREFIX
     # ────────────────────────────────────────────────────────────────────────────
-    @commands.command(name="steamkey", aliases=["sk"],  description="Miser des Reiatsu pour tenter de gagner une clé Steam")
+    @commands.command(name="steamkey", aliases=["sk"], description="Miser des Reiatsu pour tenter de gagner une clé Steam")
     async def prefix_steamkey(self, ctx: commands.Context):
         try:
             view = await self._send_menu(ctx.channel, ctx.author.id)
             await view.wait()
+
             if view.value:
-                # On simule un objet interaction minimal pour _try_win_key
+                # Création d'une interaction minimale simulée pour _try_win_key
                 class DummyInteraction:
                     def __init__(self, user, channel):
                         self.user = user
@@ -187,6 +194,7 @@ class SteamKey(commands.Cog):
                 await self._try_win_key(dummy_inter)
             else:
                 await safe_send(ctx.channel, "⏰ Temps écoulé, la mise a été annulée.")
+
         except Exception as e:
             print(f"[ERREUR !steamkey] {e}")
             await safe_send(ctx.channel, "❌ Une erreur est survenue.")
