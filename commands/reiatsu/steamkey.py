@@ -134,8 +134,8 @@ class SteamKey(commands.Cog):
             description=f"Miser {REIATSU_COST} Reiatsu pour avoir une faible chance de gagner une clé Steam.",
             color=discord.Color.blurple()
         )
-        embed.add_field(name="Probabilité de gagner une clé", value=str(nb_keys), inline=False)
-        embed.add_field(name="Nombre de clés disponibles", value="1%", inline=False)
+        embed.add_field(name="Probabilité de gagner une clé", value="1%", inline=False)
+        embed.add_field(name="Nombre de clés disponibles", value=str(nb_keys), inline=False)
         embed.add_field(name="Jeux possibles à gagner", value=", ".join(games) if games else "Aucun", inline=True)
         embed.set_footer(text="Vous avez 2 minutes pour miser.")
 
