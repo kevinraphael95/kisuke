@@ -230,6 +230,14 @@ class ReiatsuSpawner(commands.Cog):
 async def setup(bot: commands.Bot):
     await bot.add_cog(ReiatsuSpawner(bot))
 
+    # Restaure les Views des Reiatsu en attente après reboot
+    configs = supabase.table("reiatsu_config").select("*").execute()
+    for conf in configs.data:
+        if conf.get("en_attente") and conf.get("spawn_message_id") and conf.get("guild_id"):
+            guild_id = conf["guild_id"]
+            spawn_message_id = conf["spawn_message_id"]
+            view = AbsorberButtonView(bot, guild_id, spawn_message_id)
+            bot.add_view(view)  # Important : relie la View au message Discord existant
 
 
 
