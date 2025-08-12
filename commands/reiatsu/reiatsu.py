@@ -218,7 +218,16 @@ class Reiatsu2Command(commands.Cog):
     )
     @commands.cooldown(rate=1, per=3, type=commands.BucketType.user)
     async def reiatsu(self, ctx: commands.Context, member: discord.Member = None):
+        # 📌 Supprimer le message de l'utilisateur
+        try:
+            await ctx.message.delete()
+        except discord.Forbidden:
+            pass
+        except Exception as e:
+            print(f"[ERREUR suppression message !reiatsu] {e}")
+
         await self._reiatsu_core(ctx.channel, ctx.author, ctx.guild, member)
+
 
     # ────────────────────────────────────────────────────────────────────────────────
     # 💬 Commande slash
