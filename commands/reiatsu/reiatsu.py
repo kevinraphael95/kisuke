@@ -229,9 +229,18 @@ class Reiatsu2Command(commands.Cog):
     )
     @app_commands.describe(member="Membre dont voir le score (optionnel)")
     async def reiatsu_slash(self, interaction: discord.Interaction, member: discord.Member = None):
-        # Suppression du thinking pour éviter le “Kisuke Urahara réfléchit…”
-        await self._reiatsu_core(interaction.channel, interaction.user, interaction.guild, member)
+        """Commande slash Reiatsu avec suppression de la première réponse éphémère."""
+        try:
+            # On supprime le message "envoi de la commande"
+            await interaction.response.defer(thinking=False)
+            
+            # On utilise ton moteur principal mais en envoyant dans le salon
+            await self._reiatsu_core(interaction.channel, interaction.user, interaction.guild, member)
 
+            # Suppression du placeholder initial
+            await interaction.delete_original_response()
+        except Exception as e:
+            print(f"[ERREUR /reiatsu] {e}")
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🔌 Setup du Cog
