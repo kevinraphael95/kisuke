@@ -14,31 +14,41 @@ from discord import app_commands
 from dateutil import parser
 from datetime import datetime, timedelta
 import time
-from supabase_client import supabase
 import json
 
-from utils.discord_utils import safe_send  # <-- import fonctions anti 429
+from supabase_client import supabase
+from utils.discord_utils import safe_send  # Fonctions anti-429 pour éviter les ratelimits
 
 # ────────────────────────────────────────────────────────────────────────────────
-# 🎯 Boutons interactifs
+# 🎯 Boutons interactifs Reiatsu
 # ────────────────────────────────────────────────────────────────────────────────
 class ReiatsuView(discord.ui.View):
     """
-    Boutons interactifs pour la commande Reiatsu.
+    Boutons interactifs affichés avec le profil Reiatsu.
+    Inclut le bouton Classement et le bouton Aller au spawn si disponible.
     """
-    def __init__(self, author: discord.Member):
+    def __init__(self, author: discord.Member, spawn_link: str = None):
         super().__init__(timeout=None)  # View persistante
         self.author = author
 
+        # Ajout dynamique d'un bouton "Aller au spawn" si un lien existe
+        if spawn_link:
+            self.add_item(discord.ui.Button(
+                label="💠 Aller au spawn",
+                style=discord.ButtonStyle.link,
+                url=spawn_link
+            ))
+
     @discord.ui.button(label="📊 Classement", style=discord.ButtonStyle.primary, custom_id="reiatsu:classement")
     async def classement_button(self, interaction: discord.Interaction, button: discord.ui.Button):
-        # Autoriser seulement l'auteur du message
+        """
+        Affiche le top 10 des joueurs par points Reiatsu.
+        """
+        # Autoriser seulement l'auteur du message original
         if interaction.user != self.author:
             return await interaction.response.send_message("❌ Tu ne peux pas utiliser ce bouton.", ephemeral=True)
 
-      
-        # Exemple simple : top 5 des utilisateurs par points
-
+        # Récupération du classement en base
         classement_data = supabase.table("reiatsu") \
             .select("user_id, points") \
             .order("points", desc=True) \
@@ -48,10 +58,9 @@ class ReiatsuView(discord.ui.View):
         if not classement_data.data:
             return await interaction.response.send_message("Aucun classement disponible pour le moment.", ephemeral=True)
 
-        classement = classement_data.data
-
+        # Formatage de l'affichage
         description = ""
-        for i, entry in enumerate(classement, start=1):
+        for i, entry in enumerate(classement_data.data, start=1):
             user_id = int(entry["user_id"])
             points = entry["points"]
             user = interaction.guild.get_member(user_id) if interaction.guild else None
@@ -70,21 +79,26 @@ class ReiatsuView(discord.ui.View):
 # ────────────────────────────────────────────────────────────────────────────────
 class Reiatsu2Command(commands.Cog):
     """
-    Commande !reiatsu ou /reiatsu — Affiche ton score de Reiatsu, le salon et le temps avant le prochain spawn.
+    Commande !reiatsu ou /reiatsu — Affiche ton score de Reiatsu, la classe choisie, 
+    et les infos sur le prochain spawn.
     """
 
     def __init__(self, bot: commands.Bot):
         self.bot = bot
 
     # ────────────────────────────────────────────────────────────────────────────────
-    # ♻️ Fonction interne commune
+    # ♻️ Fonction interne commune — utilisée par préfixe & slash
     # ────────────────────────────────────────────────────────────────────────────────
-    async def _reiatsu_core(self, channel, author, guild, target_user):
+    async def _reiatsu_core(self, ctx_or_interaction, author, guild, target_user):
+        """
+        Affiche le profil Reiatsu complet (points, classe, cooldown vol, infos spawn).
+        S'adapte automatiquement au type d'appel (ctx ou interaction).
+        """
         user = target_user or author
         user_id = str(user.id)
         guild_id = str(guild.id) if guild else None
 
-        # 📦 Requête : Données joueur
+        # ─── 1️⃣ Récupération des données joueur ───────────────────────────────
         user_data = supabase.table("reiatsu") \
             .select("points, classe, last_steal_attempt, steal_cd") \
             .eq("user_id", user_id) \
@@ -96,7 +110,7 @@ class Reiatsu2Command(commands.Cog):
         last_steal_str = data.get("last_steal_attempt")
         steal_cd = data.get("steal_cd")
 
-        # 🔁 Chargement des infos de la classe
+        # ─── 2️⃣ Chargement infos classe depuis fichier local ──────────────────
         with open("data/classes.json", "r", encoding="utf-8") as f:
             CLASSES = json.load(f)
 
@@ -110,7 +124,7 @@ class Reiatsu2Command(commands.Cog):
         else:
             classe_text = "Aucune classe sélectionnée.\nUtilise la commande `!classe` pour en choisir une."
 
-        # 📦 Cooldown vol
+        # ─── 3️⃣ Calcul cooldown vol ──────────────────────────────────────────
         cooldown_text = "Disponible ✅"
         if classe_nom and steal_cd is None:
             steal_cd = 19 if classe_nom == "Voleur" else 24
@@ -126,9 +140,11 @@ class Reiatsu2Command(commands.Cog):
                 h, m = divmod(minutes_total, 60)
                 cooldown_text = f"{restant.days}j {h}h{m}m" if restant.days else f"{h}h{m}m"
 
-        # 📦 Config serveur
+        # ─── 4️⃣ Infos serveur et spawn Reiatsu ───────────────────────────────
         salon_text = "❌"
         temps_text = "❌"
+        spawn_link = None  # Lien direct vers le spawn si dispo
+
         if guild:
             config_data = supabase.table("reiatsu_config") \
                 .select("*") \
@@ -141,12 +157,13 @@ class Reiatsu2Command(commands.Cog):
             if config:
                 salon = guild.get_channel(int(config["channel_id"])) if config.get("channel_id") else None
                 salon_text = salon.mention if salon else "⚠️ Salon introuvable"
+
                 if config.get("en_attente"):
                     channel_id = config.get("channel_id")
                     msg_id = config.get("spawn_message_id")
                     if msg_id and channel_id:
-                        link = f"https://discord.com/channels/{guild_id}/{channel_id}/{msg_id}"
-                        temps_text = f"Un Reiatsu 💠 est **déjà apparu** ! [Aller le prendre]({link})"
+                        spawn_link = f"https://discord.com/channels/{guild_id}/{channel_id}/{msg_id}"
+                        temps_text = f"Un Reiatsu 💠 est **déjà apparu** !"
                     else:
                         temps_text = "Un Reiatsu 💠 est **déjà apparu** ! (Lien indisponible)"
                 else:
@@ -164,7 +181,7 @@ class Reiatsu2Command(commands.Cog):
                     else:
                         temps_text = "Un Reiatsu 💠 peut apparaître **à tout moment** !"
 
-        # 📋 Embed
+        # ─── 5️⃣ Création de l'embed profil ───────────────────────────────────
         embed = discord.Embed(
             title="__**💠 Profil**__",
             description=(
@@ -181,9 +198,14 @@ class Reiatsu2Command(commands.Cog):
         )
         embed.set_footer(text="Utilise les boutons ci-dessous pour interagir.")
 
-        # ✅ Envoi avec bouton
-        view = ReiatsuView(author)
-        await safe_send(channel, embed=embed, view=view)
+        # ─── 6️⃣ Création de la vue avec boutons ─────────────────────────────
+        view = ReiatsuView(author, spawn_link=spawn_link)
+
+        # ─── 7️⃣ Envoi adapté selon le type d'appel ──────────────────────────
+        if isinstance(ctx_or_interaction, discord.Interaction):
+            await ctx_or_interaction.response.send_message(embed=embed, view=view)
+        else:
+            await safe_send(ctx_or_interaction, embed=embed, view=view)
 
     # ────────────────────────────────────────────────────────────────────────────────
     # ⌨️ Commande préfixe
@@ -207,8 +229,9 @@ class Reiatsu2Command(commands.Cog):
     )
     @app_commands.describe(member="Membre dont voir le score (optionnel)")
     async def reiatsu_slash(self, interaction: discord.Interaction, member: discord.Member = None):
-        await interaction.response.defer(thinking=False)
+        # Suppression du thinking pour éviter le “Kisuke Urahara réfléchit…”
         await self._reiatsu_core(interaction.channel, interaction.user, interaction.guild, member)
+
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🔌 Setup du Cog
