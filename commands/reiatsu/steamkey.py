@@ -45,7 +45,7 @@ class SteamKeyView(View):
     @discord.ui.button(label=f"Miser {REIATSU_COST} Reiatsu", style=discord.ButtonStyle.green)
     async def bet_button(self, interaction: discord.Interaction, button: Button):
         button.disabled = True
-        # Correction ici : utiliser interaction.response.edit_message
+        # C'est ici la correction majeure : on répond avec edit_message via interaction.response
         await interaction.response.edit_message(view=self)
         self.value = True
         self.stop()
@@ -173,17 +173,16 @@ class SteamKey(commands.Cog):
             view = await self._send_menu(ctx.channel, ctx.author.id)
             await view.wait()
             if view.value:
-                # Simuler un faux Interaction pour la réponse (adaptation safe_respond)
+                # On simule un objet interaction minimal pour _try_win_key
                 class DummyInteraction:
                     def __init__(self, user, channel):
                         self.user = user
                         self.channel = channel
-                    async def followup_send(self, *args, **kwargs):
+
+                    async def send(self, *args, **kwargs):
                         await safe_send(self.channel, *args, **kwargs)
-                    async def response_send_message(self, *args, **kwargs):
-                        await safe_send(self.channel, *args, **kwargs)
+
                 dummy_inter = DummyInteraction(ctx.author, ctx.channel)
-                # La vraie méthode attend un Interaction, on fait simple ici
                 await self._try_win_key(dummy_inter)
             else:
                 await safe_send(ctx.channel, "⏰ Temps écoulé, la mise a été annulée.")
