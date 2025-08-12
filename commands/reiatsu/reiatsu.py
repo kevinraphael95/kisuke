@@ -207,7 +207,7 @@ class Reiatsu2Command(commands.Cog):
     )
     @app_commands.describe(member="Membre dont voir le score (optionnel)")
     async def reiatsu_slash(self, interaction: discord.Interaction, member: discord.Member = None):
-        await interaction.response.defer()
+        await interaction.response.defer(thinking=False)
         await self._reiatsu_core(interaction.channel, interaction.user, interaction.guild, member)
 
 # ────────────────────────────────────────────────────────────────────────────────
