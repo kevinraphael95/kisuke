@@ -32,15 +32,14 @@ class SteamKey(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
+    async def cog_load(self):
+        print("[SteamKey] Cog chargé correctement.")
+
     # ──────────────────────────────
     # 🔑 Fonction principale
     # ──────────────────────────────
     async def _steamkey_logic(self, ctx_or_interaction, user_id: int, is_slash: bool):
-        """
-        Fonction principale pour tenter de gagner une clé Steam.
-        """
         try:
-            # Récupération du solde Reiatsu
             response = supabase.table("reiatsu_users").select("reiatsu").eq("user_id", str(user_id)).single().execute()
             if not response.data:
                 msg = "❌ Vous n'avez pas encore de Reiatsu enregistré."
@@ -60,9 +59,7 @@ class SteamKey(commands.Cog):
             # Déduction immédiate
             supabase.table("reiatsu_users").update({"reiatsu": reiatsu_amount - REIATSU_COST}).eq("user_id", str(user_id)).execute()
 
-            # Tirage
             if random.random() <= WIN_CHANCE:
-                # Récupération d'une clé
                 key_data = supabase.table("steam_keys").select("*").limit(1).execute()
                 if not key_data.data:
                     msg = "🎉 Vous avez gagné ! Mais... il n'y a plus de clés Steam disponibles 😅"
@@ -72,10 +69,8 @@ class SteamKey(commands.Cog):
                         return await safe_send(ctx_or_interaction, msg)
 
                 key = key_data.data[0]
-                # Suppression de la clé
                 supabase.table("steam_keys").delete().eq("id", key["id"]).execute()
 
-                # Embed victoire
                 embed = discord.Embed(
                     title="🎉 Félicitations !",
                     description=f"Vous avez gagné une clé Steam pour **{key['game_name']}** !",
@@ -87,9 +82,7 @@ class SteamKey(commands.Cog):
                     return await safe_respond(ctx_or_interaction, embed=embed)
                 else:
                     return await safe_send(ctx_or_interaction, embed=embed)
-
             else:
-                # Embed défaite
                 embed = discord.Embed(
                     title="💨 Pas de chance...",
                     description=f"Vous avez perdu. **{REIATSU_COST} Reiatsu** ont été dépensés.",
@@ -120,8 +113,7 @@ class SteamKey(commands.Cog):
     # ──────────────────────────────
     @app_commands.command(name="steamkey", description="Tenter de gagner une clé Steam (coût : 50 Reiatsu).")
     async def steamkey_slash(self, interaction: discord.Interaction):
-        # IMPORTANT : defer la réponse pour éviter le timeout
-        await interaction.response.defer(ephemeral=True)  # cacher la réponse à tous sauf à l'utilisateur
+        await interaction.response.defer(ephemeral=True)
         await self._steamkey_logic(interaction, interaction.user.id, is_slash=True)
 
 # ────────────────────────────────────────────────────────────────────────────────
@@ -129,7 +121,12 @@ class SteamKey(commands.Cog):
 # ────────────────────────────────────────────────────────────────────────────────
 async def setup(bot: commands.Bot):
     cog = SteamKey(bot)
-    for command in cog.get_commands():
-        if not hasattr(command, "category"):
-            command.category = "Reiatsu"
+    # Ajout du cog
     await bot.add_cog(cog)
+
+    # Synchronisation des commandes slash (très important)
+    try:
+        await bot.tree.sync()
+        print("[SteamKey] Slash commands synchronisées.")
+    except Exception as e:
+        print(f"[SteamKey] Erreur sync commandes slash : {e}")
