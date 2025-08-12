@@ -95,7 +95,6 @@ class SteamKey(commands.Cog):
         # Tentative de gain
         if random.random() <= WIN_CHANCE:
             keys_data = supabase.table("steam_keys").select("*").limit(1).execute()
-
             if not keys_data.data:
                 embed = discord.Embed(
                     title="Jeu Steam Key - Résultat",
@@ -104,7 +103,6 @@ class SteamKey(commands.Cog):
                 )
             else:
                 key = keys_data.data[0]
-
                 # Suppression de la clé gagnée de la base
                 supabase.table("steam_keys").delete().eq("id", key["id"]).execute()
 
@@ -115,6 +113,7 @@ class SteamKey(commands.Cog):
                 embed.add_field(name="Jeu", value=key["game_name"], inline=False)
                 embed.add_field(name="Lien Steam", value=f"[Clique ici]({key['steam_url']})", inline=False)
                 embed.add_field(name="Clé Steam", value=f"`{key['steam_key']}`", inline=False)
+
         else:
             embed = discord.Embed(
                 title="Jeu Steam Key - Résultat",
@@ -207,7 +206,6 @@ class SteamKey(commands.Cog):
                 # Timeout : on édite le message pour désactiver le bouton si possible
                 for child in view.children:
                     child.disabled = True
-
                 # interaction.response a déjà été envoyée => on doit éditer followup
                 await interaction.followup.edit_message(message_id=interaction.message.id, view=view)
                 await interaction.followup.send("⏰ Temps écoulé, la mise a été annulée.", ephemeral=True)
@@ -230,7 +228,3 @@ async def setup(bot: commands.Bot):
     for command in cog.get_commands():
         command.category = "Reiatsu"
     await bot.add_cog(cog)
-
-
-
-
