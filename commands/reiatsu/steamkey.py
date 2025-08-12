@@ -109,8 +109,8 @@ class SteamKey(commands.Cog):
                     title="🎉 Félicitations, tu as gagné une clé Steam !",
                     color=discord.Color.green()
                 )
-                embed.add_field(name="Jeu", value=key["game_name"], inline=False)
-                embed.add_field(name="Lien Steam", value=f"[Clique ici]({key['steam_url']})", inline=False)
+                embed.add_field(name="Jeu", value=key["game_name"], inline=True)
+                embed.add_field(name="Lien Steam", value=f"[Clique ici]({key['steam_url']})", inline=True)
                 embed.add_field(name="Clé Steam", value=f"`{key['steam_key']}`", inline=False)
         else:
             embed = discord.Embed(
