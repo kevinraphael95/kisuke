@@ -166,7 +166,7 @@ class SteamKey(commands.Cog):
     # ────────────────────────────────────────────────────────────────────────────
     # 🔹 Commande PREFIX
     # ────────────────────────────────────────────────────────────────────────────
-    @commands.command(name="steamkey")
+    @commands.command(name="steamkey", aliases=["sk"])
     async def prefix_steamkey(self, ctx: commands.Context):
         try:
             view = await self._send_menu(ctx.channel, ctx.author.id)
@@ -197,7 +197,7 @@ async def setup(bot: commands.Bot):
     cog = SteamKey(bot)
     for command in cog.get_commands():
         if not hasattr(command, "category"):
-            command.category = "Général"
+            command.category = "Reiatsu"
     await bot.add_cog(cog)
 
 
