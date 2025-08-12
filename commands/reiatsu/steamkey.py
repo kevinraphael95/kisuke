@@ -116,17 +116,14 @@ class SteamKey(commands.Cog):
         await interaction.response.defer(ephemeral=True)
         await self._steamkey_logic(interaction, interaction.user.id, is_slash=True)
 
+
+
 # ────────────────────────────────────────────────────────────────────────────────
 # 🔌 Setup du Cog
 # ────────────────────────────────────────────────────────────────────────────────
 async def setup(bot: commands.Bot):
     cog = SteamKey(bot)
-    # Ajout du cog
+    for command in cog.get_commands():
+        command.category = "Reiatsu"
     await bot.add_cog(cog)
 
-    # Synchronisation des commandes slash (très important)
-    try:
-        await bot.tree.sync()
-        print("[SteamKey] Slash commands synchronisées.")
-    except Exception as e:
-        print(f"[SteamKey] Erreur sync commandes slash : {e}")
