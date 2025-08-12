@@ -57,18 +57,27 @@ class SteamKey(commands.Cog):
         if not response.data:
             msg = "❌ Vous n'avez pas encore de Reiatsu enregistré."
             if is_slash:
-                return await safe_respond(ctx_or_interaction, msg)
+                # Premier message d'une interaction deferred non encore répondu
+                if not ctx_or_interaction.response.is_done():
+                    await ctx_or_interaction.response.send_message(msg, ephemeral=True)
+                else:
+                    await ctx_or_interaction.followup.send(msg, ephemeral=True)
             else:
-                return await safe_send(ctx_or_interaction, msg)
+                await safe_send(ctx_or_interaction, msg)
+            return
 
         reiatsu_amount = response.data["reiatsu"]
 
         if reiatsu_amount < REIATSU_COST:
             msg = f"❌ Il vous faut **{REIATSU_COST} Reiatsu** pour tenter votre chance."
             if is_slash:
-                return await safe_respond(ctx_or_interaction, msg)
+                if not ctx_or_interaction.response.is_done():
+                    await ctx_or_interaction.response.send_message(msg, ephemeral=True)
+                else:
+                    await ctx_or_interaction.followup.send(msg, ephemeral=True)
             else:
-                return await safe_send(ctx_or_interaction, msg)
+                await safe_send(ctx_or_interaction, msg)
+            return
 
         # Déduction immédiate des Reiatsu
         supabase.table("reiatsu_users") \
@@ -95,7 +104,10 @@ class SteamKey(commands.Cog):
 
         # Envoi adapté selon type d'appel
         if is_slash:
-            await safe_respond(ctx_or_interaction, msg)
+            if not ctx_or_interaction.response.is_done():
+                await ctx_or_interaction.response.send_message(msg)
+            else:
+                await ctx_or_interaction.followup.send(msg)
         else:
             await safe_send(ctx_or_interaction, msg)
 
@@ -128,11 +140,19 @@ class SteamKey(commands.Cog):
     )
     async def steamkey_slash(self, interaction: discord.Interaction):
         try:
-            await interaction.response.defer(thinking=False)
+            await interaction.response.defer(thinking=True)
             await self._steamkey_logic(interaction, interaction.user.id, is_slash=True)
-            await interaction.delete_original_response()
+            # Ne pas supprimer la réponse, laisser visible
+            # await interaction.delete_original_response()
         except Exception as e:
             print(f"[ERREUR /steamkey] {e}")
+            try:
+                if not interaction.response.is_done():
+                    await interaction.response.send_message("❌ Une erreur est survenue.", ephemeral=True)
+                else:
+                    await interaction.followup.send("❌ Une erreur est survenue.", ephemeral=True)
+            except:
+                pass
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🔌 Setup du Cog
