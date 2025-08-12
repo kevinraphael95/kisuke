@@ -72,49 +72,54 @@ class ReactCommand(commands.Cog):
         except Exception as e:
             print(f"⚠️ Erreur lors de la réaction : {e}")
 
-	# ────────────────────────────────────────────────────────────────────────────
-	# 🔹 Commande SLASH — Réagit au message auquel on répond ou au dernier message
-	# ────────────────────────────────────────────────────────────────────────────
-	@app_commands.command(
-		name="react",
-		description="Réagit temporairement avec un emoji animé à un message (réponse ou dernier du salon)."
-	)
-	@app_commands.describe(
-		emoji="Nom de l'emoji animé du serveur (sans :)"
-	)
-	async def slash_react(self, interaction: discord.Interaction, emoji: str):
-		"""Commande slash /react — réagit au message auquel on répond ou au dernier du salon"""
-		await interaction.response.send_message("✅ Réaction en cours...", ephemeral=True)
+    # ────────────────────────────────────────────────────────────────────────────
+    # 🔹 Commande SLASH — Réagit au message auquel on répond ou au dernier message
+    # ────────────────────────────────────────────────────────────────────────────
+    @app_commands.command(
+        name="react",
+        description="Réagit temporairement avec un emoji animé à un message (réponse ou dernier du salon)."
+    )
+    @app_commands.describe(
+        emoji="Nom de l'emoji animé du serveur (sans :)"
+    )
+    async def slash_react(self, interaction: discord.Interaction, emoji: str):
+        """Commande slash /react — réagit au message auquel on répond ou au dernier du salon"""
+        await interaction.response.send_message("✅ Réaction en cours...", ephemeral=True)
 
-		try:
-			# 1️⃣ Si on répond à un message → on prend ce message
-			reference = interaction.channel.last_message_reference
-			if reference:
-				message = await interaction.channel.fetch_message(reference.message_id)
-			else:
-				# 2️⃣ Sinon → on prend le dernier message du salon qui n'est pas du bot
-				async for msg in interaction.channel.history(limit=2):
-					if msg.id != interaction.id and msg.author != interaction.client.user:
-						message = msg
-						break
-				else:
-					await interaction.edit_original_response(content="❌ Aucun message trouvé.")
-					return
+        try:
+            message = None
 
-			# Ajoute la réaction
-			await self._react_to_message(
-				channel=message.channel,
-				guild=interaction.guild,
-				emoji_name=emoji,
-				reference_message_id=message.id,
-				bot_member=interaction.guild.me,
-			)
-			await interaction.edit_original_response(content="✅ Réaction ajoutée temporairement.")
+            # 1️⃣ Si on répond à un message → on prend ce message
+            if interaction.message and interaction.message.reference:
+                try:
+                    message = await interaction.channel.fetch_message(interaction.message.reference.message_id)
+                except discord.NotFound:
+                    message = None
 
-		except Exception as e:
-			print(f"[ERREUR /react] {e}")
-			await interaction.edit_original_response(content="❌ Une erreur est survenue.")
+            # 2️⃣ Sinon → on prend le dernier message du salon qui n'est pas du bot
+            if not message:
+                async for msg in interaction.channel.history(limit=5):
+                    if msg.author != interaction.client.user:
+                        message = msg
+                        break
 
+            if not message:
+                await interaction.edit_original_response(content="❌ Aucun message trouvé.")
+                return
+
+            # Ajoute la réaction temporairement
+            await self._react_to_message(
+                channel=message.channel,
+                guild=interaction.guild,
+                emoji_name=emoji,
+                reference_message_id=message.id,
+                bot_member=interaction.guild.me,
+            )
+            await interaction.edit_original_response(content="✅ Réaction ajoutée temporairement.")
+
+        except Exception as e:
+            print(f"[ERREUR /react] {e}")
+            await interaction.edit_original_response(content="❌ Une erreur est survenue.")
 
     # ────────────────────────────────────────────────────────────────────────────
     # 🔹 Commande PREFIX
