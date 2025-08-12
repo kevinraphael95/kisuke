@@ -120,6 +120,8 @@ class SteamKey(commands.Cog):
     # ──────────────────────────────
     @app_commands.command(name="steamkey", description="Tenter de gagner une clé Steam (coût : 50 Reiatsu).")
     async def steamkey_slash(self, interaction: discord.Interaction):
+        # IMPORTANT : defer la réponse pour éviter le timeout
+        await interaction.response.defer(ephemeral=True)  # cacher la réponse à tous sauf à l'utilisateur
         await self._steamkey_logic(interaction, interaction.user.id, is_slash=True)
 
 # ────────────────────────────────────────────────────────────────────────────────
@@ -131,4 +133,3 @@ async def setup(bot: commands.Bot):
         if not hasattr(command, "category"):
             command.category = "Reiatsu"
     await bot.add_cog(cog)
-
