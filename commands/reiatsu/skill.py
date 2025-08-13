@@ -8,118 +8,106 @@
 # ────────────────────────────────────────────────────────────────────────────────
 # 📦 Imports nécessaires
 # ────────────────────────────────────────────────────────────────────────────────
+import random
+from datetime import datetime, timezone
 import discord
-from discord import app_commands
 from discord.ext import commands
-from discord.ui import View
-import os
-import json
-from datetime import datetime, timedelta
-from utils.discord_utils import safe_send, safe_edit, safe_respond
-from utils.supabase_utils import supabase  # fonction pour requêtes supabase
+from utils.supabase_utils import supabase
+from discord_utils import safe_send
 
 # ────────────────────────────────────────────────────────────────────────────────
-# 📂 Chargement des données JSON des skills
+# 🔹 Cog Skill
 # ────────────────────────────────────────────────────────────────────────────────
-SKILL_JSON_PATH = os.path.join("data", "skills.json")
-def load_skills():
-    with open(SKILL_JSON_PATH, "r", encoding="utf-8") as f:
-        return json.load(f)
 
-# ────────────────────────────────────────────────────────────────────────────────
-# 🧠 Cog principal
-# ────────────────────────────────────────────────────────────────────────────────
 class Skill(commands.Cog):
-    """
-    Commande /skill et !skill — Utilise la compétence active de la classe du joueur
-    """
-    def __init__(self, bot: commands.Bot):
+    def __init__(self, bot):
         self.bot = bot
-        self.skills = load_skills()
 
-    # ────────────────────────────────────────────────────────────────────────────
-    # 🔹 Fonction interne commune
-    # ────────────────────────────────────────────────────────────────────────────
-    async def _use_skill(self, user_id: int):
-        """
-        Vérifie la classe du joueur, le cooldown et applique la compétence active.
-        Retourne un message embed à envoyer.
-        """
-        try:
-            # Récupération des infos du joueur depuis Supabase
-            resp = supabase.table("reiatsu").select("*").eq("user_id", user_id).single().execute()
-            player = resp.data
-            if not player:
-                return discord.Embed(title="❌ Erreur", description="Aucune donnée trouvée pour ce joueur.", color=discord.Color.red())
-
-            classe = player.get("classe")
-            last_cd = player.get("comp_cd")
-            now = datetime.utcnow()
-            cooldown = timedelta(hours=8)
-
-            if last_cd:
-                last_used = datetime.fromisoformat(last_cd)
-                if now - last_used < cooldown:
-                    remaining = cooldown - (now - last_used)
-                    hours, remainder = divmod(int(remaining.total_seconds()), 3600)
-                    minutes = remainder // 60
-                    return discord.Embed(
-                        title="⏳ Skill en cooldown",
-                        description=f"Tu dois attendre {hours}h {minutes}min avant de réutiliser ta compétence.",
-                        color=discord.Color.orange()
-                    )
-
-            # Vérifie si la classe a une skill active
-            classe_data = self.skills.get(classe)
-            if not classe_data or "Active" not in classe_data:
-                return discord.Embed(
-                    title="⚠️ Pas de compétence active",
-                    description="Ta classe n'a pas de compétence active.",
-                    color=discord.Color.yellow()
-                )
-
-            skill_text = classe_data["Active"]
-            # Met à jour le timestamp dans Supabase
-            supabase.table("reiatsu").update({"comp_cd": now.isoformat()}).eq("user_id", user_id).execute()
-
-            embed = discord.Embed(
-                title=f"✅ Compétence utilisée : {classe}",
-                description=skill_text,
-                color=discord.Color.green()
-            )
-            return embed
-
-        except Exception as e:
-            print(f"[ERREUR _use_skill] {e}")
-            return discord.Embed(title="❌ Erreur", description="Impossible d'utiliser la compétence.", color=discord.Color.red())
-
-    # ────────────────────────────────────────────────────────────────────────────
-    # 🔹 Commande SLASH
-    # ────────────────────────────────────────────────────────────────────────────
-    @app_commands.command(name="skill", description="Utilise la compétence active de ta classe (CD 8h).")
-    async def slash_skill(self, interaction: discord.Interaction):
-        """Commande slash principale"""
-        try:
-            await interaction.response.defer()
-            embed = await self._use_skill(interaction.user.id)
-            await safe_send(interaction.channel, embed=embed)
-            await interaction.delete_original_response()
-        except Exception as e:
-            print(f"[ERREUR /skill] {e}")
-            await safe_respond(interaction, "❌ Une erreur est survenue lors de l'utilisation de la compétence.", ephemeral=True)
-
-    # ────────────────────────────────────────────────────────────────────────────
-    # 🔹 Commande PREFIX
-    # ────────────────────────────────────────────────────────────────────────────
+    # ──────────────────────────────
+    # ⚡ Commande !skill
+    # ──────────────────────────────
     @commands.command(name="skill")
-    async def prefix_skill(self, ctx: commands.Context):
-        """Commande préfixe principale"""
-        try:
-            embed = await self._use_skill(ctx.author.id)
-            await safe_send(ctx.channel, embed=embed)
-        except Exception as e:
-            print(f"[ERREUR !skill] {e}")
-            await safe_send(ctx.channel, "❌ Une erreur est survenue lors de l'utilisation de la compétence.")
+    async def skill_command(self, ctx):
+        """
+        Active la compétence spécifique de la classe du joueur.
+        """
+
+        user_id = str(ctx.author.id)
+
+        # ──────────────────────────────
+        # 📌 Récupération des infos joueur
+        # ──────────────────────────────
+        data = supabase.table("reiatsu").select("*").eq("user_id", user_id).single().execute().data
+        if not data:
+            return await safe_send(ctx, "❌ Tu n'as pas encore commencé l'aventure. Utilise `!start`.")
+
+        classe = data.get("classe", "Travailleur")
+        reiatsu = data.get("points", 0)
+        result_message = ""
+        updated_fields = {}
+
+        # ──────────────────────────────
+        # 🔹 Gestion des compétences par classe
+        # ──────────────────────────────
+
+        # ─ Travailleur ─
+        if classe == "Travailleur":
+            result_message = "💼 Tu es Travailleur : pas de compétence active."
+
+        # ─ Voleur ─
+        elif classe == "Voleur":
+            updated_fields["vol_garanti"] = True
+            result_message = "🗝️ Ton prochain vol sera garanti."
+
+        # ─ Absorbeur ─
+        elif classe == "Absorbeur":
+            updated_fields["prochain_reiatsu"] = 100
+            result_message = "⚡ Ton prochain Reiatsu absorbé sera un Super Reiatsu (100 points) garanti."
+
+        # ─ Illusionniste ─
+        elif classe == "Illusionniste":
+            if data.get("faux_reiatsu_active"):
+                return await safe_send(ctx, "❌ Tu as déjà un faux Reiatsu actif.")
+
+            # Création du faux Reiatsu
+            fake_reiatsu_data = {
+                "user_id": user_id,
+                "type": "faux",
+                "points": 0,
+                "created_at": datetime.now(timezone.utc).isoformat()
+            }
+            supabase.table("reiatsu_spawn").insert(fake_reiatsu_data).execute()
+
+            updated_fields["faux_reiatsu_active"] = True
+            result_message = (
+                "🎭 Tu as créé un faux Reiatsu ! "
+                "Si quelqu’un le prend, tu gagnes 10 points."
+            )
+
+        # ─ Parieur ─
+        elif classe == "Parieur":
+            if reiatsu < 10:
+                return await safe_send(ctx, "❌ Tu n'as pas assez de Reiatsu pour parier (10 requis).")
+
+            new_points = reiatsu - 10
+            if random.random() < 0.5:
+                new_points += 30
+                result_message = "🎰 Tu as misé 10 Reiatsu et gagné 30 !"
+            else:
+                result_message = "🎰 Tu as misé 10 Reiatsu et perdu."
+            updated_fields["points"] = new_points
+
+        # ──────────────────────────────
+        # 🔹 Mise à jour en base
+        # ──────────────────────────────
+        updated_fields["comp_cd"] = datetime.now(timezone.utc).isoformat()
+        supabase.table("reiatsu").update(updated_fields).eq("user_id", user_id).execute()
+
+        # ──────────────────────────────
+        # 🔹 Envoi du résultat
+        # ──────────────────────────────
+        await safe_send(ctx, result_message)
+
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🔌 Setup du Cog
