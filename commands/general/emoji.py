@@ -38,18 +38,16 @@ class EmojiCommand(commands.Cog):
                 not_found.append(raw_name)
         return found, not_found
 
-    async def _send_paginated(self, channel, title: str, emojis: list[str]):
-        """Envoie un ou plusieurs embeds paginés pour éviter le flood."""
-        description = ""
+    async def _send_text_paginated(self, channel, emojis: list[str]):
+        """Envoie les emojis sous forme de texte brut, en plusieurs messages si nécessaire."""
+        message = ""
         for emoji in emojis:
-            if len(description) + len(emoji) + 1 > 4096:
-                embed = discord.Embed(title=title, description=description, color=discord.Color.purple())
-                await safe_send(channel, embed=embed)
-                description = ""
-            description += emoji + " "
-        if description:
-            embed = discord.Embed(title=title, description=description, color=discord.Color.purple())
-            await safe_send(channel, embed=embed)
+            if len(message) + len(emoji) + 1 > 2000:
+                await safe_send(channel, message.strip())
+                message = ""
+            message += emoji + " "
+        if message:
+            await safe_send(channel, message.strip())
 
     async def _display_emojis(self, channel, guild, emoji_names: tuple[str]):
         """Affiche les emojis demandés ou tous les animés si aucun argument."""
@@ -58,26 +56,16 @@ class EmojiCommand(commands.Cog):
                 found, not_found = self._find_emojis(emoji_names, guild)
 
                 if found:
-                    embed_found = discord.Embed(
-                        title="✅ Emojis trouvés",
-                        description=" ".join(found),
-                        color=discord.Color.green()
-                    )
-                    await safe_send(channel, embed=embed_found)
+                    await safe_send(channel, " ".join(found))
 
                 if not_found:
-                    embed_nf = discord.Embed(
-                        title="❌ Emojis introuvables",
-                        description=", ".join(f"`{n}`" for n in not_found),
-                        color=discord.Color.red()
-                    )
-                    await safe_send(channel, embed=embed_nf)
+                    await safe_send(channel, f"❌ Emojis introuvables : {', '.join(f'`{n}`' for n in not_found)}")
             else:
                 animated_emojis = [str(e) for e in guild.emojis if e.animated and e.available]
                 if not animated_emojis:
                     await safe_send(channel, "❌ Ce serveur n'a aucun emoji animé.")
                     return
-                await self._send_paginated(channel, "🎞️ Emojis animés du serveur", animated_emojis)
+                await self._send_text_paginated(channel, animated_emojis)
 
         except Exception as e:
             print(f"[ERREUR affichage emojis] {e}")
