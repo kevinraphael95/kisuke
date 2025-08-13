@@ -5,7 +5,6 @@
 # Accès : Public
 # ────────────────────────────────────────────────────────────────────────────────
 
-# ────────────────────────────────────────────────────────────────────────────────
 # 📦 Imports nécessaires
 # ────────────────────────────────────────────────────────────────────────────────
 import discord
@@ -15,19 +14,16 @@ from discord.ui import View, Button
 import os
 import random
 from supabase import create_client
-from utils.discord_utils import safe_send, safe_edit, safe_respond  # ✅ Utilisation safe_ functions
+from utils.discord_utils import safe_send, safe_edit, safe_respond  # ✅ Utilisation safe_* functions
 
-# ────────────────────────────────────────────────────────────────────────────────
 # 📂 Chargement & constantes
 # ────────────────────────────────────────────────────────────────────────────────
 REIATSU_COST = 30
 WIN_CHANCE = 0.01  # 1% de chance de gagner
-
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY")
 supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 
-# ────────────────────────────────────────────────────────────────────────────────
 # 🎛️ UI — View avec bouton miser
 # ────────────────────────────────────────────────────────────────────────────────
 class SteamKeyView(View):
@@ -44,25 +40,20 @@ class SteamKeyView(View):
 
     @discord.ui.button(label=f"Miser {REIATSU_COST} Reiatsu", style=discord.ButtonStyle.green)
     async def bet_button(self, interaction: discord.Interaction, button: Button):
-        # On bloque le bouton immédiatement
+        # Désactive le bouton
         button.disabled = True
-        # On répond à l'interaction par un update du message (édition avec vue mise à jour)
         await interaction.response.edit_message(view=self)
         self.value = True
         self.stop()
 
-# ────────────────────────────────────────────────────────────────────────────────
 # 🧠 Cog principal
 # ────────────────────────────────────────────────────────────────────────────────
 class SteamKey(commands.Cog):
-    """
-    Commande /steamkey et !steamkey — Miser des Reiatsu pour tenter de gagner une clé Steam
-    """
+    """Commande /steamkey et !steamkey — Miser des Reiatsu pour tenter de gagner une clé Steam"""
 
     def __init__(self, bot: commands.Bot):
         self.bot = bot
 
-    # ────────────────────────────────────────────────────────────────────────────
     # 🔹 Fonctions internes accès Supabase
     # ────────────────────────────────────────────────────────────────────────────
     async def _get_reiatsu(self, user_id: str) -> int:
@@ -83,7 +74,6 @@ class SteamKey(commands.Cog):
     async def _delete_steam_key(self, key_id: int):
         supabase.table("steam_keys").delete().eq("id", key_id).execute()
 
-    # ────────────────────────────────────────────────────────────────────────────
     # 🔹 Logique du jeu après pari
     # ────────────────────────────────────────────────────────────────────────────
     async def _try_win_key(self, interaction: discord.Interaction):
@@ -122,7 +112,6 @@ class SteamKey(commands.Cog):
 
         await safe_respond(interaction, embed=embed)
 
-    # ────────────────────────────────────────────────────────────────────────────
     # 🔹 Envoi du menu interactif
     # ────────────────────────────────────────────────────────────────────────────
     async def _send_menu(self, channel: discord.abc.Messageable, user_id: int):
@@ -142,27 +131,22 @@ class SteamKey(commands.Cog):
 
         view = SteamKeyView(user_id)
         await safe_send(channel, embed=embed, view=view)
-
         return view
 
-    # ────────────────────────────────────────────────────────────────────────────
     # 🔹 Commande SLASH
     # ────────────────────────────────────────────────────────────────────────────
     @app_commands.command(name="steamkey", description="Miser des Reiatsu pour tenter de gagner une clé Steam")
     async def slash_steamkey(self, interaction: discord.Interaction):
         try:
-            await interaction.response.defer()
+            # ⚠️ Pas de defer ici, pour que le bouton puisse fonctionner
             view = await self._send_menu(interaction.channel, interaction.user.id)
             await view.wait()
 
             if view.value:
-                # Le pari a été validé, on lance la tentative de gain
                 await self._try_win_key(interaction)
             else:
-                # Timeout : on désactive boutons et on informe
                 for child in view.children:
                     child.disabled = True
-                # Edit du message initial (via interaction.original_response)
                 msg = await interaction.original_response()
                 await safe_edit(msg, view=view)
                 await safe_respond(interaction, "⏰ Temps écoulé, la mise a été annulée.", ephemeral=True)
@@ -171,7 +155,6 @@ class SteamKey(commands.Cog):
             print(f"[ERREUR /steamkey] {e}")
             await safe_respond(interaction, "❌ Une erreur est survenue.", ephemeral=True)
 
-    # ────────────────────────────────────────────────────────────────────────────
     # 🔹 Commande PREFIX
     # ────────────────────────────────────────────────────────────────────────────
     @commands.command(name="steamkey", aliases=["sk"], description="Miser des Reiatsu pour tenter de gagner une clé Steam")
@@ -181,12 +164,10 @@ class SteamKey(commands.Cog):
             await view.wait()
 
             if view.value:
-                # Création d'une interaction minimale simulée pour _try_win_key
                 class DummyInteraction:
                     def __init__(self, user, channel):
                         self.user = user
                         self.channel = channel
-
                     async def send(self, *args, **kwargs):
                         await safe_send(self.channel, *args, **kwargs)
 
@@ -194,12 +175,10 @@ class SteamKey(commands.Cog):
                 await self._try_win_key(dummy_inter)
             else:
                 await safe_send(ctx.channel, "⏰ Temps écoulé, la mise a été annulée.")
-
         except Exception as e:
             print(f"[ERREUR !steamkey] {e}")
             await safe_send(ctx.channel, "❌ Une erreur est survenue.")
 
-# ────────────────────────────────────────────────────────────────────────────────
 # 🔌 Setup du Cog
 # ────────────────────────────────────────────────────────────────────────────────
 async def setup(bot: commands.Bot):
@@ -208,3 +187,4 @@ async def setup(bot: commands.Bot):
         if not hasattr(command, "category"):
             command.category = "Reiatsu"
     await bot.add_cog(cog)
+
