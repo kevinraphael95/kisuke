@@ -37,7 +37,8 @@ class Skill(commands.Cog):
         # ──────────────────────────────
         # 📌 Récupération des infos joueur
         # ──────────────────────────────
-        data = supabase.table("reiatsu").select("*").eq("user_id", user_id).single().execute().data
+        response = supabase.table("reiatsu").select("*").eq("user_id", user_id).single().execute()
+        data = getattr(response, "data", None)
         if not data:
             return await safe_send(ctx, "❌ Tu n'as pas encore commencé l'aventure. Utilise `!start`.")
 
@@ -66,7 +67,7 @@ class Skill(commands.Cog):
 
         # ─ Illusionniste ─
         elif classe == "Illusionniste":
-            if data.get("faux_reiatsu_active"):
+            if data.get("faux_reiatsu_active", False):
                 return await safe_send(ctx, "❌ Tu as déjà un faux Reiatsu actif.")
 
             # Création du faux Reiatsu
