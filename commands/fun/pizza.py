@@ -60,21 +60,15 @@ class PizzaView(View):
     @button(label="🍕 Nouvelle pizza", style=discord.ButtonStyle.green)
     async def nouvelle_pizza(self, interaction: discord.Interaction, button: discord.ui.Button):
         try:
-            # On répond d'abord à l'interaction pour éviter délai "Interaction failed"
-            await interaction.response.defer()  # acknowledgement (deferred update)
-            
             embed = _generate_pizza_embed(self.data)
-
-            # Puis on édite le message via interaction
-            await interaction.followup.edit_message(message_id=interaction.message.id, embed=embed, view=self)
-
+            # Utiliser safe_edit avec interaction.message
+            await safe_edit(interaction.message, embed=embed, view=self)
+            # On doit répondre à l'interaction pour éviter le délai "Interaction failed"
+            await interaction.response.defer()  # Juste acknowledge, pas de message
         except Exception as e:
             print(f"[ERREUR bouton pizza] {e}")
-            # Si erreur, on envoie un message éphémère
-            if not interaction.response.is_done():
-                await interaction.response.send_message("❌ Erreur lors de la génération de la pizza.", ephemeral=True)
-            else:
-                await interaction.followup.send("❌ Erreur lors de la génération de la pizza.", ephemeral=True)
+            # En cas d'erreur, on répond avec un message visible
+            await interaction.response.send_message("❌ Erreur lors de la génération de la pizza.", ephemeral=True)
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🧠 Cog principal
