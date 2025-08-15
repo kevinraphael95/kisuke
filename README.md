@@ -1,12 +1,12 @@
 ---
 
-# Discord Bot – Hébergé sur Render avec Supabase
+# Kisuke Urahara - Bot Discor – Hébergé sur Render, avec Supabase
 
 Un bot Discord utilisant **Supabase** pour la base de données et hébergé gratuitement sur **Render**, avec un ping automatique via **UptimeRobot** pour rester en ligne.
 
 ---
 
-## 🚀 Outils utilisées
+## 🚀 Technologies utilisées
 
 * **[Supabase](https://supabase.com/)** : Base de données SQL gratuite
 * **[Render](https://render.com/)** : Hébergeur gratuit pour le bot
@@ -71,23 +71,15 @@ Un bot Discord utilisant **Supabase** pour la base de données et hébergé grat
 2. Créer un **nouveau monitor** :
 
    * Type : **HTTP(s)**
-   * URL : Lien violet généré par Render dans **Events**
+   * URL : Utiliser le lien généré par Render dans **Settings → Render Subdomain** (exemple :
+
+     ```
+     https://bleach-discord-bot-test-a6hq.onrender.com
+     ```
+
+     )
    * Intervalle : par défaut (5 minutes ou plus)
 3. Enregistrer pour que UptimeRobot ping régulièrement votre bot
-
----
-
-## 📂 Structure du projet
-
-```
-📦 MonBotDiscord
- ┣ 📜 bot.py
- ┣ 📜 requirements.txt
- ┣ 📜 .env.example
- ┣ 📂 commands/
- ┣ 📂 tasks/
- ┗ 📂 utils/          
-```
 
 ---
 
@@ -95,7 +87,7 @@ Un bot Discord utilisant **Supabase** pour la base de données et hébergé grat
 
 * Ne **jamais** publier votre Bot Token ou vos clés Supabase
 * Si vous modifiez le code, pensez à redéployer manuellement sur Render
-* Le plan gratuit Render a un temps d’inactivité si le bot n’est pas pingé (d’où UptimeRobot)
+* Le plan gratuit Render met votre bot en veille si aucun ping n’est reçu (d’où l’utilisation d’UptimeRobot)
 
 ---
 
