@@ -1,91 +1,79 @@
-
-````markdown
-# 🤖 Discord Bot – Render + Supabase + UptimeRobot
-
-![Python](https://img.shields.io/badge/python-3.9+-blue.svg)
-![Discord.py](https://img.shields.io/badge/discord.py-2.x-blueviolet.svg)
-![Supabase](https://img.shields.io/badge/Supabase-SQL-green.svg)
-![Render](https://img.shields.io/badge/Render-Free%20Hosting-orange.svg)
-![Status](https://img.shields.io/badge/Status-Online-brightgreen.svg)
-
-Un bot Discord utilisant **Supabase** pour la base de données, hébergé sur **Render**, et maintenu actif grâce à **UptimeRobot**.
-
 ---
 
-## 📑 Table des matières
-- [🚀 Technologies utilisées](#-technologies-utilisées)
-- [📦 Installation & Configuration](#-installation--configuration)
-  - [1️⃣ Créer et configurer l’application Discord](#1️⃣-créer-et-configurer-lapplication-discord)
-  - [2️⃣ Configurer Supabase](#2️⃣-configurer-supabase-base-de-données-sql-gratuite)
-  - [3️⃣ Déployer le bot sur Render](#3️⃣-déployer-le-bot-sur-render)
-  - [4️⃣ Maintenir le bot en ligne avec UptimeRobot](#4️⃣-maintenir-le-bot-en-ligne-avec-uptimerobot)
-- [📂 Structure du projet](#-structure-du-projet)
-- [⚠️ Notes importantes](#️-notes-importantes)
+# Discord Bot – Hébergé sur Render avec Supabase
+
+Un bot Discord utilisant **Supabase** pour la base de données et hébergé gratuitement sur **Render**, avec un ping automatique via **UptimeRobot** pour rester en ligne.
 
 ---
 
 ## 🚀 Technologies utilisées
-- **[Supabase](https://supabase.com/)** : Base de données SQL gratuite  
-- **[Render](https://render.com/)** : Hébergeur gratuit pour le bot  
-- **[UptimeRobot](https://uptimerobot.com/)** : Ping régulier pour garder le bot en ligne  
-- **Python** : Langage principal du bot  
+
+* **[Supabase](https://supabase.com/)** : Base de données SQL gratuite
+* **[Render](https://render.com/)** : Hébergeur gratuit pour le bot
+* **[UptimeRobot](https://uptimerobot.com/)** : Service pour pinger régulièrement le bot et le maintenir actif
+* **Python** : Langage principal du bot
 
 ---
 
 ## 📦 Installation & Configuration
 
 ### 1️⃣ Créer et configurer l’application Discord
-1. Se connecter au [Portail Développeur Discord](https://discord.com/developers/applications)  
-2. **Créer une nouvelle application**  
-3. Dans **General Information** :  
-   - Noter l’`APPLICATION ID`  
-4. Dans **Bot** :  
-   - **Reset Token** pour obtenir le **Bot Token**  
-   - Garder ce **Bot Token** privé  
+
+1. Se connecter au [Portail Développeur Discord](https://discord.com/developers/applications)
+2. **Créer une nouvelle application**
+3. Dans **General Information** :
+
+   * Noter l’`APPLICATION ID` (à conserver pour plus tard)
+4. Aller dans l’onglet **Bot** :
+
+   * Cliquer sur **Reset Token** pour obtenir le **Bot Token**
+   * Conserver ce **Bot Token** précieusement
 
 ---
 
 ### 2️⃣ Configurer Supabase (Base de données SQL gratuite)
-1. Se connecter à [Supabase](https://supabase.com/)  
-2. Créer un **nouveau projet**  
-3. Créer les **tables** via les scripts SQL (à ajouter plus tard)  
-4. Récupérer :  
-   - **URL du projet**  
-   - **Clé API**  
-   *(à mettre dans `.env`)*  
+
+1. Se connecter à [Supabase](https://supabase.com/) (connexion GitHub possible)
+2. Créer un **nouveau projet**
+3. Créer les **tables** via les scripts SQL (à ajouter plus tard dans la doc)
+4. Récupérer :
+
+   * **Lien du projet (URL)**
+   * **Clé API**
+     *(Ces deux valeurs seront utilisées dans `.env`)*
 
 ---
 
 ### 3️⃣ Déployer le bot sur Render
-[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy)
 
-1. Se connecter à [Render](https://render.com/)  
-2. **New → Web Service**  
-3. Sélectionner le **repo GitHub**  
-4. Plan gratuit  
-5. **Startup Command** :
+1. Se connecter à [Render](https://render.com/) (compte Google ou création manuelle)
+2. Cliquer sur **New → Web Service**
+3. Sélectionner le **dépôt GitHub** contenant le bot
+4. Choisir le **plan gratuit**
+5. Dans **Startup Command**, mettre :
+
    ```bash
    python bot.py
-````
-
-6. Dans **Settings → Environment Variables** :
+   ```
+6. Dans **Settings → Environment Variables**, ajouter :
 
    * `APP_ID` → Application ID Discord
    * `BOT_TOKEN` → Bot Token Discord
    * `SUPABASE_URL` → URL du projet Supabase
    * `SUPABASE_KEY` → Clé API Supabase
-7. **Désactiver** Auto Deploy (plan gratuit limité)
+7. **Désactiver** l’auto-déploiement (**Auto Deploy**) pour éviter de dépasser les limites du plan gratuit
 
 ---
 
 ### 4️⃣ Maintenir le bot en ligne avec UptimeRobot
 
-1. Se connecter à [UptimeRobot](https://uptimerobot.com/)
-2. **Nouveau monitor** :
+1. Aller sur [UptimeRobot](https://uptimerobot.com/)
+2. Créer un **nouveau monitor** :
 
    * Type : **HTTP(s)**
-   * URL : Lien Render (onglet Events)
-   * Intervalle : par défaut (5 min ou plus)
+   * URL : Lien violet généré par Render dans **Events**
+   * Intervalle : par défaut (5 minutes ou plus)
+3. Enregistrer pour que UptimeRobot ping régulièrement votre bot
 
 ---
 
@@ -103,11 +91,12 @@ Un bot Discord utilisant **Supabase** pour la base de données, hébergé sur **
 
 ## ⚠️ Notes importantes
 
-* ❌ Ne publiez jamais votre **Bot Token** ou vos **clés API**
-* 🔄 Redéployez manuellement après chaque modification de code
-* ⏳ Le plan gratuit Render coupe le bot s’il n’est pas pingé
+* Ne **jamais** publier votre Bot Token ou vos clés Supabase
+* Si vous modifiez le code, pensez à redéployer manuellement sur Render
+* Le plan gratuit Render a un temps d’inactivité si le bot n’est pas pingé (d’où UptimeRobot)
 
 ---
 
-```
-```
+Tu veux que je te fasse aussi la **version avec badges GitHub** et un **bouton "Deploy to Render"** pour que ça fasse pro ? Ça pourrait rendre ton README beaucoup plus stylé et simple à utiliser.
+
+
