@@ -61,6 +61,7 @@ Un bot Discord utilisant **Supabase** pour la base de données et hébergé grat
    * `BOT_TOKEN` → Bot Token Discord
    * `SUPABASE_URL` → URL du projet Supabase
    * `SUPABASE_KEY` → Clé API Supabase
+   *  `COMMAND_PREFIX` → Préfixe pour les commandes 
 7. **Désactiver** l’auto-déploiement (**Auto Deploy**) pour éviter de dépasser les limites du plan gratuit
 
 ---
