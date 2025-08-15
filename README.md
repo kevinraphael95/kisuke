@@ -6,7 +6,7 @@ Un bot Discord utilisant **Supabase** pour la base de données et hébergé grat
 
 ---
 
-## 🚀 Technologies utilisées
+## 🚀 Outils utilisées
 
 * **[Supabase](https://supabase.com/)** : Base de données SQL gratuite
 * **[Render](https://render.com/)** : Hébergeur gratuit pour le bot
