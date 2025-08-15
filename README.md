@@ -71,13 +71,10 @@ Un bot Discord utilisant **Supabase** pour la base de données et hébergé grat
 2. Créer un **nouveau monitor** :
 
    * Type : **HTTP(s)**
-   * URL : Utiliser le lien généré par Render dans **Settings → Render Subdomain** (exemple :
+   * URL : Utiliser le lien généré par Render dans **Settings → Render Subdomain** 
 
      ```
-     https://bleach-discord-bot-test-a6hq.onrender.com
-     ```
-
-     )
+    
    * Intervalle : par défaut (5 minutes ou plus)
 3. Enregistrer pour que UptimeRobot ping régulièrement votre bot
 
