@@ -84,7 +84,9 @@ Un bot Discord utilisant **Supabase** pour la base de données et hébergé grat
  ┣ 📜 bot.py
  ┣ 📜 requirements.txt
  ┣ 📜 .env.example
- ┗ 📂 cogs/          # Extensions du bot
+ ┣ 📂 commands/
+ ┣ 📂 tasks/
+ ┗ 📂 utils/          
 ```
 
 ---
