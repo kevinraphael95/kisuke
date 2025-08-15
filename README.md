@@ -1,6 +1,6 @@
 ---
 
-# Kisuke Urahara - Bot Discor – Hébergé sur Render, avec Supabase
+# Kisuke Urahara - Bot Discord – Hébergé sur Render, avec Supabase
 
 Un bot Discord utilisant **Supabase** pour la base de données et hébergé gratuitement sur **Render**, avec un ping automatique via **UptimeRobot** pour rester en ligne.
 
