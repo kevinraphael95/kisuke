@@ -1,3 +1,5 @@
+![kisuke](assets/kisuke.png)
+
 ---
 
 # Kisuke Urahara - Bot Discord – Hébergé sur Render, avec Supabase
