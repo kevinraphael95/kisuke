@@ -73,9 +73,6 @@ Un bot Discord utilisant **Supabase** pour la base de données et hébergé grat
 
    * Type : **HTTP(s)**
    * URL : Utiliser le lien généré par Render dans **Settings → Render Subdomain** 
-
-     ```
-    
    * Intervalle : par défaut (5 minutes ou plus)
 3. Enregistrer pour que UptimeRobot ping régulièrement votre bot
 
