@@ -1,4 +1,4 @@
-![kisuke](assets/kisuke.png)
+![kisuke](assets/kisuke.jpg)
 
 ---
 
