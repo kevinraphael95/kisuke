@@ -97,6 +97,3 @@ Un bot Discord utilisant **Supabase** pour la base de données et hébergé grat
 
 ---
 
-Tu veux que je te fasse aussi la **version avec badges GitHub** et un **bouton "Deploy to Render"** pour que ça fasse pro ? Ça pourrait rendre ton README beaucoup plus stylé et simple à utiliser.
-
-
