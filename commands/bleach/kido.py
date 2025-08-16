@@ -116,12 +116,20 @@ class Kido(commands.Cog):
             incantation = sort.get("incantation")
             image = sort.get("image")
 
-            # Chercher une image locale en priorité
+            # Chemin image locale (ex: data/images/kido/1Sai.gif)
             local_img = os.path.join("data", "images", "kido", f"{numero}{nom.replace(' ', '')}.gif")
-            if os.path.exists(local_img):
-                image = f"attachment://{os.path.basename(local_img)}"
 
-            # 📈 Embed final (direct, sans "concentration")
+            files = None
+            if os.path.exists(local_img):
+                # Attache le fichier et l’associe à l’embed
+                file = discord.File(local_img, filename=os.path.basename(local_img))
+                files = [file]
+                image_url = f"attachment://{os.path.basename(local_img)}"
+            else:
+                # Sinon utilise l’image définie dans kido.json (si présente)
+                image_url = image
+
+            # 📈 Embed final
             embed = discord.Embed(
                 title=f"{type_kido.title()} #{numero} — {nom}",
                 description=f"**📜 Incantation :**\n*{incantation or 'Aucune incantation connue'}*",
@@ -132,10 +140,10 @@ class Kido(commands.Cog):
                 value=target.user.mention if isinstance(target, discord.Interaction) else target.author.mention,
                 inline=False
             )
-            if image:
-                embed.set_image(url=image)
+            if image_url:
+                embed.set_image(url=image_url)
 
-            files = [discord.File(local_img)] if os.path.exists(local_img) else None
+            # Envoi final
             if isinstance(target, discord.Interaction):
                 await target.response.send_message(embed=embed, files=files)
             else:
