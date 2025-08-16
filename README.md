@@ -8,9 +8,7 @@
 
 ---
 
-# Hébergé sur Render, avec Supabase
-
-Kisuke Urahara est un bot Discord utilisant **Supabase** pour la base de données et hébergé gratuitement sur **Render**, avec un ping automatique via **UptimeRobot** pour rester en ligne.
+# 📦 Installation & Configuration avcec Render, Supabase et Uptime Robot
 
 ---
 
@@ -22,8 +20,6 @@ Kisuke Urahara est un bot Discord utilisant **Supabase** pour la base de donnée
 * **Python** : Langage principal du bot
 
 ---
-
-## 📦 Installation & Configuration
 
 ### 1️⃣ Créer et configurer l’application Discord
 
