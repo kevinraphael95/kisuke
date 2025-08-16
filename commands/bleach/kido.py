@@ -11,22 +11,22 @@
 import discord
 from discord.ext import commands
 from discord import app_commands
-import json, asyncio, os
+import json, os
 
-from utils.discord_utils import safe_send, safe_edit
+from utils.discord_utils import safe_send
 
-# ───────────────────────────────────────────────────────────────────────
+# ───────────────────────────────────────────────
 # 📂 Données Kidō
-# ───────────────────────────────────────────────────────────────────────
+# ───────────────────────────────────────────────
 KIDO_FILE = os.path.join("data", "kido.json")
 
 def load_kido_data():
     with open(KIDO_FILE, "r", encoding="utf-8") as f:
         return json.load(f)
 
-# ───────────────────────────────────────────────────────────────────────
+# ───────────────────────────────────────────────
 # 🔁 Pagination
-# ───────────────────────────────────────────────────────────────────────
+# ───────────────────────────────────────────────
 class KidoPaginator(discord.ui.View):
     def __init__(self, user, pages):
         super().__init__(timeout=60)
@@ -54,16 +54,16 @@ class KidoPaginator(discord.ui.View):
             self.index += 1
             await self.update_message(interaction)
 
-# ───────────────────────────────────────────────────────────────────────
+# ───────────────────────────────────────────────
 # 🧠 Cog principal
-# ───────────────────────────────────────────────────────────────────────
+# ───────────────────────────────────────────────
 class Kido(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    # ───────────────────────────────────────────────────────────────────────
+    # ───────────────────────────────────────
     # 📌 Fonction unique commune
-    # ───────────────────────────────────────────────────────────────────────
+    # ───────────────────────────────────────
     async def _run_kido(self, target, type_kido: str = None, numero: int = None):
         try:
             data = load_kido_data()
@@ -121,28 +121,25 @@ class Kido(commands.Cog):
             if os.path.exists(local_img):
                 image = f"attachment://{os.path.basename(local_img)}"
 
-            # ⏳ Animation
-            msg_txt = f"🤘 Concentration... (`{type_kido.title()} #{numero}`)"
-            if isinstance(target, discord.Interaction):
-                loading = await target.response.send_message(msg_txt)
-                loading_msg = await target.original_response()
-            else:
-                loading_msg = await safe_send(target.channel, msg_txt)
-
-            await asyncio.sleep(1.5)
-
-            # 📈 Embed final
+            # 📈 Embed final (direct, sans "concentration")
             embed = discord.Embed(
                 title=f"{type_kido.title()} #{numero} — {nom}",
                 description=f"**📜 Incantation :**\n*{incantation or 'Aucune incantation connue'}*",
                 color=discord.Color.purple()
             )
-            embed.add_field(name="🎼 Lancé par", value=target.user.mention if isinstance(target, discord.Interaction) else target.author.mention, inline=False)
+            embed.add_field(
+                name="🎼 Lancé par",
+                value=target.user.mention if isinstance(target, discord.Interaction) else target.author.mention,
+                inline=False
+            )
             if image:
                 embed.set_image(url=image)
 
             files = [discord.File(local_img)] if os.path.exists(local_img) else None
-            await safe_edit(loading_msg, content=None, embed=embed, files=files)
+            if isinstance(target, discord.Interaction):
+                await target.response.send_message(embed=embed, files=files)
+            else:
+                await safe_send(target.channel, embed=embed, files=files)
 
         except FileNotFoundError:
             err = "❌ Le fichier `kido.json` est introuvable."
@@ -157,17 +154,17 @@ class Kido(commands.Cog):
             else:
                 await safe_send(target.channel, err)
 
-    # ───────────────────────────────────────────────────────────────────────
+    # ───────────────────────────────────────
     # Commande préfixe
-    # ───────────────────────────────────────────────────────────────────────
+    # ───────────────────────────────────────
     @commands.command(name="kido", help="🎼 Lance un sort de Kidō ! Exemple: `!!kido bakudo 61`")
     @commands.cooldown(1, 5, commands.BucketType.user)
     async def kido_prefix(self, ctx, type_kido: str = None, numero: int = None):
         await self._run_kido(ctx, type_kido, numero)
 
-    # ───────────────────────────────────────────────────────────────────────
+    # ───────────────────────────────────────
     # Slash command
-    # ───────────────────────────────────────────────────────────────────────
+    # ───────────────────────────────────────
     @app_commands.command(name="kido", description="🎼 Lance un sort de Kidō (Bleach).")
     @app_commands.describe(type_kido="Type de Kidō (Hadō, Bakudō...)", numero="Numéro du sort")
     async def kido_slash(self, interaction: discord.Interaction, type_kido: str = None, numero: int = None):
