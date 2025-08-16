@@ -96,8 +96,6 @@ python bot.py
 * **Cooldown personnalisable pour le spawn de Reiatsu**
 
   * Chaque serveur peut ajuster la fréquence entre deux spawns
-* **Messages de bienvenue personnalisables par serveur**
-* **Autres commandes personnalisables** selon les besoins du serveur
 
 ---
 
