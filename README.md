@@ -8,7 +8,7 @@
 
 ---
 
-# 📦 Installation & Configuration avcec Render, Supabase et Uptime Robot
+# 📦 Installation & Configuration avec Render, Supabase et Uptime Robot
 
 ---
 
