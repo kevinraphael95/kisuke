@@ -3,35 +3,34 @@
 # Objectif : Lancer un sort de Kidō avec animation et incantation
 # Catégorie : Bleach
 # Accès : Public
-# ──────────────────────────────────────────────────────────────────
+# ───────────────────────────────────────────────────────────────────────
 
-# ───────────────────────────────────────────────────────
+# ───────────────────────────────────────────────────────────────────────
 # 📦 Imports nécessaires
-# ───────────────────────────────────────────────────
+# ───────────────────────────────────────────────────────────────────────
 import discord
 from discord.ext import commands
-import json
-import asyncio
-import os
+from discord import app_commands
+import json, asyncio, os
 
-# Import des fonctions sécurisées pour éviter le rate-limit 429
-from utils.discord_utils import safe_send, safe_edit  # <-- Import utils safe_send / safe_edit
+from utils.discord_utils import safe_send, safe_edit
 
-# ───────────────────────────────────────────────────
-# 📂 Chargement des données Kidō
-# ───────────────────────────────────────────────────
+# ───────────────────────────────────────────────────────────────────────
+# 📂 Données Kidō
+# ───────────────────────────────────────────────────────────────────────
 KIDO_FILE = os.path.join("data", "kido.json")
+
 def load_kido_data():
     with open(KIDO_FILE, "r", encoding="utf-8") as f:
         return json.load(f)
 
-# ───────────────────────────────────────────────────
-# 🔁 Paginator pour lister les sorts
-# ───────────────────────────────────────────────────
+# ───────────────────────────────────────────────────────────────────────
+# 🔁 Pagination
+# ───────────────────────────────────────────────────────────────────────
 class KidoPaginator(discord.ui.View):
-    def __init__(self, ctx, pages):
+    def __init__(self, user, pages):
         super().__init__(timeout=60)
-        self.ctx = ctx
+        self.user = user
         self.pages = pages
         self.index = 0
 
@@ -41,7 +40,7 @@ class KidoPaginator(discord.ui.View):
 
     @discord.ui.button(label="◀️", style=discord.ButtonStyle.secondary)
     async def previous(self, interaction: discord.Interaction, button: discord.ui.Button):
-        if interaction.user != self.ctx.author:
+        if interaction.user != self.user:
             return await interaction.response.send_message("❌ Tu ne peux pas interagir avec cette pagination.", ephemeral=True)
         if self.index > 0:
             self.index -= 1
@@ -49,93 +48,135 @@ class KidoPaginator(discord.ui.View):
 
     @discord.ui.button(label="▶️", style=discord.ButtonStyle.secondary)
     async def next(self, interaction: discord.Interaction, button: discord.ui.Button):
-        if interaction.user != self.ctx.author:
+        if interaction.user != self.user:
             return await interaction.response.send_message("❌ Tu ne peux pas interagir avec cette pagination.", ephemeral=True)
         if self.index < len(self.pages) - 1:
             self.index += 1
             await self.update_message(interaction)
 
-# ───────────────────────────────────────────────────
+# ───────────────────────────────────────────────────────────────────────
 # 🧠 Cog principal
-# ───────────────────────────────────────────────────
+# ───────────────────────────────────────────────────────────────────────
 class Kido(commands.Cog):
-    """
-    Commande !kido — Lance un sort de Kidō avec animation et incantation.
-    """
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command(
-        name="kido",
-        help="🎼 Lance un sort de Kidō ! Syntaxe : `!!kido <type> <numéro>`",
-        description="Exemple : `!!kido bakudo 61`"
-    )
-    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
-    async def kido(self, ctx, type_kido: str = None, numero: int = None):
+    # ───────────────────────────────────────────────────────────────────────
+    # 📌 Fonction unique commune
+    # ───────────────────────────────────────────────────────────────────────
+    async def _run_kido(self, target, type_kido: str = None, numero: int = None):
         try:
             data = load_kido_data()
 
-            # ➤ Aucun argument fourni → liste paginée des sorts
+            # ➤ Liste des sorts
             if type_kido is None and numero is None:
                 all_sorts = []
                 for kido_type, sorts in data.items():
                     for sort in sorts:
                         all_sorts.append(f"`{kido_type.title()} {sort['numero']}` — {sort['nom']}")
 
-                # Diviser la liste en pages de 20 éléments
                 pages = []
-                for i in range(0, len(all_sorts), 20):
+                for i in range(0, len(all_sorts), 15):
                     embed = discord.Embed(
                         title="📘 Liste des sorts de Kidō",
-                        description="\n".join(all_sorts[i:i+20]),
+                        description="\n".join(all_sorts[i:i+15]),
                         color=discord.Color.teal()
                     )
-                    embed.set_footer(text=f"Page {i//20+1}/{(len(all_sorts)-1)//20+1}")
+                    embed.set_footer(text=f"Page {i//15+1}/{(len(all_sorts)-1)//15+1}")
                     pages.append(embed)
 
-                view = KidoPaginator(ctx, pages)
-                await safe_send(ctx.channel, embed=pages[0], view=view)
+                view = KidoPaginator(target.user if isinstance(target, discord.Interaction) else target.author, pages)
+                if isinstance(target, discord.Interaction):
+                    await target.response.send_message(embed=pages[0], view=view)
+                else:
+                    await safe_send(target.channel, embed=pages[0], view=view)
                 return
 
-            # ➤ Argument fourni → comportement normal
+            # ➤ Validation
             type_kido = type_kido.lower()
             if type_kido not in data:
-                await safe_send(ctx.channel, f"❌ Type de Kidō inconnu : `{type_kido}`.")
+                msg = f"❌ Type de Kidō inconnu : `{type_kido}`."
+                if isinstance(target, discord.Interaction):
+                    await target.response.send_message(msg, ephemeral=True)
+                else:
+                    await safe_send(target.channel, msg)
                 return
 
             sort = next((k for k in data[type_kido] if k["numero"] == numero), None)
             if not sort:
-                await safe_send(ctx.channel, f"❌ Aucun sort {type_kido} numéro {numero} trouvé.")
+                msg = f"❌ Aucun sort {type_kido} numéro {numero} trouvé."
+                if isinstance(target, discord.Interaction):
+                    await target.response.send_message(msg, ephemeral=True)
+                else:
+                    await safe_send(target.channel, msg)
                 return
 
+            # ────────────────────────
             nom = sort["nom"]
             incantation = sort.get("incantation")
             image = sort.get("image")
 
-            # ⏳ Animation dramatique
-            loading = await safe_send(ctx.channel, f"🤘 Concentration... (`{type_kido.title()} #{numero}`)")
+            # Chercher une image locale en priorité
+            local_img = os.path.join("data", "images", "kido", f"{numero}{nom.replace(' ', '')}.gif")
+            if os.path.exists(local_img):
+                image = f"attachment://{os.path.basename(local_img)}"
+
+            # ⏳ Animation
+            msg_txt = f"🤘 Concentration... (`{type_kido.title()} #{numero}`)"
+            if isinstance(target, discord.Interaction):
+                loading = await target.response.send_message(msg_txt)
+                loading_msg = await target.original_response()
+            else:
+                loading_msg = await safe_send(target.channel, msg_txt)
+
             await asyncio.sleep(1.5)
 
             # 📈 Embed final
             embed = discord.Embed(
                 title=f"{type_kido.title()} #{numero} — {nom}",
+                description=f"**📜 Incantation :**\n*{incantation or 'Aucune incantation connue'}*",
                 color=discord.Color.purple()
             )
-            embed.add_field(name="🎼 Sort lancé par", value=ctx.author.mention, inline=False)
-            embed.add_field(name="📜 Incantation", value=f"*{incantation}*" if incantation else "*(Aucune incantation connue)*", inline=False)
+            embed.add_field(name="🎼 Lancé par", value=target.user.mention if isinstance(target, discord.Interaction) else target.author.mention, inline=False)
             if image:
                 embed.set_image(url=image)
 
-            await safe_edit(loading, content=None, embed=embed)
+            files = [discord.File(local_img)] if os.path.exists(local_img) else None
+            await safe_edit(loading_msg, content=None, embed=embed, files=files)
 
         except FileNotFoundError:
-            await safe_send(ctx.channel, "❌ Le fichier `kido.json` est introuvable.")
+            err = "❌ Le fichier `kido.json` est introuvable."
+            if isinstance(target, discord.Interaction):
+                await target.response.send_message(err, ephemeral=True)
+            else:
+                await safe_send(target.channel, err)
         except Exception as e:
-            await safe_send(ctx.channel, f"⚠️ Erreur : `{e}`")
+            err = f"⚠️ Erreur : `{e}`"
+            if isinstance(target, discord.Interaction):
+                await target.response.send_message(err, ephemeral=True)
+            else:
+                await safe_send(target.channel, err)
 
-# ────────────────────────────────────────────────────────────────────────────────
+    # ───────────────────────────────────────────────────────────────────────
+    # Commande préfixe
+    # ───────────────────────────────────────────────────────────────────────
+    @commands.command(name="kido", help="🎼 Lance un sort de Kidō ! Exemple: `!!kido bakudo 61`")
+    @commands.cooldown(1, 5, commands.BucketType.user)
+    async def kido_prefix(self, ctx, type_kido: str = None, numero: int = None):
+        await self._run_kido(ctx, type_kido, numero)
+
+    # ───────────────────────────────────────────────────────────────────────
+    # Slash command
+    # ───────────────────────────────────────────────────────────────────────
+    @app_commands.command(name="kido", description="🎼 Lance un sort de Kidō (Bleach).")
+    @app_commands.describe(type_kido="Type de Kidō (Hadō, Bakudō...)", numero="Numéro du sort")
+    async def kido_slash(self, interaction: discord.Interaction, type_kido: str = None, numero: int = None):
+        await self._run_kido(interaction, type_kido, numero)
+
+
+# ───────────────────────────────────────────────────────────────────────
 # 🔌 Setup du Cog
-# ────────────────────────────────────────────────────────────────────────────────
+# ───────────────────────────────────────────────────────────────────────
 async def setup(bot: commands.Bot):
     cog = Kido(bot)
     for command in cog.get_commands():
