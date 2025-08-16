@@ -12,7 +12,7 @@
 
 ---
 
-## 🚀 Outils utilisées
+## 🚀 Outils utilisés
 
 * **[Supabase](https://supabase.com/)** : Base de données SQL gratuite
 * **[Render](https://render.com/)** : Hébergeur gratuit pour le bot
