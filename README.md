@@ -10,8 +10,6 @@
 
 # 📦 Installation & Configuration avec Render, Supabase et Uptime Robot
 
----
-
 ## 🚀 Outils utilisés
 
 * **[Supabase](https://supabase.com/)** : Base de données SQL gratuite
