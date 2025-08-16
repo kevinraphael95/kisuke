@@ -49,9 +49,20 @@ async def _run_bmoji(target):
 
         lettres = ["🇦", "🇧", "🇨", "🇩"]
         bonne = lettres[options.index(nom)]
-        desc = " ".join(emojis) + "\n" + "\n".join(f"{lettres[i]} : {options[i]}" for i in range(4))
 
-        # Boutons
+        # ─────────────── Embed ───────────────
+        embed = discord.Embed(
+            title="Bmoji",
+            description="Devine le personnage de Bleach derrière ces emojis !",
+            color=discord.Color.purple()
+        )
+        embed.add_field(
+            name="Les emojis",
+            value=" ".join(emojis) + "\n\n" + "\n".join(f"{lettres[i]} : {options[i]}" for i in range(4)),
+            inline=False
+        )
+
+        # ─────────────── Boutons ───────────────
         class PersoButton(discord.ui.Button):
             def __init__(self, emoji, idx):
                 super().__init__(emoji=emoji, style=discord.ButtonStyle.secondary)
@@ -74,17 +85,17 @@ async def _run_bmoji(target):
             view.add_item(PersoButton(lettres[i], i))
         view.success = False
 
-        # Envoi du défi
+        # ─────────────── Envoi embed ───────────────
         if isinstance(target, discord.Interaction):
-            await target.response.send_message(f"🔍 Devine le perso :\n{desc}", view=view)
+            await target.response.send_message(embed=embed, view=view)
             msg = await target.original_response()
         else:
-            msg = await safe_send(target.channel, f"🔍 Devine le perso :\n{desc}", view=view)
+            msg = await safe_send(target.channel, embed=embed, view=view)
 
         view.message = msg
         await view.wait()
 
-        # Résultat
+        # ─────────────── Résultat ───────────────
         result_msg = "✅ Bonne réponse" if view.success else f"❌ Mauvaise réponse (c'était {nom})"
         if isinstance(target, discord.Interaction):
             await target.followup.send(result_msg)
