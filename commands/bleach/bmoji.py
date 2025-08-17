@@ -57,10 +57,11 @@ async def _run_bmoji(target):
             color=discord.Color.purple()
         )
         embed.add_field(
-            name="Les emojis",
-            value=" ".join(emojis) + "\n\n" + "\n".join(f"{lettres[i]} : {options[i]}" for i in range(4)),
+            name=" ".join(emojis),  # <- Les emojis deviennent le titre, donc plus gros
+            value="\n".join(f"{lettres[i]} : {options[i]}" for i in range(4)),
             inline=False
         )
+
 
         # ─────────────── Boutons ───────────────
         class PersoButton(discord.ui.Button):
