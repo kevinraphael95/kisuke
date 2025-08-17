@@ -21,7 +21,7 @@ from utils.discord_utils import safe_send, safe_edit, safe_respond  # ✅ Utilis
 # 📂 Chargement & constantes
 # ────────────────────────────────────────────────────────────────────────────────
 REIATSU_COST = 1
-WIN_CHANCE = 0.01  # 1% de chance de gagner
+WIN_CHANCE = 0.5  # 0.01 pour 1% de chance de gagner
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY")
 supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
@@ -147,7 +147,7 @@ class SteamKey(commands.Cog):
             description=f"Miser {REIATSU_COST} Reiatsu pour avoir une faible chance de gagner une clé Steam.",
             color=discord.Color.blurple()
         )
-        embed.add_field(name="Probabilité de gagner une clé", value="1%", inline=False)
+        embed.add_field(name="Probabilité de gagner une clé", value="50%", inline=False)
         embed.add_field(name="Nombre de clés disponibles", value=str(nb_keys), inline=False)
         embed.add_field(name="Jeux possibles à gagner", value=", ".join(games) if games else "Aucun", inline=True)
         embed.set_footer(text="Vous avez 2 minutes pour miser.")
