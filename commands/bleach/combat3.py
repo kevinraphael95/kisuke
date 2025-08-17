@@ -15,7 +15,7 @@ import json
 import os
 
 # Import des fonctions utilitaires safe_send
-from discord_utils import safe_send
+from utils.discord_utils import safe_send
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 📂 Chargement des personnages
