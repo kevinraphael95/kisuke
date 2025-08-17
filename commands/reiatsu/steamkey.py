@@ -34,6 +34,7 @@ class SteamKeyView(View):
         super().__init__(timeout=120)
         self.author_id = author_id
         self.value = None  # Pour savoir si pari validé
+        self.last_interaction = None  # ✅ stocker la dernière interaction
 
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
         if interaction.user.id != self.author_id:
@@ -47,6 +48,7 @@ class SteamKeyView(View):
         button.disabled = True
         await interaction.response.edit_message(view=self)
         self.value = True
+        self.last_interaction = interaction  # ✅ on stocke
         self.stop()
 
 # ────────────────────────────────────────────────────────────────────────────────
@@ -82,16 +84,26 @@ class SteamKey(commands.Cog):
     # ────────────────────────────────────────────────────────────────────────────────
     # 🔹 Logique du jeu après pari
     # ────────────────────────────────────────────────────────────────────────────────
-    async def _try_win_key(self, interaction: discord.Interaction):
-        user_id = str(interaction.user.id)
+    async def _try_win_key(self, interaction_or_ctx):
+        """Logique pour savoir si l'utilisateur gagne une clé."""
+        user_id = str(interaction_or_ctx.user.id)
         reiatsu_points = await self._get_reiatsu(user_id)
 
+        # Vérification des points
         if reiatsu_points < REIATSU_COST:
-            await safe_respond(interaction, f"❌ Tu n'as pas assez de Reiatsu (il te faut {REIATSU_COST}).", ephemeral=True)
+            if isinstance(interaction_or_ctx, discord.Interaction):
+                await interaction_or_ctx.followup.send(
+                    f"❌ Tu n'as pas assez de Reiatsu (il te faut {REIATSU_COST}).",
+                    ephemeral=True
+                )
+            else:
+                await safe_send(interaction_or_ctx.channel, f"❌ Tu n'as pas assez de Reiatsu (il te faut {REIATSU_COST}).")
             return
 
+        # Déduction des points
         await self._update_reiatsu(user_id, reiatsu_points - REIATSU_COST)
 
+        # Détermination du résultat
         if random.random() <= WIN_CHANCE:
             key = await self._get_one_steam_key()
             if not key:
@@ -116,7 +128,11 @@ class SteamKey(commands.Cog):
                 color=discord.Color.red()
             )
 
-        await safe_respond(interaction, embed=embed)
+        # Envoi du résultat
+        if isinstance(interaction_or_ctx, discord.Interaction):
+            await interaction_or_ctx.followup.send(embed=embed)
+        else:
+            await safe_send(interaction_or_ctx.channel, embed=embed)
 
     # ────────────────────────────────────────────────────────────────────────────────
     # 🔹 Envoi du menu interactif
@@ -151,7 +167,7 @@ class SteamKey(commands.Cog):
             await view.wait()
 
             if view.value:
-                await self._try_win_key(interaction)
+                await self._try_win_key(view.last_interaction)
             else:
                 for child in view.children:
                     child.disabled = True
@@ -163,7 +179,6 @@ class SteamKey(commands.Cog):
             print(f"[ERREUR /steamkey] {e}")
             await safe_respond(interaction, "❌ Une erreur est survenue.", ephemeral=True)
 
-
     # ────────────────────────────────────────────────────────────────────────────────
     # 🔹 Commande PREFIX
     # ────────────────────────────────────────────────────────────────────────────────
@@ -174,12 +189,11 @@ class SteamKey(commands.Cog):
             await view.wait()
 
             if view.value:
+                # On réutilise le même pipeline que slash
                 class DummyInteraction:
                     def __init__(self, user, channel):
                         self.user = user
                         self.channel = channel
-                    async def send(self, *args, **kwargs):
-                        await safe_send(self.channel, *args, **kwargs)
 
                 dummy_inter = DummyInteraction(ctx.author, ctx.channel)
                 await self._try_win_key(dummy_inter)
@@ -198,4 +212,3 @@ async def setup(bot: commands.Bot):
         if not hasattr(command, "category"):
             command.category = "Reiatsu"
     await bot.add_cog(cog)
-
