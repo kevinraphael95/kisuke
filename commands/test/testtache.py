@@ -12,9 +12,11 @@ import discord
 from discord.ext import commands
 from discord import app_commands
 
-# Import commun : toutes les tâches et les vues
-from utils.taches import TacheSelectView
+# Import depuis utils.taches
+from utils.taches import NOM_TACHES, lancer_tache_unique
 
+# Import utils Discord sécurisés
+from utils.discord_utils import safe_send, safe_respond
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🔧 Cog principal TestTache
@@ -25,18 +27,30 @@ class TestTache(commands.Cog):
 
     # 📌 Commande avec préfixe (!testtache)
     @commands.command(name="testtache")
-    async def test_tache_prefix(self, ctx: commands.Context):
-        """Tester les mini-jeux interactifs (version préfixe)."""
-        view = TacheSelectView(self.bot)
-        await ctx.send("🛠️ Choisis une tâche à tester dans le menu ci-dessous :", view=view)
+    async def test_tache_prefix(self, ctx: commands.Context, nom_tache: str):
+        """Tester une tâche spécifique en utilisant son nom."""
+        nom_tache = nom_tache.lower()
+        if nom_tache not in NOM_TACHES:
+            await safe_send(
+                ctx,
+                f"❌ Tâche inconnue : `{nom_tache}`\nTâches dispo : {', '.join(NOM_TACHES.keys())}"
+            )
+            return
+        await lancer_tache_unique(ctx, nom_tache)
 
     # 📌 Commande slash (/testtache)
-    @app_commands.command(name="testtache", description="Tester les mini-jeux interactifs (version slash).")
-    async def test_tache_slash(self, interaction: discord.Interaction):
-        view = TacheSelectView(self.bot)
-        await interaction.response.send_message("🛠️ Choisis une tâche à tester dans le menu ci-dessous :", view=view)
-
-
+    @app_commands.command(name="testtache", description="Tester une tâche interactive spécifique")
+    @app_commands.describe(tache="Nom de la tâche à tester")
+    async def test_tache_slash(self, interaction: discord.Interaction, tache: str):
+        tache = tache.lower()
+        if tache not in NOM_TACHES:
+            await safe_respond(
+                interaction,
+                f"❌ Tâche inconnue : `{tache}`\nTâches dispo : {', '.join(NOM_TACHES.keys())}",
+                ephemeral=True
+            )
+            return
+        await lancer_tache_unique(interaction, tache)
 
 
 # ────────────────────────────────────────────────────────────────────────────────
@@ -47,4 +61,3 @@ async def setup(bot: commands.Bot):
     for command in cog.get_commands():
         if not hasattr(command, "category"):
             command.category = "Test"
-    await bot.add_cog(cog)
