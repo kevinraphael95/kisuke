@@ -99,7 +99,7 @@ class KlubOutside(commands.Cog):
     @commands.command(
         name="kluboutside",
         aliases=["ko"],
-        help="📓 Affiche une question Klub Outside par son numéro, aléatoire ou pagine toutes.",
+        help="📓 Affiche une question de la FAQ du Klub Outside.",
         description="Utilisation : `!ko`, `!ko <numéro>`, `!ko random`"
     )
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
