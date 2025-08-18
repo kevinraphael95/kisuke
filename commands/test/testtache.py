@@ -36,9 +36,16 @@ class TestTache(commands.Cog):
             if isinstance(destination, discord.Interaction):
                 await safe_respond(destination, msg, ephemeral=True)
             else:
-                await safe_send(destination, msg)
+                await safe_send(destination.channel, msg)
             return
-        await lancer_tache_unique(destination, nom_tache)
+        # Création d'un embed de base pour la tâche
+        embed = discord.Embed(title=f"Test de tâche : {nom_tache}", color=discord.Color.blurple())
+        async def update_embed(e):
+            if isinstance(destination, discord.Interaction):
+                await destination.edit_original_response(embed=e)
+            else:
+                await safe_send(destination.channel, embed=e)
+        await NOM_TACHES[nom_tache](destination, embed, update_embed, 1)
 
     # ────────────────────────────────────────────────────────────────────────────
     # 🔹 Commande SLASH
@@ -50,7 +57,6 @@ class TestTache(commands.Cog):
         try:
             await interaction.response.defer()
             await self._lancer_tache(interaction, tache)
-            await interaction.delete_original_response()
         except Exception as e:
             print(f"[ERREUR /testtache] {e}")
             await safe_respond(interaction, "❌ Une erreur est survenue lors du lancement de la tâche.", ephemeral=True)
