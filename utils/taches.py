@@ -292,3 +292,58 @@ async def lancer_3_taches(interaction, embed, update_embed):
 
     return success_global
 
+
+
+# ────────────────────────────────────────────────────────────────────────────────
+# 🎯 Lancer UNE tâche spécifique (pour test/debug)
+# ────────────────────────────────────────────────────────────────────────────────
+
+NOM_TACHES = {
+    "emoji": lancer_emoji,
+    "reflexe": lancer_reflexe,
+    "fleche": lancer_fleche,
+    "infusion": lancer_infusion,
+    "emoji9": lancer_emoji9,
+    "bmoji": lancer_bmoji,
+}
+
+async def lancer_tache_unique(interaction, nom_tache: str):
+    """
+    Lance une tâche précise par son nom (ex: 'reflexe').
+    Utilisé par la commande !testtache /slash testtache.
+    """
+    nom_tache = nom_tache.lower()
+    if nom_tache not in NOM_TACHES:
+        if isinstance(interaction, discord.Interaction):
+            await interaction.response.send_message(
+                f"❌ Tâche inconnue : `{nom_tache}`.\nTâches dispo : {', '.join(NOM_TACHES.keys())}",
+                ephemeral=True
+            )
+        else:
+            await interaction.send(
+                f"❌ Tâche inconnue : `{nom_tache}`.\nTâches dispo : {', '.join(NOM_TACHES.keys())}"
+            )
+        return False
+
+    # Embed de suivi (comme dans lancer_3_taches)
+    embed = discord.Embed(title=f"🔹 Test tâche : {nom_tache}", color=discord.Color.blurple())
+    embed.add_field(name="Épreuve en cours", value="Chargement...", inline=False)
+
+    if isinstance(interaction, discord.Interaction):
+        await interaction.response.send_message(embed=embed)
+        message = await interaction.original_response()
+    else:
+        message = await interaction.send(embed=embed)
+
+    async def update_embed(new_embed):
+        await message.edit(embed=new_embed)
+
+    # Lancer la tâche choisie
+    try:
+        result = await NOM_TACHES[nom_tache](interaction, embed, update_embed, 1)
+    except Exception as e:
+        result = False
+        embed.add_field(name="Erreur", value=f"⚠️ {e}", inline=False)
+        await update_embed(embed)
+
+    return result
