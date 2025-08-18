@@ -43,20 +43,15 @@
 
 ### 🔮 Reiatsu
 
-* `reiatsu` : Affiche ton énergie Reiatsu.
+* `reiatsu` : Commande principale pour le minijeu de récolte des reiatsu.
 * `reiatsuvol` : Permet de voler du Reiatsu à quelqu’un.
-* `steamkey` : Donne une clé Steam (fun/lotterie).
-* `skill` : Semble inactif ou non chargé correctement.
+* `steamkey` : Lotterie, 1% de chance de gagner une clé steam en échanges de reiatsu.
+* `skill` : fonctionne pas
 
-### 🧪 Test
-
-* `testtache` : Test des tâches périodiques.
-* `hollow` : Test lié aux Hollows.
-* `test` : Fonction de test générique.
 
 ### ⚙️ Tâches & comportements automatiques
 
-* `tasks/heartbeat.py` : Ping le bot toutes les 60 secondes pour vérifier qu’il répond.
+* `tasks/heartbeat.py` : Si activé, le bote envoie un message toute les 5 minutes dans le salon souhaité, permet de garder le bot en ligne dans l'évetualité où render désactive momentanément le serveur pour le keep-alive.
 * `tasks/reiatsu_spawner.py` : Fait apparaître périodiquement des Reiatsu aléatoires dans un canal.
 
 ---
