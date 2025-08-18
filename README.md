@@ -59,7 +59,7 @@
 
 ---
 
-# 📦 Installation & Configuration
+# 📦 Installation & Configuration avec supabase et render
 
 ## 🚀 Outils utilisés
 
@@ -83,7 +83,21 @@
 1. Se connecter à [Supabase](https://supabase.com/).
 2. Créer un **nouveau projet**.
 3. Créer les **tables** via les scripts SQL.
-4. Récupérer :
+
+create table public.reiatsu (
+  user_id text not null,
+  username text not null,
+  points bigint not null,
+  last_steal_attempt timestamp without time zone null,
+  steal_cd smallint null,
+  classe text null default 'Travailleur'::text,
+  comp_cd timestamp with time zone null,
+  bonus5 smallint null default '0'::smallint,
+  created_at timestamp with time zone not null default now(),
+  constraint reiatsu2_pkey primary key (user_id)
+) TABLESPACE pg_default;
+
+4.  Récupérer :
 
    * **URL du projet**
    * **Clé API**
