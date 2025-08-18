@@ -6,6 +6,89 @@
 
 ---
 
+## 🛠️ Commandes du Bot
+
+**Préfixe par défaut** : `os.getenv("COMMAND_PREFIX", "!")`
+Modules chargés dynamiquement. Certaines tâches automatiques peuvent être actives : `tasks.heartbeat` (ping toutes les 60s), `tasks.reiatsu_spawner` (spawn aléatoire de Reiatsu).
+
+---
+
+### 👑 Admin
+
+| Commande          | Description                                          |
+| ----------------- | ---------------------------------------------------- |
+| `heartbeat_admin` | Vérifie que le bot est actif, renvoie un pong / état |
+| `spawn_reiatsu`   | Force l’apparition d’un Reiatsu (administratif)      |
+| `re`              | Recharge une extension                               |
+| `rpgreset`        | Réinitialise les données RPG                         |
+
+---
+
+### ⚔️ Bleach
+
+| Commande | Description                                   |
+| -------- | --------------------------------------------- |
+| `bmoji`  | Affiche des emojis liés à Bleach              |
+| `kido`   | Utilisation de techniques Kido                |
+| `ship`   | Calcule la compatibilité entre deux personnes |
+| `tupref` | Affiche le préfixe configuré du serveur       |
+
+---
+
+### 🎉 Fun
+
+| Commande     | Description                  |
+| ------------ | ---------------------------- |
+| `gay`        | Commande fun aléatoire       |
+| `mastermind` | Joue au jeu du Mastermind    |
+| `pendu`      | Joue au jeu du Pendu         |
+| `couleur`    | Jeu de devinette de couleurs |
+| `emoji`      | Génère un emoji custom       |
+| `say`        | Fait parler le bot           |
+| `pizza`      | Semble inactif ou buggué     |
+
+---
+
+### 📚 General
+
+| Commande | Description                              |
+| -------- | ---------------------------------------- |
+| `code`   | Génère du code                           |
+| `react`  | Fait réagir le bot avec un emoji         |
+| `help`   | Affiche l’aide et la liste des commandes |
+
+---
+
+### 🔮 Reiatsu
+
+| Commande     | Description                               |
+| ------------ | ----------------------------------------- |
+| `reiatsu`    | Affiche ton énergie Reiatsu               |
+| `reiatsuvol` | Permet de voler du Reiatsu à quelqu’un    |
+| `steamkey`   | Donne une clé Steam (fun/lotterie)        |
+| `skill`      | Semble inactif ou non chargé correctement |
+
+---
+
+### 🧪 Test
+
+| Commande    | Description                 |
+| ----------- | --------------------------- |
+| `testtache` | Test des tâches périodiques |
+| `hollow`    | Test lié aux Hollows        |
+| `test`      | Fonction de test générique  |
+
+---
+
+### ⚙️ Tâches & comportements automatiques
+
+| Tâche                      | Description                                                         |
+| -------------------------- | ------------------------------------------------------------------- |
+| `tasks/heartbeat.py`       | Ping le bot toutes les 60 secondes pour vérifier qu’il répond       |
+| `tasks/reiatsu_spawner.py` | Fait apparaître périodiquement des Reiatsu aléatoires dans un canal |
+
+---
+
 # 📦 Installation & Configuration avec Render, Supabase et Uptime Robot
 
 ## 🚀 Outils utilisés
