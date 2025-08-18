@@ -2,7 +2,7 @@
 
 # Kisuke Urahara - Bot Discord
 
-👍 **Description :** Bot multi-serveurs avec commandes personnalisables et gestion automatique des spawns de Reiatsu.
+👍 **Description :** Kisuke Urahara est un bot Discord en python inspiré de Bleach. Il propose peu de commandes amusantes et un mini-jeu de collecte de "reiatsu" (qui ne sert à rien à part en avoir plus que les autres).
 
 ---
 
