@@ -38,11 +38,14 @@
 ### 📚 Général
 
 * `code` : Lien vers le code github
-* `react` : Fait réagir le bot avec un emoji.
+* `emoji` : Affiche tous les emojis animés du serveur ou un ou plusieurs.
 * `help` : Affiche l’aide et la liste des commandes.
+* `react` : Fait réagir le bot avec un emoji.
+* `say` : Répète un message
 
 ### 🔮 Reiatsu
 
+* `classe` : Choisir sa classe pour le minijeu des reiatsu.
 * `reiatsu` : Commande principale pour le minijeu de récolte des reiatsu.
 * `reiatsuvol` : Permet de voler du Reiatsu à quelqu’un.
 * `steamkey` : Lotterie, 1% de chance de gagner une clé steam en échanges de reiatsu.
