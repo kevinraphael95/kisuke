@@ -8,37 +8,36 @@
 
 ## 🛠️ Commandes du Bot
 
-**Préfixe par défaut** : `os.getenv("COMMAND_PREFIX", "!")`
-Modules chargés dynamiquement. Certaines tâches automatiques peuvent être actives :
-`tasks.heartbeat` (ping toutes les 60s), `tasks.reiatsu_spawner` (spawn aléatoire de Reiatsu).
 
 ### 👑 Admin
 
-* `heartbeat_admin` : Vérifie que le bot est actif.
-* `spawn_reiatsu` : Force l’apparition d’un Reiatsu.
-* `re` : Recharge une extension.
-* `rpgreset` : Réinitialise les données RPG.
+* `heartbeat_admin` : x
+* `reiatsu_admin` : x
+* `re` : x
+* `rpgreset` : x
+
 
 ### ⚔️ Bleach
 
-* `bmoji` : Affiche des emojis liés à Bleach.
-* `kido` : Utilisation de techniques Kido.
+* `bmoji` : Devine quel personnage Bleach se cache derrière ces emojis.
+* `combat` : Lance un combat automatisé sur 5 tours entre 2 personnages tirés au hasard.
+* `division` : Détermine ta division dans le Gotei 13.
+* `kido` : Lance un sort de Kidō !
+* `kluboutside` : Affiche une question de la FAQ du Klub Outside.
 * `ship` : Calcule la compatibilité entre deux personnes.
-* `tupref` : Affiche le préfixe configuré du serveur.
+* `tupref` : Choisis ton personnage préféré entre deux propositions aléatoires.
 
 ### 🎉 Fun
 
-* `gay` : Commande amusante aléatoire.
+* `couleur` : Affiche une couleur aléatoire avec un aperçu visuel et ses codes HEX & RGB.
+* `gay` : Calcule ton taux de gaytitude.
 * `mastermind` : Joue au Mastermind.
 * `pendu` : Joue au Pendu.
-* `couleur` : Jeu de devinette de couleurs.
-* `emoji` : Génère un emoji custom.
-* `say` : Fait parler le bot.
-* `pizza` : Semble inactif ou buggué.
+* `pizza` : Pizza aléatoire.
 
 ### 📚 Général
 
-* `code` : Génère du code.
+* `code` : Lien vers le code github
 * `react` : Fait réagir le bot avec un emoji.
 * `help` : Affiche l’aide et la liste des commandes.
 
