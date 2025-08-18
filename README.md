@@ -66,7 +66,6 @@
 * **[Supabase](https://supabase.com/)** : Base de données SQL gratuite.
 * **[Render](https://render.com/)** : Hébergeur gratuit pour le bot.
 * **[UptimeRobot](https://uptimerobot.com/)** : Service pour maintenir le bot actif.
-* **Python** : Langage principal du bot.
 
 ---
 
@@ -124,14 +123,6 @@ python bot.py
    * URL : Lien généré par Render
    * Intervalle : par défaut (5 minutes)
 3. Enregistrer pour que le bot soit ping régulièrement.
-
----
-
-## ⚠️ Notes importantes
-
-* Ne **jamais** publier votre Bot Token ou vos clés Supabase.
-* Si vous modifiez le code, redéployer manuellement sur Render.
-* Le plan gratuit Render met votre bot en veille si aucun ping n’est reçu.
 
 ---
 
