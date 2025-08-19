@@ -21,6 +21,7 @@ class CouleurView(discord.ui.View):
     def __init__(self, author):
         super().__init__(timeout=60)
         self.author = author
+        self.message = None  # Stocke le message pour pouvoir le modifier après timeout
 
     def generer_embed(self):
         code_hex = random.randint(0, 0xFFFFFF)
@@ -50,6 +51,16 @@ class CouleurView(discord.ui.View):
         except Exception as e:
             await safe_edit(interaction, content=f"❌ Erreur : {e}", view=None)
 
+    async def on_timeout(self):
+        """Désactive le bouton quand le délai est écoulé."""
+        for child in self.children:
+            child.disabled = True
+        if self.message:
+            try:
+                await safe_edit(self.message, view=self)
+            except Exception:
+                pass
+
 # ────────────────────────────────────────────────────────────────────────────────
 # 🧠 Cog principal
 # ────────────────────────────────────────────────────────────────────────────────
@@ -71,12 +82,10 @@ class CouleurCommand(commands.Cog):
     async def slash_couleur(self, interaction: discord.Interaction):
         """Commande slash principale qui génère une couleur aléatoire."""
         try:
-            await interaction.response.defer()
             view = CouleurView(interaction.user)
             embed = view.generer_embed()
             embed.timestamp = interaction.created_at
-            await safe_send(interaction.channel, embed=embed, view=view)
-            await interaction.delete_original_response()
+            view.message = await safe_send(interaction, embed=embed, view=view)
         except Exception as e:
             print(f"[ERREUR /couleur] {e}")
             await safe_respond(interaction, "❌ Une erreur est survenue lors de la génération de la couleur.", ephemeral=True)
@@ -96,7 +105,7 @@ class CouleurCommand(commands.Cog):
             view = CouleurView(ctx.author)
             embed = view.generer_embed()
             embed.timestamp = ctx.message.created_at
-            await safe_send(ctx, embed=embed, view=view)
+            view.message = await safe_send(ctx, embed=embed, view=view)
         except Exception as e:
             print(f"[ERREUR !couleur] {e}")
             await safe_send(ctx, "❌ Une erreur est survenue lors de la génération de la couleur.")
