@@ -1,7 +1,7 @@
 # ────────────────────────────────────────────────────────────────────────────────
-# 📌 pizza_aléatoire.py — Commande !pizza et /pizza
+# 📌 pizza_aléatoire.py — Commande /pizza et !pizza
 # Objectif : Générer une pizza aléatoire simple (pâte, sauce, fromage, garnitures, toppings)
-# Catégorie : Test
+# Catégorie : Fun
 # Accès : Public
 # ────────────────────────────────────────────────────────────────────────────────
 
@@ -9,12 +9,13 @@
 # 📦 Imports nécessaires
 # ────────────────────────────────────────────────────────────────────────────────
 import discord
+from discord import app_commands
 from discord.ext import commands
 from discord.ui import View, button
 import json
 import os
 import random
-from utils.discord_utils import safe_send, safe_edit  # ✅ Utilisation des safe_
+from utils.discord_utils import safe_send, safe_edit, safe_respond  # ✅ Utilisation des safe_
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 📂 Chargement des données JSON
@@ -56,18 +57,23 @@ class PizzaView(View):
     def __init__(self, data):
         super().__init__(timeout=60)
         self.data = data
+        self.message = None
+
+    async def on_timeout(self):
+        """Désactive le bouton quand la vue expire."""
+        for child in self.children:
+            child.disabled = True
+        if self.message:
+            await safe_edit(self.message, view=self)
 
     @button(label="🍕 Nouvelle pizza", style=discord.ButtonStyle.green)
     async def nouvelle_pizza(self, interaction: discord.Interaction, button: discord.ui.Button):
         try:
             embed = _generate_pizza_embed(self.data)
-            # Utiliser safe_edit avec interaction.message
             await safe_edit(interaction.message, embed=embed, view=self)
-            # On doit répondre à l'interaction pour éviter le délai "Interaction failed"
-            await interaction.response.defer()  # Juste acknowledge, pas de message
+            await interaction.response.defer()  # juste acknowledge
         except Exception as e:
             print(f"[ERREUR bouton pizza] {e}")
-            # En cas d'erreur, on répond avec un message visible
             await interaction.response.send_message("❌ Erreur lors de la génération de la pizza.", ephemeral=True)
 
 # ────────────────────────────────────────────────────────────────────────────────
@@ -75,43 +81,39 @@ class PizzaView(View):
 # ────────────────────────────────────────────────────────────────────────────────
 class PizzaAleatoire(commands.Cog):
     """
-    Commande !pizza et /pizza — Génère une pizza aléatoire simple
+    Commande /pizza et !pizza — Génère une pizza aléatoire simple
     """
     def __init__(self, bot: commands.Bot):
         self.bot = bot
 
-    @commands.command(
-        name="pizza",
-        help="Génère une pizza aléatoire.",
-        description="Affiche une pizza composée d'une pâte, d'une base, d'un fromage, de garnitures et de toppings spéciaux choisis aléatoirement."
-    )
-    @commands.cooldown(rate=1, per=3, type=commands.BucketType.user)  # ⏱️ Anti-spam 3 secondes
-    async def pizza(self, ctx: commands.Context):
-        """Commande principale qui envoie une pizza aléatoire."""
+    # ────────────────────────────────────────────────────────────────────────────
+    # 🔹 Commande PREFIX
+    # ────────────────────────────────────────────────────────────────────────────
+    @commands.command(name="pizza", help="Génère une pizza aléatoire.")
+    @commands.cooldown(rate=1, per=3, type=commands.BucketType.user)  # ⏱️ Anti-spam
+    async def prefix_pizza(self, ctx: commands.Context):
         try:
             data = load_data()
             embed = _generate_pizza_embed(data)
             view = PizzaView(data)
-            await safe_send(ctx.channel, embed=embed, view=view)
+            view.message = await safe_send(ctx.channel, embed=embed, view=view)
         except Exception as e:
-            print(f"[ERREUR pizza] {e}")
+            print(f"[ERREUR !pizza] {e}")
             await safe_send(ctx.channel, "❌ Une erreur est survenue lors de la génération de la pizza.")
 
-    @commands.slash_command(
-        name="pizza",
-        description="Génère une pizza aléatoire."
-    )
+    # ────────────────────────────────────────────────────────────────────────────
+    # 🔹 Commande SLASH
+    # ────────────────────────────────────────────────────────────────────────────
+    @app_commands.command(name="pizza", description="Génère une pizza aléatoire.")
     async def slash_pizza(self, interaction: discord.Interaction):
-        """Commande slash qui envoie une pizza aléatoire."""
         try:
             data = load_data()
             embed = _generate_pizza_embed(data)
             view = PizzaView(data)
-            # Ici on répond à l'interaction en envoyant le message
-            await safe_send(interaction, embed=embed, view=view)
+            view.message = await interaction.response.send_message(embed=embed, view=view)
         except Exception as e:
-            print(f"[ERREUR pizza slash] {e}")
-            await safe_send(interaction, "❌ Une erreur est survenue lors de la génération de la pizza.")
+            print(f"[ERREUR /pizza] {e}")
+            await safe_respond(interaction, "❌ Une erreur est survenue lors de la génération de la pizza.", ephemeral=True)
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🔌 Setup du Cog
