@@ -1,4 +1,26 @@
-reiatsu
+Code SQL à copier coller dans SQL Editor pour créer les tables
+
+
+- la table bot_lock : 
+
+create table public.bot_lock (
+  id text not null,
+  instance_id text null,
+  updated_at timestamp with time zone null default now(),
+  constraint bot_lock_pkey primary key (id)
+) TABLESPACE pg_default;
+
+
+- la table bot_settings : 
+
+create table public.bot_settings (
+  key text not null,
+  value text not null,
+  constraint bot_settings_pkey primary key (key)
+) TABLESPACE pg_default;
+
+
+- la table reiatsu :
 
 create table public.reiatsu (
   user_id text not null,
@@ -14,7 +36,7 @@ create table public.reiatsu (
 ) TABLESPACE pg_default;
 
 
-reiatsu_config
+- la table reiatsu_config :
 
 create table public.reiatsu_config (
   guild_id text not null,
@@ -26,3 +48,12 @@ create table public.reiatsu_config (
   constraint reiatsu_config_pkey primary key (guild_id)
 ) TABLESPACE pg_default;
 
+
+- la table steam_keys :
+
+x
+
+
+- la table perso_votes :
+
+x
