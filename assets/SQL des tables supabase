@@ -16,7 +16,6 @@ create table public.reiatsu (
 
 reiatsu_config
 
-```
 create table public.reiatsu_config (
   guild_id text not null,
   channel_id text null,
@@ -26,4 +25,4 @@ create table public.reiatsu_config (
   delay_minutes integer null default 1800,
   constraint reiatsu_config_pkey primary key (guild_id)
 ) TABLESPACE pg_default;
-```
+
