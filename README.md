@@ -43,7 +43,7 @@
 4. Récupérer et mettre de côté :
 
    * **Le lien du projet (URL)** dans **Project Settings → Data API → Project URL**
-   * **La clé API** dans **Project Settings → API Settings → API Keys → Publishable Keys**
+   * **La clé API** dans **j'ai oublié c'est où**
 
 ---
 
