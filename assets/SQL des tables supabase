@@ -1,0 +1,29 @@
+reiatsu
+
+create table public.reiatsu (
+  user_id text not null,
+  username text not null,
+  points bigint not null,
+  last_steal_attempt timestamp without time zone null,
+  steal_cd smallint null,
+  classe text null default 'Travailleur'::text,
+  comp_cd timestamp with time zone null,
+  bonus5 smallint null default '0'::smallint,
+  created_at timestamp with time zone not null default now(),
+  constraint reiatsu2_pkey primary key (user_id)
+) TABLESPACE pg_default;
+
+
+reiatsu_config
+
+```
+create table public.reiatsu_config (
+  guild_id text not null,
+  channel_id text null,
+  en_attente boolean null default false,
+  last_spawn_at timestamp with time zone null,
+  spawn_message_id text null,
+  delay_minutes integer null default 1800,
+  constraint reiatsu_config_pkey primary key (guild_id)
+) TABLESPACE pg_default;
+```
