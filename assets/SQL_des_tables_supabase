@@ -1,4 +1,4 @@
-Code SQL à copier coller dans SQL Editor pour créer les tables
+###Code SQL à copier coller dans SQL Editor pour créer les tables
 
 
 - la table bot_lock : 
@@ -51,9 +51,21 @@ create table public.reiatsu_config (
 
 - la table steam_keys :
 
-x
+create table public.steam_keys (
+  id bigserial not null,
+  game_name text not null,
+  steam_url text not null,
+  steam_key text not null,
+  constraint steam_keys_pkey primary key (id)
+) TABLESPACE pg_default;
 
 
 - la table perso_votes :
 
-x
+create table public.perso_votes (
+  id uuid not null default gen_random_uuid (),
+  nom text not null,
+  votes integer null default 0,
+  constraint perso_votes_pkey primary key (id),
+  constraint perso_votes_nom_key unique (nom)
+) TABLESPACE pg_default;
