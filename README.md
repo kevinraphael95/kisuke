@@ -39,11 +39,10 @@
 1. Se connecter à [Supabase](https://supabase.com/) (connexion GitHub possible)
 2. Créer un **nouveau projet**
 3. Créer les **tables** via les scripts SQL (à ajouter plus tard dans la doc)
-4. Récupérer :
+4. Récupérer et mettre de côté :
 
-   * **Lien du projet (URL)**
-   * **Clé API**
-     *(à conserver pour plus tard)*
+   * **Le lien du projet (URL)** dans **Project Settings → Data API → Project URL**
+   * **La clé API** dans **Project Settings → API Settings → API Keys → Publishable Keys**
 
 ---
 
