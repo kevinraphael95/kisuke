@@ -65,7 +65,7 @@
    * `SUPABASE_URL` → URL du projet Supabase
    * `SUPABASE_KEY` → Clé API Supabase
    *  `COMMAND_PREFIX` → Préfixe pour les commandes 
-7. **Désactiver** l’auto-déploiement (**Auto Deploy**) pour éviter de dépasser les limites du plan gratuit
+7. Dans Advanced, chercher l’option auto-déploiement (**Auto Deploy**) et le mettre sur Off pour éviter de dépasser les limites du plan gratuit
 
 ---
 
