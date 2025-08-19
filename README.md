@@ -26,11 +26,11 @@
 2. **Créer une nouvelle application**
 3. Dans **General Information** :
 
-   * Noter l’`APPLICATION ID` (à conserver pour plus tard)
+   * Noter l’`APPLICATION ID`, à conserver pour plus tard
 4. Aller dans l’onglet **Bot** :
 
    * Cliquer sur **Reset Token** pour obtenir le **Bot Token**
-   * Conserver ce **Bot Token** précieusement
+   * Conserver ce **Bot Token** précieusement pour plus tard, ne jamais l'écrire quelque part de public
 
 ---
 
@@ -43,7 +43,7 @@
 
    * **Lien du projet (URL)**
    * **Clé API**
-     *(Ces deux valeurs seront utilisées dans `.env`)*
+     *(à conserver pour plus tard)*
 
 ---
 
