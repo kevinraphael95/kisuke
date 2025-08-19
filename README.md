@@ -4,7 +4,7 @@
 
 # Kisuke Urahara - Bot Discord
 
-👍 (mettre description du bot ici)
+👍 Kisuke Urahara est un bot discord très très amateur en python. Il propose quelques commandes simples, peu de commandes amusantes parfois inspirées du manga bleach, et un petit jeu de collecte de "reiatsu" qui ne sert à rien. Les commande fonctionnent avec le préfixe et certaines aussi en mode slash.
 
 ---
 
