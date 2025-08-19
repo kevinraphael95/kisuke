@@ -17,7 +17,6 @@
 * **[Supabase](https://supabase.com/)** : Base de données SQL gratuite
 * **[Render](https://render.com/)** : Hébergeur gratuit pour le bot
 * **[UptimeRobot](https://uptimerobot.com/)** : Service pour pinger régulièrement le bot et le maintenir actif
-* **Python** : Langage principal du bot
 
 ---
 
