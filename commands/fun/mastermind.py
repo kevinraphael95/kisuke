@@ -221,7 +221,7 @@ class Mastermind(commands.Cog):
 # 🔌 Setup du Cog
 # ────────────────────────────────────────────────────────────────────────────────
 async def setup(bot: commands.Bot):
-    cog = Mastermind2(bot)
+    cog = MastermindView(bot)
     for command in cog.get_commands():
         if not hasattr(command, "category"):
             command.category = "Fun"
