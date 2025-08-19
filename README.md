@@ -1,4 +1,4 @@
-![Tables supabase](assets/SQL des tables supabase)
+![Tables supabase](assets/SQL_des_tables_supabase)
 
 ![kisuke](assets/kisuke.jpg)
 
