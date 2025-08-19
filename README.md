@@ -42,6 +42,7 @@
 2. Créer un **nouveau projet**.
 3. Créer les **tables** via les scripts SQL.
 
+Table reiatsu :
 ```bash
 create table public.reiatsu (
   user_id text not null,
@@ -56,6 +57,18 @@ create table public.reiatsu (
   constraint reiatsu2_pkey primary key (user_id)
 ) TABLESPACE pg_default;
 ```
+
+Table reiatsu_config :
+```bash
+create table public.reiatsu_config (
+  guild_id text not null,
+  channel_id text null,
+  en_attente boolean null default false,
+  last_spawn_at timestamp with time zone null,
+  spawn_message_id text null,
+  delay_minutes integer null default 1800,
+  constraint reiatsu_config_pkey primary key (guild_id)
+) TABLESPACE pg_default;```
 
 4. Récupérer :
 
