@@ -43,7 +43,7 @@
 4. Récupérer et mettre de côté :
 
    * **Le lien du projet (URL)** dans **Project Settings → Data API → Project URL**
-   * **La clé API**  dans **Project Settings → API Keys → Publishable Keys ou Secret Keys** (Publishable c'est mieux mais après faut mettre des rls sur chaque table c'est barbant)
+   * **La clé API**  dans **Project Settings → API Keys → Publishable Keys ou Secret Keys** (Publishable c'est mieux mais après faut mettre des rls sur chaque table pour autoriser l'accès aux tables avec la clé)
 ---
 
 ### 3️⃣ Déployer le bot sur Render
