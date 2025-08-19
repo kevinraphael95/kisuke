@@ -1,6 +1,6 @@
 # ────────────────────────────────────────────────────────────────────────────────
 # 📌 mastermind2.py — Commande interactive /mastermind et !mastermind
-# Objectif : Jeu de logique Mastermind via boutons Discord avec menu difficulté
+# Objectif : Jeu Mastermind interactif avec choix de difficulté via boutons
 # Catégorie : Fun
 # Accès : Public
 # ────────────────────────────────────────────────────────────────────────────────
@@ -16,13 +16,10 @@ import random
 from utils.discord_utils import safe_send, safe_edit, safe_respond
 
 # ────────────────────────────────────────────────────────────────────────────────
-# 🎨 Couleurs disponibles
+# 🎛️ Views & Buttons Mastermind
 # ────────────────────────────────────────────────────────────────────────────────
 COLORS = ["🟥", "🟦", "🟩", "🟨", "🟪", "🟧"]
 
-# ────────────────────────────────────────────────────────────────────────────────
-# 🎛️ Views & Buttons Mastermind
-# ────────────────────────────────────────────────────────────────────────────────
 class MastermindView(View):
     def __init__(self, author: discord.User, code_length: int, corruption: bool):
         super().__init__(timeout=180)
@@ -36,7 +33,7 @@ class MastermindView(View):
         self.message = None
         self.result_shown = False
 
-        # Ajout des boutons couleurs + valider/effacer
+        # Ajout des boutons
         for color in COLORS:
             self.add_item(ColorButton(color, self))
         self.add_item(ValidateButton(self))
@@ -62,14 +59,12 @@ class MastermindView(View):
         matched_code = [False] * self.code_length
         matched_guess = [False] * self.code_length
 
-        # 🔴 Couleurs à la bonne position
         for i in range(self.code_length):
             if guess[i] == code_copy[i]:
                 feedback[i] = "🔴"
                 matched_code[i] = True
                 matched_guess[i] = True
 
-        # ⚪ Couleurs correctes, mauvaise position
         for i in range(self.code_length):
             if feedback[i] is None:
                 for j in range(self.code_length):
@@ -79,12 +74,10 @@ class MastermindView(View):
                         matched_guess[i] = True
                         break
 
-        # ❌ Couleurs absentes
         for i in range(self.code_length):
             if feedback[i] is None:
                 feedback[i] = "❌"
 
-        # ☠️ Mode corruption
         if self.corruption:
             feedback = [f if random.random() > 0.5 else "💀" for f in feedback]
 
@@ -121,9 +114,11 @@ class MastermindView(View):
             description=f"La combinaison était : {' '.join(self.code)}",
             color=discord.Color.green() if win else discord.Color.red()
         )
-        await interaction.response.defer()
         await interaction.followup.send(embed=embed, ephemeral=False)
 
+# ────────────────────────────────────────────────────────────────────────────────
+# Buttons
+# ────────────────────────────────────────────────────────────────────────────────
 class ColorButton(Button):
     def __init__(self, color: str, view: MastermindView):
         super().__init__(style=discord.ButtonStyle.secondary, emoji=color)
@@ -164,7 +159,7 @@ class ValidateButton(Button):
         await self.view_ref.make_attempt(interaction)
 
 # ────────────────────────────────────────────────────────────────────────────────
-# 🎛️ Menu difficulté
+# 🎛️ UI — Menu difficulté
 # ────────────────────────────────────────────────────────────────────────────────
 class DifficultyView(View):
     def __init__(self, author):
@@ -199,29 +194,44 @@ class Mastermind(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
 
+    # ────────────────────────────────────────────────────────────────────────────────
+    # 🔹 Fonction interne commune
+    # ────────────────────────────────────────────────────────────────────────────────
+    async def _send_menu(self, channel: discord.abc.Messageable):
+        """Envoie le menu de sélection de difficulté."""
+        view = DifficultyView(self.bot.user)
+        message = await safe_send(channel, "🎮 Choisis la difficulté du Mastermind :", view=view)
+        view.message = message
+
+    # ────────────────────────────────────────────────────────────────────────────────
     # 🔹 Commande SLASH
+    # ────────────────────────────────────────────────────────────────────────────────
     @app_commands.command(name="mastermind", description="Jouer au Mastermind interactif.")
     async def slash_mastermind(self, interaction: discord.Interaction):
         try:
             await interaction.response.defer()
-            view = DifficultyView(interaction.user)
-            embed = discord.Embed(
-                title="🎮 Choisis la difficulté du Mastermind",
-                description="Clique sur un bouton ci-dessous :",
-                color=discord.Color.orange()
-            )
-            await safe_send(interaction.channel, embed=embed, view=view)
+            await self._send_menu(interaction.channel)
             await interaction.delete_original_response()
         except Exception as e:
             print(f"[ERREUR /mastermind] {e}")
-            await safe_respond(interaction, "❌ Une erreur est survenue lors du lancement du Mastermind.", ephemeral
+            await safe_respond(interaction, "❌ Une erreur est survenue lors du lancement du Mastermind.", ephemeral=True)
 
+    # ────────────────────────────────────────────────────────────────────────────────
+    # 🔹 Commande PREFIX
+    # ────────────────────────────────────────────────────────────────────────────────
+    @commands.command(name="mastermind")
+    async def prefix_mastermind(self, ctx: commands.Context):
+        try:
+            await self._send_menu(ctx.channel)
+        except Exception as e:
+            print(f"[ERREUR !mastermind] {e}")
+            await safe_send(ctx.channel, "❌ Une erreur est survenue lors du lancement du Mastermind.")
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🔌 Setup du Cog
 # ────────────────────────────────────────────────────────────────────────────────
 async def setup(bot: commands.Bot):
-    cog = MastermindView(bot)
+    cog = Mastermind(bot)
     for command in cog.get_commands():
         if not hasattr(command, "category"):
             command.category = "Fun"
