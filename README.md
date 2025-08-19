@@ -68,7 +68,8 @@ create table public.reiatsu_config (
   spawn_message_id text null,
   delay_minutes integer null default 1800,
   constraint reiatsu_config_pkey primary key (guild_id)
-) TABLESPACE pg_default;```
+) TABLESPACE pg_default;
+```
 
 4. Récupérer :
 
