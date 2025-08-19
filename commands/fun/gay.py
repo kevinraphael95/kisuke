@@ -40,7 +40,7 @@ def calculer_gaytitude_embed(member: discord.Member) -> discord.Embed:
         ]},
         {"min": 50, "emoji": "🌀", "titre": "Curieux·se affirmé·e", "couleur": discord.Color.blurple(), "descriptions": [
             "Tu es une énigme en glitter.",
-            "Explorateur.rice de toutes les vibes.",
+            "Explorateur·rice de toutes les vibes.",
             "Ton cœur a plus de bissections qu’un shōnen."
         ]},
         {"min": 30, "emoji": "🤔", "titre": "Questionnement doux", "couleur": discord.Color.gold(), "descriptions": [
@@ -79,7 +79,7 @@ def calculer_gaytitude_embed(member: discord.Member) -> discord.Embed:
 class GayCommand(commands.Cog):
     """Commande !gay et /gay — Calcule un taux de gaytitude fixe et fun."""
 
-    def __init__(self, bot):
+    def __init__(self, bot: commands.Bot):
         self.bot = bot
 
     # ────────────────────────────────────────────────────────────────────────────
@@ -92,12 +92,10 @@ class GayCommand(commands.Cog):
     @app_commands.describe(member="Utilisateur pour qui calculer la gaytitude (optionnel)")
     async def slash_gay(self, interaction: discord.Interaction, member: discord.Member = None):
         try:
-            await interaction.response.defer()
             member = member or interaction.user
             embed = calculer_gaytitude_embed(member)
             embed.timestamp = interaction.created_at
-            await safe_send(interaction.channel, embed=embed)
-            await interaction.delete_original_response()
+            await safe_send(interaction, embed=embed)  # ✅ cohérent avec safe_send
         except Exception as e:
             print(f"[ERREUR /gay] {e}")
             await safe_respond(interaction, "❌ Une erreur est survenue.", ephemeral=True)
