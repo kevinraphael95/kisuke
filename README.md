@@ -51,7 +51,7 @@
 1. Se connecter à [Render](https://render.com/) (compte Google ou création manuelle)
 2. Cliquer sur **New → Web Service**
 3. Sélectionner le **dépôt GitHub** contenant le bot
-4. Choisir le **plan gratuit** dans le type d'instance pour les hobbies
+4. Choisir le **plan gratuit** dans le type d'instance
 5. Dans **Startup Command**, mettre :
 
    ```bash
@@ -82,7 +82,8 @@
 
 ## ⚠️ Notes importantes
 
-* Ne **jamais** publier votre Bot Token ou vos clés Supabase
+* Cette façon d'héberger et déployer le bot gratuitement peut supporter que peu d'utilisateurs, pas plus d'une centaine je pense
+* Ne **jamais** publier votre Bot Token quelque part de public
 * Si vous modifiez le code, pensez à redéployer manuellement sur Render
 * Le plan gratuit Render met votre bot en veille si aucun ping n’est reçu (d’où l’utilisation d’UptimeRobot)
 
