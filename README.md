@@ -52,13 +52,13 @@
 1. Se connecter à [Render](https://render.com/) (compte Google ou création manuelle)
 2. Cliquer sur **New → Web Service**
 3. Sélectionner le **dépôt GitHub** contenant le bot
-4. Choisir le **plan gratuit**
+4. Choisir le **plan gratuit** dans le type d'instance pour les hobbies
 5. Dans **Startup Command**, mettre :
 
    ```bash
    python bot.py
    ```
-6. Dans **Settings → Environment Variables**, ajouter :
+6. Dans **Environment Variables**, ajouter les variables :
 
    * `APP_ID` → Application ID Discord
    * `BOT_TOKEN` → Bot Token Discord
