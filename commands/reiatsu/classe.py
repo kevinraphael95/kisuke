@@ -1,7 +1,7 @@
 # ────────────────────────────────────────────────────────────────────────────────
 # 📌 choisir_classe.py — Commande interactive !classe
 # Objectif : Permettre aux joueurs de choisir leur classe Reiatsu via un menu déroulant
-# Catégorie : VAACT
+# Catégorie : Reiatsu
 # Accès : Public
 # ────────────────────────────────────────────────────────────────────────────────
 
@@ -10,8 +10,7 @@
 # ────────────────────────────────────────────────────────────────────────────────
 import discord
 from discord.ext import commands
-from discord import app_commands
-from discord.ui import View, Select, select
+from discord.ui import View
 from supabase import create_client, Client
 import os
 import json
@@ -40,33 +39,49 @@ class ClasseSelect(discord.ui.Select):
 
         options = [
             discord.SelectOption(
-                label=classe,
+                label=f"{data.get('Symbole', '🌀')} {classe}",
                 description=data["Passive"][:100],
                 value=classe
             )
             for classe, data in CLASSES.items()
         ]
-        super().__init__(placeholder="Choisis ta classe Reiatsu", options=options, min_values=1, max_values=1)
+
+        super().__init__(
+            placeholder="Choisis ta classe Reiatsu",
+            options=options,
+            min_values=1,
+            max_values=1
+        )
 
     async def callback(self, interaction: discord.Interaction):
         if interaction.user.id != self.user_id:
-            await safe_respond(interaction, "❌ Tu ne peux pas choisir une classe pour un autre joueur.", ephemeral=True)
+            await safe_respond(
+                interaction,
+                "❌ Tu ne peux pas choisir une classe pour un autre joueur.",
+                ephemeral=True
+            )
             return
 
         classe = self.values[0]
         user_id = str(interaction.user.id)
 
         try:
-            # Choisir une classe et ajuster le cooldown selon la classe choisie
+            # Ajuste le cooldown selon la classe choisie
             nouveau_cd = 19 if classe == "Voleur" else 24
+
             supabase.table("reiatsu").update({
                 "classe": classe,
                 "steal_cd": nouveau_cd
             }).eq("user_id", user_id).execute()
 
+            symbole = CLASSES[classe].get("Symbole", "🌀")
+
             embed = discord.Embed(
-                title=f"✅ Classe choisie : {classe}",
-                description=f"**Passive** : {CLASSES[classe]['Passive']}\n**Active** : {CLASSES[classe]['Active']}",
+                title=f"✅ Classe choisie : {symbole} {classe}",
+                description=(
+                    f"**Passive** : {CLASSES[classe]['Passive']}\n"
+                    f"**Active** : {CLASSES[classe]['Active']}"
+                ),
                 color=discord.Color.green()
             )
             await interaction.response.edit_message(embed=embed, view=None)
@@ -99,17 +114,21 @@ class ChoisirClasse(commands.Cog):
         embed = discord.Embed(
             title="🎭 Choisis ta classe Reiatsu",
             description=(
-                "Sélectionne une classe dans le menu déroulant ci-dessous. Chaque classe possède une compétence passive et une active.\n\n"
+                "Sélectionne une classe dans le menu déroulant ci-dessous. "
+                "Chaque classe possède une compétence passive et une active.\n\n"
                 "👉 Si tu n’as jamais choisi de classe, tu es **Travailleur** par défaut."
             ),
             color=discord.Color.purple()
         )
+
         for nom, details in CLASSES.items():
+            symbole = details.get("Symbole", "🌀")
             embed.add_field(
-                name=f"🌀 {nom}",
+                name=f"{symbole} {nom}",
                 value=f"**Passive :** {details['Passive']}\n**Active :** {details['Active']}",
                 inline=False
             )
+
         view = ClasseSelectView(ctx.author.id)
         await safe_send(ctx.channel, embed=embed, view=view)
 
@@ -122,3 +141,5 @@ async def setup(bot: commands.Bot):
         if not hasattr(command, "category"):
             command.category = "Reiatsu"
     await bot.add_cog(cog)
+
+
