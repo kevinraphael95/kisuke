@@ -57,7 +57,6 @@ class HollowView(View):
         uid = str(inter.user.id)
 
         try:
-            # 🔋 Vérification du reiatsu
             resp = supabase.table("reiatsu").select("points").eq("user_id", uid).execute()
             points = resp.data[0]["points"] if resp.data else 0
 
@@ -65,11 +64,9 @@ class HollowView(View):
                 await inter.followup.send("❌ Tu n'as pas assez de reiatsu.", ephemeral=True)
                 return
 
-            # 🔻 Déduction
             supabase.table("reiatsu").update({"points": points - REIATSU_COST}).eq("user_id", uid).execute()
             self.attacked = True
 
-            # 📄 Préparation de l’embed de combat
             embed = Embed(
                 title="👹 Combat contre le Hollow",
                 description=f"⚔️ {inter.user.display_name} dépense 1 reiatsu pour affronter le Hollow !\n\nRéussis les 3 épreuves pour le vaincre.",
@@ -80,13 +77,11 @@ class HollowView(View):
             embed.add_field(name="Épreuves", value="⏳ Chargement des épreuves...", inline=False)
             await safe_edit(self.message, embeds=[embed], view=self)
 
-            # 🧪 Lancement des épreuves
             async def update_embed(e):
                 await safe_edit(self.message, embeds=[e], view=self)
 
             victoire = await lancer_3_taches(inter, embed, update_embed)
 
-            # 🏁 Résultat
             result = Embed(
                 title="🎯 Résultat du combat",
                 description="🎉 Tu as vaincu le Hollow !" if victoire else "💀 Tu as échoué à vaincre le Hollow.",
