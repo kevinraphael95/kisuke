@@ -1,68 +1,159 @@
 # ────────────────────────────────────────────────────────────────────────────────
-# 📌 discord_utils.py — Fonctions utilitaires optimisées avec gestion du rate-limit
-# Objectif : Fournir des fonctions sécurisées pour send/edit/respond Discord
-# Version : ✅ Optimisée et robuste, backoff exponentiel, logs clairs
+# 📌 utils/taches.py — Mini-jeux (tâches) pour le bot
+# Objectif : Mini-jeux interactifs affichés dynamiquement dans un embed unique
 # ────────────────────────────────────────────────────────────────────────────────
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 📦 Imports nécessaires
 # ────────────────────────────────────────────────────────────────────────────────
-import asyncio
 import discord
-from discord.errors import HTTPException
+import random
+import asyncio
+import json
+import os
 
 # ────────────────────────────────────────────────────────────────────────────────
-# 🛡️ Gestion centralisée des appels Discord avec backoff 429
+# 📂 Chargement des données JSON
 # ────────────────────────────────────────────────────────────────────────────────
-async def _discord_action(action_func, *args, retry=3, delay=0.3, **kwargs):
-    """
-    Exécute une action Discord sécurisée avec gestion du rate-limit et des exceptions.
-    - action_func : fonction Discord à appeler (send, edit, reply, etc.)
-    - retry : nombre de tentatives en cas de 429
-    - delay : délai entre chaque tentative (anti-429)
-    """
-    for attempt in range(1, retry + 2):
-        try:
-            result = await action_func(*args, **kwargs)
-            if delay > 0:
-                await asyncio.sleep(delay)
-            return result
-        except HTTPException as e:
-            if e.status == 429:
-                wait_time = 10 * attempt  # backoff exponentiel
-                print(f"[RateLimit] {action_func.__name__} → 429 Too Many Requests. Pause {wait_time}s...")
-                await asyncio.sleep(wait_time)
+DATA_JSON_PATH = os.path.join("data", "bleach_emojis.json")
+
+def load_characters():
+    """Charge les personnages depuis le fichier JSON."""
+    with open(DATA_JSON_PATH, encoding="utf-8") as f:
+        return json.load(f)
+
+# ────────────────────────────────────────────────────────────────────────────────
+# 🔹 Fonctions des mini-jeux
+# ────────────────────────────────────────────────────────────────────────────────
+
+async def lancer_emoji(interaction, embed, update_embed, num):
+    pool = ["💀", "🌀", "🔥", "🌪️", "🌟", "🍥", "🍡", "🧊", "❄️", "💨"]
+    sequence = random.sample(pool, 3)
+    autres = [e for e in pool if e not in sequence]
+    mix = sequence + random.sample(autres, 2)
+    random.shuffle(mix)
+
+    class EmojiButton(discord.ui.Button):
+        def __init__(self, emoji):
+            super().__init__(style=discord.ButtonStyle.secondary, emoji=emoji)
+            self.emoji_val = emoji
+        async def callback(self, inter_button):
+            if inter_button.user != interaction.user:
+                return
+            await inter_button.response.defer()
+            if len(view.reponses) < len(sequence) and self.emoji_val == sequence[len(view.reponses)]:
+                view.reponses.append(self.emoji_val)
+                if len(view.reponses) == len(sequence):
+                    view.stop()
             else:
-                raise e
-        except Exception as e:
-            print(f"[Erreur] {action_func.__name__} → {e}")
-            return None
-    print(f"[Erreur] {action_func.__name__} → Échec après {retry+1} tentatives")
-    return None
+                view.reponses.clear()
+
+    view = discord.ui.View(timeout=120)
+    for e in mix:
+        view.add_item(EmojiButton(e))
+    view.reponses = []
+
+    embed.set_field_at(0, name=f"Épreuve {num}", value=f"🔁 Reproduis cette séquence : {' → '.join(sequence)}", inline=False)
+    await update_embed(embed)
+    await interaction.edit_original_message(view=view)
+    await view.wait()
+
+    success = view.reponses == sequence
+    embed.set_field_at(0, name=f"Épreuve {num}", value="✅ Séquence réussie" if success else "❌ Échec de la séquence", inline=False)
+    await update_embed(embed)
+    return success
+
+async def lancer_reflexe(interaction, embed, update_embed, num):
+    compte = ["5️⃣", "4️⃣", "3️⃣", "2️⃣", "1️⃣"]
+
+    class ReflexeButton(discord.ui.Button):
+        def __init__(self, emoji):
+            super().__init__(style=discord.ButtonStyle.secondary, emoji=emoji)
+            self.emoji_val = emoji
+        async def callback(self, inter_button):
+            if inter_button.user != interaction.user:
+                return
+            await inter_button.response.defer()
+            if len(view.reponses) < len(compte) and self.emoji_val == compte[len(view.reponses)]:
+                view.reponses.append(self.emoji_val)
+                if len(view.reponses) == len(compte):
+                    view.stop()
+            else:
+                view.reponses.clear()
+
+    view = discord.ui.View(timeout=20)
+    for e in compte:
+        view.add_item(ReflexeButton(e))
+    view.reponses = []
+
+    embed.set_field_at(0, name=f"Épreuve {num}", value="🕒 Clique dans l’ordre : `5️⃣ 4️⃣ 3️⃣ 2️⃣ 1️⃣`", inline=False)
+    await update_embed(embed)
+    await interaction.edit_original_message(view=view)
+    await view.wait()
+
+    success = view.reponses == compte
+    embed.set_field_at(0, name=f"Épreuve {num}", value="⚡ Réflexe réussi" if success else "❌ Échec du réflexe", inline=False)
+    await update_embed(embed)
+    return success
+
+async def lancer_fleche(interaction, embed, update_embed, num):
+    fleches = ["⬅️", "⬆️", "⬇️", "➡️"]
+    sequence = [random.choice(fleches) for _ in range(5)]
+
+    embed.set_field_at(0, name=f"Épreuve {num}", value=f"🧭 Mémorise : `{' '.join(sequence)}` (5 s)", inline=False)
+    await update_embed(embed)
+    await asyncio.sleep(5)
+    embed.set_field_at(0, name=f"Épreuve {num}", value="🔁 Reproduis la séquence avec les boutons ci-dessous :", inline=False)
+    await update_embed(embed)
+
+    class FlecheButton(discord.ui.Button):
+        def __init__(self, emoji):
+            super().__init__(style=discord.ButtonStyle.secondary, emoji=emoji)
+            self.emoji_val = emoji
+        async def callback(self, inter_button):
+            if inter_button.user != interaction.user:
+                return
+            await inter_button.response.defer()
+            if len(view.reponses) < len(sequence) and self.emoji_val == sequence[len(view.reponses)]:
+                view.reponses.append(self.emoji_val)
+                if len(view.reponses) == len(sequence):
+                    view.stop()
+            else:
+                view.reponses.clear()
+
+    view = discord.ui.View(timeout=30)
+    for e in fleches:
+        view.add_item(FlecheButton(e))
+    view.reponses = []
+
+    await interaction.edit_original_message(view=view)
+    await view.wait()
+
+    success = view.reponses == sequence
+    embed.set_field_at(0, name=f"Épreuve {num}", value="✅ Séquence fléchée réussie" if success else "❌ Séquence incorrecte", inline=False)
+    await update_embed(embed)
+    return success
 
 # ────────────────────────────────────────────────────────────────────────────────
-# 📩 Fonctions publiques sécurisées
+# 🔁 Lancer 3 épreuves aléatoires dans le même embed
 # ────────────────────────────────────────────────────────────────────────────────
-async def safe_send(channel: discord.abc.Messageable, content=None, **kwargs):
-    return await _discord_action(channel.send, content=content, **kwargs)
+TACHES = [lancer_emoji, lancer_reflexe, lancer_fleche]
 
-async def safe_edit(message: discord.Message, content=None, **kwargs):
-    return await _discord_action(message.edit, content=content, **kwargs)
+async def lancer_3_taches(interaction, embed, update_embed):
+    taches_disponibles = TACHES.copy()
+    random.shuffle(taches_disponibles)
+    selection = taches_disponibles[:3]
+    success_global = True
 
-async def safe_respond(interaction: discord.Interaction, content=None, **kwargs):
-    return await _discord_action(interaction.response.send_message, content=content, **kwargs)
+    for i, tache in enumerate(selection):
+        embed.set_field_at(0, name="Épreuve en cours", value=f"🔹 Épreuve {i+1} en cours...", inline=False)
+        await update_embed(embed)
+        try:
+            result = await tache(interaction, embed, update_embed, i+1)
+        except Exception:
+            result = False
+        if not result:
+            success_global = False
+            break
 
-async def safe_followup(interaction: discord.Interaction, content=None, **kwargs):
-    return await _discord_action(interaction.followup.send, content=content, **kwargs)
-
-async def safe_reply(ctx_or_message, content=None, **kwargs):
-    return await _discord_action(ctx_or_message.reply, content=content, **kwargs)
-
-async def safe_add_reaction(message: discord.Message, emoji: str, delay: float = 0.3):
-    return await _discord_action(message.add_reaction, emoji, delay=delay)
-
-async def safe_delete(message: discord.Message, delay: float = 0):
-    return await _discord_action(message.delete, delay=delay)
-
-async def safe_clear_reactions(message: discord.Message):
-    return await _discord_action(message.clear_reactions)
+    return success_global
