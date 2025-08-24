@@ -1,6 +1,6 @@
 # ────────────────────────────────────────────────────────────────────────────────
-# 📌 jardin.py — Commande interactive /jardin et !jardin
-# Objectif : Chaque utilisateur a un jardin persistant avec des fleurs
+# 📌 jardin.py — Commande interactive /jardin et !jardin + mini-jeu alchimie
+# Objectif : Jardin persistant + système de fleurs et création de potions
 # Catégorie : Jeu
 # Accès : Tout le monde
 # ────────────────────────────────────────────────────────────────────────────────
@@ -14,6 +14,8 @@ from discord.ext import commands
 import os
 import random
 import datetime
+import json
+
 from utils.discord_utils import safe_send, safe_respond  # ✅
 from supabase import create_client, Client
 
@@ -45,16 +47,23 @@ DEFAULT_GARDEN = {
 }
 
 FLEUR_EMOJIS = {
-    "tulipes": "🌷",
-    "roses": "🌹",
-    "jacinthes": "🪻",
-    "hibiscus": "🌺",
-    "paquerettes": "🌼",
-    "tournesols": "🌻"
+    "tulipes": "🌷",      # +1
+    "roses": "🌹",        # +2
+    "jacinthes": "🪻",    # ×2
+    "hibiscus": "🌺",     # ×3
+    "paquerettes": "🌼",  # -1
+    "tournesols": "🌻"    # -2
 }
 FLEUR_LIST = list(FLEUR_EMOJIS.items())  # [(col, emoji), ...]
 
 FERTILIZE_COOLDOWN = datetime.timedelta(days=5)
+
+# ────────────────────────────────────────────────────────────────────────────────
+# ⚗️ Chargement des potions
+# ────────────────────────────────────────────────────────────────────────────────
+POTIONS_PATH = os.path.join("data", "potions.json")
+with open(POTIONS_PATH, "r", encoding="utf-8") as f:
+    POTIONS = json.load(f)
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🧠 Fonctions utilitaires
@@ -121,7 +130,54 @@ def couper_fleurs(lines: list[str], garden: dict) -> tuple[list[str], dict]:
     return new_lines, garden
 
 # ────────────────────────────────────────────────────────────────────────────────
-# 🎛️ UI — Boutons d’action
+# ⚗️ Alchimie — Mini-jeu de potions
+# ────────────────────────────────────────────────────────────────────────────────
+def calculer_valeur_fleurs(garden: dict) -> int:
+    """Calcule un score numérique selon les fleurs récoltées"""
+    total = 0
+    total += garden["tulipes"] * 1
+    total += garden["roses"] * 2
+    total += garden["paquerettes"] * -1
+    total += garden["tournesols"] * -2
+    total = total * (2 ** garden["jacinthes"])
+    total = total * (3 ** garden["hibiscus"])
+    return total
+
+def determiner_potion(valeur: int):
+    """Retourne une potion selon la valeur"""
+    if valeur == 0:
+        return None
+    positif = valeur > 0
+    index = str(abs(valeur))
+    if index not in POTIONS:
+        return None
+    potion = POTIONS[index]
+    return potion[0:2] if positif else potion[2:4]
+
+class AlchimieView(discord.ui.View):
+    def __init__(self, garden: dict, user_id: int):
+        super().__init__(timeout=60)
+        self.garden = garden
+        self.user_id = user_id
+
+    @discord.ui.button(label="⚗️ Fusionner", style=discord.ButtonStyle.blurple)
+    async def fusionner(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if interaction.user.id != self.user_id:
+            return await interaction.response.send_message("❌ Ce n'est pas ton alchimie !", ephemeral=True)
+
+        valeur = calculer_valeur_fleurs(self.garden)
+        potion = determiner_potion(valeur)
+
+        if potion:
+            nom, emoji = potion
+            msg = f"⚗️ Tu as créé **{nom} {emoji}** (valeur {valeur}) !"
+        else:
+            msg = f"⚗️ La combinaison ({valeur}) n’a produit aucune potion..."
+
+        await interaction.response.send_message(msg, ephemeral=True)
+
+# ────────────────────────────────────────────────────────────────────────────────
+# 🎛️ UI — Boutons d’action Jardin
 # ────────────────────────────────────────────────────────────────────────────────
 class JardinView(discord.ui.View):
     def __init__(self, garden: dict, user_id: int):
@@ -179,6 +235,14 @@ class JardinView(discord.ui.View):
     async def bourse(self, interaction: discord.Interaction, button: discord.ui.Button):
         await interaction.response.send_message("💶 La bourse n'est pas encore disponible !", ephemeral=True)
 
+    @discord.ui.button(label="Alchimie", emoji="⚗️", style=discord.ButtonStyle.red)
+    async def alchimie(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if interaction.user.id != self.user_id:
+            return await interaction.response.send_message("❌ Ce jardin n'est pas à toi !", ephemeral=True)
+
+        await interaction.response.send_message("⚗️ Lance ton mélange de fleurs :", 
+                                               view=AlchimieView(self.garden, self.user_id), ephemeral=True)
+
 # ────────────────────────────────────────────────────────────────────────────────
 # 🧠 Cog principal
 # ────────────────────────────────────────────────────────────────────────────────
@@ -219,5 +283,5 @@ async def setup(bot: commands.Bot):
     cog = Jardin(bot)
     for command in cog.get_commands():
         if not hasattr(command, "category"):
-            command.category = "Test"
+            command.category = "Jeu"
     await bot.add_cog(cog)
