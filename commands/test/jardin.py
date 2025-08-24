@@ -82,7 +82,7 @@ def build_garden_embed(garden: dict, viewer_id: int) -> discord.Embed:
 
     embed = discord.Embed(
         title=f"🏡 Jardin de {garden['username']}",
-        description="\n".join(lines)",
+        description="\n".join(lines),
         color=discord.Color.green()
     )
     embed.add_field(
