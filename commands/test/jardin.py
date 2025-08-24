@@ -209,7 +209,7 @@ class JardinView(discord.ui.View):
         )
         embed.add_field(
             name="🌿 Plantes",
-            value="🌷 +1\n🌹 +2\n🪻 x2\n🌺 x3\n🌼 -1\n🌻 -2",
+            value="🌷+1  🌹+2  🪻x2  🌺x3  🌼-1  🌻-2",
             inline=False
         )
         embed.add_field(
