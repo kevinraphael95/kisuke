@@ -1,0 +1,18 @@
+{
+  "1": ["Potion de Mana", "🔮", "Potion Anti Magie", "🛡️"],
+  "2": ["Potion d’Agrandissement", "📏", "Potion de Rétrécissement", "📐"],
+  "3": ["Potion de Gel", "❄️", "Potion Protection contre le Gel", "🌡️"],
+  "4": ["Potion de Feu", "🔥", "Potion Protection contre le Feu", "🧯"],
+  "5": ["Potion Foudre", "⚡", "Potion de Protection contre la Foudre", "🌩️"],
+  "6": ["Potion Acide", "🧪", "Potion de Résistance à l’Acide", "🥼"],
+  "7": ["Potion de Rajeunissement", "🧴", "Potion de Nécromancie", "🪦"],
+  "8": ["Potion de Force", "💪", "Potion Somnifère", "😴"],
+  "9": ["Potion de Lumière", "💡", "Potion Explosion", "💥"],
+  "10": ["Potion de Célérité", "🏃‍♂️", "Potion Ralentissement", "🐌"],
+  "11": ["Potion de Soin", "❤️", "Potion de Poison", "💀"],
+  "12": ["Potion de Vision", "👁️", "Potion d’Invisibilité", "👻"],
+  "13": ["Potion de Chance", "🍀", "Potion de Pestilence", "☣️"],
+  "14": ["Potion de Parfum", "🌸", "Potion Charme", "🪄"],
+  "15": ["Potion de Glisse", "⛸️", "Potion Lévitation", "🪁"],
+  "16": ["Potion de Dextérité", "🤹", "Potion Peau de Pierre", "🪨"]
+}
