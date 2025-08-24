@@ -54,6 +54,8 @@ FLEUR_EMOJIS = {
 }
 FLEUR_LIST = list(FLEUR_EMOJIS.items())  # [(col, emoji), ...]
 
+FERTILIZE_COOLDOWN = datetime.timedelta(days=5)
+
 # ────────────────────────────────────────────────────────────────────────────────
 # 🧠 Fonctions utilitaires
 # ────────────────────────────────────────────────────────────────────────────────
@@ -66,20 +68,33 @@ async def get_or_create_garden(user_id: int, username: str):
     supabase.table(TABLE_NAME).insert(new_garden).execute()
     return new_garden
 
-def build_garden_embed(garden: dict) -> discord.Embed:
+def build_garden_embed(garden: dict, viewer_id: int) -> discord.Embed:
     lines = [garden["line1"], garden["line2"], garden["line3"]]
     inv = " / ".join(f"{FLEUR_EMOJIS[f]}{garden[f]}" for f in FLEUR_EMOJIS)
+
+    # cooldown calcul
+    cd_str = "✅ Disponible"
+    if garden.get("last_fertilize"):
+        last_dt = datetime.datetime.fromisoformat(garden["last_fertilize"])
+        remain = last_dt + FERTILIZE_COOLDOWN - datetime.datetime.utcnow()
+        if remain.total_seconds() > 0:
+            cd_str = f"⏳ {remain.days}j {remain.seconds//3600}h"
 
     embed = discord.Embed(
         title=f"🏡 Jardin de {garden['username']}",
         description="\n".join(lines) + f"\n\n{inv}",
         color=discord.Color.green()
     )
-    embed.add_field(name="Statut", value=f"Argent : {garden['argent']} € | Armée : {garden['armee'] or '—'}", inline=False)
+    embed.add_field(
+        name="Infos",
+        value=f"Fleurs possédées : {inv}\n"
+              f"Armée : {garden['armee'] or '—'} | Argent : {garden['argent']}💰\n"
+              f"Cooldown engrais : {cd_str}",
+        inline=False
+    )
     return embed
 
 def pousser_fleurs(lines: list[str]) -> list[str]:
-    """50% de chance par 🌱 de faire pousser une fleur aléatoire"""
     new_lines = []
     for line in lines:
         chars = []
@@ -93,12 +108,10 @@ def pousser_fleurs(lines: list[str]) -> list[str]:
     return new_lines
 
 def couper_fleurs(lines: list[str], garden: dict) -> tuple[list[str], dict]:
-    """Transforme les fleurs en 🌱 et ajoute dans l'inventaire"""
     new_lines = []
     for line in lines:
         chars = []
         for c in line:
-            # check si c'est une fleur
             for col, emoji in FLEUR_EMOJIS.items():
                 if c == emoji:
                     garden[col] += 1
@@ -116,28 +129,36 @@ class JardinView(discord.ui.View):
         self.garden = garden
         self.user_id = user_id
 
+        # bouton engrais désactivé si cooldown
+        last = self.garden.get("last_fertilize")
+        disabled = False
+        if last:
+            last_dt = datetime.datetime.fromisoformat(last)
+            if datetime.datetime.utcnow() < last_dt + FERTILIZE_COOLDOWN:
+                disabled = True
+        self.children[0].disabled = disabled  # engrais button = premier
+
     @discord.ui.button(label="Engrais", emoji="💩", style=discord.ButtonStyle.green)
     async def engrais(self, interaction: discord.Interaction, button: discord.ui.Button):
         if interaction.user.id != self.user_id:
             return await interaction.response.send_message("❌ Ce jardin n'est pas à toi !", ephemeral=True)
 
-        # cooldown 5 jours
+        # cooldown check
         last = self.garden.get("last_fertilize")
         if last:
             last_dt = datetime.datetime.fromisoformat(last)
-            if datetime.datetime.utcnow() < last_dt + datetime.timedelta(days=5):
+            if datetime.datetime.utcnow() < last_dt + FERTILIZE_COOLDOWN:
                 return await interaction.response.send_message("⏳ Tu dois attendre avant d'utiliser de l'engrais à nouveau !", ephemeral=True)
 
         # pousse des fleurs
         lines = [self.garden["line1"], self.garden["line2"], self.garden["line3"]]
         new_lines = pousser_fleurs(lines)
 
-        # update DB
         self.garden["line1"], self.garden["line2"], self.garden["line3"] = new_lines
         self.garden["last_fertilize"] = datetime.datetime.utcnow().isoformat()
         supabase.table(TABLE_NAME).update(self.garden).eq("user_id", self.user_id).execute()
 
-        embed = build_garden_embed(self.garden)
+        embed = build_garden_embed(self.garden, self.user_id)
         await interaction.response.edit_message(embed=embed, view=JardinView(self.garden, self.user_id))
 
     @discord.ui.button(label="Couper", emoji="✂️", style=discord.ButtonStyle.secondary)
@@ -148,11 +169,10 @@ class JardinView(discord.ui.View):
         lines = [self.garden["line1"], self.garden["line2"], self.garden["line3"]]
         new_lines, self.garden = couper_fleurs(lines, self.garden)
 
-        # update DB
         self.garden["line1"], self.garden["line2"], self.garden["line3"] = new_lines
         supabase.table(TABLE_NAME).update(self.garden).eq("user_id", self.user_id).execute()
 
-        embed = build_garden_embed(self.garden)
+        embed = build_garden_embed(self.garden, self.user_id)
         await interaction.response.edit_message(embed=embed, view=JardinView(self.garden, self.user_id))
 
     @discord.ui.button(label="Bourse", emoji="💶", style=discord.ButtonStyle.blurple)
@@ -168,23 +188,25 @@ class Jardin(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
 
-    @app_commands.command(name="jardin", description="Affiche ton jardin personnel 🌱")
-    async def slash_jardin(self, interaction: discord.Interaction):
+    @app_commands.command(name="jardin", description="Affiche ton jardin ou celui d'un autre utilisateur 🌱")
+    async def slash_jardin(self, interaction: discord.Interaction, user: discord.User = None):
         try:
-            garden = await get_or_create_garden(interaction.user.id, interaction.user.name)
-            embed = build_garden_embed(garden)
-            view = JardinView(garden, interaction.user.id)
+            target = user or interaction.user
+            garden = await get_or_create_garden(target.id, target.name)
+            embed = build_garden_embed(garden, interaction.user.id)
+            view = None if user else JardinView(garden, interaction.user.id)
             await safe_respond(interaction, embed=embed, view=view)
         except Exception as e:
             print(f"[ERREUR /jardin] {e}")
             await safe_respond(interaction, "❌ Une erreur est survenue.", ephemeral=True)
 
     @commands.command(name="jardin")
-    async def prefix_jardin(self, ctx: commands.Context):
+    async def prefix_jardin(self, ctx: commands.Context, user: discord.User = None):
         try:
-            garden = await get_or_create_garden(ctx.author.id, ctx.author.name)
-            embed = build_garden_embed(garden)
-            view = JardinView(garden, ctx.author.id)
+            target = user or ctx.author
+            garden = await get_or_create_garden(target.id, target.name)
+            embed = build_garden_embed(garden, ctx.author.id)
+            view = None if user else JardinView(garden, ctx.author.id)
             await safe_send(ctx.channel, embed=embed, view=view)
         except Exception as e:
             print(f"[ERREUR !jardin] {e}")
