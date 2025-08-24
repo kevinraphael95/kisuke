@@ -187,8 +187,39 @@ class JardinView(discord.ui.View):
         await interaction.response.edit_message(embed=embed, view=JardinView(self.garden, self.user_id))
 
     @discord.ui.button(label="Alchimie", emoji="⚗️", style=discord.ButtonStyle.blurple)
-    async def bourse(self, interaction: discord.Interaction, button: discord.ui.Button):
-        await interaction.response.send_message("⚗️ L'alchimie n'est pas encore disponible !", ephemeral=True)
+    async def alchimie(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if interaction.user.id != self.user_id:
+            return await interaction.response.send_message("❌ Ce jardin n'est pas à toi !", ephemeral=True)
+
+        embed = discord.Embed(
+            title="⚗️ Alchimie",
+            description="Fabriquer des potions grâce aux plantes de votre jardin.\n"
+                        "*(Attention : l'alchimie n'est pas encore ajoutée au bot)*",
+            color=discord.Color.purple()
+        )
+        embed.add_field(
+            name="📖 Comment jouer",
+            value=(
+                "Vous commencez avec un alambic rempli d'eau qui vaut **0**.\n"
+                "Ajouter des plantes de votre jardin change la valeur de votre mixture.\n"
+                "Chaque potion a une valeur précise à atteindre pour pouvoir la créer.\n"
+                "Une fois la valeur souhaitée atteinte, cliquez sur **Concocter**."
+            ),
+            inline=False
+        )
+        embed.add_field(
+            name="🌿 Plantes",
+            value="🌷 +1\n🌹 +2\n🪻 x2\n🌺 x3\n🌼 -1\n🌻 -2",
+            inline=True
+        )
+        embed.add_field(
+            name="🧪 Potions",
+            value="32 potions prévues 👀",
+            inline=True
+        )
+
+        await interaction.response.send_message(embed=embed, ephemeral=True)
+
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🧠 Cog principal
