@@ -29,6 +29,7 @@ TABLE_NAME = "gardens"
 # ────────────────────────────────────────────────────────────────────────────────
 # 🌱 Constantes du jeu
 # ────────────────────────────────────────────────────────────────────────────────
+# Configuration jardin par défaut
 DEFAULT_GARDEN = {
     "line1": "🌱🌱🌱🌱🌱🌱🌱🌱",
     "line2": "🌱🌱🌱🌱🌱🌱🌱🌱",
@@ -44,6 +45,7 @@ DEFAULT_GARDEN = {
     "last_fertilize": None,
 }
 
+# Dictionnaire fleurs et emojis
 FLEUR_EMOJIS = {
     "tulipes": "🌷",
     "roses": "🌹",
@@ -54,7 +56,9 @@ FLEUR_EMOJIS = {
 }
 FLEUR_LIST = list(FLEUR_EMOJIS.items())  # [(col, emoji), ...]
 
-FERTILIZE_COOLDOWN = datetime.timedelta(days=5)
+# Paramètres gameplay
+FERTILIZE_COOLDOWN = datetime.timedelta(days=5)   # délai entre deux engrais
+FERTILIZE_PROBABILITY = 0.5                       # probabilité qu'une graine devienne fleur
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🧠 Fonctions utilitaires
@@ -99,7 +103,7 @@ def pousser_fleurs(lines: list[str]) -> list[str]:
     for line in lines:
         chars = []
         for c in line:
-            if c == "🌱" and random.random() < 0.5:
+            if c == "🌱" and random.random() < FERTILIZE_PROBABILITY:
                 _, emoji = random.choice(FLEUR_LIST)
                 chars.append(emoji)
             else:
@@ -129,14 +133,16 @@ class JardinView(discord.ui.View):
         self.garden = garden
         self.user_id = user_id
 
-        # bouton engrais désactivé si cooldown
+        # désactiver bouton engrais si cooldown
         last = self.garden.get("last_fertilize")
         disabled = False
         if last:
             last_dt = datetime.datetime.fromisoformat(last)
             if datetime.datetime.utcnow() < last_dt + FERTILIZE_COOLDOWN:
                 disabled = True
-        self.children[0].disabled = disabled  # engrais button = premier
+        for child in self.children:
+            if isinstance(child, discord.ui.Button) and child.label == "Engrais":
+                child.disabled = disabled
 
     @discord.ui.button(label="Engrais", emoji="💩", style=discord.ButtonStyle.green)
     async def engrais(self, interaction: discord.Interaction, button: discord.ui.Button):
