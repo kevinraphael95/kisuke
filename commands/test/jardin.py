@@ -83,7 +83,11 @@ def build_garden_embed(garden: dict, viewer_id: int) -> discord.Embed:
         last_dt = datetime.datetime.fromisoformat(garden["last_fertilize"])
         remain = last_dt + FERTILIZE_COOLDOWN - datetime.datetime.utcnow()
         if remain.total_seconds() > 0:
-            cd_str = f"⏳ {remain.days}j {remain.seconds//3600}h"
+            total_seconds = int(remain.total_seconds())
+            minutes, seconds = divmod(total_seconds, 60)
+            hours, minutes = divmod(minutes, 60)
+            cd_str = f"⏳ {hours}h {minutes}m {seconds}s"
+
 
     embed = discord.Embed(
         title=f"🏡 Jardin de {garden['username']}",
