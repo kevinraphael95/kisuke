@@ -210,12 +210,29 @@ class JardinView(discord.ui.View):
         embed.add_field(
             name="🌿 Plantes",
             value="🌷 +1\n🌹 +2\n🪻 x2\n🌺 x3\n🌼 -1\n🌻 -2",
-            inline=True
+            inline=False
         )
         embed.add_field(
             name="🧪 Potions",
-            value="32 potions prévues 👀",
-            inline=True
+            value=(
+                "1. Potion de Mana 🔮 | Potion Anti Magie 🛡️ -1 \n"
+                "2. Potion d’Agrandissement 📏 | Potion de Rétrécissement 📐 -2 \n"
+                "3. Potion de Gel ❄️ | Potion Protection contre le Gel 🌡️ -3 \n"
+                "4. Potion de Feu 🔥 | Potion Protection contre le Feu 🧯-4 \n"
+                "5. Potion Foudre ⚡ | Potion de Protection contre la Foudre 🌩️ -5 \n"
+                "6. Potion Acide 🧪 | Potion de Résistance à l’Acide 🥼 -6 \n"
+                "7. Potion de Rajeunissement 🧴 | Potion de Nécromancie 🪦 -7 \n"
+                "8. Potion de Force 💪 | Potion Somnifère 😴 -8 \n"
+                "9. Potion de Lumière 💡 | Potion Explosion 💥 -9 \n"
+                "10. Potion de Célérité 🏃‍♂️ | Potion Ralentissement 🐌 -10 \n"
+                "11. Potion de Soin ❤️ | Potion de Poison 💀 -11 \n"
+                "12. Potion de Vision 👁️ | Potion d’Invisibilité 👻 -12 \n"
+                "13. Potion de Chance 🍀 | Potion de Pestilence ☣️ -13 \n"
+                "14. Potion de Parfum 🌸 | Potion Charme 🪄 -14 \n"
+                "15. Potion de Glisse ⛸️ | Potion Lévitation 🪁 -15 \n"
+                "16. Potion de Dextérité 🤹 | Potion Peau de Pierre 🪨 -16"
+            ),
+            inline=False
         )
 
         await interaction.response.send_message(embed=embed)
