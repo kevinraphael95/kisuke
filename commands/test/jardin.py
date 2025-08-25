@@ -15,7 +15,7 @@ import os
 import random
 import datetime
 import json
-from utils.discord_utils import safe_send, safe_respond  # ✅
+from utils.discord_utils import safe_send, safe_respond
 from supabase import create_client, Client
 
 # ────────────────────────────────────────────────────────────────────────────────
@@ -24,7 +24,6 @@ from supabase import create_client, Client
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY")
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
-
 TABLE_NAME = "gardens"
 
 # ────────────────────────────────────────────────────────────────────────────────
@@ -61,60 +60,77 @@ FERTILIZE_PROBABILITY = 0.39
 # 🧠 Fonctions utilitaires
 # ────────────────────────────────────────────────────────────────────────────────
 def _jsonify(data):
-    """Force une structure JSON propre pour Supabase (évite erreurs avec emojis/dict)."""
     return json.loads(json.dumps(data, ensure_ascii=False))
 
 def supabase_json(garden: dict) -> dict:
-    """Prépare uniquement les champs JSONB pour Supabase"""
     return {
         **garden,
-        "garden_grid": garden["garden_grid"],  # liste de strings
-        "inventory": garden["inventory"]       # dict
+        "garden_grid": garden.get("garden_grid", DEFAULT_GRID),
+        "inventory": garden.get("inventory", DEFAULT_INVENTORY)
     }
 
-async def get_or_create_garden(user_id: int, username: str):
-    res = supabase.table(TABLE_NAME).select("*").eq("user_id", user_id).execute()
-    if res.data:
-        return res.data[0]
+async def get_or_create_garden(user_id: int, username: str) -> dict:
+    try:
+        res = supabase.table(TABLE_NAME).select("*").eq("user_id", user_id).execute()
+        if res.data:
+            garden = res.data[0]
+            garden.setdefault("garden_grid", DEFAULT_GRID)
+            garden.setdefault("inventory", DEFAULT_INVENTORY)
+            return garden
 
-    new_garden = {
-        "user_id": user_id,
-        "username": username,
-        "garden_grid": DEFAULT_GRID,
-        "inventory": DEFAULT_INVENTORY,
-        "argent": 0,
-        "armee": "",
-        "last_fertilize": None
-    }
-    print("DEBUG INSERT:", new_garden)
-    res = supabase.table(TABLE_NAME).insert(supabase_json(new_garden)).execute()
-    print("INSERT RESULT:", res.data, res.error)
-    return new_garden
+        new_garden = {
+            "user_id": user_id,
+            "username": username,
+            "garden_grid": DEFAULT_GRID,
+            "inventory": DEFAULT_INVENTORY,
+            "argent": 0,
+            "armee": "",
+            "last_fertilize": None
+        }
+        res = supabase.table(TABLE_NAME).insert(supabase_json(new_garden)).execute()
+        if res.error:
+            print("[SUPABASE INSERT ERROR]", res.error)
+        return new_garden
+    except Exception as e:
+        print(f"[SUPABASE GET/CREATE ERROR] {e}")
+        return {
+            "user_id": user_id,
+            "username": username,
+            "garden_grid": DEFAULT_GRID,
+            "inventory": DEFAULT_INVENTORY,
+            "argent": 0,
+            "armee": "",
+            "last_fertilize": None
+        }
 
 def build_garden_embed(garden: dict, viewer_id: int) -> discord.Embed:
-    lines = garden["garden_grid"]
-    inv_dict = garden["inventory"]
-    inv = " / ".join(f"{FLEUR_EMOJIS[f]}{inv_dict.get(f, 0)}" for f in FLEUR_EMOJIS)
+    lines = garden.get("garden_grid", DEFAULT_GRID)
+    inv_dict = garden.get("inventory", DEFAULT_INVENTORY)
+    inv = " / ".join(f"{FLEUR_EMOJIS[f]}{inv_dict.get(f,0)}" for f in FLEUR_EMOJIS)
 
     cd_str = "✅ Disponible"
-    if garden.get("last_fertilize"):
-        last_dt = datetime.datetime.fromisoformat(garden["last_fertilize"])
-        remain = last_dt + FERTILIZE_COOLDOWN - datetime.datetime.utcnow()
-        if remain.total_seconds() > 0:
-            total_seconds = int(remain.total_seconds())
-            minutes, seconds = divmod(total_seconds, 60)
-            hours, minutes = divmod(minutes, 60)
-            cd_str = f"⏳ {hours}h {minutes}m {seconds}s"
+    last = garden.get("last_fertilize")
+    if last:
+        try:
+            last_dt = datetime.datetime.fromisoformat(last)
+            remain = last_dt + FERTILIZE_COOLDOWN - datetime.datetime.utcnow()
+            if remain.total_seconds() > 0:
+                total_seconds = int(remain.total_seconds())
+                minutes, seconds = divmod(total_seconds, 60)
+                hours, minutes = divmod(minutes, 60)
+                cd_str = f"⏳ {hours}h {minutes}m {seconds}s"
+        except Exception:
+            cd_str = "✅ Disponible"
 
     embed = discord.Embed(
-        title=f"🏡 Jardin de {garden['username']}",
+        title=f"🏡 Jardin de {garden.get('username', 'Utilisateur')}",
         description="\n".join(lines),
         color=discord.Color.green()
     )
     embed.add_field(
         name="Infos",
         value=f"Fleurs possédées : {inv}\n"
-              f"Armée : {garden['armee'] or '—'} | Argent : {garden['argent']}💰\n"
+              f"Armée : {garden.get('armee', '—')} | Argent : {garden.get('argent',0)}💰\n"
               f"Cooldown engrais : {cd_str}",
         inline=False
     )
@@ -135,13 +151,13 @@ def pousser_fleurs(lines: list[str]) -> list[str]:
 
 def couper_fleurs(lines: list[str], garden: dict) -> tuple[list[str], dict]:
     new_lines = []
-    inv = garden["inventory"]
+    inv = garden.get("inventory", DEFAULT_INVENTORY)
     for line in lines:
         chars = []
         for c in line:
             for col, emoji in FLEUR_EMOJIS.items():
                 if c == emoji:
-                    inv[col] = inv.get(col, 0) + 1
+                    inv[col] = inv.get(col,0)+1
                     c = "🌱"
             chars.append(c)
         new_lines.append("".join(chars))
@@ -157,12 +173,15 @@ class JardinView(discord.ui.View):
         self.garden = garden
         self.user_id = user_id
 
-        last = self.garden.get("last_fertilize")
+        last = garden.get("last_fertilize")
         disabled = False
         if last:
-            last_dt = datetime.datetime.fromisoformat(last)
-            if datetime.datetime.utcnow() < last_dt + FERTILIZE_COOLDOWN:
-                disabled = True
+            try:
+                last_dt = datetime.datetime.fromisoformat(last)
+                if datetime.datetime.utcnow() < last_dt + FERTILIZE_COOLDOWN:
+                    disabled = True
+            except Exception:
+                disabled = False
         for child in self.children:
             if isinstance(child, discord.ui.Button) and child.label == "Engrais":
                 child.disabled = disabled
@@ -174,16 +193,22 @@ class JardinView(discord.ui.View):
 
         last = self.garden.get("last_fertilize")
         if last:
-            last_dt = datetime.datetime.fromisoformat(last)
-            if datetime.datetime.utcnow() < last_dt + FERTILIZE_COOLDOWN:
-                return await interaction.response.send_message("⏳ Tu dois attendre avant d'utiliser de l'engrais à nouveau !", ephemeral=True)
+            try:
+                last_dt = datetime.datetime.fromisoformat(last)
+                if datetime.datetime.utcnow() < last_dt + FERTILIZE_COOLDOWN:
+                    return await interaction.response.send_message("⏳ Tu dois attendre avant d'utiliser de l'engrais à nouveau !", ephemeral=True)
+            except Exception:
+                pass
 
-        new_lines = pousser_fleurs(self.garden["garden_grid"])
-        self.garden["garden_grid"] = new_lines
+        self.garden["garden_grid"] = pousser_fleurs(self.garden.get("garden_grid", DEFAULT_GRID))
         self.garden["last_fertilize"] = datetime.datetime.utcnow().isoformat()
 
-        res = supabase.table(TABLE_NAME).update(supabase_json(self.garden)).eq("user_id", self.user_id).execute()
-        print("UPDATE ENGRAIS:", res.data, res.error)
+        try:
+            res = supabase.table(TABLE_NAME).update(supabase_json(self.garden)).eq("user_id", self.user_id).execute()
+            if res.error:
+                print("[SUPABASE UPDATE ENGRAIS ERROR]", res.error)
+        except Exception as e:
+            print(f"[SUPABASE UPDATE ENGRAIS EXCEPTION] {e}")
 
         embed = build_garden_embed(self.garden, self.user_id)
         await interaction.response.edit_message(embed=embed, view=JardinView(self.garden, self.user_id))
@@ -193,11 +218,14 @@ class JardinView(discord.ui.View):
         if interaction.user.id != self.user_id:
             return await interaction.response.send_message("❌ Ce jardin n'est pas à toi !", ephemeral=True)
 
-        new_lines, self.garden = couper_fleurs(self.garden["garden_grid"], self.garden)
-        self.garden["garden_grid"] = new_lines
+        self.garden["garden_grid"], self.garden = couper_fleurs(self.garden.get("garden_grid", DEFAULT_GRID), self.garden)
 
-        res = supabase.table(TABLE_NAME).update(supabase_json(self.garden)).eq("user_id", self.user_id).execute()
-        print("UPDATE COUPER:", res.data, res.error)
+        try:
+            res = supabase.table(TABLE_NAME).update(supabase_json(self.garden)).eq("user_id", self.user_id).execute()
+            if res.error:
+                print("[SUPABASE UPDATE COUPER ERROR]", res.error)
+        except Exception as e:
+            print(f"[SUPABASE UPDATE COUPER EXCEPTION] {e}")
 
         embed = build_garden_embed(self.garden, self.user_id)
         await interaction.response.edit_message(embed=embed, view=JardinView(self.garden, self.user_id))
@@ -209,8 +237,7 @@ class JardinView(discord.ui.View):
 
         embed = discord.Embed(
             title="⚗️ Alchimie",
-            description="Fabriquer des potions grâce aux plantes de votre jardin.\n"
-                        "*(Attention : l'alchimie n'est pas encore ajoutée au bot)*",
+            description="Fabriquer des potions grâce aux plantes de votre jardin.\n*(Attention : l'alchimie n'est pas encore ajoutée au bot)*",
             color=discord.Color.purple
         )
         embed.add_field(
