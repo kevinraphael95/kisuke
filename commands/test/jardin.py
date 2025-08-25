@@ -30,7 +30,6 @@ TABLE_NAME = "gardens"
 # ────────────────────────────────────────────────────────────────────────────────
 # 🌱 Constantes du jeu
 # ────────────────────────────────────────────────────────────────────────────────
-# Jardin et inventaire par défaut
 DEFAULT_GRID = [
     "🌱🌱🌱🌱🌱🌱🌱🌱",
     "🌱🌱🌱🌱🌱🌱🌱🌱",
@@ -45,7 +44,6 @@ DEFAULT_INVENTORY = {
     "tournesols": 0,
 }
 
-# Dictionnaire fleurs et emojis
 FLEUR_EMOJIS = {
     "tulipes": "🌷",
     "roses": "🌹",
@@ -54,12 +52,10 @@ FLEUR_EMOJIS = {
     "paquerettes": "🌼",
     "tournesols": "🌻"
 }
-FLEUR_LIST = list(FLEUR_EMOJIS.items())  # [(col, emoji), ...]
+FLEUR_LIST = list(FLEUR_EMOJIS.items())
 
-# Paramètres gameplay
-FERTILIZE_COOLDOWN = datetime.timedelta(minutes=10)   # délai entre deux engrais
-FERTILIZE_PROBABILITY = 0.39                          # probabilité (%)
-
+FERTILIZE_COOLDOWN = datetime.timedelta(minutes=10)
+FERTILIZE_PROBABILITY = 0.39
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🧠 Fonctions utilitaires
@@ -67,6 +63,14 @@ FERTILIZE_PROBABILITY = 0.39                          # probabilité (%)
 def _jsonify(data):
     """Force une structure JSON propre pour Supabase (évite erreurs avec emojis/dict)."""
     return json.loads(json.dumps(data, ensure_ascii=False))
+
+def supabase_json(garden: dict) -> dict:
+    """Prépare uniquement les champs JSONB pour Supabase"""
+    return {
+        **garden,
+        "garden_grid": json.dumps(garden["garden_grid"], ensure_ascii=False),
+        "inventory": json.dumps(garden["inventory"], ensure_ascii=False)
+    }
 
 async def get_or_create_garden(user_id: int, username: str):
     res = supabase.table(TABLE_NAME).select("*").eq("user_id", user_id).execute()
@@ -76,14 +80,14 @@ async def get_or_create_garden(user_id: int, username: str):
     new_garden = {
         "user_id": user_id,
         "username": username,
-        "garden_grid": _jsonify(DEFAULT_GRID),
-        "inventory": _jsonify(DEFAULT_INVENTORY),
+        "garden_grid": DEFAULT_GRID,
+        "inventory": DEFAULT_INVENTORY,
         "argent": 0,
         "armee": "",
         "last_fertilize": None
     }
-    print("DEBUG INSERT:", new_garden)  # 👀 debug console
-    supabase.table(TABLE_NAME).insert(new_garden).execute()
+    print("DEBUG INSERT:", new_garden)
+    supabase.table(TABLE_NAME).insert(supabase_json(new_garden)).execute()
     return new_garden
 
 def build_garden_embed(garden: dict, viewer_id: int) -> discord.Embed:
@@ -91,7 +95,6 @@ def build_garden_embed(garden: dict, viewer_id: int) -> discord.Embed:
     inv_dict = garden["inventory"]
     inv = " / ".join(f"{FLEUR_EMOJIS[f]}{inv_dict.get(f, 0)}" for f in FLEUR_EMOJIS)
 
-    # cooldown calcul
     cd_str = "✅ Disponible"
     if garden.get("last_fertilize"):
         last_dt = datetime.datetime.fromisoformat(garden["last_fertilize"])
@@ -144,7 +147,6 @@ def couper_fleurs(lines: list[str], garden: dict) -> tuple[list[str], dict]:
     garden["inventory"] = inv
     return new_lines, garden
 
-
 # ────────────────────────────────────────────────────────────────────────────────
 # 🎛️ UI — Boutons d’action
 # ────────────────────────────────────────────────────────────────────────────────
@@ -154,7 +156,6 @@ class JardinView(discord.ui.View):
         self.garden = garden
         self.user_id = user_id
 
-        # désactiver bouton engrais si cooldown
         last = self.garden.get("last_fertilize")
         disabled = False
         if last:
@@ -170,25 +171,17 @@ class JardinView(discord.ui.View):
         if interaction.user.id != self.user_id:
             return await interaction.response.send_message("❌ Ce jardin n'est pas à toi !", ephemeral=True)
 
-        # cooldown check
         last = self.garden.get("last_fertilize")
         if last:
             last_dt = datetime.datetime.fromisoformat(last)
             if datetime.datetime.utcnow() < last_dt + FERTILIZE_COOLDOWN:
                 return await interaction.response.send_message("⏳ Tu dois attendre avant d'utiliser de l'engrais à nouveau !", ephemeral=True)
 
-        # pousse des fleurs
-        lines = self.garden["garden_grid"]
-        new_lines = pousser_fleurs(lines)
-
+        new_lines = pousser_fleurs(self.garden["garden_grid"])
         self.garden["garden_grid"] = new_lines
         self.garden["last_fertilize"] = datetime.datetime.utcnow().isoformat()
 
-        supabase.table(TABLE_NAME).update({
-            **self.garden,
-            "garden_grid": _jsonify(self.garden["garden_grid"]),
-            "inventory": _jsonify(self.garden["inventory"])
-        }).eq("user_id", self.user_id).execute()
+        supabase.table(TABLE_NAME).update(supabase_json(self.garden)).eq("user_id", self.user_id).execute()
 
         embed = build_garden_embed(self.garden, self.user_id)
         await interaction.response.edit_message(embed=embed, view=JardinView(self.garden, self.user_id))
@@ -198,16 +191,10 @@ class JardinView(discord.ui.View):
         if interaction.user.id != self.user_id:
             return await interaction.response.send_message("❌ Ce jardin n'est pas à toi !", ephemeral=True)
 
-        lines = self.garden["garden_grid"]
-        new_lines, self.garden = couper_fleurs(lines, self.garden)
-
+        new_lines, self.garden = couper_fleurs(self.garden["garden_grid"], self.garden)
         self.garden["garden_grid"] = new_lines
 
-        supabase.table(TABLE_NAME).update({
-            **self.garden,
-            "garden_grid": _jsonify(self.garden["garden_grid"]),
-            "inventory": _jsonify(self.garden["inventory"])
-        }).eq("user_id", self.user_id).execute()
+        supabase.table(TABLE_NAME).update(supabase_json(self.garden)).eq("user_id", self.user_id).execute()
 
         embed = build_garden_embed(self.garden, self.user_id)
         await interaction.response.edit_message(embed=embed, view=JardinView(self.garden, self.user_id))
@@ -262,7 +249,6 @@ class JardinView(discord.ui.View):
         )
 
         await interaction.response.send_message(embed=embed)
-
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🧠 Cog principal
