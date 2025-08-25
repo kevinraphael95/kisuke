@@ -173,18 +173,19 @@ class JardinView(discord.ui.View):
         self.garden = garden
         self.user_id = user_id
 
-        last = garden.get("last_fertilize")
-        disabled = False
-        if last:
-            try:
-                last_dt = datetime.datetime.fromisoformat(last)
-                if datetime.datetime.utcnow() < last_dt + FERTILIZE_COOLDOWN:
-                    disabled = True
-            except Exception:
-                disabled = False
+        # Désactive le bouton Engrais si cooldown actif
         for child in self.children:
             if isinstance(child, discord.ui.Button) and child.label == "Engrais":
-                child.disabled = disabled
+                last = garden.get("last_fertilize")
+                if last:
+                    try:
+                        last_dt = datetime.datetime.fromisoformat(last)
+                        child.disabled = datetime.datetime.utcnow() < last_dt + FERTILIZE_COOLDOWN
+                    except Exception:
+                        child.disabled = False
+                else:
+                    child.disabled = False
+
 
     @discord.ui.button(label="Engrais", emoji="💩", style=discord.ButtonStyle.green)
     async def engrais(self, interaction: discord.Interaction, button: discord.ui.Button):
