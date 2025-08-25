@@ -145,6 +145,8 @@ class JardinView(discord.ui.View):
         self.garden = garden
         self.user_id = user_id
 
+    def update_buttons(self):
+        """Active ou désactive le bouton Engrais selon le cooldown"""
         last = self.garden.get("last_fertilize")
         disabled = False
         if last:
@@ -177,8 +179,12 @@ class JardinView(discord.ui.View):
             try:
                 last_dt = datetime.datetime.fromisoformat(last)
                 if datetime.datetime.utcnow() < last_dt + FERTILIZE_COOLDOWN:
+                    remain = last_dt + FERTILIZE_COOLDOWN - datetime.datetime.utcnow()
+                    total_seconds = int(remain.total_seconds())
+                    minutes, seconds = divmod(total_seconds, 60)
+                    hours, minutes = divmod(minutes, 60)
                     return await interaction.response.send_message(
-                        "⏳ Tu dois attendre avant d'utiliser de l'engrais à nouveau !",
+                        f"⏳ Tu dois attendre {hours}h {minutes}m {seconds}s avant d'utiliser de l'engrais !",
                         ephemeral=True
                     )
             except Exception:
@@ -188,8 +194,11 @@ class JardinView(discord.ui.View):
         self.garden["last_fertilize"] = datetime.datetime.utcnow().isoformat()
         await self.update_garden_db()
 
+        # Mettre à jour la vue avec le bouton Engrais désactivé
+        view = JardinView(self.garden, self.user_id)
+        view.update_buttons()
         embed = build_garden_embed(self.garden, self.user_id)
-        await interaction.response.edit_message(embed=embed, view=JardinView(self.garden, self.user_id))
+        await interaction.response.edit_message(embed=embed, view=view)
 
     @discord.ui.button(label="Couper", emoji="✂️", style=discord.ButtonStyle.secondary)
     async def couper(self, interaction: discord.Interaction, button: discord.ui.Button):
@@ -200,8 +209,11 @@ class JardinView(discord.ui.View):
         self.garden["garden_grid"] = new_lines
         await self.update_garden_db()
 
+        # Actualiser la vue pour garder le cooldown
+        view = JardinView(self.garden, self.user_id)
+        view.update_buttons()
         embed = build_garden_embed(self.garden, self.user_id)
-        await interaction.response.edit_message(embed=embed, view=JardinView(self.garden, self.user_id))
+        await interaction.response.edit_message(embed=embed, view=view)
 
     @discord.ui.button(label="Alchimie", emoji="⚗️", style=discord.ButtonStyle.blurple)
     async def alchimie(self, interaction: discord.Interaction, button: discord.ui.Button):
