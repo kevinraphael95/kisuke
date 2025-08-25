@@ -165,7 +165,7 @@ def couper_fleurs(lines: list[str], garden: dict) -> tuple[list[str], dict]:
     return new_lines, garden
 
 # ────────────────────────────────────────────────────────────────────────────────
-# 🎛️ UI — Boutons d’action
+# 🎛️ UI — Boutons d’action corrigés
 # ────────────────────────────────────────────────────────────────────────────────
 class JardinView(discord.ui.View):
     def __init__(self, garden: dict, user_id: int):
@@ -173,22 +173,32 @@ class JardinView(discord.ui.View):
         self.garden = garden
         self.user_id = user_id
 
-        # Désactive le bouton Engrais si cooldown actif
-        for child in self.children:
-            if isinstance(child, discord.ui.Button) and child.label == "Engrais":
-                last = garden.get("last_fertilize")
-                if last:
-                    try:
-                        last_dt = datetime.datetime.fromisoformat(last)
-                        child.disabled = datetime.datetime.utcnow() < last_dt + FERTILIZE_COOLDOWN
-                    except Exception:
-                        child.disabled = False
-                else:
-                    child.disabled = False
+        # Calcul du cooldown pour Engrais
+        last = garden.get("last_fertilize")
+        disabled = False
+        if last:
+            try:
+                last_dt = datetime.datetime.fromisoformat(last)
+                disabled = datetime.datetime.utcnow() < last_dt + FERTILIZE_COOLDOWN
+            except Exception:
+                disabled = False
 
+        # Bouton Engrais
+        engrais_btn = discord.ui.Button(label="Engrais", emoji="💩", style=discord.ButtonStyle.green, disabled=disabled)
+        engrais_btn.callback = self.engrais
+        self.add_item(engrais_btn)
 
-    @discord.ui.button(label="Engrais", emoji="💩", style=discord.ButtonStyle.green)
-    async def engrais(self, interaction: discord.Interaction, button: discord.ui.Button):
+        # Bouton Couper
+        couper_btn = discord.ui.Button(label="Couper", emoji="✂️", style=discord.ButtonStyle.secondary)
+        couper_btn.callback = self.couper
+        self.add_item(couper_btn)
+
+        # Bouton Alchimie
+        alchimie_btn = discord.ui.Button(label="Alchimie", emoji="⚗️", style=discord.ButtonStyle.blurple)
+        alchimie_btn.callback = self.alchimie
+        self.add_item(alchimie_btn)
+
+    async def engrais(self, interaction: discord.Interaction):
         if interaction.user.id != self.user_id:
             return await interaction.response.send_message("❌ Ce jardin n'est pas à toi !", ephemeral=True)
 
@@ -197,10 +207,13 @@ class JardinView(discord.ui.View):
             try:
                 last_dt = datetime.datetime.fromisoformat(last)
                 if datetime.datetime.utcnow() < last_dt + FERTILIZE_COOLDOWN:
-                    return await interaction.response.send_message("⏳ Tu dois attendre avant d'utiliser de l'engrais à nouveau !", ephemeral=True)
+                    return await interaction.response.send_message(
+                        "⏳ Tu dois attendre avant d'utiliser de l'engrais à nouveau !", ephemeral=True
+                    )
             except Exception:
                 pass
 
+        # Appliquer l'engrais
         self.garden["garden_grid"] = pousser_fleurs(self.garden.get("garden_grid", DEFAULT_GRID))
         self.garden["last_fertilize"] = datetime.datetime.utcnow().isoformat()
 
@@ -211,11 +224,11 @@ class JardinView(discord.ui.View):
         except Exception as e:
             print(f"[SUPABASE UPDATE ENGRAIS EXCEPTION] {e}")
 
+        # Recréer la vue pour désactiver le bouton si nécessaire
         embed = build_garden_embed(self.garden, self.user_id)
         await interaction.response.edit_message(embed=embed, view=JardinView(self.garden, self.user_id))
 
-    @discord.ui.button(label="Couper", emoji="✂️", style=discord.ButtonStyle.secondary)
-    async def couper(self, interaction: discord.Interaction, button: discord.ui.Button):
+    async def couper(self, interaction: discord.Interaction):
         if interaction.user.id != self.user_id:
             return await interaction.response.send_message("❌ Ce jardin n'est pas à toi !", ephemeral=True)
 
@@ -231,8 +244,7 @@ class JardinView(discord.ui.View):
         embed = build_garden_embed(self.garden, self.user_id)
         await interaction.response.edit_message(embed=embed, view=JardinView(self.garden, self.user_id))
 
-    @discord.ui.button(label="Alchimie", emoji="⚗️", style=discord.ButtonStyle.blurple)
-    async def alchimie(self, interaction: discord.Interaction, button: discord.ui.Button):
+    async def alchimie(self, interaction: discord.Interaction):
         if interaction.user.id != self.user_id:
             return await interaction.response.send_message("❌ Ce jardin n'est pas à toi !", ephemeral=True)
 
@@ -241,44 +253,6 @@ class JardinView(discord.ui.View):
             description="Fabriquer des potions grâce aux plantes de votre jardin.\n*(Attention : l'alchimie n'est pas encore ajoutée au bot)*",
             color=discord.Color.purple
         )
-        embed.add_field(
-            name="📖 Comment jouer",
-            value=(
-                "Vous commencez avec un alambic rempli d'eau qui vaut **0**.\n"
-                "Ajouter des plantes de votre jardin change la valeur de votre mixture.\n"
-                "Chaque potion a une valeur précise à atteindre pour pouvoir la créer.\n"
-                "Une fois la valeur souhaitée atteinte, cliquez sur **Concocter**."
-            ),
-            inline=False
-        )
-        embed.add_field(
-            name="🌿 Plantes",
-            value="🌷+1  🌹+2  🪻x2  🌺x3  🌼-1  🌻-2",
-            inline=False
-        )
-        embed.add_field(
-            name="🧪 Potions",
-            value=(
-                "1. Potion de Mana 🔮 | Potion Anti Magie 🛡️ -1 \n"
-                "2. Potion d’Agrandissement 📏 | Potion de Rétrécissement 📐 -2 \n"
-                "3. Potion de Gel ❄️ | Potion Protection contre le Gel 🌡️ -3 \n"
-                "4. Potion de Feu 🔥 | Potion Protection contre le Feu 🧯-4 \n"
-                "5. Potion Foudre ⚡ | Potion de Protection contre la Foudre 🌩️ -5 \n"
-                "6. Potion Acide 🧪 | Potion de Résistance à l’Acide 🥼 -6 \n"
-                "7. Potion de Rajeunissement 🧴 | Potion de Nécromancie 🪦 -7 \n"
-                "8. Potion de Force 💪 | Potion Somnifère 😴 -8 \n"
-                "9. Potion de Lumière 💡 | Potion Explosion 💥 -9 \n"
-                "10. Potion de Célérité 🏃‍♂️ | Potion Ralentissement 🐌 -10 \n"
-                "11. Potion de Soin ❤️ | Potion de Poison 💀 -11 \n"
-                "12. Potion de Vision 👁️ | Potion d’Invisibilité 👻 -12 \n"
-                "13. Potion de Chance 🍀 | Potion de Pestilence ☣️ -13 \n"
-                "14. Potion de Parfum 🌸 | Potion Charme 🪄 -14 \n"
-                "15. Potion de Glisse ⛸️ | Potion Lévitation 🪁 -15 \n"
-                "16. Potion de Dextérité 🤹 | Potion Peau de Pierre 🪨 -16"
-            ),
-            inline=False
-        )
-
         await interaction.response.send_message(embed=embed)
 
 # ────────────────────────────────────────────────────────────────────────────────
