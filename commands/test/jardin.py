@@ -14,6 +14,7 @@ from discord.ext import commands
 import os
 import random
 import datetime
+import json
 from utils.discord_utils import safe_send, safe_respond  # ✅
 from supabase import create_client, Client
 
@@ -63,6 +64,10 @@ FERTILIZE_PROBABILITY = 0.39                          # probabilité (%)
 # ────────────────────────────────────────────────────────────────────────────────
 # 🧠 Fonctions utilitaires
 # ────────────────────────────────────────────────────────────────────────────────
+def _jsonify(data):
+    """Force une structure JSON propre pour Supabase (évite erreurs avec emojis/dict)."""
+    return json.loads(json.dumps(data, ensure_ascii=False))
+
 async def get_or_create_garden(user_id: int, username: str):
     res = supabase.table(TABLE_NAME).select("*").eq("user_id", user_id).execute()
     if res.data:
@@ -71,12 +76,13 @@ async def get_or_create_garden(user_id: int, username: str):
     new_garden = {
         "user_id": user_id,
         "username": username,
-        "garden_grid": DEFAULT_GRID,
-        "inventory": DEFAULT_INVENTORY,
+        "garden_grid": _jsonify(DEFAULT_GRID),
+        "inventory": _jsonify(DEFAULT_INVENTORY),
         "argent": 0,
         "armee": "",
         "last_fertilize": None
     }
+    print("DEBUG INSERT:", new_garden)  # 👀 debug console
     supabase.table(TABLE_NAME).insert(new_garden).execute()
     return new_garden
 
@@ -177,7 +183,12 @@ class JardinView(discord.ui.View):
 
         self.garden["garden_grid"] = new_lines
         self.garden["last_fertilize"] = datetime.datetime.utcnow().isoformat()
-        supabase.table(TABLE_NAME).update(self.garden).eq("user_id", self.user_id).execute()
+
+        supabase.table(TABLE_NAME).update({
+            **self.garden,
+            "garden_grid": _jsonify(self.garden["garden_grid"]),
+            "inventory": _jsonify(self.garden["inventory"])
+        }).eq("user_id", self.user_id).execute()
 
         embed = build_garden_embed(self.garden, self.user_id)
         await interaction.response.edit_message(embed=embed, view=JardinView(self.garden, self.user_id))
@@ -191,7 +202,12 @@ class JardinView(discord.ui.View):
         new_lines, self.garden = couper_fleurs(lines, self.garden)
 
         self.garden["garden_grid"] = new_lines
-        supabase.table(TABLE_NAME).update(self.garden).eq("user_id", self.user_id).execute()
+
+        supabase.table(TABLE_NAME).update({
+            **self.garden,
+            "garden_grid": _jsonify(self.garden["garden_grid"]),
+            "inventory": _jsonify(self.garden["inventory"])
+        }).eq("user_id", self.user_id).execute()
 
         embed = build_garden_embed(self.garden, self.user_id)
         await interaction.response.edit_message(embed=embed, view=JardinView(self.garden, self.user_id))
