@@ -68,8 +68,8 @@ def supabase_json(garden: dict) -> dict:
     """Prépare uniquement les champs JSONB pour Supabase"""
     return {
         **garden,
-        "garden_grid": json.dumps(garden["garden_grid"], ensure_ascii=False),
-        "inventory": json.dumps(garden["inventory"], ensure_ascii=False)
+        "garden_grid": garden["garden_grid"],  # liste de strings
+        "inventory": garden["inventory"]       # dict
     }
 
 async def get_or_create_garden(user_id: int, username: str):
@@ -87,7 +87,8 @@ async def get_or_create_garden(user_id: int, username: str):
         "last_fertilize": None
     }
     print("DEBUG INSERT:", new_garden)
-    supabase.table(TABLE_NAME).insert(supabase_json(new_garden)).execute()
+    res = supabase.table(TABLE_NAME).insert(supabase_json(new_garden)).execute()
+    print("INSERT RESULT:", res.data, res.error)
     return new_garden
 
 def build_garden_embed(garden: dict, viewer_id: int) -> discord.Embed:
@@ -181,7 +182,8 @@ class JardinView(discord.ui.View):
         self.garden["garden_grid"] = new_lines
         self.garden["last_fertilize"] = datetime.datetime.utcnow().isoformat()
 
-        supabase.table(TABLE_NAME).update(supabase_json(self.garden)).eq("user_id", self.user_id).execute()
+        res = supabase.table(TABLE_NAME).update(supabase_json(self.garden)).eq("user_id", self.user_id).execute()
+        print("UPDATE ENGRAIS:", res.data, res.error)
 
         embed = build_garden_embed(self.garden, self.user_id)
         await interaction.response.edit_message(embed=embed, view=JardinView(self.garden, self.user_id))
@@ -194,7 +196,8 @@ class JardinView(discord.ui.View):
         new_lines, self.garden = couper_fleurs(self.garden["garden_grid"], self.garden)
         self.garden["garden_grid"] = new_lines
 
-        supabase.table(TABLE_NAME).update(supabase_json(self.garden)).eq("user_id", self.user_id).execute()
+        res = supabase.table(TABLE_NAME).update(supabase_json(self.garden)).eq("user_id", self.user_id).execute()
+        print("UPDATE COUPER:", res.data, res.error)
 
         embed = build_garden_embed(self.garden, self.user_id)
         await interaction.response.edit_message(embed=embed, view=JardinView(self.garden, self.user_id))
@@ -208,7 +211,7 @@ class JardinView(discord.ui.View):
             title="⚗️ Alchimie",
             description="Fabriquer des potions grâce aux plantes de votre jardin.\n"
                         "*(Attention : l'alchimie n'est pas encore ajoutée au bot)*",
-            color=discord.Color.purple()
+            color=discord.Color.purple
         )
         embed.add_field(
             name="📖 Comment jouer",
