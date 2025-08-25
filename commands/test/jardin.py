@@ -58,7 +58,7 @@ FLEUR_LIST = list(FLEUR_EMOJIS.items())  # [(col, emoji), ...]
 
 # Paramètres gameplay
 FERTILIZE_COOLDOWN = datetime.timedelta(minutes=10)   # délai entre deux engrais
-FERTILIZE_PROBABILITY = 0.13                          # probabilité (5%)
+FERTILIZE_PROBABILITY = 0.39                          # probabilité (%)
 
 
 # ────────────────────────────────────────────────────────────────────────────────
