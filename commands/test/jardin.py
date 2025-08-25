@@ -253,7 +253,49 @@ class JardinView(discord.ui.View):
             description="Fabriquer des potions grâce aux plantes de votre jardin.\n*(Attention : l'alchimie n'est pas encore ajoutée au bot)*",
             color=discord.Color.purple
         )
+
+        embed.add_field(
+            name="📖 Comment jouer",
+            value=(
+                "Vous commencez avec un alambic rempli d'eau qui vaut **0**.\n"
+                "Ajouter des plantes de votre jardin change la valeur de votre mixture.\n"
+                "Chaque potion a une valeur précise à atteindre pour pouvoir la créer.\n"
+                "Une fois la valeur souhaitée atteinte, cliquez sur **Concocter**."
+            ),
+            inline=False
+        )
+
+        embed.add_field(
+            name="🌿 Plantes",
+            value="🌷+1 🌹+2 🪻x2 🌺x3 🌼-1 🌻-2",
+            inline=False
+        )
+
+        embed.add_field(
+            name="🧪 Potions",
+            value=(
+                "1. Potion de Mana 🔮 | Potion Anti Magie 🛡️ -1\n"
+                "2. Potion d’Agrandissement 📏 | Potion de Rétrécissement 📐 -2\n"
+                "3. Potion de Gel ❄️ | Potion Protection contre le Gel 🌡️ -3\n"
+                "4. Potion de Feu 🔥 | Potion Protection contre le Feu 🧯 -4\n"
+                "5. Potion Foudre ⚡ | Potion de Protection contre la Foudre 🌩️ -5\n"
+                "6. Potion Acide 🧪 | Potion de Résistance à l’Acide 🥼 -6\n"
+                "7. Potion de Rajeunissement 🧴 | Potion de Nécromancie 🪦 -7\n"
+                "8. Potion de Force 💪 | Potion Somnifère 😴 -8\n"
+                "9. Potion de Lumière 💡 | Potion Explosion 💥 -9\n"
+                "10. Potion de Célérité 🏃‍♂️ | Potion Ralentissement 🐌 -10\n"
+                "11. Potion de Soin ❤️ | Potion de Poison 💀 -11\n"
+                "12. Potion de Vision 👁️ | Potion d’Invisibilité 👻 -12\n"
+                "13. Potion de Chance 🍀 | Potion de Pestilence ☣️ -13\n"
+                "14. Potion de Parfum 🌸 | Potion Charme 🪄 -14\n"
+                "15. Potion de Glisse ⛸️ | Potion Lévitation 🪁 -15\n"
+                "16. Potion de Dextérité 🤹 | Potion Peau de Pierre 🪨 -16"
+            ),
+            inline=False
+        )
+
         await interaction.response.send_message(embed=embed)
+
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🧠 Cog principal
