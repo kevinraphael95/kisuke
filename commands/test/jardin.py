@@ -14,7 +14,7 @@ from discord.ext import commands
 import os
 import random
 import datetime
-from utils.discord_utils import safe_send, safe_respond
+from utils.discord_utils import safe_send, safe_respond  # ✅
 from supabase import create_client, Client
 
 # ────────────────────────────────────────────────────────────────────────────────
@@ -29,6 +29,7 @@ TABLE_NAME = "gardens"
 # ────────────────────────────────────────────────────────────────────────────────
 # 🌱 Constantes du jeu
 # ────────────────────────────────────────────────────────────────────────────────
+# Jardin et inventaire par défaut
 DEFAULT_GRID = [
     "🌱🌱🌱🌱🌱🌱🌱🌱",
     "🌱🌱🌱🌱🌱🌱🌱🌱",
@@ -43,6 +44,7 @@ DEFAULT_INVENTORY = {
     "tournesols": 0,
 }
 
+# Dictionnaire fleurs et emojis
 FLEUR_EMOJIS = {
     "tulipes": "🌷",
     "roses": "🌹",
@@ -51,10 +53,12 @@ FLEUR_EMOJIS = {
     "paquerettes": "🌼",
     "tournesols": "🌻"
 }
-FLEUR_LIST = list(FLEUR_EMOJIS.items())
+FLEUR_LIST = list(FLEUR_EMOJIS.items())  # [(col, emoji), ...]
 
-FERTILIZE_COOLDOWN = datetime.timedelta(minutes=10)
-FERTILIZE_PROBABILITY = 0.39
+# Paramètres gameplay
+FERTILIZE_COOLDOWN = datetime.timedelta(minutes=10)   # délai entre deux engrais
+FERTILIZE_PROBABILITY = 0.39                          # probabilité (%)
+
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🧠 Fonctions utilitaires
@@ -67,8 +71,8 @@ async def get_or_create_garden(user_id: int, username: str):
     new_garden = {
         "user_id": user_id,
         "username": username,
-        "garden_grid": DEFAULT_GRID.copy(),
-        "inventory": DEFAULT_INVENTORY.copy(),
+        "garden_grid": DEFAULT_GRID,
+        "inventory": DEFAULT_INVENTORY,
         "argent": 0,
         "armee": "",
         "last_fertilize": None
@@ -81,18 +85,16 @@ def build_garden_embed(garden: dict, viewer_id: int) -> discord.Embed:
     inv_dict = garden["inventory"]
     inv = " / ".join(f"{FLEUR_EMOJIS[f]}{inv_dict.get(f, 0)}" for f in FLEUR_EMOJIS)
 
+    # cooldown calcul
     cd_str = "✅ Disponible"
     if garden.get("last_fertilize"):
-        try:
-            last_dt = datetime.datetime.fromisoformat(garden["last_fertilize"])
-            remain = last_dt + FERTILIZE_COOLDOWN - datetime.datetime.utcnow()
-            if remain.total_seconds() > 0:
-                total_seconds = int(remain.total_seconds())
-                minutes, seconds = divmod(total_seconds, 60)
-                hours, minutes = divmod(minutes, 60)
-                cd_str = f"⏳ {hours}h {minutes}m {seconds}s"
-        except Exception as e:
-            print(f"[ERREUR parse last_fertilize] {e}")
+        last_dt = datetime.datetime.fromisoformat(garden["last_fertilize"])
+        remain = last_dt + FERTILIZE_COOLDOWN - datetime.datetime.utcnow()
+        if remain.total_seconds() > 0:
+            total_seconds = int(remain.total_seconds())
+            minutes, seconds = divmod(total_seconds, 60)
+            hours, minutes = divmod(minutes, 60)
+            cd_str = f"⏳ {hours}h {minutes}m {seconds}s"
 
     embed = discord.Embed(
         title=f"🏡 Jardin de {garden['username']}",
@@ -136,6 +138,7 @@ def couper_fleurs(lines: list[str], garden: dict) -> tuple[list[str], dict]:
     garden["inventory"] = inv
     return new_lines, garden
 
+
 # ────────────────────────────────────────────────────────────────────────────────
 # 🎛️ UI — Boutons d’action
 # ────────────────────────────────────────────────────────────────────────────────
@@ -145,75 +148,53 @@ class JardinView(discord.ui.View):
         self.garden = garden
         self.user_id = user_id
 
-    def update_buttons(self):
-        """Active ou désactive le bouton Engrais selon le cooldown"""
+        # désactiver bouton engrais si cooldown
         last = self.garden.get("last_fertilize")
         disabled = False
         if last:
-            try:
-                last_dt = datetime.datetime.fromisoformat(last)
-                if datetime.datetime.utcnow() < last_dt + FERTILIZE_COOLDOWN:
-                    disabled = True
-            except Exception:
-                pass
+            last_dt = datetime.datetime.fromisoformat(last)
+            if datetime.datetime.utcnow() < last_dt + FERTILIZE_COOLDOWN:
+                disabled = True
         for child in self.children:
             if isinstance(child, discord.ui.Button) and child.label == "Engrais":
                 child.disabled = disabled
-
-    async def update_garden_db(self):
-        supabase.table(TABLE_NAME).update({
-            "garden_grid": self.garden["garden_grid"],
-            "inventory": self.garden["inventory"],
-            "last_fertilize": self.garden["last_fertilize"],
-            "argent": self.garden["argent"],
-            "armee": self.garden["armee"]
-        }).eq("user_id", self.user_id).execute()
 
     @discord.ui.button(label="Engrais", emoji="💩", style=discord.ButtonStyle.green)
     async def engrais(self, interaction: discord.Interaction, button: discord.ui.Button):
         if interaction.user.id != self.user_id:
             return await interaction.response.send_message("❌ Ce jardin n'est pas à toi !", ephemeral=True)
 
+        # cooldown check
         last = self.garden.get("last_fertilize")
         if last:
-            try:
-                last_dt = datetime.datetime.fromisoformat(last)
-                if datetime.datetime.utcnow() < last_dt + FERTILIZE_COOLDOWN:
-                    remain = last_dt + FERTILIZE_COOLDOWN - datetime.datetime.utcnow()
-                    total_seconds = int(remain.total_seconds())
-                    minutes, seconds = divmod(total_seconds, 60)
-                    hours, minutes = divmod(minutes, 60)
-                    return await interaction.response.send_message(
-                        f"⏳ Tu dois attendre {hours}h {minutes}m {seconds}s avant d'utiliser de l'engrais !",
-                        ephemeral=True
-                    )
-            except Exception:
-                pass
+            last_dt = datetime.datetime.fromisoformat(last)
+            if datetime.datetime.utcnow() < last_dt + FERTILIZE_COOLDOWN:
+                return await interaction.response.send_message("⏳ Tu dois attendre avant d'utiliser de l'engrais à nouveau !", ephemeral=True)
 
-        self.garden["garden_grid"] = pousser_fleurs(self.garden["garden_grid"])
+        # pousse des fleurs
+        lines = self.garden["garden_grid"]
+        new_lines = pousser_fleurs(lines)
+
+        self.garden["garden_grid"] = new_lines
         self.garden["last_fertilize"] = datetime.datetime.utcnow().isoformat()
-        await self.update_garden_db()
+        supabase.table(TABLE_NAME).update(self.garden).eq("user_id", self.user_id).execute()
 
-        # Mettre à jour la vue avec le bouton Engrais désactivé
-        view = JardinView(self.garden, self.user_id)
-        view.update_buttons()
         embed = build_garden_embed(self.garden, self.user_id)
-        await interaction.response.edit_message(embed=embed, view=view)
+        await interaction.response.edit_message(embed=embed, view=JardinView(self.garden, self.user_id))
 
     @discord.ui.button(label="Couper", emoji="✂️", style=discord.ButtonStyle.secondary)
     async def couper(self, interaction: discord.Interaction, button: discord.ui.Button):
         if interaction.user.id != self.user_id:
             return await interaction.response.send_message("❌ Ce jardin n'est pas à toi !", ephemeral=True)
 
-        new_lines, self.garden = couper_fleurs(self.garden["garden_grid"], self.garden)
-        self.garden["garden_grid"] = new_lines
-        await self.update_garden_db()
+        lines = self.garden["garden_grid"]
+        new_lines, self.garden = couper_fleurs(lines, self.garden)
 
-        # Actualiser la vue pour garder le cooldown
-        view = JardinView(self.garden, self.user_id)
-        view.update_buttons()
+        self.garden["garden_grid"] = new_lines
+        supabase.table(TABLE_NAME).update(self.garden).eq("user_id", self.user_id).execute()
+
         embed = build_garden_embed(self.garden, self.user_id)
-        await interaction.response.edit_message(embed=embed, view=view)
+        await interaction.response.edit_message(embed=embed, view=JardinView(self.garden, self.user_id))
 
     @discord.ui.button(label="Alchimie", emoji="⚗️", style=discord.ButtonStyle.blurple)
     async def alchimie(self, interaction: discord.Interaction, button: discord.ui.Button):
@@ -222,7 +203,8 @@ class JardinView(discord.ui.View):
 
         embed = discord.Embed(
             title="⚗️ Alchimie",
-            description="Fabriquer des potions grâce aux plantes de votre jardin.\n*(Attention : l'alchimie n'est pas encore ajoutée au bot)*",
+            description="Fabriquer des potions grâce aux plantes de votre jardin.\n"
+                        "*(Attention : l'alchimie n'est pas encore ajoutée au bot)*",
             color=discord.Color.purple()
         )
         embed.add_field(
@@ -264,6 +246,7 @@ class JardinView(discord.ui.View):
         )
 
         await interaction.response.send_message(embed=embed)
+
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🧠 Cog principal
