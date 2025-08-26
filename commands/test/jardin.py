@@ -144,12 +144,12 @@ class JardinView(discord.ui.View):
         super().__init__(timeout=120)
         self.garden = garden
         self.user_id = user_id
-        self.update_buttons()
+        self.update_buttons()  # Active ou désactive Engrais dès l'ouverture
 
     def update_buttons(self):
         """Active ou désactive le bouton Engrais selon le cooldown"""
-        last = self.garden.get("last_fertilize")
         disabled = False
+        last = self.garden.get("last_fertilize")
         if last:
             try:
                 last_dt = datetime.datetime.fromisoformat(last)
@@ -163,7 +163,7 @@ class JardinView(discord.ui.View):
                 child.disabled = disabled
 
     async def update_garden_db(self):
-        """Sauvegarde le jardin dans la base Supabase"""
+        """Sauvegarde le jardin dans Supabase"""
         supabase.table(TABLE_NAME).update({
             "garden_grid": self.garden["garden_grid"],
             "inventory": self.garden["inventory"],
@@ -179,6 +179,7 @@ class JardinView(discord.ui.View):
                 "❌ Ce jardin n'est pas à toi !", ephemeral=True
             )
 
+        # Vérification cooldown
         last = self.garden.get("last_fertilize")
         if last:
             last_dt = datetime.datetime.fromisoformat(last)
@@ -197,10 +198,12 @@ class JardinView(discord.ui.View):
         self.garden["last_fertilize"] = datetime.datetime.utcnow().isoformat()
         await self.update_garden_db()
 
-        # Mise à jour du bouton et de l'embed
+        # Mettre à jour l'embed et le bouton **sur la même vue**
         self.update_buttons()
         embed = build_garden_embed(self.garden, self.user_id)
         await interaction.response.edit_message(embed=embed, view=self)
+
+
 
     @discord.ui.button(label="Couper", emoji="✂️", style=discord.ButtonStyle.secondary)
     async def couper(self, interaction: discord.Interaction, button: discord.ui.Button):
