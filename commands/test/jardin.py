@@ -85,7 +85,8 @@ def build_garden_embed(garden: dict, viewer_id: int) -> discord.Embed:
     if garden.get("last_fertilize"):
         try:
             last_dt = datetime.datetime.fromisoformat(garden["last_fertilize"])
-            remain = last_dt + FERTILIZE_COOLDOWN - datetime.datetime.utcnow()
+            now = datetime.datetime.now(datetime.timezone.utc)
+            remain = last_dt + FERTILIZE_COOLDOWN - now
             if remain.total_seconds() > 0:
                 total_seconds = int(remain.total_seconds())
                 minutes, seconds = divmod(total_seconds, 60)
@@ -152,7 +153,8 @@ class JardinView(discord.ui.View):
         if last:
             try:
                 last_dt = datetime.datetime.fromisoformat(last)
-                if datetime.datetime.utcnow() < last_dt + FERTILIZE_COOLDOWN:
+                now = datetime.datetime.now(datetime.timezone.utc)
+                if now < last_dt + FERTILIZE_COOLDOWN:
                     disabled = True
             except Exception:
                 pass
@@ -178,8 +180,9 @@ class JardinView(discord.ui.View):
         if last:
             try:
                 last_dt = datetime.datetime.fromisoformat(last)
-                if datetime.datetime.utcnow() < last_dt + FERTILIZE_COOLDOWN:
-                    remain = last_dt + FERTILIZE_COOLDOWN - datetime.datetime.utcnow()
+                now = datetime.datetime.now(datetime.timezone.utc)
+                if now < last_dt + FERTILIZE_COOLDOWN:
+                    remain = last_dt + FERTILIZE_COOLDOWN - now
                     total_seconds = int(remain.total_seconds())
                     minutes, seconds = divmod(total_seconds, 60)
                     hours, minutes = divmod(minutes, 60)
@@ -191,7 +194,7 @@ class JardinView(discord.ui.View):
                 pass
 
         self.garden["garden_grid"] = pousser_fleurs(self.garden["garden_grid"])
-        self.garden["last_fertilize"] = datetime.datetime.utcnow().isoformat()
+        self.garden["last_fertilize"] = datetime.datetime.now(datetime.timezone.utc).isoformat()
         await self.update_garden_db()
 
         # Mettre à jour la vue avec le bouton Engrais désactivé
