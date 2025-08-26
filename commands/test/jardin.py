@@ -277,29 +277,31 @@ class Jardin(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
 
+    async def _send_garden(self, target_user, viewer_id, respond_func):
+        """Fonction partagée pour afficher le jardin avec le bouton Engrais grisé si cooldown actif"""
+        try:
+            garden = await get_or_create_garden(target_user.id, target_user.name)
+            embed = build_garden_embed(garden, viewer_id)
+            view = None
+            if target_user.id == viewer_id:
+                view = JardinView(garden, viewer_id)
+                view.update_buttons()  # ⚡ Grise le bouton si cooldown actif
+
+            await respond_func(embed=embed, view=view)
+        except Exception as e:
+            print(f"[ERREUR jardin] {e}")
+            await respond_func("❌ Une erreur est survenue.", ephemeral=True)
+
     @app_commands.command(name="jardin", description="Affiche ton jardin ou celui d'un autre utilisateur 🌱")
     async def slash_jardin(self, interaction: discord.Interaction, user: discord.User = None):
-        try:
-            target = user or interaction.user
-            garden = await get_or_create_garden(target.id, target.name)
-            embed = build_garden_embed(garden, interaction.user.id)
-            view = None if user else JardinView(garden, interaction.user.id)
-            await safe_respond(interaction, embed=embed, view=view)
-        except Exception as e:
-            print(f"[ERREUR /jardin] {e}")
-            await safe_respond(interaction, "❌ Une erreur est survenue.", ephemeral=True)
+        target = user or interaction.user
+        await self._send_garden(target, interaction.user.id, lambda **kwargs: safe_respond(interaction, **kwargs))
 
     @commands.command(name="jardin")
     async def prefix_jardin(self, ctx: commands.Context, user: discord.User = None):
-        try:
-            target = user or ctx.author
-            garden = await get_or_create_garden(target.id, target.name)
-            embed = build_garden_embed(garden, ctx.author.id)
-            view = None if user else JardinView(garden, ctx.author.id)
-            await safe_send(ctx.channel, embed=embed, view=view)
-        except Exception as e:
-            print(f"[ERREUR !jardin] {e}")
-            await safe_send(ctx.channel, "❌ Une erreur est survenue.")
+        target = user or ctx.author
+        await self._send_garden(target, ctx.author.id, lambda **kwargs: safe_send(ctx.channel, **kwargs))
+
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🔌 Setup du Cog
