@@ -144,7 +144,7 @@ class JardinView(discord.ui.View):
         super().__init__(timeout=120)
         self.garden = garden
         self.user_id = user_id
-        self.update_buttons()  # Active/désactive Engrais dès le départ
+        self.update_buttons()
 
     def update_buttons(self):
         """Active ou désactive le bouton Engrais selon le cooldown"""
@@ -175,9 +175,10 @@ class JardinView(discord.ui.View):
     @discord.ui.button(label="Engrais", emoji="💩", style=discord.ButtonStyle.green)
     async def engrais(self, interaction: discord.Interaction, button: discord.ui.Button):
         if interaction.user.id != self.user_id:
-            return await interaction.response.send_message("❌ Ce jardin n'est pas à toi !", ephemeral=True)
+            return await interaction.response.send_message(
+                "❌ Ce jardin n'est pas à toi !", ephemeral=True
+            )
 
-        # Vérifie le cooldown
         last = self.garden.get("last_fertilize")
         if last:
             last_dt = datetime.datetime.fromisoformat(last)
@@ -196,37 +197,37 @@ class JardinView(discord.ui.View):
         self.garden["last_fertilize"] = datetime.datetime.utcnow().isoformat()
         await self.update_garden_db()
 
-        # Mettre à jour le bouton et l'embed sans recréer de nouvelle vue
+        # Mise à jour du bouton et de l'embed
         self.update_buttons()
         embed = build_garden_embed(self.garden, self.user_id)
         await interaction.response.edit_message(embed=embed, view=self)
 
-
-
     @discord.ui.button(label="Couper", emoji="✂️", style=discord.ButtonStyle.secondary)
     async def couper(self, interaction: discord.Interaction, button: discord.ui.Button):
         if interaction.user.id != self.user_id:
-            return await interaction.response.send_message("❌ Ce jardin n'est pas à toi !", ephemeral=True)
+            return await interaction.response.send_message(
+                "❌ Ce jardin n'est pas à toi !", ephemeral=True
+            )
 
         new_lines, self.garden = couper_fleurs(self.garden["garden_grid"], self.garden)
         self.garden["garden_grid"] = new_lines
         await self.update_garden_db()
 
-        # Actualiser la vue pour garder le cooldown
-        view = JardinView(self.garden, self.user_id)
-        view.update_buttons()
+        self.update_buttons()
         embed = build_garden_embed(self.garden, self.user_id)
-        await interaction.response.edit_message(embed=embed, view=view)
+        await interaction.response.edit_message(embed=embed, view=self)
 
     @discord.ui.button(label="Alchimie", emoji="⚗️", style=discord.ButtonStyle.blurple)
     async def alchimie(self, interaction: discord.Interaction, button: discord.ui.Button):
         if interaction.user.id != self.user_id:
-            return await interaction.response.send_message("❌ Ce jardin n'est pas à toi !", ephemeral=True)
+            return await interaction.response.send_message(
+                "❌ Ce jardin n'est pas à toi !", ephemeral=True
+            )
 
         embed = discord.Embed(
             title="⚗️ Alchimie",
             description="Fabriquer des potions grâce aux plantes de votre jardin.\n*(Attention : l'alchimie n'est pas encore ajoutée au bot)*",
-            color=discord.Color.purple()
+            color=discord.Color.purple
         )
         embed.add_field(
             name="📖 Comment jouer",
@@ -245,28 +246,27 @@ class JardinView(discord.ui.View):
         )
         embed.add_field(
             name="🧪 Potions",
-            value=(
-                "1. Potion de Mana 🔮 | Potion Anti Magie 🛡️ -1 \n"
-                "2. Potion d’Agrandissement 📏 | Potion de Rétrécissement 📐 -2 \n"
-                "3. Potion de Gel ❄️ | Potion Protection contre le Gel 🌡️ -3 \n"
-                "4. Potion de Feu 🔥 | Potion Protection contre le Feu 🧯-4 \n"
-                "5. Potion Foudre ⚡ | Potion de Protection contre la Foudre 🌩️ -5 \n"
-                "6. Potion Acide 🧪 | Potion de Résistance à l’Acide 🥼 -6 \n"
-                "7. Potion de Rajeunissement 🧴 | Potion de Nécromancie 🪦 -7 \n"
-                "8. Potion de Force 💪 | Potion Somnifère 😴 -8 \n"
-                "9. Potion de Lumière 💡 | Potion Explosion 💥 -9 \n"
-                "10. Potion de Célérité 🏃‍♂️ | Potion Ralentissement 🐌 -10 \n"
-                "11. Potion de Soin ❤️ | Potion de Poison 💀 -11 \n"
-                "12. Potion de Vision 👁️ | Potion d’Invisibilité 👻 -12 \n"
-                "13. Potion de Chance 🍀 | Potion de Pestilence ☣️ -13 \n"
-                "14. Potion de Parfum 🌸 | Potion Charme 🪄 -14 \n"
-                "15. Potion de Glisse ⛸️ | Potion Lévitation 🪁 -15 \n"
-                "16. Potion de Dextérité 🤹 | Potion Peau de Pierre 🪨 -16"
-            ),
+            value="1. Potion de Mana 🔮 | Potion Anti Magie 🛡️ -1 \n"
+                  "2. Potion d’Agrandissement 📏 | Potion de Rétrécissement 📐 -2 \n"
+                  "3. Potion de Gel ❄️ | Potion Protection contre le Gel 🌡️ -3 \n"
+                  "4. Potion de Feu 🔥 | Potion Protection contre le Feu 🧯-4 \n"
+                  "5. Potion Foudre ⚡ | Potion de Protection contre la Foudre 🌩️ -5 \n"
+                  "6. Potion Acide 🧪 | Potion de Résistance à l’Acide 🥼 -6 \n"
+                  "7. Potion de Rajeunissement 🧴 | Potion de Nécromancie 🪦 -7 \n"
+                  "8. Potion de Force 💪 | Potion Somnifère 😴 -8 \n"
+                  "9. Potion de Lumière 💡 | Potion Explosion 💥 -9 \n"
+                  "10. Potion de Célérité 🏃‍♂️ | Potion Ralentissement 🐌 -10 \n"
+                  "11. Potion de Soin ❤️ | Potion de Poison 💀 -11 \n"
+                  "12. Potion de Vision 👁️ | Potion d’Invisibilité 👻 -12 \n"
+                  "13. Potion de Chance 🍀 | Potion de Pestilence ☣️ -13 \n"
+                  "14. Potion de Parfum 🌸 | Potion Charme 🪄 -14 \n"
+                  "15. Potion de Glisse ⛸️ | Potion Lévitation 🪁 -15 \n"
+                  "16. Potion de Dextérité 🤹 | Potion Peau de Pierre 🪨 -16",
             inline=False
         )
 
         await interaction.response.send_message(embed=embed)
+
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🧠 Cog principal
