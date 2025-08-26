@@ -144,6 +144,7 @@ class JardinView(discord.ui.View):
         super().__init__(timeout=120)
         self.garden = garden
         self.user_id = user_id
+        self.update_buttons()  # Active/désactive Engrais dès le départ
 
     def update_buttons(self):
         """Active ou désactive le bouton Engrais selon le cooldown"""
@@ -156,11 +157,13 @@ class JardinView(discord.ui.View):
                     disabled = True
             except Exception:
                 pass
+
         for child in self.children:
             if isinstance(child, discord.ui.Button) and child.label == "Engrais":
                 child.disabled = disabled
 
     async def update_garden_db(self):
+        """Sauvegarde le jardin dans la base Supabase"""
         supabase.table(TABLE_NAME).update({
             "garden_grid": self.garden["garden_grid"],
             "inventory": self.garden["inventory"],
@@ -174,31 +177,31 @@ class JardinView(discord.ui.View):
         if interaction.user.id != self.user_id:
             return await interaction.response.send_message("❌ Ce jardin n'est pas à toi !", ephemeral=True)
 
+        # Vérifie le cooldown
         last = self.garden.get("last_fertilize")
         if last:
-            try:
-                last_dt = datetime.datetime.fromisoformat(last)
-                if datetime.datetime.utcnow() < last_dt + FERTILIZE_COOLDOWN:
-                    remain = last_dt + FERTILIZE_COOLDOWN - datetime.datetime.utcnow()
-                    total_seconds = int(remain.total_seconds())
-                    minutes, seconds = divmod(total_seconds, 60)
-                    hours, minutes = divmod(minutes, 60)
-                    return await interaction.response.send_message(
-                        f"⏳ Tu dois attendre {hours}h {minutes}m {seconds}s avant d'utiliser de l'engrais !",
-                        ephemeral=True
-                    )
-            except Exception:
-                pass
+            last_dt = datetime.datetime.fromisoformat(last)
+            if datetime.datetime.utcnow() < last_dt + FERTILIZE_COOLDOWN:
+                remain = last_dt + FERTILIZE_COOLDOWN - datetime.datetime.utcnow()
+                total_seconds = int(remain.total_seconds())
+                minutes, seconds = divmod(total_seconds, 60)
+                hours, minutes = divmod(minutes, 60)
+                return await interaction.response.send_message(
+                    f"⏳ Tu dois attendre {hours}h {minutes}m {seconds}s avant d'utiliser de l'engrais !",
+                    ephemeral=True
+                )
 
+        # Pousser les fleurs et mettre à jour le cooldown
         self.garden["garden_grid"] = pousser_fleurs(self.garden["garden_grid"])
         self.garden["last_fertilize"] = datetime.datetime.utcnow().isoformat()
         await self.update_garden_db()
 
-        # Mettre à jour la vue avec le bouton Engrais désactivé
-        view = JardinView(self.garden, self.user_id)
-        view.update_buttons()
+        # Mettre à jour le bouton et l'embed sans recréer de nouvelle vue
+        self.update_buttons()
         embed = build_garden_embed(self.garden, self.user_id)
-        await interaction.response.edit_message(embed=embed, view=view)
+        await interaction.response.edit_message(embed=embed, view=self)
+
+
 
     @discord.ui.button(label="Couper", emoji="✂️", style=discord.ButtonStyle.secondary)
     async def couper(self, interaction: discord.Interaction, button: discord.ui.Button):
