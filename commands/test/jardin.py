@@ -14,6 +14,7 @@ from discord.ext import commands
 import os
 import random
 import datetime
+import json
 from utils.discord_utils import safe_send, safe_respond
 from supabase import create_client, Client
 
@@ -52,6 +53,18 @@ FLEUR_EMOJIS = {
     "tournesols": "🌻"
 }
 FLEUR_LIST = list(FLEUR_EMOJIS.items())
+
+FLEUR_VALUES = {
+    "tulipes": 1,
+    "roses": 2,
+    "jacinthes": 2,
+    "hibiscus": 3,
+    "paquerettes": -1,
+    "tournesols": -2,
+}
+
+with open("data/potions.json", "r", encoding="utf-8") as f:
+    POTIONS = json.load(f)
 
 FERTILIZE_COOLDOWN = datetime.timedelta(minutes=10)
 FERTILIZE_PROBABILITY = 0.39
@@ -138,7 +151,96 @@ def couper_fleurs(lines: list[str], garden: dict) -> tuple[list[str], dict]:
     return new_lines, garden
 
 # ────────────────────────────────────────────────────────────────────────────────
-# 🎛️ UI — Boutons d’action
+# 🎛️ UI — Alchimie interactive
+# ────────────────────────────────────────────────────────────────────────────────
+class AlchimieView(discord.ui.View):
+    def __init__(self, garden: dict, user_id: int):
+        super().__init__(timeout=180)
+        self.garden = garden
+        self.user_id = user_id
+        self.value = 0
+        self.ingredients = []
+
+    def build_embed(self):
+        fleurs = " ".join(f"{FLEUR_EMOJIS[f]}{FLEUR_VALUES[f]:+d}" for f in FLEUR_VALUES)
+        chosen = " ".join(self.ingredients) if self.ingredients else "—"
+        embed = discord.Embed(
+            title="⚗️ Alchimie",
+            description=f"Ingrédients : {fleurs}\n\n"
+                        f"⚗️ Valeur actuelle : **{self.value}**\n"
+                        f"Fleurs utilisées : {chosen}",
+            color=discord.Color.purple()
+        )
+        return embed
+
+    async def update_message(self, interaction: discord.Interaction):
+        await interaction.response.edit_message(embed=self.build_embed(), view=self)
+
+    def use_flower(self, flower: str) -> bool:
+        """Retire une fleur de l’inventaire et applique sa valeur"""
+        if self.garden["inventory"].get(flower, 0) <= 0:
+            return False
+        self.garden["inventory"][flower] -= 1
+        self.value += FLEUR_VALUES[flower]
+        self.ingredients.append(FLEUR_EMOJIS[flower])
+        return True
+
+    # Boutons de fleurs
+    @discord.ui.button(label="🌷", style=discord.ButtonStyle.green)
+    async def add_tulipe(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if not self.use_flower("tulipes"):
+            return await interaction.response.send_message("❌ Tu n’as plus de 🌷 !", ephemeral=True)
+        await self.update_message(interaction)
+
+    @discord.ui.button(label="🌹", style=discord.ButtonStyle.green)
+    async def add_rose(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if not self.use_flower("roses"):
+            return await interaction.response.send_message("❌ Tu n’as plus de 🌹 !", ephemeral=True)
+        await self.update_message(interaction)
+
+    @discord.ui.button(label="🪻", style=discord.ButtonStyle.green)
+    async def add_jacinthe(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if not self.use_flower("jacinthes"):
+            return await interaction.response.send_message("❌ Tu n’as plus de 🪻 !", ephemeral=True)
+        await self.update_message(interaction)
+
+    @discord.ui.button(label="🌺", style=discord.ButtonStyle.green)
+    async def add_hibiscus(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if not self.use_flower("hibiscus"):
+            return await interaction.response.send_message("❌ Tu n’as plus de 🌺 !", ephemeral=True)
+        await self.update_message(interaction)
+
+    @discord.ui.button(label="🌼", style=discord.ButtonStyle.green)
+    async def add_paquerette(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if not self.use_flower("paquerettes"):
+            return await interaction.response.send_message("❌ Tu n’as plus de 🌼 !", ephemeral=True)
+        await self.update_message(interaction)
+
+    @discord.ui.button(label="🌻", style=discord.ButtonStyle.green)
+    async def add_tournesol(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if not self.use_flower("tournesols"):
+            return await interaction.response.send_message("❌ Tu n’as plus de 🌻 !", ephemeral=True)
+        await self.update_message(interaction)
+
+    # Concocter
+    @discord.ui.button(label="Concocter", emoji="⚗️", style=discord.ButtonStyle.blurple)
+    async def concocter(self, interaction: discord.Interaction, button: discord.ui.Button):
+        potion = POTIONS.get(str(self.value))
+        if potion:
+            await interaction.response.send_message(f"✨ Tu as créé : **{potion}** !", ephemeral=False)
+        else:
+            await interaction.response.send_message("💥 Ta mixture explose ! Rien obtenu...", ephemeral=False)
+        self.stop()
+
+    # Reset
+    @discord.ui.button(label="Reset", style=discord.ButtonStyle.red)
+    async def reset(self, interaction: discord.Interaction, button: discord.ui.Button):
+        self.value = 0
+        self.ingredients = []
+        await self.update_message(interaction)
+
+# ────────────────────────────────────────────────────────────────────────────────
+# 🎛️ UI — Boutons Jardin
 # ────────────────────────────────────────────────────────────────────────────────
 class JardinView(discord.ui.View):
     def __init__(self, garden: dict, user_id: int):
@@ -197,7 +299,6 @@ class JardinView(discord.ui.View):
         self.garden["last_fertilize"] = datetime.datetime.now(datetime.timezone.utc).isoformat()
         await self.update_garden_db()
 
-        # Mettre à jour la vue avec le bouton Engrais désactivé
         view = JardinView(self.garden, self.user_id)
         view.update_buttons()
         embed = build_garden_embed(self.garden, self.user_id)
@@ -212,7 +313,6 @@ class JardinView(discord.ui.View):
         self.garden["garden_grid"] = new_lines
         await self.update_garden_db()
 
-        # Actualiser la vue pour garder le cooldown
         view = JardinView(self.garden, self.user_id)
         view.update_buttons()
         embed = build_garden_embed(self.garden, self.user_id)
@@ -223,50 +323,9 @@ class JardinView(discord.ui.View):
         if interaction.user.id != self.user_id:
             return await interaction.response.send_message("❌ Ce jardin n'est pas à toi !", ephemeral=True)
 
-        embed = discord.Embed(
-            title="⚗️ Alchimie",
-            description="Fabriquer des potions grâce aux plantes de votre jardin.\n*(Attention : l'alchimie n'est pas encore ajoutée au bot)*",
-            color=discord.Color.purple()
-        )
-        embed.add_field(
-            name="📖 Comment jouer",
-            value=(
-                "Vous commencez avec un alambic rempli d'eau qui vaut **0**.\n"
-                "Ajouter des plantes de votre jardin change la valeur de votre mixture.\n"
-                "Chaque potion a une valeur précise à atteindre pour pouvoir la créer.\n"
-                "Une fois la valeur souhaitée atteinte, cliquez sur **Concocter**."
-            ),
-            inline=False
-        )
-        embed.add_field(
-            name="🌿 Plantes",
-            value="🌷+1  🌹+2  🪻x2  🌺x3  🌼-1  🌻-2",
-            inline=False
-        )
-        embed.add_field(
-            name="🧪 Potions",
-            value=(
-                "1. Potion de Mana 🔮 | Potion Anti Magie 🛡️ -1 \n"
-                "2. Potion d’Agrandissement 📏 | Potion de Rétrécissement 📐 -2 \n"
-                "3. Potion de Gel ❄️ | Potion Protection contre le Gel 🌡️ -3 \n"
-                "4. Potion de Feu 🔥 | Potion Protection contre le Feu 🧯-4 \n"
-                "5. Potion Foudre ⚡ | Potion de Protection contre la Foudre 🌩️ -5 \n"
-                "6. Potion Acide 🧪 | Potion de Résistance à l’Acide 🥼 -6 \n"
-                "7. Potion de Rajeunissement 🧴 | Potion de Nécromancie 🪦 -7 \n"
-                "8. Potion de Force 💪 | Potion Somnifère 😴 -8 \n"
-                "9. Potion de Lumière 💡 | Potion Explosion 💥 -9 \n"
-                "10. Potion de Célérité 🏃‍♂️ | Potion Ralentissement 🐌 -10 \n"
-                "11. Potion de Soin ❤️ | Potion de Poison 💀 -11 \n"
-                "12. Potion de Vision 👁️ | Potion d’Invisibilité 👻 -12 \n"
-                "13. Potion de Chance 🍀 | Potion de Pestilence ☣️ -13 \n"
-                "14. Potion de Parfum 🌸 | Potion Charme 🪄 -14 \n"
-                "15. Potion de Glisse ⛸️ | Potion Lévitation 🪁 -15 \n"
-                "16. Potion de Dextérité 🤹 | Potion Peau de Pierre 🪨 -16"
-            ),
-            inline=False
-        )
-
-        await interaction.response.send_message(embed=embed)
+        view = AlchimieView(self.garden, self.user_id)
+        embed = view.build_embed()
+        await interaction.response.send_message(embed=embed, view=view, ephemeral=True)
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🧠 Cog principal
@@ -278,15 +337,13 @@ class Jardin(commands.Cog):
         self.bot = bot
 
     async def _send_garden(self, target_user, viewer_id, respond_func):
-        """Fonction partagée pour afficher le jardin avec le bouton Engrais grisé si cooldown actif"""
         try:
             garden = await get_or_create_garden(target_user.id, target_user.name)
             embed = build_garden_embed(garden, viewer_id)
             view = None
             if target_user.id == viewer_id:
                 view = JardinView(garden, viewer_id)
-                view.update_buttons()  # ⚡ Grise le bouton si cooldown actif
-
+                view.update_buttons()
             await respond_func(embed=embed, view=view)
         except Exception as e:
             print(f"[ERREUR jardin] {e}")
@@ -301,7 +358,6 @@ class Jardin(commands.Cog):
     async def prefix_jardin(self, ctx: commands.Context, user: discord.User = None):
         target = user or ctx.author
         await self._send_garden(target, ctx.author.id, lambda **kwargs: safe_send(ctx.channel, **kwargs))
-
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🔌 Setup du Cog
