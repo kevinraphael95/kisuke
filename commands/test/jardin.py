@@ -376,15 +376,22 @@ class Jardin(commands.Cog):
             print(f"[ERREUR jardin] {e}")
             await respond_func("❌ Une erreur est survenue.", ephemeral=True)
 
+
+    # ───────── Commande Slash ─────────
     @app_commands.command(name="jardin", description="Affiche ton jardin ou celui d'un autre utilisateur 🌱")
-    async def slash_jardin(self, interaction: discord.Interaction, user: discord.User = None):
+    @app_commands.checks.cooldown(1, 5.0)
+    async def slash_jardin(self, interaction:discord.Interaction, user:discord.User=None):
         target = user or interaction.user
         await self._send_garden(target, interaction.user.id, lambda **kwargs: safe_respond(interaction, **kwargs))
 
+    # ───────── Commande Préfixe ─────────
     @commands.command(name="jardin")
-    async def prefix_jardin(self, ctx: commands.Context, user: discord.User = None):
+    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
+    async def prefix_jardin(self, ctx:commands.Context, user:discord.User=None):
         target = user or ctx.author
         await self._send_garden(target, ctx.author.id, lambda **kwargs: safe_send(ctx.channel, **kwargs))
+
+ 
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🔌 Setup du Cog
