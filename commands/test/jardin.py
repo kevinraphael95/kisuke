@@ -247,7 +247,8 @@ class JardinView(discord.ui.View):
         await self.update_garden_db()
         self.update_buttons()
         embed = build_garden_embed(self.garden, self.user_id)
-        await interaction.response.edit_message(embed=embed, view=self)
+        msg = await interaction.response.edit_message(embed=embed, view=self)
+        self.message = msg
 
     @discord.ui.button(label="Couper", emoji="✂️", style=discord.ButtonStyle.secondary)
     async def couper(self, interaction, button):
@@ -257,7 +258,8 @@ class JardinView(discord.ui.View):
         self.garden["garden_grid"]=new_lines
         await self.update_garden_db()
         embed = build_garden_embed(self.garden, self.user_id)
-        await interaction.response.edit_message(embed=embed, view=self)
+        msg = await interaction.response.edit_message(embed=embed, view=self)
+        self.message = msg
 
     @discord.ui.button(label="Alchimie", emoji="⚗️", style=discord.ButtonStyle.blurple)
     async def alchimie(self, interaction, button):
@@ -265,13 +267,15 @@ class JardinView(discord.ui.View):
             return await interaction.response.send_message("❌ Ce jardin n'est pas à toi !", ephemeral=True)
         view = AlchimieView(self.garden,self.user_id)
         embed = view.build_embed()
-        msg = await interaction.response.send_message(embed=embed, view=view)
+        await interaction.response.defer()
+        msg = await interaction.followup.send(embed=embed, view=view)
         view.message = msg
 
     async def on_timeout(self):
         # 🔹 Désactive tous les boutons au timeout
         for child in self.children:
-            if isinstance(child,discord.ui.Button): child.disabled=True
+            if isinstance(child,discord.ui.Button):
+                child.disabled=True
         if self.message:
             try:
                 await self.message.edit(view=self)
