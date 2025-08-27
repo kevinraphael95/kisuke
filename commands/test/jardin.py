@@ -181,7 +181,15 @@ class AlchimieView(discord.ui.View):
         if self.garden["inventory"].get(flower, 0) <= 0:
             return False
         self.garden["inventory"][flower] -= 1
-        self.value += FLEUR_VALUES[flower]
+
+        # 🔹 Logique multiplicative pour Jacinthe et Hibiscus
+        if flower == "jacinthes":
+            self.value = self.value * 2 if self.value != 0 else 2
+        elif flower == "hibiscus":
+            self.value = self.value * 3 if self.value != 0 else 3
+        else:
+            self.value += FLEUR_VALUES[flower]
+
         self.ingredients.append(FLEUR_EMOJIS[flower])
         return True
 
