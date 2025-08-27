@@ -171,8 +171,20 @@ class AlchimieView(discord.ui.View):
         self.ingredients = []
 
     def build_embed(self):
-        fleurs = " ".join(f"{FLEUR_EMOJIS[f]}{FLEUR_VALUES[f]:+d}" for f in FLEUR_VALUES)
+        # Grouper les fleurs par signe
+        fleurs_grouped = {"+" : [], "×" : [], "-" : []}
+        for f in FLEUR_EMOJIS:
+            sign = FLEUR_SIGNS[f]
+            if sign in ("+", "-"):
+                fleurs_grouped[sign].append(f"{FLEUR_EMOJIS[f]}{sign}{FLEUR_VALUES[f]}")
+            else:  # multiplicatif, juste le symbole
+                fleurs_grouped[sign].append(f"{FLEUR_EMOJIS[f]}{sign}")
+
+        # Affichage regroupé : +, ×, -
+        fleurs = "  ".join(" ".join(fleurs_grouped[s]) for s in ("+", "×", "-"))
+
         chosen = " ".join(self.ingredients) if self.ingredients else "—"
+
         embed = discord.Embed(
             title="⚗️ Alchimie",
             description=f"Valeurs de fleurs : {fleurs}\n\n"
@@ -181,6 +193,7 @@ class AlchimieView(discord.ui.View):
             color=discord.Color.purple()
         )
         return embed
+
 
 
 
