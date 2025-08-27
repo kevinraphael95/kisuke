@@ -63,6 +63,15 @@ FLEUR_VALUES = {
     "tournesols": -2,
 }
 
+FLEUR_SIGNS = {
+    "tulipes": "+",
+    "roses": "+",
+    "jacinthes": "×",
+    "hibiscus": "×",
+    "paquerettes": "-",
+    "tournesols": "-",
+}
+
 with open("data/potions.json", "r", encoding="utf-8") as f:
     POTIONS = json.load(f)
 
@@ -162,16 +171,15 @@ class AlchimieView(discord.ui.View):
         self.ingredients = []
 
     def build_embed(self):
-        fleurs = " ".join(f"{FLEUR_EMOJIS[f]}{FLEUR_VALUES[f]:+d}" for f in FLEUR_VALUES)
         chosen = " ".join(self.ingredients) if self.ingredients else "—"
         embed = discord.Embed(
             title="⚗️ Alchimie",
-            description=f"Ingrédients : {fleurs}\n\n"
-                        f"⚗️ Valeur actuelle : **{self.value}**\n"
-                        f"Fleurs utilisées : {chosen}",
+            description=f"⚗️ {chosen}\n\n"
+                        f"Valeur : **{self.value}**",
             color=discord.Color.purple()
         )
         return embed
+
 
     async def update_message(self, interaction: discord.Interaction):
         await interaction.response.edit_message(embed=self.build_embed(), view=self)
