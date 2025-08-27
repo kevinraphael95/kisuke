@@ -185,13 +185,10 @@ class AlchimieView(discord.ui.View):
         return interaction.user.id==self.user_id
 
     async def on_timeout(self):
-        # 🔹 Désactive tous les boutons au timeout
         for child in self.children:
-            if isinstance(child, discord.ui.Button):
-                child.disabled=True
+            if isinstance(child, discord.ui.Button): child.disabled=True
         if self.message:
-            try:
-                await self.message.edit(view=self)
+            try: await self.message.edit(view=self)
             except: pass
 
 # ────────────────────────────────────────────────────────────────────────────────
@@ -245,7 +242,6 @@ class JardinView(discord.ui.View):
         self.garden["garden_grid"] = pousser_fleurs(self.garden["garden_grid"])
         self.garden["last_fertilize"] = datetime.datetime.now(datetime.timezone.utc).isoformat()
         await self.update_garden_db()
-        self.update_buttons()
         embed = build_garden_embed(self.garden, self.user_id)
         await interaction.response.edit_message(embed=embed, view=self)
 
@@ -269,12 +265,10 @@ class JardinView(discord.ui.View):
         view.message = msg
 
     async def on_timeout(self):
-        # 🔹 Désactive tous les boutons au timeout
         for child in self.children:
             if isinstance(child,discord.ui.Button): child.disabled=True
         if self.message:
-            try:
-                await self.message.edit(view=self)
+            try: await self.message.edit(view=self)
             except: pass
 
 # ────────────────────────────────────────────────────────────────────────────────
