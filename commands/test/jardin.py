@@ -171,14 +171,17 @@ class AlchimieView(discord.ui.View):
         self.ingredients = []
 
     def build_embed(self):
+        fleurs = " ".join(f"{FLEUR_EMOJIS[f]}{FLEUR_VALUES[f]:+d}" for f in FLEUR_VALUES)
         chosen = " ".join(self.ingredients) if self.ingredients else "—"
         embed = discord.Embed(
             title="⚗️ Alchimie",
-            description=f"⚗️ {chosen}\n\n"
+            description=f"Valeurs de fleurs : {fleurs}\n\n"
+                        f"⚗️ {chosen}\n"
                         f"Valeur : **{self.value}**",
             color=discord.Color.purple()
         )
         return embed
+
 
 
     async def update_message(self, interaction: discord.Interaction):
