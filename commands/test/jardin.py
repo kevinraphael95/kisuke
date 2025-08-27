@@ -344,7 +344,7 @@ class JardinView(discord.ui.View):
 
         view = AlchimieView(self.garden, self.user_id)
         embed = view.build_embed()
-        await interaction.response.send_message(embed=embed, view=view, ephemeral=True)
+        await interaction.response.send_message(embed=embed, view=view)
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🧠 Cog principal
