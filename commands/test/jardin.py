@@ -59,8 +59,8 @@ FLEUR_VALUES = {
     "roses": 2,
     "jacinthes": 2,
     "hibiscus": 3,
-    "paquerettes": -1,
-    "tournesols": -2,
+    "paquerettes": 1,   # valeur positive ici, le signe gère le + ou -
+    "tournesols": 2,
 }
 
 FLEUR_SIGNS = {
@@ -171,18 +171,17 @@ class AlchimieView(discord.ui.View):
         self.ingredients = []
 
     def build_embed(self):
-        # Grouper les fleurs par signe
+        # Grouper les fleurs par signe et afficher valeur positive avec signe
         fleurs_grouped = {"+" : [], "×" : [], "-" : []}
         for f in FLEUR_EMOJIS:
             sign = FLEUR_SIGNS[f]
+            val = FLEUR_VALUES[f]
             if sign in ("+", "-"):
-                fleurs_grouped[sign].append(f"{FLEUR_EMOJIS[f]}{sign}{FLEUR_VALUES[f]}")
-            else:  # multiplicatif, juste le symbole
-                fleurs_grouped[sign].append(f"{FLEUR_EMOJIS[f]}{sign}")
+                fleurs_grouped[sign].append(f"{FLEUR_EMOJIS[f]}{sign}{val}")
+            else:
+                fleurs_grouped[sign].append(f"{FLEUR_EMOJIS[f]}{sign}{val}")
 
-        # Affichage regroupé : +, ×, -
         fleurs = "  ".join(" ".join(fleurs_grouped[s]) for s in ("+", "×", "-"))
-
         chosen = " ".join(self.ingredients) if self.ingredients else "—"
 
         embed = discord.Embed(
@@ -194,30 +193,29 @@ class AlchimieView(discord.ui.View):
         )
         return embed
 
-
-
-
     async def update_message(self, interaction: discord.Interaction):
         await interaction.response.edit_message(embed=self.build_embed(), view=self)
 
     def use_flower(self, flower: str) -> bool:
-        """Retire une fleur de l’inventaire et applique sa valeur"""
+        """Retire une fleur de l’inventaire et applique sa valeur selon le signe"""
         if self.garden["inventory"].get(flower, 0) <= 0:
             return False
         self.garden["inventory"][flower] -= 1
 
-        # 🔹 Logique multiplicative pour Jacinthe et Hibiscus
-        if flower == "jacinthes":
-            self.value = self.value * 2 if self.value != 0 else 2
-        elif flower == "hibiscus":
-            self.value = self.value * 3 if self.value != 0 else 3
-        else:
-            self.value += FLEUR_VALUES[flower]
+        sign = FLEUR_SIGNS[flower]
+        val = FLEUR_VALUES[flower]
+
+        if sign == "+":
+            self.value += val
+        elif sign == "-":
+            self.value -= val
+        elif sign == "×":
+            self.value = self.value * val if self.value != 0 else val
 
         self.ingredients.append(FLEUR_EMOJIS[flower])
         return True
 
-    # Boutons de fleurs
+    # ────────────── Boutons fleurs ──────────────
     @discord.ui.button(label="🌷", style=discord.ButtonStyle.green)
     async def add_tulipe(self, interaction: discord.Interaction, button: discord.ui.Button):
         if not self.use_flower("tulipes"):
@@ -254,7 +252,7 @@ class AlchimieView(discord.ui.View):
             return await interaction.response.send_message("❌ Tu n’as plus de 🌻 !", ephemeral=True)
         await self.update_message(interaction)
 
-    # Concocter
+    # ────────────── Concocter & Reset ──────────────
     @discord.ui.button(label="Concocter", emoji="⚗️", style=discord.ButtonStyle.blurple)
     async def concocter(self, interaction: discord.Interaction, button: discord.ui.Button):
         potion = POTIONS.get(str(self.value))
@@ -264,7 +262,6 @@ class AlchimieView(discord.ui.View):
             await interaction.response.send_message("💥 Ta mixture explose ! Rien obtenu...", ephemeral=False)
         self.stop()
 
-    # Reset
     @discord.ui.button(label="Reset", style=discord.ButtonStyle.red)
     async def reset(self, interaction: discord.Interaction, button: discord.ui.Button):
         self.value = 0
@@ -281,7 +278,6 @@ class JardinView(discord.ui.View):
         self.user_id = user_id
 
     def update_buttons(self):
-        """Active ou désactive le bouton Engrais selon le cooldown"""
         last = self.garden.get("last_fertilize")
         disabled = False
         if last:
