@@ -53,8 +53,15 @@ async def get_or_create_garden(user_id:int, username:str):
     res = supabase.table(TABLE_NAME).select("*").eq("user_id", user_id).execute()
     if res.data:
         return res.data[0]
-    new_garden = {"user_id":user_id,"username":username,"garden_grid":DEFAULT_GRID.copy(),
-                  "inventory":DEFAULT_INVENTORY.copy(),"argent":0,"armee":"","last_fertilize":None}
+    new_garden = {
+        "user_id": user_id,
+        "username": username,
+        "garden_grid": DEFAULT_GRID.copy(),
+        "inventory": DEFAULT_INVENTORY.copy(),
+        "argent": 0,
+        "armee": "",
+        "last_fertilize": None
+    }
     supabase.table(TABLE_NAME).insert(new_garden).execute()
     return new_garden
 
@@ -75,10 +82,13 @@ def build_garden_embed(garden:dict, viewer_id:int) -> discord.Embed:
         except Exception as e:
             print(f"[ERREUR parse last_fertilize] {e}")
     embed = discord.Embed(title=f"🏡 Jardin de {garden['username']}",
-                          description="\n".join(lines), color=discord.Color.green())
-    embed.add_field(name="Infos",
-                    value=f"Fleurs possédées : {inv}\nArmée : {garden['armee'] or '—'} | Argent : {garden['argent']}💰\nCooldown engrais : {cd_str}",
-                    inline=False)
+                          description="\n".join(lines),
+                          color=discord.Color.green())
+    embed.add_field(
+        name="Infos",
+        value=f"Fleurs possédées : {inv}\nArmée : {garden['armee'] or '—'} | Argent : {garden['argent']}💰\nCooldown engrais : {cd_str}",
+        inline=False
+    )
     return embed
 
 def pousser_fleurs(lines:list[str]) -> list[str]:
@@ -89,7 +99,8 @@ def pousser_fleurs(lines:list[str]) -> list[str]:
             if c=="🌱" and random.random() < FERTILIZE_PROBABILITY:
                 _, emoji = random.choice(FLEUR_LIST)
                 chars.append(emoji)
-            else: chars.append(c)
+            else:
+                chars.append(c)
         new_lines.append("".join(chars))
     return new_lines
 
@@ -128,9 +139,11 @@ class AlchimieView(discord.ui.View):
             fleurs_grouped[FLEUR_SIGNS[f]].append(f"{FLEUR_EMOJIS[f]}{FLEUR_SIGNS[f]}{FLEUR_VALUES[f]}")
         fleurs = "  ".join(" ".join(fleurs_grouped[s]) for s in ("+","×","-"))
         chosen = " ".join(FLEUR_EMOJIS[f] for f in self.selected_flowers) if self.selected_flowers else "—"
-        return discord.Embed(title="⚗️ Alchimie",
-                             description=f"Valeurs de fleurs : {fleurs}\n\n⚗️ {chosen}\nValeur : **{self.value}**",
-                             color=discord.Color.purple())
+        return discord.Embed(
+            title="⚗️ Alchimie",
+            description=f"Valeurs de fleurs : {fleurs}\n\n⚗️ {chosen}\nValeur : **{self.value}**",
+            color=discord.Color.purple()
+        )
 
     async def update_message(self, interaction:discord.Interaction):
         await interaction.response.edit_message(embed=self.build_embed(), view=self)
@@ -247,8 +260,8 @@ class JardinView(discord.ui.View):
         await self.update_garden_db()
         self.update_buttons()
         embed = build_garden_embed(self.garden, self.user_id)
-        msg = await interaction.response.edit_message(embed=embed, view=self)
-        self.message = msg
+        await interaction.response.edit_message(embed=embed, view=self)
+        self.message = await interaction.original_response()  # ✅ récupère le vrai message
 
     @discord.ui.button(label="Couper", emoji="✂️", style=discord.ButtonStyle.secondary)
     async def couper(self, interaction, button):
@@ -258,8 +271,8 @@ class JardinView(discord.ui.View):
         self.garden["garden_grid"]=new_lines
         await self.update_garden_db()
         embed = build_garden_embed(self.garden, self.user_id)
-        msg = await interaction.response.edit_message(embed=embed, view=self)
-        self.message = msg
+        await interaction.response.edit_message(embed=embed, view=self)
+        self.message = await interaction.original_response()
 
     @discord.ui.button(label="Alchimie", emoji="⚗️", style=discord.ButtonStyle.blurple)
     async def alchimie(self, interaction, button):
@@ -267,14 +280,13 @@ class JardinView(discord.ui.View):
             return await interaction.response.send_message("❌ Ce jardin n'est pas à toi !", ephemeral=True)
         view = AlchimieView(self.garden,self.user_id)
         embed = view.build_embed()
-        await interaction.response.defer()
-        msg = await interaction.followup.send(embed=embed, view=view)
-        view.message = msg
+        await interaction.response.send_message(embed=embed, view=view)
+        view.message = await interaction.original_response()
 
     async def on_timeout(self):
         # 🔹 Désactive tous les boutons au timeout
         for child in self.children:
-            if isinstance(child,discord.ui.Button):
+            if isinstance(child, discord.ui.Button):
                 child.disabled=True
         if self.message:
             try:
@@ -304,12 +316,12 @@ class Jardin(commands.Cog):
 
     # ───────── Commande Slash ─────────
     @app_commands.command(name="jardin", description="Affiche ton jardin ou celui d'un autre utilisateur 🌱")
-    @app_commands.checks.cooldown(1, 5.0)  # 1 utilisation toutes les 5 secondes par utilisateur
+    @app_commands.checks.cooldown(1, 5.0)
     async def slash_jardin(self, interaction:discord.Interaction, user:discord.User=None):
         target = user or interaction.user
         await self._send_garden(target, interaction.user.id, lambda **kwargs: safe_respond(interaction, **kwargs))
 
-    # ───────── Commande avec Préfixe ─────────
+    # ───────── Commande Préfixe ─────────
     @commands.command(name="jardin")
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def prefix_jardin(self, ctx:commands.Context, user:discord.User=None):
