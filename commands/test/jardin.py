@@ -163,110 +163,109 @@ def couper_fleurs(lines: list[str], garden: dict) -> tuple[list[str], dict]:
 # 🎛️ UI — Alchimie interactive
 # ────────────────────────────────────────────────────────────────────────────────
 class AlchimieView(discord.ui.View):
-    def __init__(self, garden: dict, user_id: int):
-        super().__init__(timeout=180)
+    def __init__(self, garden: dict, user_id: int, timeout=180):
+        super().__init__(timeout=timeout)
         self.garden = garden
         self.user_id = user_id
+        self.original_inventory = garden["inventory"].copy()  # inventaire réel sauvegardé
+        self.temp_inventory = garden["inventory"].copy()      # inventaire temporaire
         self.value = 0
-        self.ingredients = []
+        self.selected_flowers = []
 
     def build_embed(self):
-        # Grouper les fleurs par signe et afficher valeur positive avec signe
         fleurs_grouped = {"+" : [], "×" : [], "-" : []}
         for f in FLEUR_EMOJIS:
             sign = FLEUR_SIGNS[f]
             val = FLEUR_VALUES[f]
-            if sign in ("+", "-"):
-                fleurs_grouped[sign].append(f"{FLEUR_EMOJIS[f]}{sign}{val}")
-            else:
-                fleurs_grouped[sign].append(f"{FLEUR_EMOJIS[f]}{sign}{val}")
-
+            fleurs_grouped[sign].append(f"{FLEUR_EMOJIS[f]}{sign}{val}")
         fleurs = "  ".join(" ".join(fleurs_grouped[s]) for s in ("+", "×", "-"))
-        chosen = " ".join(self.ingredients) if self.ingredients else "—"
+        chosen = " ".join(FLEUR_EMOJIS[f] for f in self.selected_flowers) if self.selected_flowers else "—"
 
-        embed = discord.Embed(
+        return discord.Embed(
             title="⚗️ Alchimie",
-            description=f"Valeurs de fleurs : {fleurs}\n\n"
-                        f"⚗️ {chosen}\n"
-                        f"Valeur : **{self.value}**",
+            description=f"Valeurs de fleurs : {fleurs}\n\n⚗️ {chosen}\nValeur : **{self.value}**",
             color=discord.Color.purple()
         )
-        return embed
 
     async def update_message(self, interaction: discord.Interaction):
         await interaction.response.edit_message(embed=self.build_embed(), view=self)
 
     def use_flower(self, flower: str) -> bool:
-        """Retire une fleur de l’inventaire et applique sa valeur selon le signe"""
-        if self.garden["inventory"].get(flower, 0) <= 0:
+        if self.temp_inventory.get(flower, 0) <= 0:
             return False
-        self.garden["inventory"][flower] -= 1
+        self.temp_inventory[flower] -= 1
+        self.selected_flowers.append(flower)
 
         sign = FLEUR_SIGNS[flower]
         val = FLEUR_VALUES[flower]
-
         if sign == "+":
             self.value += val
         elif sign == "-":
             self.value -= val
         elif sign == "×":
             self.value = self.value * val if self.value != 0 else val
-
-        self.ingredients.append(FLEUR_EMOJIS[flower])
         return True
 
-    # ────────────── Boutons fleurs ──────────────
+    # ───────── Boutons fleurs ─────────
     @discord.ui.button(label="🌷", style=discord.ButtonStyle.green)
-    async def add_tulipe(self, interaction: discord.Interaction, button: discord.ui.Button):
+    async def add_tulipe(self, interaction, button):
         if not self.use_flower("tulipes"):
             return await interaction.response.send_message("❌ Tu n’as plus de 🌷 !", ephemeral=True)
         await self.update_message(interaction)
 
     @discord.ui.button(label="🌹", style=discord.ButtonStyle.green)
-    async def add_rose(self, interaction: discord.Interaction, button: discord.ui.Button):
+    async def add_rose(self, interaction, button):
         if not self.use_flower("roses"):
             return await interaction.response.send_message("❌ Tu n’as plus de 🌹 !", ephemeral=True)
         await self.update_message(interaction)
 
     @discord.ui.button(label="🪻", style=discord.ButtonStyle.green)
-    async def add_jacinthe(self, interaction: discord.Interaction, button: discord.ui.Button):
+    async def add_jacinthe(self, interaction, button):
         if not self.use_flower("jacinthes"):
             return await interaction.response.send_message("❌ Tu n’as plus de 🪻 !", ephemeral=True)
         await self.update_message(interaction)
 
     @discord.ui.button(label="🌺", style=discord.ButtonStyle.green)
-    async def add_hibiscus(self, interaction: discord.Interaction, button: discord.ui.Button):
+    async def add_hibiscus(self, interaction, button):
         if not self.use_flower("hibiscus"):
             return await interaction.response.send_message("❌ Tu n’as plus de 🌺 !", ephemeral=True)
         await self.update_message(interaction)
 
     @discord.ui.button(label="🌼", style=discord.ButtonStyle.green)
-    async def add_paquerette(self, interaction: discord.Interaction, button: discord.ui.Button):
+    async def add_paquerette(self, interaction, button):
         if not self.use_flower("paquerettes"):
             return await interaction.response.send_message("❌ Tu n’as plus de 🌼 !", ephemeral=True)
         await self.update_message(interaction)
 
     @discord.ui.button(label="🌻", style=discord.ButtonStyle.green)
-    async def add_tournesol(self, interaction: discord.Interaction, button: discord.ui.Button):
+    async def add_tournesol(self, interaction, button):
         if not self.use_flower("tournesols"):
             return await interaction.response.send_message("❌ Tu n’as plus de 🌻 !", ephemeral=True)
         await self.update_message(interaction)
 
-    # ────────────── Concocter & Reset ──────────────
+    # ───────── Concocter & Reset ─────────
     @discord.ui.button(label="Concocter", emoji="⚗️", style=discord.ButtonStyle.blurple)
-    async def concocter(self, interaction: discord.Interaction, button: discord.ui.Button):
+    async def concocter(self, interaction, button):
         potion = POTIONS.get(str(self.value))
+
+        # 🔥 On met à jour l'inventaire réel seulement ici
+        supabase.table(TABLE_NAME).update({"inventory": self.temp_inventory}).eq("user_id", self.user_id).execute()
+
         if potion:
             await interaction.response.send_message(f"✨ Tu as créé : **{potion}** !", ephemeral=False)
         else:
             await interaction.response.send_message("💥 Ta mixture explose ! Rien obtenu...", ephemeral=False)
         self.stop()
 
-    @discord.ui.button(label="Reset", style=discord.ButtonStyle.red)
-    async def reset(self, interaction: discord.Interaction, button: discord.ui.Button):
+    @discord.ui.button(label="Reset", emoji="🔄", style=discord.ButtonStyle.red)
+    async def reset(self, interaction, button):
+        self.temp_inventory = self.original_inventory.copy()
         self.value = 0
-        self.ingredients = []
+        self.selected_flowers = []
         await self.update_message(interaction)
+
+    async def interaction_check(self, interaction):
+        return interaction.user.id == self.user_id
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🎛️ UI — Boutons Jardin
