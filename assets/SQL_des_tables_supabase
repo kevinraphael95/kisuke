@@ -62,12 +62,16 @@ create table public.steam_keys (
 ) TABLESPACE pg_default;
 
 # ────────────────────────────────────────────────────────────────────────────────
-# la table perso_votes :
+# la table gardens
 # ────────────────────────────────────────────────────────────────────────────────
-create table public.perso_votes (
-  id uuid not null default gen_random_uuid (),
-  nom text not null,
-  votes integer null default 0,
-  constraint perso_votes_pkey primary key (id),
-  constraint perso_votes_nom_key unique (nom)
+create table public.gardens (
+  user_id bigint not null,
+  username text not null,
+  garden_grid jsonb not null default '["🌱🌱🌱🌱🌱🌱🌱🌱", "🌱🌱🌱🌱🌱🌱🌱🌱", "🌱🌱🌱🌱🌱🌱🌱🌱"]'::jsonb,
+  inventory jsonb not null default '{"roses": 0, "tulipes": 0, "hibiscus": 0, "jacinthes": 0, "tournesols": 0, "paquerettes": 0}'::jsonb,
+  last_fertilize timestamp with time zone null,
+  potions jsonb null,
+  armee text null,
+  argent integer null default 0,
+  constraint gardens_pkey primary key (user_id)
 ) TABLESPACE pg_default;
