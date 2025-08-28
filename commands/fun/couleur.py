@@ -3,6 +3,7 @@
 # Objectif : Afficher une couleur aléatoire avec ses codes HEX et RGB dans un embed Discord
 # Catégorie : 🎨 Fun
 # Accès : Public
+# Cooldown : 1 utilisation / 3 sec / utilisateur
 # ────────────────────────────────────────────────────────────────────────────────
 
 # ────────────────────────────────────────────────────────────────────────────────
@@ -12,18 +13,19 @@ import random
 import discord
 from discord import app_commands
 from discord.ext import commands
-from utils.discord_utils import safe_send, safe_edit, safe_respond  # ✅ Utilisation des safe_
+from utils.discord_utils import safe_send, safe_edit, safe_respond
 
 # ────────────────────────────────────────────────────────────────────────────────
-# 🧩 Vue interactive avec bouton "Nouvelle couleur"
+# 🎛️ Vue interactive avec bouton "Nouvelle couleur"
 # ────────────────────────────────────────────────────────────────────────────────
 class CouleurView(discord.ui.View):
     def __init__(self, author):
         super().__init__(timeout=60)
         self.author = author
-        self.message = None  # Stocke le message pour pouvoir le modifier après timeout
+        self.message = None
 
     def generer_embed(self):
+        """Génère un embed avec une couleur aléatoire et son aperçu visuel."""
         code_hex = random.randint(0, 0xFFFFFF)
         hex_str = f"#{code_hex:06X}"
         r = (code_hex >> 16) & 0xFF
@@ -65,9 +67,7 @@ class CouleurView(discord.ui.View):
 # 🧠 Cog principal
 # ────────────────────────────────────────────────────────────────────────────────
 class CouleurCommand(commands.Cog):
-    """
-    Commande !couleur et /couleur — Génère et affiche une couleur aléatoire avec codes HEX et RGB.
-    """
+    """Commande !couleur et /couleur — Génère et affiche une couleur aléatoire avec codes HEX et RGB."""
 
     def __init__(self, bot: commands.Bot):
         self.bot = bot
@@ -80,7 +80,6 @@ class CouleurCommand(commands.Cog):
         description="Affiche une couleur aléatoire avec un aperçu visuel et ses codes HEX & RGB."
     )
     async def slash_couleur(self, interaction: discord.Interaction):
-        """Commande slash principale qui génère une couleur aléatoire."""
         try:
             view = CouleurView(interaction.user)
             embed = view.generer_embed()
@@ -100,7 +99,6 @@ class CouleurCommand(commands.Cog):
     )
     @commands.cooldown(rate=1, per=3, type=commands.BucketType.user)
     async def prefix_couleur(self, ctx: commands.Context):
-        """Commande préfixe qui génère une couleur aléatoire."""
         try:
             view = CouleurView(ctx.author)
             embed = view.generer_embed()
