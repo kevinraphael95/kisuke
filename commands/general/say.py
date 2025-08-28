@@ -3,44 +3,55 @@
 # Objectif : Faire répéter un message par le bot (texte ou embed)
 # Catégorie : Général
 # Accès : Public
+# Cooldown : 1 utilisation / 5 sec / utilisateur
 # ────────────────────────────────────────────────────────────────────────────────
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 📦 Imports nécessaires
 # ────────────────────────────────────────────────────────────────────────────────
 import discord
+import re
 from discord import app_commands
 from discord.ext import commands
-from utils.discord_utils import safe_send, safe_delete  # ✅ Utilisation des safe_
+from utils.discord_utils import safe_send, safe_delete, safe_respond  
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🧠 Cog principal
 # ────────────────────────────────────────────────────────────────────────────────
 class Say(commands.Cog):
-    """
-    Commande /say et !say — Faire répéter un message par le bot
-    """
+    """Commande interactive /say et !say — Faire répéter un message par le bot"""
 
     def __init__(self, bot: commands.Bot):
         self.bot = bot
 
     # ────────────────────────────────────────────────────────────────────────────
-    # 🔹 Fonction interne commune
+    # 🔹 Fonction interne
     # ────────────────────────────────────────────────────────────────────────────
     async def _say_message(self, channel: discord.abc.Messageable, message: str, embed: bool = False):
-        """Envoie un message (texte ou embed) dans le salon donné."""
-        # Nettoyage du message
-        message = message.strip()
+        """Envoie un message formaté (texte ou embed)."""
+        message = (message or "").strip()
         if not message:
             return await safe_send(channel, "⚠️ Message vide.")
 
-        # Limite de caractères
+        # 🔄 Remplacer :emoji: par l’emoji custom si trouvé
+        pattern = r":([a-zA-Z0-9_]+):"
+        if hasattr(channel, "guild"):  # vérifie qu’on est bien dans un serveur
+            for match in re.finditer(pattern, message):
+                name = match.group(1)
+                emoji = discord.utils.get(channel.guild.emojis, name=name)
+                if emoji:
+                    message = message.replace(f":{name}:", str(emoji))
+
+        # ✂️ Limite de caractères Discord
         if len(message) > 2000:
             message = message[:1997] + "..."
 
-        # Envoi
+        # 📤 Envoi final
         if embed:
-            embed_obj = discord.Embed(description=message, color=discord.Color.blurple())
+            embed_obj = discord.Embed(
+                description=message,
+                color=discord.Color.blurple()
+            )
             await safe_send(channel, embed=embed_obj, allowed_mentions=discord.AllowedMentions.none())
         else:
             await safe_send(channel, message, allowed_mentions=discord.AllowedMentions.none())
@@ -48,43 +59,44 @@ class Say(commands.Cog):
     # ────────────────────────────────────────────────────────────────────────────
     # 🔹 Commande SLASH
     # ────────────────────────────────────────────────────────────────────────────
-    @app_commands.command(name="say", description="Le bot répète le message donné.")
+    @app_commands.command(
+        name="say",
+        description="Fait répéter un message par le bot."
+    )
     @app_commands.describe(
-        message="Message à faire répéter",
+        message="Message à répéter",
         embed="Envoyer le message dans un embed"
     )
+    @app_commands.checks.cooldown(1, 5.0, key=lambda i: (i.user.id))
     async def slash_say(self, interaction: discord.Interaction, message: str, embed: bool = False):
-        """Commande slash principale qui fait répéter un message."""
         try:
-            await interaction.response.defer(thinking=False)
             await self._say_message(interaction.channel, message, embed)
-            await interaction.delete_original_response()
+            await safe_respond(interaction, "✅ Message envoyé !", ephemeral=True)
         except Exception as e:
             print(f"[ERREUR /say] {e}")
+            await safe_respond(interaction, "❌ Impossible d’envoyer le message.", ephemeral=True)
 
     # ────────────────────────────────────────────────────────────────────────────
     # 🔹 Commande PREFIX
     # ────────────────────────────────────────────────────────────────────────────
-    @commands.command(name="say")
+    @commands.command(
+        name="say",
+        help="Fait répéter un message par le bot. Utilise `embed` au début pour forcer un embed."
+    )
+    @commands.cooldown(1, 5.0, commands.BucketType.user)
     async def prefix_say(self, ctx: commands.Context, *, message: str):
-        """
-        Commande préfixe qui fait répéter un message.
-        Utilise embed en premier argument pour envoyer dans un embed.
-        """
-        words = message.split(maxsplit=1)
-        if words[0].lower() == "embed":
+        embed = False
+        if message.lower().startswith("embed "):
             embed = True
-            message = words[1] if len(words) > 1 else ""
-        else:
-            embed = False
+            message = message[6:]  # enlever le mot "embed"
 
         try:
             await self._say_message(ctx.channel, message, embed)
+        except Exception as e:
+            print(f"[ERREUR !say] {e}")
+            await safe_send(ctx.channel, "❌ Impossible d’envoyer le message.")
         finally:
-            try:
-                await safe_delete(ctx.message)
-            except Exception as e:
-                print(f"[WARN] safe_delete échoué dans !say : {e}")
+            await safe_delete(ctx.message)
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🔌 Setup du Cog
