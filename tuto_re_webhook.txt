@@ -15,16 +15,9 @@
 
 • Dans Render, va dans **Environment → Environment Variables**
 • Ajoute une variable pour le webhook :
-
-```
-RENDER_REDEPLOY_WEBHOOK=https://api.render.com/deploy/srv-xxxxxx
-```
-
+  RENDER_REDEPLOY_WEBHOOK=https://api.render.com/deploy/srv-xxxxxx
 • Pour vérifier que le service est de nouveau actif après le redeploy, ajoute aussi :
-
-```
-RENDER_SERVICE_API=https://api.render.com/v1/services/srv-xxxxxx
-```
+  RENDER_SERVICE_API=https://api.render.com/v1/services/srv-xxxxxx
 
 > 🔹 **Comment trouver l’URL `RENDER_SERVICE_API`**
 >
