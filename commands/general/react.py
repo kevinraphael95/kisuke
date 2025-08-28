@@ -1,6 +1,6 @@
 # ────────────────────────────────────────────────────────────────────────────────
 # 📌 react.py — Commande interactive /react et !react
-# Objectif : Réagit à un message avec un emoji animé temporaire (3 minutes)
+# Objectif : Réagit à un message avec un ou plusieurs emojis (custom animés ou standards)
 # Catégorie : Général
 # Accès : Public
 # Cooldown : 1 utilisation / 3 sec / utilisateur
@@ -13,13 +13,12 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 from utils.discord_utils import safe_send
-import asyncio
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🧠 Cog principal
 # ────────────────────────────────────────────────────────────────────────────────
 class ReactCommand(commands.Cog):
-    """Commande interactive /react et !react — Réagit à un message avec un emoji animé temporaire"""
+    """Commande interactive /react et !react — Réagit à un message avec des emojis"""
 
     def __init__(self, bot: commands.Bot):
         self.bot = bot
@@ -31,19 +30,11 @@ class ReactCommand(commands.Cog):
         self,
         channel: discord.abc.Messageable,
         guild: discord.Guild,
-        emoji_name: str,
+        emoji_names: list[str],
         reference_message_id: int = None,
         before_time=None,
-        bot_member=None
     ):
-        """Réagit temporairement à un message (référencé ou dernier du salon)."""
-        emoji_name_cleaned = emoji_name.strip(":").lower()
-        emoji = next((e for e in guild.emojis if e.animated and e.name.lower() == emoji_name_cleaned), None)
-
-        if not emoji:
-            await safe_send(channel, f"❌ Emoji animé `:{emoji_name_cleaned}:` introuvable sur ce serveur.", delete_after=5)
-            return
-
+        """Ajoute plusieurs réactions à un message (référencé ou dernier du salon)."""
         target_message = None
         try:
             if reference_message_id:
@@ -57,12 +48,26 @@ class ReactCommand(commands.Cog):
                 await safe_send(channel, "❌ Aucun message valide à réagir.", delete_after=5)
                 return
 
-            await target_message.add_reaction(emoji)
-            print(f"✅ Réaction {emoji} ajoutée à {target_message.id}")
+            # Ajout de toutes les réactions
+            for emoji_name in emoji_names:
+                emoji_name_cleaned = emoji_name.strip()
 
-            await asyncio.sleep(180)  # Retrait après 3 minutes
-            await target_message.remove_reaction(emoji, bot_member)
-            print(f"🔁 Réaction {emoji} retirée de {target_message.id}")
+                # 🎭 Si c'est un emoji custom animé du serveur
+                emoji_lookup = emoji_name_cleaned.strip(":").lower()
+                emoji = next(
+                    (e for e in guild.emojis if e.name.lower() == emoji_lookup),
+                    None
+                )
+
+                try:
+                    if emoji:  # custom
+                        await target_message.add_reaction(emoji)
+                        print(f"✅ Réaction {emoji} ajoutée à {target_message.id}")
+                    else:      # standard unicode
+                        await target_message.add_reaction(emoji_name_cleaned)
+                        print(f"✅ Réaction {emoji_name_cleaned} ajoutée à {target_message.id}")
+                except discord.HTTPException:
+                    await safe_send(channel, f"❌ Impossible d’ajouter `{emoji_name_cleaned}`.", delete_after=5)
 
         except discord.NotFound:
             await safe_send(channel, "❌ Message référencé introuvable.", delete_after=5)
@@ -74,11 +79,11 @@ class ReactCommand(commands.Cog):
     # ────────────────────────────────────────────────────────────────────────────
     @app_commands.command(
         name="react",
-        description="Réagit temporairement avec un emoji animé à un message (réponse ou dernier du salon)."
+        description="Réagit avec un ou plusieurs emojis à un message (réponse ou dernier du salon)."
     )
-    @app_commands.describe(emoji="Nom de l'emoji animé du serveur (sans :)")
+    @app_commands.describe(emojis="Liste d’emojis séparés par des espaces (custom ou standards)")
     @app_commands.checks.cooldown(1, 3.0, key=lambda i: i.user.id)  # Cooldown 3s par utilisateur
-    async def slash_react(self, interaction: discord.Interaction, emoji: str):
+    async def slash_react(self, interaction: discord.Interaction, emojis: str):
         await interaction.response.send_message("✅ Réaction en cours...", ephemeral=True)
 
         try:
@@ -99,14 +104,14 @@ class ReactCommand(commands.Cog):
                 await interaction.edit_original_response(content="❌ Aucun message trouvé.")
                 return
 
+            emoji_list = emojis.split()
             await self._react_to_message(
                 channel=message.channel,
                 guild=interaction.guild,
-                emoji_name=emoji,
+                emoji_names=emoji_list,
                 reference_message_id=message.id,
-                bot_member=interaction.guild.me,
             )
-            await interaction.edit_original_response(content="✅ Réaction ajoutée temporairement.")
+            await interaction.edit_original_response(content="✅ Réactions ajoutées.")
 
         except Exception as e:
             print(f"[ERREUR /react] {e}")
@@ -118,10 +123,10 @@ class ReactCommand(commands.Cog):
     @commands.command(
         name="react",
         aliases=["r"],
-        help="Réagit à un message avec un emoji animé, puis le retire après 3 minutes."
+        help="Réagit à un message avec un ou plusieurs emojis."
     )
     @commands.cooldown(rate=1, per=3, type=commands.BucketType.user)
-    async def prefix_react(self, ctx: commands.Context, emoji_name: str):
+    async def prefix_react(self, ctx: commands.Context, *emoji_names: str):
         try:
             await ctx.message.delete()
         except (discord.Forbidden, discord.HTTPException):
@@ -130,10 +135,9 @@ class ReactCommand(commands.Cog):
         await self._react_to_message(
             channel=ctx.channel,
             guild=ctx.guild,
-            emoji_name=emoji_name,
+            emoji_names=list(emoji_names),
             reference_message_id=ctx.message.reference.message_id if ctx.message.reference else None,
             before_time=ctx.message.created_at,
-            bot_member=ctx.guild.me,
         )
 
 # ────────────────────────────────────────────────────────────────────────────────
