@@ -3,6 +3,7 @@
 # Objectif : Afficher un ou plusieurs emojis du serveur via une commande
 # Catégorie : 🎉 Fun
 # Accès : Public
+# Cooldown : 1 utilisation / 3 sec / utilisateur
 # ────────────────────────────────────────────────────────────────────────────────
 
 # ────────────────────────────────────────────────────────────────────────────────
@@ -11,23 +12,22 @@
 import discord
 from discord import app_commands
 from discord.ext import commands
-from utils.discord_utils import safe_send  # ✅ Utilisation sécurisée
+from utils.discord_utils import safe_send
 
 # ────────────────────────────────────────────────────────────────────────────────
-# 🎛️ Cog principal
+# 🧠 Cog principal
 # ────────────────────────────────────────────────────────────────────────────────
 class EmojiCommand(commands.Cog):
-    """
-    Commande !emoji / !e et /emoji — Affiche un ou plusieurs emojis du serveur.
-    """
+    """Commande !emoji / !e et /emoji — Affiche un ou plusieurs emojis du serveur."""
+
     def __init__(self, bot: commands.Bot):
         self.bot = bot
 
     # ────────────────────────────────────────────────────────────────────────────
-    # 🛠️ Fonctions internes utilitaires
+    # 🔹 Fonctions internes
     # ────────────────────────────────────────────────────────────────────────────
     def _find_emojis(self, emoji_names: tuple[str], guild: discord.Guild):
-        """Retourne deux listes : (trouvés, introuvables)"""
+        """Retourne deux listes : (trouvés, introuvables)."""
         found, not_found = [], []
         for raw_name in emoji_names:
             name = raw_name.lower().strip(":")
@@ -54,10 +54,8 @@ class EmojiCommand(commands.Cog):
         try:
             if emoji_names:
                 found, not_found = self._find_emojis(emoji_names, guild)
-
                 if found:
                     await safe_send(channel, " ".join(found))
-
                 if not_found:
                     await safe_send(channel, f"❌ Emojis introuvables : {', '.join(f'`{n}`' for n in not_found)}")
             else:
@@ -66,13 +64,12 @@ class EmojiCommand(commands.Cog):
                     await safe_send(channel, "❌ Ce serveur n'a aucun emoji animé.")
                     return
                 await self._send_text_paginated(channel, animated_emojis)
-
         except Exception as e:
             print(f"[ERREUR affichage emojis] {e}")
             await safe_send(channel, "❌ Une erreur est survenue lors de l'affichage des emojis.")
 
     # ────────────────────────────────────────────────────────────────────────────
-    # 🔹 Commande PREFIX !emoji / !e
+    # 🔹 Commande PREFIX
     # ────────────────────────────────────────────────────────────────────────────
     @commands.command(
         name="emoji",
@@ -90,7 +87,7 @@ class EmojiCommand(commands.Cog):
         await self._display_emojis(ctx.channel, ctx.guild, emoji_names)
 
     # ────────────────────────────────────────────────────────────────────────────
-    # 🔹 Commande SLASH /emoji avec auto-complétion
+    # 🔹 Commande SLASH
     # ────────────────────────────────────────────────────────────────────────────
     @app_commands.command(name="emoji", description="Affiche un ou plusieurs emojis du serveur.")
     @app_commands.describe(emojis="Noms des emojis à afficher, séparés par des espaces (optionnel)")
@@ -108,10 +105,7 @@ class EmojiCommand(commands.Cog):
     async def autocomplete_emojis(self, interaction: discord.Interaction, current: str):
         """Auto-complétion qui propose les noms d'emojis du serveur."""
         suggestions = [e.name for e in interaction.guild.emojis if e.available]
-        return [
-            app_commands.Choice(name=s, value=s)
-            for s in suggestions if current.lower() in s.lower()
-        ][:25]  # Discord limite à 25 choix
+        return [app_commands.Choice(name=s, value=s) for s in suggestions if current.lower() in s.lower()][:25]
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🔌 Setup du Cog
