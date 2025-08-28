@@ -1,8 +1,9 @@
 # ────────────────────────────────────────────────────────────────────────────────
-# 📌 bmoji.py — Commande interactive !bmoji
+# 📌 bmoji.py — Commande interactive !bmoji + /bmoji
 # Objectif : Deviner quel personnage Bleach se cache derrière un emoji
 # Catégorie : Bleach
 # Accès : Public
+# Cooldown : 1 utilisation / 5s / utilisateur
 # ────────────────────────────────────────────────────────────────────────────────
 
 # ────────────────────────────────────────────────────────────────────────────────
@@ -12,8 +13,7 @@ import discord
 from discord.ext import commands
 from discord import app_commands
 import json, random, os
-
-from utils.discord_utils import safe_send  # pour le préfixe
+from utils.discord_utils import safe_send, safe_respond
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 📂 Chargement des données JSON
@@ -21,8 +21,12 @@ from utils.discord_utils import safe_send  # pour le préfixe
 DATA_JSON_PATH = os.path.join("data", "bleach_emojis.json")
 
 def load_characters():
-    with open(DATA_JSON_PATH, "r", encoding="utf-8") as f:
-        return json.load(f)
+    try:
+        with open(DATA_JSON_PATH, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except Exception as e:
+        print(f"[ERREUR JSON bmoji] {e}")
+        return []
 
 # ────────────────────────────────────────────────────────────────────────────────
 # ⚔️ Fonction commune
@@ -31,18 +35,15 @@ async def _run_bmoji(target):
     try:
         characters = load_characters()
         if not characters:
-            msg = "⚠️ Le fichier d'emojis est vide."
+            msg = "⚠️ Le fichier d'emojis est vide ou introuvable."
             if isinstance(target, discord.Interaction):
-                return await target.response.send_message(msg, ephemeral=True)
-            else:
-                return await safe_send(target.channel, msg)
+                return await safe_respond(target, msg, ephemeral=True)
+            return await safe_send(target.channel, msg)
 
-        # Tirage du perso
-        pers = random.choice(characters)
-        nom = pers["nom"]
-        emojis = random.sample(pers["emojis"], k=min(3, len(pers["emojis"])))
+        perso = random.choice(characters)
+        nom = perso["nom"]
+        emojis = random.sample(perso["emojis"], k=min(3, len(perso["emojis"])))
 
-        # Distracteurs + options
         distracteurs = random.sample([c["nom"] for c in characters if c["nom"] != nom], 3)
         options = distracteurs + [nom]
         random.shuffle(options)
@@ -57,11 +58,10 @@ async def _run_bmoji(target):
             color=discord.Color.light_grey()
         )
         embed.add_field(
-            name=" ".join(emojis),  # <- Les emojis deviennent le titre, donc plus gros
+            name=" ".join(emojis),
             value="\n".join(f"{lettres[i]} : {options[i]}" for i in range(4)),
             inline=False
         )
-
 
         # ─────────────── Boutons ───────────────
         class PersoButton(discord.ui.Button):
@@ -70,16 +70,18 @@ async def _run_bmoji(target):
                 self.idx = idx
 
             async def callback(self, inter_button):
+                user_ok = False
                 if isinstance(target, discord.Interaction):
-                    if inter_button.user != target.user:
-                        return await inter_button.response.send_message("❌ Ce défi ne t'est pas destiné.", ephemeral=True)
+                    user_ok = inter_button.user == target.user
                 else:
-                    if inter_button.user != target.author:
-                        return await inter_button.response.send_message("❌ Ce défi ne t'est pas destiné.", ephemeral=True)
+                    user_ok = inter_button.user == target.author
 
-                await inter_button.response.defer()
+                if not user_ok:
+                    return await safe_respond(inter_button, "❌ Ce défi ne t'est pas destiné.", ephemeral=True)
+
                 view.success = (lettres[self.idx] == bonne)
                 view.stop()
+                await inter_button.response.defer()
 
         view = discord.ui.View(timeout=30)
         for i in range(4):
@@ -97,27 +99,19 @@ async def _run_bmoji(target):
         await view.wait()
 
         # ─────────────── Résultat ───────────────
-        result_msg = "✅ Bonne réponse" if view.success else f"❌ Mauvaise réponse (c'était {nom})"
+        result_msg = "✅ Bonne réponse !" if view.success else f"❌ Mauvaise réponse (c'était {nom})"
         if isinstance(target, discord.Interaction):
             await target.followup.send(result_msg)
         else:
             await safe_send(target.channel, result_msg)
 
-    except FileNotFoundError:
-        err = "❌ Fichier `bleach_emojis.json` introuvable."
-        if isinstance(target, discord.Interaction):
-            await target.response.send_message(err, ephemeral=True)
-        else:
-            await safe_send(target.channel, err)
-
     except Exception as e:
         print(f"[ERREUR bmoji] {e}")
         err = "⚠️ Une erreur est survenue."
         if isinstance(target, discord.Interaction):
-            await target.response.send_message(err, ephemeral=True)
+            await safe_respond(target, err, ephemeral=True)
         else:
             await safe_send(target.channel, err)
-
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🧠 Cog principal
@@ -134,9 +128,9 @@ class BMojiCommand(commands.Cog):
 
     # Slash
     @app_commands.command(name="bmoji", description="Devine quel personnage Bleach se cache derrière ces emojis.")
+    @app_commands.checks.cooldown(1, 5.0, key=lambda i: i.user.id)
     async def bmoji_slash(self, interaction: discord.Interaction):
         await _run_bmoji(interaction)
-
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🔌 Setup du Cog
