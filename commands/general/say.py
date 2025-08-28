@@ -27,37 +27,36 @@ class Say(commands.Cog):
     # ────────────────────────────────────────────────────────────────────────────
     # 🔹 Fonction interne
     # ────────────────────────────────────────────────────────────────────────────
-	async def _say_message(self, channel: discord.abc.Messageable, message: str, embed: bool = False):
-		"""Envoie un message formaté avec tous les emojis custom remplacés efficacement."""
-		message = (message or "").strip()
-		if not message:
-			return await safe_send(channel, "⚠️ Message vide.")
+    async def _say_message(self, channel: discord.abc.Messageable, message: str, embed: bool = False):
+        """Envoie un message formaté avec tous les emojis custom remplacés efficacement."""
+        message = (message or "").strip()
+        if not message:
+            return await safe_send(channel, "⚠️ Message vide.")
 
-		pattern = r":([a-zA-Z0-9_]+):"
-		
-		if hasattr(channel, "guild"):  # On est dans un serveur
-			guild_emojis = {e.name: str(e) for e in channel.guild.emojis}  # dictionnaire pour accès rapide
+        pattern = r":([a-zA-Z0-9_]+):"
+        
+        if hasattr(channel, "guild"):  # On est dans un serveur
+            guild_emojis = {e.name: str(e) for e in channel.guild.emojis}  # dictionnaire pour accès rapide
 
-			def replace_emoji(match):
-				name = match.group(1)
-				return guild_emojis.get(name, match.group(0))  # garde le texte si emoji non trouvé
+            def replace_emoji(match):
+                name = match.group(1)
+                return guild_emojis.get(name, match.group(0))  # garde le texte si emoji non trouvé
 
-			message = re.sub(pattern, replace_emoji, message)
+            message = re.sub(pattern, replace_emoji, message)
 
-		# ✂️ Limite de caractères Discord
-		if len(message) > 2000:
-			message = message[:1997] + "..."
+        # ✂️ Limite de caractères Discord
+        if len(message) > 2000:
+            message = message[:1997] + "..."
 
-		# 📤 Envoi final
-		if embed:
-			embed_obj = discord.Embed(
-				description=message,
-				color=discord.Color.blurple()
-			)
-			await safe_send(channel, embed=embed_obj, allowed_mentions=discord.AllowedMentions.none())
-		else:
-			await safe_send(channel, message, allowed_mentions=discord.AllowedMentions.none())
-
+        # 📤 Envoi final
+        if embed:
+            embed_obj = discord.Embed(
+                description=message,
+                color=discord.Color.blurple()
+            )
+            await safe_send(channel, embed=embed_obj, allowed_mentions=discord.AllowedMentions.none())
+        else:
+            await safe_send(channel, message, allowed_mentions=discord.AllowedMentions.none())
 
 
     # ────────────────────────────────────────────────────────────────────────────
