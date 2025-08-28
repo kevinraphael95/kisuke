@@ -1,7 +1,7 @@
 # ────────────────────────────────────────────────────────────────────────────────
-# 📌 mastermind2.py — Commande interactive !mastermind2
-# Objectif : Jeu de logique Mastermind via des boutons Discord
-# Catégorie : Jeux / Fun
+# 📌 mastermind2.py — Commande interactive !mastermind /mastermind
+# Objectif : Jeu de logique Mastermind via boutons Discord avec difficulté et corruption
+# Catégorie : Fun
 # Accès : Public
 # Cooldown : 1 utilisation / 10 secondes / utilisateur
 # ────────────────────────────────────────────────────────────────────────────────
@@ -10,6 +10,7 @@
 # 📦 Imports nécessaires
 # ────────────────────────────────────────────────────────────────────────────────
 import discord
+from discord import app_commands
 from discord.ext import commands
 from discord.ui import View, Button
 import random
@@ -21,10 +22,9 @@ from utils.discord_utils import safe_send, safe_edit, safe_respond
 COLORS = ["🟥", "🟦", "🟩", "🟨", "🟪", "🟧"]
 
 # ────────────────────────────────────────────────────────────────────────────────
-# 🧩 Vue principale du jeu Mastermind2
+# 🧩 Vue principale du jeu Mastermind
 # ────────────────────────────────────────────────────────────────────────────────
-class Mastermind2View(View):
-    """Vue interactive du Mastermind2 avec boutons de couleur, validation et effacement."""
+class MastermindView(View):
     def __init__(self, author: discord.User, code_length: int, corruption: bool):
         super().__init__(timeout=180)
         self.author = author
@@ -46,8 +46,8 @@ class Mastermind2View(View):
         embed = discord.Embed(
             title="🎯 Mastermind — Trouve la combinaison !",
             description=(
-                "🔴 : bonne couleur, bonne position\n"
-                "⚪ : bonne couleur, mauvaise position\n"
+                "🔴 : bonne couleur et bonne position\n"
+                "⚪ : bonne couleur mais mauvaise position\n"
                 "❌ : couleur absente"
             ),
             color=discord.Color.blue()
@@ -120,7 +120,10 @@ class Mastermind2View(View):
             return
 
         await self.update_message()
-        await interaction.response.defer()
+        try:
+            await interaction.response.defer()
+        except discord.InteractionResponded:
+            pass
 
     async def show_result(self, interaction: discord.Interaction, win: bool):
         self.stop()
@@ -129,14 +132,16 @@ class Mastermind2View(View):
             description=f"La combinaison était : {' '.join(self.code)}",
             color=discord.Color.green() if win else discord.Color.red()
         )
-        await interaction.response.defer()
-        await interaction.followup.send(embed=embed, ephemeral=False)
+        try:
+            await interaction.response.edit_message(embed=embed, view=None)
+        except discord.InteractionResponded:
+            await interaction.edit_original_response(embed=embed, view=None)
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🔵 Boutons interactifs
 # ────────────────────────────────────────────────────────────────────────────────
 class ColorButton(Button):
-    def __init__(self, color: str, view_ref: Mastermind2View):
+    def __init__(self, color: str, view_ref: MastermindView):
         super().__init__(style=discord.ButtonStyle.secondary, emoji=color)
         self.color = color
         self.view_ref = view_ref
@@ -148,10 +153,13 @@ class ColorButton(Button):
             return await safe_respond(interaction, "❗ Nombre de couleurs atteint.", ephemeral=True)
         self.view_ref.current_guess.append(self.color)
         await self.view_ref.update_message()
-        await interaction.response.defer()
+        try:
+            await interaction.response.defer()
+        except discord.InteractionResponded:
+            pass
 
 class ClearButton(Button):
-    def __init__(self, view_ref: Mastermind2View):
+    def __init__(self, view_ref: MastermindView):
         super().__init__(emoji="🗑️", style=discord.ButtonStyle.danger)
         self.view_ref = view_ref
 
@@ -160,10 +168,13 @@ class ClearButton(Button):
             return await safe_respond(interaction, "⛔ Ce jeu ne t'appartient pas.", ephemeral=True)
         self.view_ref.current_guess.clear()
         await self.view_ref.update_message()
-        await interaction.response.defer()
+        try:
+            await interaction.response.defer()
+        except discord.InteractionResponded:
+            pass
 
 class ValidateButton(Button):
-    def __init__(self, view_ref: Mastermind2View):
+    def __init__(self, view_ref: MastermindView):
         super().__init__(emoji="✅", style=discord.ButtonStyle.success)
         self.view_ref = view_ref
 
@@ -195,7 +206,7 @@ class DifficultyButton(Button):
     async def callback(self, interaction: discord.Interaction):
         if interaction.user != self.view.author:
             return await safe_respond(interaction, "⛔ Ce menu ne t'appartient pas.", ephemeral=True)
-        view = Mastermind2View(interaction.user, self.code_length, self.corruption)
+        view = MastermindView(interaction.user, self.code_length, self.corruption)
         embed = view.build_embed()
         await interaction.response.edit_message(embed=embed, view=view)
         view.message = interaction.message
@@ -203,7 +214,7 @@ class DifficultyButton(Button):
 # ────────────────────────────────────────────────────────────────────────────────
 # 🧠 Cog principal
 # ────────────────────────────────────────────────────────────────────────────────
-class Mastermind2(commands.Cog):
+class Mastermind(commands.Cog):
     """Mastermind interactif avec commandes prefix et slash."""
 
     def __init__(self, bot: commands.Bot):
@@ -221,7 +232,7 @@ class Mastermind2(commands.Cog):
             description="Clique sur un bouton ci-dessous :",
             color=discord.Color.orange()
         )
-        await safe_send(ctx, embed=embed, view=view)
+        await safe_send(ctx.channel, embed=embed, view=view)
 
     # ────────────────────────────────────────────────────────────────────────────
     # 🔹 Commande SLASH
@@ -230,7 +241,7 @@ class Mastermind2(commands.Cog):
         name="mastermind",
         description="Jouer au Mastermind interactif."
     )
-    @app_commands.checks.cooldown(1, 10.0, key=lambda i: i.user.id)  # Cooldown 10 secondes par utilisateur
+    @app_commands.checks.cooldown(1, 10.0, key=lambda i: i.user.id)
     async def slash_mastermind(self, interaction: discord.Interaction):
         view = DifficultyView(interaction.user)
         embed = discord.Embed(
@@ -238,16 +249,13 @@ class Mastermind2(commands.Cog):
             description="Clique sur un bouton ci-dessous :",
             color=discord.Color.orange()
         )
-        await safe_send(interaction.channel, embed=embed, view=view)
-        await safe_respond(interaction, "✅ Mastermind lancé !", ephemeral=True)
-
-
+        await interaction.response.send_message(embed=embed, view=view)
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🔌 Setup du Cog
 # ────────────────────────────────────────────────────────────────────────────────
 async def setup(bot: commands.Bot):
-    cog = Mastermind2(bot)
+    cog = Mastermind(bot)
     for command in cog.get_commands():
         if not hasattr(command, "category"):
             command.category = "Fun"
