@@ -93,7 +93,7 @@ class RedemarrageCommand(commands.Cog):
                     return
 
                 # Polling du service
-                max_checks = 30
+                max_checks = 100
                 for i in range(max_checks):
                     async with session.get(self.render_service_api) as status_resp:
                         if status_resp.status == 200:
