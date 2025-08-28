@@ -19,11 +19,11 @@
 • Pour vérifier que le service est de nouveau actif après le redeploy, ajoute aussi :
   RENDER_SERVICE_API=https://api.render.com/v1/services/srv-xxxxxx
 
-> 🔹 **Comment trouver l’URL `RENDER_SERVICE_API`**
->
-> * Va dans ton service sur Render → **Settings** ou **Service Details**
-> * Repère l’ID du service (`srv-xxxxxx`)
-> * Combine-le avec `https://api.render.com/v1/services/` → tu obtiens l’URL complète
+**Comment trouver l’URL `RENDER_SERVICE_API`**
+
+* Va dans ton service sur Render → **Settings** ou **Service Details**
+* Repère l’ID du service (`srv-xxxxxx`)
+* Combine-le avec `https://api.render.com/v1/services/` → tu obtiens l’URL complète
 
 • Sauvegarde et redeploy ton bot une dernière fois pour que les variables soient prises en compte
 
