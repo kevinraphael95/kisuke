@@ -204,19 +204,44 @@ class DifficultyButton(Button):
 # 🧠 Cog principal
 # ────────────────────────────────────────────────────────────────────────────────
 class Mastermind2(commands.Cog):
+    """Mastermind interactif avec commandes prefix et slash."""
+
     def __init__(self, bot: commands.Bot):
         self.bot = bot
 
-    @commands.command(name="mastermind2", aliases=["mm2"], help="Jouer au Mastermind interactif.")
+    # ────────────────────────────────────────────────────────────────────────────
+    # 🔹 Commande PREFIX
+    # ────────────────────────────────────────────────────────────────────────────
+    @commands.command(name="mastermind", aliases=["mm"], help="Jouer au Mastermind interactif.")
     @commands.cooldown(1, 10, commands.BucketType.user)
-    async def mastermind2(self, ctx: commands.Context):
+    async def prefix_mastermind(self, ctx: commands.Context):
         view = DifficultyView(ctx.author)
         embed = discord.Embed(
-            title="🎮 Choisis la difficulté du Mastermind2",
+            title="🎮 Choisis la difficulté du Mastermind",
             description="Clique sur un bouton ci-dessous :",
             color=discord.Color.orange()
         )
         await safe_send(ctx, embed=embed, view=view)
+
+    # ────────────────────────────────────────────────────────────────────────────
+    # 🔹 Commande SLASH
+    # ────────────────────────────────────────────────────────────────────────────
+    @app_commands.command(
+        name="mastermind",
+        description="Jouer au Mastermind interactif."
+    )
+    @app_commands.checks.cooldown(1, 10.0, key=lambda i: i.user.id)  # Cooldown 10 secondes par utilisateur
+    async def slash_mastermind(self, interaction: discord.Interaction):
+        view = DifficultyView(interaction.user)
+        embed = discord.Embed(
+            title="🎮 Choisis la difficulté du Mastermind",
+            description="Clique sur un bouton ci-dessous :",
+            color=discord.Color.orange()
+        )
+        await safe_send(interaction.channel, embed=embed, view=view)
+        await safe_respond(interaction, "✅ Mastermind lancé !", ephemeral=True)
+
+
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🔌 Setup du Cog
