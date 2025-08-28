@@ -3,6 +3,7 @@
 # Objectif : Gérer tout le heartbeat via une seule commande
 # Catégorie : Heartbeat
 # Accès : Modérateur (permission admin requise)
+# Cooldown : 1 utilisation / 5 secondes / utilisateur
 # ────────────────────────────────────────────────────────────────────────────────
 
 # ────────────────────────────────────────────────────────────────────────────────
@@ -16,10 +17,16 @@ from utils.discord_utils import safe_send
 # 🧠 Cog principal
 # ────────────────────────────────────────────────────────────────────────────────
 class HeartbeatAdmin(commands.Cog):
+    """
+    Commande !heartbeat — Gère le heartbeat automatique (pause, relance, statut, salon).
+    """
     def __init__(self, bot: commands.Bot):
         self.bot = bot
         self.supabase = bot.supabase
 
+    # ────────────────────────────────────────────────────────────────────────────
+    # 🔹 Commande PREFIX
+    # ────────────────────────────────────────────────────────────────────────────
     @commands.command(
         name="heartbeat",
         aliases=["hb"],
@@ -29,8 +36,9 @@ class HeartbeatAdmin(commands.Cog):
     @commands.has_permissions(administrator=True)
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def heartbeat(self, ctx: commands.Context, action: str = None, channel: discord.TextChannel = None):
+        """Commande préfixe pour gérer le heartbeat."""
         try:
-            if action is None:
+            if not action:
                 await safe_send(ctx, "❓ Utilisation : `!heartbeat pause|resume|status|set <#salon>|unset`")
                 return
 
@@ -57,7 +65,7 @@ class HeartbeatAdmin(commands.Cog):
                 await safe_send(ctx, status_msg)
 
             elif action == "set":
-                if channel is None:
+                if not channel:
                     await safe_send(ctx, "❌ Tu dois mentionner un salon. Exemple : `!heartbeat set #général`")
                     return
                 self.supabase.table("bot_settings").upsert({
@@ -82,6 +90,8 @@ class HeartbeatAdmin(commands.Cog):
             else:
                 await safe_send(ctx, "❌ Action inconnue. Utilise `pause`, `resume`, `status`, `set`, ou `unset`.")
 
+        except commands.CommandOnCooldown as e:
+            await safe_send(ctx, f"⏳ Attends encore {e.retry_after:.1f}s avant de réutiliser cette commande.")
         except Exception as e:
             print(f"[heartbeat:{action}] Erreur : {e}")
             await safe_send(ctx, "❌ Une erreur est survenue lors de l'action heartbeat.")
