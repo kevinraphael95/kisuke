@@ -27,34 +27,38 @@ class Say(commands.Cog):
     # ────────────────────────────────────────────────────────────────────────────
     # 🔹 Fonction interne
     # ────────────────────────────────────────────────────────────────────────────
-    async def _say_message(self, channel: discord.abc.Messageable, message: str, embed: bool = False):
-        """Envoie un message formaté (texte ou embed)."""
-        message = (message or "").strip()
-        if not message:
-            return await safe_send(channel, "⚠️ Message vide.")
+	async def _say_message(self, channel: discord.abc.Messageable, message: str, embed: bool = False):
+		"""Envoie un message formaté avec tous les emojis custom remplacés efficacement."""
+		message = (message or "").strip()
+		if not message:
+			return await safe_send(channel, "⚠️ Message vide.")
 
-        # 🔄 Remplacer :emoji: par l’emoji custom si trouvé
-        pattern = r":([a-zA-Z0-9_]+):"
-        if hasattr(channel, "guild"):  # vérifie qu’on est bien dans un serveur
-            for match in re.finditer(pattern, message):
-                name = match.group(1)
-                emoji = discord.utils.get(channel.guild.emojis, name=name)
-                if emoji:
-                    message = message.replace(f":{name}:", str(emoji))
+		pattern = r":([a-zA-Z0-9_]+):"
+		
+		if hasattr(channel, "guild"):  # On est dans un serveur
+			guild_emojis = {e.name: str(e) for e in channel.guild.emojis}  # dictionnaire pour accès rapide
 
-        # ✂️ Limite de caractères Discord
-        if len(message) > 2000:
-            message = message[:1997] + "..."
+			def replace_emoji(match):
+				name = match.group(1)
+				return guild_emojis.get(name, match.group(0))  # garde le texte si emoji non trouvé
 
-        # 📤 Envoi final
-        if embed:
-            embed_obj = discord.Embed(
-                description=message,
-                color=discord.Color.blurple()
-            )
-            await safe_send(channel, embed=embed_obj, allowed_mentions=discord.AllowedMentions.none())
-        else:
-            await safe_send(channel, message, allowed_mentions=discord.AllowedMentions.none())
+			message = re.sub(pattern, replace_emoji, message)
+
+		# ✂️ Limite de caractères Discord
+		if len(message) > 2000:
+			message = message[:1997] + "..."
+
+		# 📤 Envoi final
+		if embed:
+			embed_obj = discord.Embed(
+				description=message,
+				color=discord.Color.blurple()
+			)
+			await safe_send(channel, embed=embed_obj, allowed_mentions=discord.AllowedMentions.none())
+		else:
+			await safe_send(channel, message, allowed_mentions=discord.AllowedMentions.none())
+
+
 
     # ────────────────────────────────────────────────────────────────────────────
     # 🔹 Commande SLASH
