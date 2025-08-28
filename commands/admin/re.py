@@ -101,7 +101,7 @@ class RedemarrageCommand(commands.Cog):
                             return
                     await asyncio.sleep(5)  # attendre 5s avant le prochain check
 
-                await safe_send(channel, "⚠️ Timeout : le bot ne semble pas être redeployé après 2min.")
+                await safe_send(channel, "⚠️ Timeout : le bot ne semble pas être redeployé dans les temps attendu.")
 
         except Exception as e:
             print(f"[REDEPLOY] Erreur : {e}")
