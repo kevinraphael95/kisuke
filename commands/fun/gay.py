@@ -1,8 +1,9 @@
 # ────────────────────────────────────────────────────────────────────────────────
-# 📌 gay.py — Commande interactive !gay + /gay
+# 📌 gay.py — Commande simple /gay et !gay
 # Objectif : Calcule un taux de gaytitude fixe et fun pour un utilisateur Discord
 # Catégorie : 🌈 Fun
-# Accès : Public
+# Accès : Tous
+# Cooldown : 1 utilisation / 3 secondes / utilisateur
 # ────────────────────────────────────────────────────────────────────────────────
 
 # ────────────────────────────────────────────────────────────────────────────────
@@ -13,15 +14,15 @@ from discord import app_commands
 from discord.ext import commands
 import hashlib
 import random
-from utils.discord_utils import safe_send, safe_respond  # ✅ Cohérent avec couleur.py
+from utils.discord_utils import safe_send, safe_respond
 
 # ────────────────────────────────────────────────────────────────────────────────
-# 🧠 Fonction commune pour calculer le score et créer l'embed
+# 🧠 Fonction utilitaire pour calculer le score et générer l'embed
 # ────────────────────────────────────────────────────────────────────────────────
 def calculer_gaytitude_embed(member: discord.Member) -> discord.Embed:
     user_id = str(member.id).encode()
     hash_val = hashlib.md5(user_id).digest()
-    score = int.from_bytes(hash_val, 'big') % 101
+    score = int.from_bytes(hash_val, "big") % 101
 
     filled = "█" * (score // 10)
     empty = "░" * (10 - (score // 10))
@@ -63,10 +64,7 @@ def calculer_gaytitude_embed(member: discord.Member) -> discord.Embed:
         description=commentaire,
         color=niveau["couleur"]
     )
-    embed.set_author(
-        name=f"Taux de gaytitude de {member.display_name}",
-        icon_url=member.display_avatar.url
-    )
+    embed.set_author(name=f"Taux de gaytitude de {member.display_name}", icon_url=member.display_avatar.url)
     embed.add_field(name="📊 Pourcentage", value=f"**{score}%**", inline=True)
     embed.add_field(name="📈 Niveau", value=bar, inline=False)
     embed.set_footer(text="✨ C’est scientifique. Enfin presque.")
@@ -74,10 +72,10 @@ def calculer_gaytitude_embed(member: discord.Member) -> discord.Embed:
     return embed
 
 # ────────────────────────────────────────────────────────────────────────────────
-# 🧠 Cog principal avec commande préfixe + slash
+# 🧠 Cog principal
 # ────────────────────────────────────────────────────────────────────────────────
 class GayCommand(commands.Cog):
-    """Commande !gay et /gay — Calcule un taux de gaytitude fixe et fun."""
+    """Commande /gay et !gay — Calcule un taux de gaytitude fixe et fun."""
 
     def __init__(self, bot: commands.Bot):
         self.bot = bot
@@ -87,15 +85,18 @@ class GayCommand(commands.Cog):
     # ────────────────────────────────────────────────────────────────────────────
     @app_commands.command(
         name="gay",
-        description="🌈 Calcule ton taux de gaytitude fixe et fun."
+        description="🌈 Calcule ton taux de gaytitude."
     )
+    @app_commands.checks.cooldown(1, 3.0, key=lambda i: i.user.id)  # Cooldown 3s par utilisateur
     @app_commands.describe(member="Utilisateur pour qui calculer la gaytitude (optionnel)")
     async def slash_gay(self, interaction: discord.Interaction, member: discord.Member = None):
         try:
             member = member or interaction.user
             embed = calculer_gaytitude_embed(member)
             embed.timestamp = interaction.created_at
-            await safe_send(interaction, embed=embed)  # ✅ cohérent avec safe_send
+            await safe_respond(interaction, embed=embed)
+        except app_commands.CommandOnCooldown as e:
+            await safe_respond(interaction, f"⏳ Attends encore {e.retry_after:.1f}s.", ephemeral=True)
         except Exception as e:
             print(f"[ERREUR /gay] {e}")
             await safe_respond(interaction, "❌ Une erreur est survenue.", ephemeral=True)
@@ -105,15 +106,17 @@ class GayCommand(commands.Cog):
     # ────────────────────────────────────────────────────────────────────────────
     @commands.command(
         name="gay",
-        help="🌈 Calcule ton taux de gaytitude fixe et fun."
+        help="🌈 Calcule ton taux de gaytitude."
     )
-    @commands.cooldown(rate=1, per=3, type=commands.BucketType.user)
+    @commands.cooldown(1, 3, commands.BucketType.user)  # Cooldown 3s par utilisateur
     async def prefix_gay(self, ctx: commands.Context, member: discord.Member = None):
         try:
             member = member or ctx.author
             embed = calculer_gaytitude_embed(member)
             embed.timestamp = ctx.message.created_at
             await safe_send(ctx, embed=embed)
+        except commands.CommandOnCooldown as e:
+            await safe_send(ctx, f"⏳ Attends encore {e.retry_after:.1f}s.")
         except Exception as e:
             print(f"[ERREUR !gay] {e}")
             await safe_send(ctx, "❌ Une erreur est survenue.")
