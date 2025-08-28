@@ -1,6 +1,6 @@
 # ────────────────────────────────────────────────────────────────────────────────
 # 📌 redemarrage_command.py — Commande simple /re et !re
-# Objectif : Prévenir les membres et redémarrer le bot sur Render (plan gratuit, auto-deploy off)
+# Objectif : Prévenir les membres et déclencher un redeploy Render via webhook
 # Catégorie : ⚙️ Admin
 # Accès : Administrateur
 # Cooldown : 1 utilisation / 5 secondes / utilisateur
@@ -12,33 +12,33 @@
 import discord
 from discord import app_commands
 from discord.ext import commands
-from utils.discord_utils import safe_send, safe_respond  # ✅ Anti 429
+from utils.discord_utils import safe_send, safe_respond
+import aiohttp
 import os
-import sys
-import asyncio
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🧠 Cog principal
 # ────────────────────────────────────────────────────────────────────────────────
 class RedemarrageCommand(commands.Cog):
     """
-    Commande /re et !re — Préviens les membres et redémarre le bot.
+    Commande /re et !re — Préviens les membres et déclenche un redeploy sur Render.
     """
     def __init__(self, bot: commands.Bot):
         self.bot = bot
+        self.render_webhook = os.getenv("RENDER_REDEPLOY_WEBHOOK")  # URL du webhook GitHub → Render
 
     # ────────────────────────────────────────────────────────────────────────────
     # 🔹 Commande SLASH
     # ────────────────────────────────────────────────────────────────────────────
     @app_commands.command(
         name="re",
-        description="(Admin) Préviens les membres et redémarre le bot."
+        description="(Admin) Préviens les membres et redémarre le bot via Render."
     )
     @app_commands.checks.cooldown(1, 5.0, key=lambda i: i.user.id)
     async def slash_re(self, interaction: discord.Interaction):
         try:
             await interaction.response.defer(ephemeral=True)
-            await self._restart_bot(interaction.channel)
+            await self._trigger_restart(interaction.channel)
         except app_commands.CommandOnCooldown as e:
             await safe_respond(interaction, f"⏳ Attends encore {e.retry_after:.1f}s.", ephemeral=True)
         except Exception as e:
@@ -50,32 +50,42 @@ class RedemarrageCommand(commands.Cog):
     # ────────────────────────────────────────────────────────────────────────────
     @commands.command(
         name="re",
-        help="(Admin) Préviens les membres et redémarre le bot.",
-        description="Commande préfixe pour annoncer et relancer le bot."
+        help="(Admin) Préviens les membres et redémarre le bot via Render.",
+        description="Commande préfixe pour annoncer et déclencher le redeploy."
     )
     @commands.has_permissions(administrator=True)
     @commands.cooldown(1, 5, commands.BucketType.user)
     async def prefix_re(self, ctx: commands.Context):
-        await self._restart_bot(ctx.channel)
+        await self._trigger_restart(ctx.channel)
 
     # ────────────────────────────────────────────────────────────────────────────
-    # 🔹 Fonction interne de redémarrage
+    # 🔹 Fonction interne de redeploy
     # ────────────────────────────────────────────────────────────────────────────
-    async def _restart_bot(self, channel: discord.abc.Messageable):
-        """Annonce le redémarrage et relance le bot."""
+    async def _trigger_restart(self, channel: discord.abc.Messageable):
+        """Annonce le redémarrage et déclenche le redeploy Render via webhook."""
         try:
+            # Préviens les membres
             embed = discord.Embed(
                 title="🔃 Redémarrage",
                 description="Le bot va redémarrer sous peu...",
                 color=discord.Color.red()
             )
             await safe_send(channel, embed=embed)
-            await asyncio.sleep(1)  # petit délai pour s'assurer que le message passe
-            await self.bot.close()
-            os.execv(sys.executable, ["python"] + sys.argv)
+
+            # Déclenche le redeploy via webhook
+            if not self.render_webhook:
+                await safe_send(channel, "⚠️ Webhook Render non configuré.")
+                return
+
+            async with aiohttp.ClientSession() as session:
+                async with session.post(self.render_webhook) as resp:
+                    if resp.status == 200 or resp.status == 201:
+                        await safe_send(channel, "✅ Redeploy demandé avec succès sur Render !")
+                    else:
+                        await safe_send(channel, f"❌ Échec du redeploy. Code HTTP : {resp.status}")
         except Exception as e:
-            print(f"[RESTART] Erreur lors du redémarrage : {e}")
-            await safe_send(channel, f"❌ Impossible de redémarrer le bot : `{e}`")
+            print(f"[REDEPLOY] Erreur : {e}")
+            await safe_send(channel, f"❌ Une erreur est survenue lors du redeploy : `{e}`")
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🔌 Setup du Cog
