@@ -1,24 +1,28 @@
 # ────────────────────────────────────────────────────────────────
-# 💘 SHIP - COMPATIBILITÉ BLEACH ENTRE DEUX ÂMES
+# 📌 ship.py — Commande interactive /ship et !ship
+# Objectif : Tester la compatibilité entre deux personnages de Bleach
+# Catégorie : Bleach
+# Accès : Public
+# Cooldown : 1 utilisation / 3 secondes / utilisateur
 # ────────────────────────────────────────────────────────────────
 
-# ──────────────────────────────────────────────────────────────
-# 📦 IMPORTS
-# ──────────────────────────────────────────────────────────────
+# ────────────────────────────────────────────────────────────────
+# 📦 Imports nécessaires
+# ────────────────────────────────────────────────────────────────
 import discord
+from discord import app_commands
 from discord.ext import commands
 from discord.ui import View, button
 import json
 import hashlib
 import random
-import asyncio  # nécessaire pour les animations
+import asyncio
 
-# Import des fonctions sécurisées pour éviter le rate-limit 429
 from utils.discord_utils import safe_send, safe_edit, safe_respond
 
-# ──────────────────────────────────────────────────────────────
-# 🧮 FONCTION : Calcul du score de compatibilité
-# ──────────────────────────────────────────────────────────────
+# ────────────────────────────────────────────────────────────────
+# 🧮 Fonction : Calcul du score de compatibilité
+# ────────────────────────────────────────────────────────────────
 def calculer_score(p1, p2):
     noms_ordonnes = sorted([p1["nom"], p2["nom"]])
     clef = f"{noms_ordonnes[0]}+{noms_ordonnes[1]}"
@@ -46,9 +50,9 @@ def calculer_score(p1, p2):
 
     return max(0, min(score, 100))
 
-# ──────────────────────────────────────────────────────────────
-# 🎛️ VUE INTERACTIVE : Bouton Nouveau Ship
-# ──────────────────────────────────────────────────────────────
+# ────────────────────────────────────────────────────────────────
+# 🎛️ Vue interactive : Bouton Nouveau Ship
+# ────────────────────────────────────────────────────────────────
 class ShipView(View):
     def __init__(self, persos, message=None):
         super().__init__(timeout=60)
@@ -67,6 +71,9 @@ class ShipView(View):
     @button(label="💘 Nouveau ship", style=discord.ButtonStyle.blurple)
     async def nouveau_ship(self, interaction: discord.Interaction, button: discord.ui.Button):
         p1, p2 = random.sample(self.persos, 2)
+        await self._send_result(interaction, p1, p2)
+
+    async def _send_result(self, interaction, p1, p2):
         score = calculer_score(p1, p2)
 
         if score >= 90:
@@ -100,27 +107,23 @@ class ShipView(View):
 
         await interaction.response.edit_message(embed=embed, view=self)
 
-# ────────────────────────────────────────────────
-# 💞 COMMANDE : !ship
-# Tire au sort deux personnages et mesure leur compatibilité
-# Basée sur genre, race et statistiques
-# ────────────────────────────────────────────────
+# ────────────────────────────────────────────────────────────────
+# 🧠 Cog principal
+# ────────────────────────────────────────────────────────────────
 class ShipCommand(commands.Cog):
+    """
+    Commande /ship et !ship — Tire au sort deux personnages de Bleach et calcule leur compatibilité
+    """
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command(
-        name="ship",
-        help="💘 Teste la compatibilité entre deux personnages de Bleach."
-    )
-    @commands.cooldown(rate=1, per=3, type=commands.BucketType.user)
-    async def ship(self, ctx):
+    async def _send_ship(self, channel: discord.abc.Messageable, user=None):
         try:
             with open("data/bleach_personnages.json", "r", encoding="utf-8") as f:
                 persos = json.load(f)
 
             if len(persos) < 2:
-                await safe_send(ctx.channel, "❌ Il faut au moins **deux personnages** pour créer une romance.")
+                await safe_send(channel, "❌ Il faut au moins **deux personnages** pour créer une romance.")
                 return
 
             p1, p2 = random.sample(persos, 2)
@@ -142,8 +145,9 @@ class ShipCommand(commands.Cog):
                 reaction = "aucune chance... ils sont de mondes opposés 💔"
                 color = discord.Color.blue()
 
+            # Animation d'analyse
             barre = ["⏳", "💞"]
-            loading_msg = await safe_send(ctx.channel, "Analyse en cours... " + barre[0])
+            loading_msg = await safe_send(channel, "Analyse en cours... " + barre[0])
             for emoji in barre[1:]:
                 await asyncio.sleep(1)
                 await safe_edit(loading_msg, content=f"Analyse en cours... {emoji}")
@@ -164,18 +168,54 @@ class ShipCommand(commands.Cog):
 
             view = ShipView(persos)
             message = await safe_edit(loading_msg, content=None, embed=embed, view=view)
-            view.message = message  # Permet de gérer le timeout
+            view.message = message
 
         except FileNotFoundError:
-            await safe_send(ctx.channel, "❌ Le fichier `bleach_personnages.json` est introuvable. Impossible de procéder au *shipping*.")
+            await safe_send(channel, "❌ Le fichier `bleach_personnages.json` est introuvable. Impossible de procéder au *shipping*.")
         except Exception as e:
-            await safe_send(ctx.channel, f"⚠️ Une erreur est survenue : `{e}`")
+            await safe_send(channel, f"⚠️ Une erreur est survenue : `{e}`")
 
-# ────────────────────────────────────────────────
-# 🔌 Chargement automatique du cog
-# ────────────────────────────────────────────────
-async def setup(bot):
+    # ──────────────────────────────────────────────────────────
+    # 🔹 Commande SLASH
+    # ──────────────────────────────────────────────────────────
+    @app_commands.command(
+        name="ship",
+        description="💘 Teste la compatibilité entre deux personnages de Bleach."
+    )
+    @app_commands.checks.cooldown(1, 3.0, key=lambda i: i.user.id)
+    async def slash_ship(self, interaction: discord.Interaction):
+        try:
+            await interaction.response.defer()
+            await self._send_ship(interaction.channel, user=interaction.user)
+            await interaction.delete_original_response()
+        except app_commands.CommandOnCooldown as e:
+            await safe_respond(interaction, f"⏳ Attends encore {e.retry_after:.1f}s.", ephemeral=True)
+        except Exception as e:
+            print(f"[ERREUR /ship] {e}")
+            await safe_respond(interaction, "❌ Une erreur est survenue.", ephemeral=True)
+
+    # ──────────────────────────────────────────────────────────
+    # 🔹 Commande PREFIX
+    # ──────────────────────────────────────────────────────────
+    @commands.command(
+        name="ship"
+    )
+    @commands.cooldown(1, 3, commands.BucketType.user)
+    async def prefix_ship(self, ctx: commands.Context):
+        try:
+            await self._send_ship(ctx.channel, user=ctx.author)
+        except commands.CommandOnCooldown as e:
+            await safe_send(ctx.channel, f"⏳ Attends encore {e.retry_after:.1f}s.")
+        except Exception as e:
+            print(f"[ERREUR !ship] {e}")
+            await safe_send(ctx.channel, "❌ Une erreur est survenue.")
+
+# ────────────────────────────────────────────────────────────────
+# 🔌 Setup du Cog
+# ────────────────────────────────────────────────────────────────
+async def setup(bot: commands.Bot):
     cog = ShipCommand(bot)
     for command in cog.get_commands():
-        command.category = "Bleach"
+        if not hasattr(command, "category"):
+            command.category = "Bleach"
     await bot.add_cog(cog)
