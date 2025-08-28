@@ -15,17 +15,19 @@ from discord.ext import commands
 from utils.discord_utils import safe_send, safe_respond
 import aiohttp
 import os
+import asyncio
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🧠 Cog principal
 # ────────────────────────────────────────────────────────────────────────────────
 class RedemarrageCommand(commands.Cog):
     """
-    Commande /re et !re — Préviens les membres et déclenche un redeploy sur Render.
+    Commande /re et !re — Préviens les membres, déclenche un redeploy sur Render et notifie quand le bot est redeployé.
     """
     def __init__(self, bot: commands.Bot):
         self.bot = bot
-        self.render_webhook = os.getenv("RENDER_REDEPLOY_WEBHOOK")  # URL du webhook GitHub → Render
+        self.render_webhook = os.getenv("RENDER_REDEPLOY_WEBHOOK")  # URL du webhook Render
+        self.render_service_api = os.getenv("RENDER_SERVICE_API")    # API Render pour vérifier l'état du service
 
     # ────────────────────────────────────────────────────────────────────────────
     # 🔹 Commande SLASH
@@ -62,9 +64,9 @@ class RedemarrageCommand(commands.Cog):
     # 🔹 Fonction interne de redeploy
     # ────────────────────────────────────────────────────────────────────────────
     async def _trigger_restart(self, channel: discord.abc.Messageable):
-        """Annonce le redémarrage et déclenche le redeploy Render via webhook."""
+        """Annonce le redémarrage, déclenche le redeploy Render et confirme quand le bot est redeployé."""
         try:
-            # Préviens les membres
+            # 1️⃣ Préviens les membres
             embed = discord.Embed(
                 title="🔃 Redémarrage",
                 description="Le bot va redémarrer sous peu...",
@@ -72,17 +74,35 @@ class RedemarrageCommand(commands.Cog):
             )
             await safe_send(channel, embed=embed)
 
-            # Déclenche le redeploy via webhook
+            # 2️⃣ Déclenche le redeploy via webhook
             if not self.render_webhook:
                 await safe_send(channel, "⚠️ Webhook Render non configuré.")
                 return
 
             async with aiohttp.ClientSession() as session:
                 async with session.post(self.render_webhook) as resp:
-                    if resp.status == 200 or resp.status == 201:
+                    if resp.status in (200, 201):
                         await safe_send(channel, "✅ Redeploy demandé avec succès sur Render !")
                     else:
                         await safe_send(channel, f"❌ Échec du redeploy. Code HTTP : {resp.status}")
+                        return
+
+                # 3️⃣ Attente que le service soit redeployé
+                if not self.render_service_api:
+                    await safe_send(channel, "⚠️ API Render pour le service non configurée. Impossible de vérifier l'état du redeploy.")
+                    return
+
+                # Polling du service
+                max_checks = 30
+                for i in range(max_checks):
+                    async with session.get(self.render_service_api) as status_resp:
+                        if status_resp.status == 200:
+                            await safe_send(channel, "🎉 Le bot a été redeployé et est de nouveau en ligne !")
+                            return
+                    await asyncio.sleep(5)  # attendre 5s avant le prochain check
+
+                await safe_send(channel, "⚠️ Timeout : le bot ne semble pas être redeployé après 2min.")
+
         except Exception as e:
             print(f"[REDEPLOY] Erreur : {e}")
             await safe_send(channel, f"❌ Une erreur est survenue lors du redeploy : `{e}`")
