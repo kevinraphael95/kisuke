@@ -33,14 +33,3 @@ Quand !re est exécuté :
 ✅ Le bot prévient les membres que le redeploy est imminent.
 ✅ Envoie la requête au webhook Render.
 ✅ Attend que le service soit de nouveau en ligne et notifie. (ou pas)
-
-# ────────────────────────────────────────────────────────────────────────────────
-# 4️⃣ Test
-# ────────────────────────────────────────────────────────────────────────────────
-1. Envoie !re dans Discord.
-2. Le bot devrait :
-
-   * Prévenir le serveur que le bot va redémarrer.
-   * Envoyer la requête au webhook Render.
-   * Vérifier que le service est de nouveau actif et notifier la fin du redeploy.
-3. Dans Render, tu verras le redeploy se lancer et se terminer automatiquement.
