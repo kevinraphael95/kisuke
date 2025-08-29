@@ -52,13 +52,15 @@ class EmojiCommand(commands.Cog):
         """Retourne deux listes : (trouvés, introuvables)."""
         found, not_found = [], []
         for raw_name in emoji_names:
-            name = raw_name.lower().strip(":")
+            # 🔹 On garde le nom exact (pas de strip)
+            name = raw_name.lower().replace(":", "")  
             match = discord.utils.find(lambda e: e.name.lower() == name and e.available, guild.emojis)
             if match:
                 found.append(str(match))
             else:
                 not_found.append(raw_name)
         return found, not_found
+
 
     def _build_pages(self, guilds: list[discord.Guild]) -> list[discord.Embed]:
         """Construit les pages d'emojis animés, une page par serveur (ou plusieurs si nécessaire)."""
