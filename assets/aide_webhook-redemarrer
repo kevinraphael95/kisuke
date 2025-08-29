@@ -1,0 +1,45 @@
+# Redémarrage du bot avec redeploy Render via webhook
+
+## Créer un webhook Render
+1. Connecte-toi à ton compte Render.
+2. Va dans ton service bot.
+3. Clique sur Settings
+4. Met de côté l’ID du service (srv-xxxxxx).
+6. Regarde dans Build & Deploy → Deploy Hooks. Met de côté l’URL du deploy hook. Elle ressemble à :
+   [https://api.render.com/deploy/srv-xxxxxx](https://api.render.com/deploy/srv-xxxxxx)
+
+---
+
+## Ajouter les variables d’environnement
+1. Dans Render, va dans Environment → Environment Variables.
+2. Ajoute une variable pour le webhook :
+   RENDER\_REDEPLOY\_WEBHOOK=[https://api.render.com/deploy/srv-xxxxxx](https://api.render.com/deploy/srv-xxxxxx)
+3. Ajoute aussi une variable pour l'API de servive (Pour vérifier que le service est de nouveau actif après le redeploy):
+   RENDER\_SERVICE\_API=[https://api.render.com/v1/services/srv-xxxxxx](https://api.render.com/v1/services/srv-xxxxxx)
+4. Sauvegarde et redeploy ton bot une dernière fois pour que les variables soient prises en compte.
+
+---
+
+## La commande pour utiliser le webhook et redémarer le bot
+
+Dans la commande !re du bot, ajoute :
+  self.render\_webhook = os.getenv("RENDER\_REDEPLOY\_WEBHOOK")
+  self.render\_service\_api = os.getenv("RENDER\_SERVICE\_API")
+
+Quand !re est exécuté :
+* Le bot prévient les membres que le redeploy est imminent.
+* Envoie la requête au webhook Render.
+* Attend que le service soit de nouveau en ligne et notifie. (ou pas)
+
+---
+
+## Test
+1. Envoie !re dans Discord.
+2. Le bot devrait :
+
+   * Prévenir le serveur que le bot va redémarrer.
+   * Envoyer la requête au webhook Render.
+   * Vérifier que le service est de nouveau actif et notifier la fin du redeploy.
+3. Dans Render, tu verras le redeploy se lancer et se terminer automatiquement.
+
+---
