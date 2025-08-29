@@ -27,8 +27,8 @@ class SayAs(commands.Cog):
     # ────────────────────────────────────────────────────────────────────────────
     # 🔹 Fonction interne
     # ────────────────────────────────────────────────────────────────────────────
-    async def _send_as(self, channel: discord.TextChannel, target: discord.User, message: str):
-        """Envoie un message via webhook en utilisant le pseudo et avatar du membre cible"""
+    async def _send_as(self, channel: discord.TextChannel, target: discord.abc.User, message: str):
+        """Envoie un message via webhook en utilisant le pseudo (serveur ou global) et avatar du membre cible"""
         message = (message or "").strip()
         if not message:
             return await safe_send(channel, "⚠️ Message vide.")
@@ -51,7 +51,7 @@ class SayAs(commands.Cog):
         try:
             await webhook.send(
                 content=message,
-                username=target.display_name,
+                username=target.display_name,  # prend le pseudo serveur si Member, sinon global
                 avatar_url=target.display_avatar.url
             )
         finally:
@@ -64,10 +64,10 @@ class SayAs(commands.Cog):
         name="say_as",
         description="(Admin) Fait répéter un message par le bot comme si c'était un autre membre."
     )
-    @app_commands.describe(user="Utilisateur ciblé", message="Message à répéter")
+    @app_commands.describe(user="Membre ciblé", message="Message à répéter")
     @app_commands.checks.has_permissions(administrator=True)
     @app_commands.checks.cooldown(1, 5.0, key=lambda i: (i.user.id))
-    async def slash_say_as(self, interaction: discord.Interaction, user: discord.User, *, message: str):
+    async def slash_say_as(self, interaction: discord.Interaction, user: discord.Member, *, message: str):
         try:
             await interaction.response.defer()
             await self._send_as(interaction.channel, user, message)
@@ -88,7 +88,11 @@ class SayAs(commands.Cog):
     @commands.cooldown(1, 5.0, commands.BucketType.user)
     async def prefix_say_as(self, ctx: commands.Context, user_id: int, *, message: str):
         try:
-            target = await self.bot.fetch_user(user_id)
+            # Essayer de récupérer un Member (pseudo serveur) d'abord
+            target = ctx.guild.get_member(user_id)
+            if target is None:
+                target = await self.bot.fetch_user(user_id)  # fallback : User global
+
             await self._send_as(ctx.channel, target, message)
         except Exception as e:
             print(f"[ERREUR !say_as] {e}")
