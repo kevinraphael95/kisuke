@@ -79,15 +79,20 @@ class CouleurCommand(commands.Cog):
         name="couleur",
         description="Affiche une couleur aléatoire avec un aperçu visuel et ses codes HEX & RGB."
     )
+    @app_commands.checks.cooldown(1, 3.0, key=lambda i: (i.user.id))  # cooldown : 1 fois / 3s / utilisateur
     async def slash_couleur(self, interaction: discord.Interaction):
         try:
             view = CouleurView(interaction.user)
             embed = view.generer_embed()
             embed.timestamp = interaction.created_at
-            view.message = await safe_send(interaction, embed=embed, view=view)
+
+            # Répond directement à l'interaction
+            await interaction.response.send_message(embed=embed, view=view)
+            view.message = await interaction.original_response()
         except Exception as e:
             print(f"[ERREUR /couleur] {e}")
             await safe_respond(interaction, "❌ Une erreur est survenue lors de la génération de la couleur.", ephemeral=True)
+
 
     # ────────────────────────────────────────────────────────────────────────────
     # 🔹 Commande PREFIX
