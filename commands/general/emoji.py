@@ -15,6 +15,28 @@ from discord.ext import commands
 from utils.discord_utils import safe_send
 
 # ────────────────────────────────────────────────────────────────────────────────
+# 🎮 View pour la pagination
+# ────────────────────────────────────────────────────────────────────────────────
+class EmojiPaginator(discord.ui.View):
+    def __init__(self, pages: list[discord.Embed], timeout: int = 90):
+        super().__init__(timeout=timeout)
+        self.pages = pages
+        self.index = 0
+
+    async def update(self, interaction: discord.Interaction):
+        await interaction.response.edit_message(embed=self.pages[self.index], view=self)
+
+    @discord.ui.button(label="⬅️", style=discord.ButtonStyle.secondary)
+    async def previous(self, interaction: discord.Interaction, button: discord.ui.Button):
+        self.index = (self.index - 1) % len(self.pages)
+        await self.update(interaction)
+
+    @discord.ui.button(label="➡️", style=discord.ButtonStyle.secondary)
+    async def next(self, interaction: discord.Interaction, button: discord.ui.Button):
+        self.index = (self.index + 1) % len(self.pages)
+        await self.update(interaction)
+
+# ────────────────────────────────────────────────────────────────────────────────
 # 🧠 Cog principal
 # ────────────────────────────────────────────────────────────────────────────────
 class EmojiCommand(commands.Cog):
@@ -38,32 +60,49 @@ class EmojiCommand(commands.Cog):
                 not_found.append(raw_name)
         return found, not_found
 
-    async def _send_text_paginated(self, channel, emojis: list[str]):
-        """Envoie les emojis sous forme de texte brut, en plusieurs messages si nécessaire."""
-        message = ""
-        for emoji in emojis:
-            if len(message) + len(emoji) + 1 > 2000:
-                await safe_send(channel, message.strip())
-                message = ""
-            message += emoji + " "
-        if message:
-            await safe_send(channel, message.strip())
+    def _build_pages(self, guilds: list[discord.Guild]) -> list[discord.Embed]:
+        """Construit les pages d'emojis animés, une page par serveur (ou plusieurs si nécessaire)."""
+        pages = []
+        for g in guilds:
+            animated = [str(e) for e in g.emojis if e.animated and e.available]
+            if not animated:
+                continue
+
+            # Découpe en paquets de 40 pour éviter le dépassement
+            chunks = [animated[i:i+40] for i in range(0, len(animated), 40)]
+            for i, chunk in enumerate(chunks, start=1):
+                embed = discord.Embed(
+                    title=f"🎭 Emojis animés — {g.name}",
+                    description=" ".join(chunk),
+                    color=discord.Color.orange()
+                )
+                if len(chunks) > 1:
+                    embed.set_footer(text=f"Page {i}/{len(chunks)} pour {g.name}")
+                pages.append(embed)
+        return pages
 
     async def _display_emojis(self, channel, guild, emoji_names: tuple[str]):
-        """Affiche les emojis demandés ou tous les animés si aucun argument."""
+        """Affiche soit des emojis précis, soit tous les animés paginés de tous les serveurs."""
         try:
             if emoji_names:
+                # Recherche ciblée dans le serveur actuel
                 found, not_found = self._find_emojis(emoji_names, guild)
                 if found:
                     await safe_send(channel, " ".join(found))
                 if not_found:
                     await safe_send(channel, f"❌ Emojis introuvables : {', '.join(f'`{n}`' for n in not_found)}")
             else:
-                animated_emojis = [str(e) for e in guild.emojis if e.animated and e.available]
-                if not animated_emojis:
-                    await safe_send(channel, "❌ Ce serveur n'a aucun emoji animé.")
+                # Pagination sur tous les serveurs où le bot est présent
+                guilds = [guild] + [g for g in self.bot.guilds if g.id != guild.id]
+                pages = self._build_pages(guilds)
+
+                if not pages:
+                    await safe_send(channel, "❌ Aucun emoji animé trouvé sur les serveurs.")
                     return
-                await self._send_text_paginated(channel, animated_emojis)
+
+                view = EmojiPaginator(pages)
+                await safe_send(channel, embed=pages[0], view=view)
+
         except Exception as e:
             print(f"[ERREUR affichage emojis] {e}")
             await safe_send(channel, "❌ Une erreur est survenue lors de l'affichage des emojis.")
@@ -75,7 +114,7 @@ class EmojiCommand(commands.Cog):
         name="emoji",
         aliases=["e"],
         help="😄 Affiche un ou plusieurs emojis du serveur.",
-        description="Affiche les emojis demandés ou tous les emojis animés du serveur si aucun argument."
+        description="Affiche les emojis demandés ou tous les emojis animés de tous les serveurs si aucun argument."
     )
     @commands.cooldown(rate=1, per=3, type=commands.BucketType.user)
     async def prefix_emoji(self, ctx: commands.Context, *emoji_names):
@@ -89,10 +128,10 @@ class EmojiCommand(commands.Cog):
     # ────────────────────────────────────────────────────────────────────────────
     # 🔹 Commande SLASH
     # ────────────────────────────────────────────────────────────────────────────
-    @app_commands.command(name="emoji", description="Affiche un ou plusieurs emojis du serveur.")
+    @app_commands.command(name="emoji", description="Affiche un ou plusieurs emojis du serveur ou tous les animés des serveurs.")
     @app_commands.describe(emojis="Noms des emojis à afficher, séparés par des espaces (optionnel)")
     async def slash_emoji(self, interaction: discord.Interaction, *, emojis: str = ""):
-        """Commande slash qui affiche des emojis du serveur."""
+        """Commande slash qui affiche des emojis du serveur ou de tous les serveurs."""
         await interaction.response.defer()
         emoji_names = tuple(emojis.split()) if emojis else ()
         await self._display_emojis(interaction.channel, interaction.guild, emoji_names)
