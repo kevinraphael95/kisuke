@@ -62,7 +62,6 @@ class SayAsUser(commands.Cog):
     # ────────────────────────────────────────────────────────────────────────────
     @app_commands.command(
         name="say_as_user",
-        aliases=["sau"],
         description="Fait répéter un message par le bot comme si c'était vous."
     )
     @app_commands.describe(message="Message à répéter")
@@ -83,6 +82,7 @@ class SayAsUser(commands.Cog):
     # ────────────────────────────────────────────────────────────────────────────
     @commands.command(
         name="say_as_user",
+        aliases=["sau"],
         help="Fait répéter un message par le bot comme si c'était vous."
     )
     @commands.cooldown(1, 5.0, commands.BucketType.user)
