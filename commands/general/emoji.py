@@ -13,6 +13,7 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 from utils.discord_utils import safe_send
+import random
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🎮 View pour la pagination
@@ -48,19 +49,29 @@ class EmojiCommand(commands.Cog):
     # ────────────────────────────────────────────────────────────────────────────
     # 🔹 Fonctions internes
     # ────────────────────────────────────────────────────────────────────────────
-    def _find_emojis(self, emoji_names: tuple[str], guild: discord.Guild):
-        """Retourne deux listes : (trouvés, introuvables)."""
+    def _find_emojis(self, emoji_names: tuple[str], current_guild: discord.Guild):
+        """Retourne deux listes : (trouvés, introuvables), priorise le serveur actuel."""
         found, not_found = [], []
         for raw_name in emoji_names:
-            # 🔹 On garde le nom exact (pas de strip)
-            name = raw_name.lower().replace(":", "")  
-            match = discord.utils.find(lambda e: e.name.lower() == name and e.available, guild.emojis)
+            name = raw_name.lower().replace(":", "")
+
+            # 1️⃣ Recherche dans le serveur actuel
+            match = discord.utils.find(lambda e: e.name.lower() == name and e.available, current_guild.emojis)
+
+            # 2️⃣ Si pas trouvé, recherche dans les autres serveurs au hasard
+            if not match:
+                other_guilds = [g for g in self.bot.guilds if g.id != current_guild.id]
+                for g in random.sample(other_guilds, len(other_guilds)):
+                    match = discord.utils.find(lambda e: e.name.lower() == name and e.available, g.emojis)
+                    if match:
+                        break
+
             if match:
                 found.append(str(match))
             else:
                 not_found.append(raw_name)
-        return found, not_found
 
+        return found, not_found
 
     def _build_pages(self, guilds: list[discord.Guild]) -> list[discord.Embed]:
         """Construit les pages d'emojis animés, une page par serveur (ou plusieurs si nécessaire)."""
@@ -87,7 +98,7 @@ class EmojiCommand(commands.Cog):
         """Affiche soit des emojis précis, soit tous les animés paginés de tous les serveurs."""
         try:
             if emoji_names:
-                # Recherche ciblée dans le serveur actuel
+                # Recherche ciblée dans le serveur actuel, sinon autres serveurs
                 found, not_found = self._find_emojis(emoji_names, guild)
                 if found:
                     await safe_send(channel, " ".join(found))
