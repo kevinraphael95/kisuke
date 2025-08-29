@@ -3,7 +3,7 @@
 # ────────────────────────────────────────────────────────────────────────────────
 
 # ────────────────────────────────────────────────────────────────────────────────
-1️⃣ Créer un webhook Render
+# 1️⃣ Créer un webhook Render
 # ────────────────────────────────────────────────────────────────────────────────
 1. Connecte-toi à ton compte Render.
 2. Va dans ton service bot.
@@ -13,7 +13,7 @@
    [https://api.render.com/deploy/srv-xxxxxx](https://api.render.com/deploy/srv-xxxxxx)
 
 # ────────────────────────────────────────────────────────────────────────────────
-2️⃣ Ajouter les variables d’environnement
+# 2️⃣ Ajouter les variables d’environnement
 # ────────────────────────────────────────────────────────────────────────────────
 1. Dans Render, va dans Environment → Environment Variables.
 2. Ajoute une variable pour le webhook :
@@ -23,7 +23,7 @@
 4. Sauvegarde et redeploy ton bot une dernière fois pour que les variables soient prises en compte.
 
 # ────────────────────────────────────────────────────────────────────────────────
-3️⃣ La commande pour utiliser le webhook et redémarer le bot
+# 3️⃣ La commande pour utiliser le webhook et redémarer le bot
 # ────────────────────────────────────────────────────────────────────────────────
 Dans la commande !re du bot, ajoute :
   self.render\_webhook = os.getenv("RENDER\_REDEPLOY\_WEBHOOK")
@@ -35,7 +35,7 @@ Quand !re est exécuté :
 ✅ Attend que le service soit de nouveau en ligne et notifie. (ou pas)
 
 # ────────────────────────────────────────────────────────────────────────────────
-4️⃣ Test
+# 4️⃣ Test
 # ────────────────────────────────────────────────────────────────────────────────
 1. Envoie !re dans Discord.
 2. Le bot devrait :
