@@ -28,21 +28,22 @@ class Say(commands.Cog):
     # 🔹 Fonction interne
     # ────────────────────────────────────────────────────────────────────────────
     async def _say_message(self, channel: discord.abc.Messageable, message: str, embed: bool = False):
-        """Envoie un message formaté avec tous les emojis custom remplacés efficacement."""
+        """Envoie un message formaté avec tous les emojis custom remplacés efficacement (case-insensible)."""
         message = (message or "").strip()
         if not message:
             return await safe_send(channel, "⚠️ Message vide.")
 
         pattern = r":([a-zA-Z0-9_]+):"
-        
+
         if hasattr(channel, "guild"):  # On est dans un serveur
-            guild_emojis = {e.name: str(e) for e in channel.guild.emojis}  # dictionnaire pour accès rapide
+            # dictionnaire en lowercase pour éviter les soucis de majuscules
+            guild_emojis = {e.name.lower(): str(e) for e in channel.guild.emojis}
 
             def replace_emoji(match):
-                name = match.group(1)
+                name = match.group(1).lower()
                 return guild_emojis.get(name, match.group(0))  # garde le texte si emoji non trouvé
 
-            message = re.sub(pattern, replace_emoji, message)
+            message = re.sub(pattern, replace_emoji, message, flags=re.IGNORECASE)
 
         # ✂️ Limite de caractères Discord
         if len(message) > 2000:
@@ -57,6 +58,7 @@ class Say(commands.Cog):
             await safe_send(channel, embed=embed_obj, allowed_mentions=discord.AllowedMentions.none())
         else:
             await safe_send(channel, message, allowed_mentions=discord.AllowedMentions.none())
+
 
 
     # ────────────────────────────────────────────────────────────────────────────
