@@ -3,7 +3,7 @@
 # ────────────────────────────────────────────────────────────────────────────────
 
 # ────────────────────────────────────────────────────────────────────────────────
-# Créer un webhook Render
+1️⃣ Créer un webhook Render
 # ────────────────────────────────────────────────────────────────────────────────
 1. Connecte-toi à ton compte Render.
 2. Va dans ton service bot.
@@ -13,7 +13,7 @@
    [https://api.render.com/deploy/srv-xxxxxx](https://api.render.com/deploy/srv-xxxxxx)
 
 # ────────────────────────────────────────────────────────────────────────────────
-# Ajouter les variables d’environnement
+2️⃣ Ajouter les variables d’environnement
 # ────────────────────────────────────────────────────────────────────────────────
 1. Dans Render, va dans Environment → Environment Variables.
 2. Ajoute une variable pour le webhook :
@@ -22,22 +22,20 @@
    RENDER\_SERVICE\_API=[https://api.render.com/v1/services/srv-xxxxxx](https://api.render.com/v1/services/srv-xxxxxx)
 4. Sauvegarde et redeploy ton bot une dernière fois pour que les variables soient prises en compte.
 
----
-
 # ────────────────────────────────────────────────────────────────────────────────
-# La commande pour utiliser le webhook et redémarer le bot
+3️⃣ La commande pour utiliser le webhook et redémarer le bot
 # ────────────────────────────────────────────────────────────────────────────────
 Dans la commande !re du bot, ajoute :
   self.render\_webhook = os.getenv("RENDER\_REDEPLOY\_WEBHOOK")
   self.render\_service\_api = os.getenv("RENDER\_SERVICE\_API")
 
 Quand !re est exécuté :
-* Le bot prévient les membres que le redeploy est imminent.
-* Envoie la requête au webhook Render.
-* Attend que le service soit de nouveau en ligne et notifie. (ou pas)
+✅ Le bot prévient les membres que le redeploy est imminent.
+✅ Envoie la requête au webhook Render.
+✅ Attend que le service soit de nouveau en ligne et notifie. (ou pas)
 
 # ────────────────────────────────────────────────────────────────────────────────
-# Test
+4️⃣ Test
 # ────────────────────────────────────────────────────────────────────────────────
 1. Envoie !re dans Discord.
 2. Le bot devrait :
