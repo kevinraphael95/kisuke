@@ -14,6 +14,7 @@ from discord import app_commands
 from discord.ext import commands
 from utils.discord_utils import safe_send
 import random
+import re
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🎮 View pour la pagination
@@ -49,27 +50,33 @@ class EmojiCommand(commands.Cog):
     # ────────────────────────────────────────────────────────────────────────────
     # 🔹 Fonctions internes
     # ────────────────────────────────────────────────────────────────────────────
-    def _find_emojis(self, emoji_names: tuple[str], current_guild: discord.Guild):
-        """Retourne deux listes : (trouvés, introuvables), priorise le serveur actuel."""
+    def _parse_emoji_input(self, raw_input: tuple[str]) -> list[str]:
+        """Transforme un texte comme :woah::woah: en ['woah','woah']"""
+        joined = "".join(raw_input)
+        return re.findall(r":([a-zA-Z0-9_]+):", joined)
+
+    def _find_emojis(self, emoji_inputs: list[str], current_guild: discord.Guild):
+        """Retourne les emojis à afficher, priorise le serveur actuel, sinon autres serveurs."""
         found, not_found = [], []
-        for raw_name in emoji_names:
-            name = raw_name.lower().replace(":", "")
 
-            # 1️⃣ Recherche dans le serveur actuel
-            match = discord.utils.find(lambda e: e.name.lower() == name and e.available, current_guild.emojis)
+        for name in emoji_inputs:
+            name_lower = name.lower()
 
-            # 2️⃣ Si pas trouvé, recherche dans les autres serveurs au hasard
+            # 1️⃣ Serveur actuel
+            match = discord.utils.find(lambda e: e.name.lower() == name_lower and e.available, current_guild.emojis)
+
+            # 2️⃣ Autres serveurs
             if not match:
                 other_guilds = [g for g in self.bot.guilds if g.id != current_guild.id]
                 for g in random.sample(other_guilds, len(other_guilds)):
-                    match = discord.utils.find(lambda e: e.name.lower() == name and e.available, g.emojis)
+                    match = discord.utils.find(lambda e: e.name.lower() == name_lower and e.available, g.emojis)
                     if match:
                         break
 
             if match:
                 found.append(str(match))
             else:
-                not_found.append(raw_name)
+                not_found.append(f":{name}:")
 
         return found, not_found
 
@@ -98,21 +105,20 @@ class EmojiCommand(commands.Cog):
         """Affiche soit des emojis précis, soit tous les animés paginés de tous les serveurs."""
         try:
             if emoji_names:
-                # Recherche ciblée dans le serveur actuel, sinon autres serveurs
-                found, not_found = self._find_emojis(emoji_names, guild)
+                # Parse et cherche les emojis
+                emoji_inputs = self._parse_emoji_input(emoji_names)
+                found, not_found = self._find_emojis(emoji_inputs, guild)
                 if found:
                     await safe_send(channel, " ".join(found))
                 if not_found:
-                    await safe_send(channel, f"❌ Emojis introuvables : {', '.join(f'`{n}`' for n in not_found)}")
+                    await safe_send(channel, f"❌ Emojis introuvables : {', '.join(not_found)}")
             else:
-                # Pagination sur tous les serveurs où le bot est présent
+                # Pagination sur tous les serveurs
                 guilds = [guild] + [g for g in self.bot.guilds if g.id != guild.id]
                 pages = self._build_pages(guilds)
-
                 if not pages:
                     await safe_send(channel, "❌ Aucun emoji animé trouvé sur les serveurs.")
                     return
-
                 view = EmojiPaginator(pages)
                 await safe_send(channel, embed=pages[0], view=view)
 
@@ -142,12 +148,16 @@ class EmojiCommand(commands.Cog):
     # 🔹 Commande SLASH
     # ────────────────────────────────────────────────────────────────────────────
     @app_commands.command(name="emoji", description="Affiche un ou plusieurs emojis du serveur ou tous les animés des serveurs.")
-    @app_commands.describe(emojis="Noms des emojis à afficher, séparés par des espaces (optionnel)")
+    @app_commands.describe(emojis="Noms des emojis à afficher, séparés par des espaces ou répétés (ex: :woah::woah:)")
     async def slash_emoji(self, interaction: discord.Interaction, *, emojis: str = ""):
         """Commande slash qui affiche des emojis du serveur ou de tous les serveurs."""
         await interaction.response.defer()
-        emoji_names = tuple(emojis.split()) if emojis else ()
-        await self._display_emojis(interaction.channel, interaction.guild, emoji_names)
+        emoji_inputs = self._parse_emoji_input((emojis,))
+        found, not_found = self._find_emojis(emoji_inputs, interaction.guild)
+        if found:
+            await safe_send(interaction.channel, " ".join(found))
+        if not_found:
+            await safe_send(interaction.channel, f"❌ Emojis introuvables : {', '.join(not_found)}")
         try:
             await interaction.delete_original_response()
         except Exception:
