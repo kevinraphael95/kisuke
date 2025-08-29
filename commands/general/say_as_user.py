@@ -33,14 +33,15 @@ class SayAsUser(commands.Cog):
         if not message:
             return await safe_send(channel, "⚠️ Message vide.")
 
-        # Remplacement des emojis custom du serveur
+        # Remplacement des emojis custom du serveur (case-insensible)
         if hasattr(channel, "guild"):
-            guild_emojis = {e.name: str(e) for e in channel.guild.emojis}
+            guild_emojis = {e.name.lower(): str(e) for e in channel.guild.emojis}
 
             def replace_emoji(match):
-                return guild_emojis.get(match.group(1), match.group(0))
+                return guild_emojis.get(match.group(1).lower(), match.group(0))
 
-            message = re.sub(r":([a-zA-Z0-9_]+):", replace_emoji, message)
+            message = re.sub(r":([a-zA-Z0-9_]+):", replace_emoji, message, flags=re.IGNORECASE)
+
 
         # Limite Discord
         if len(message) > 2000:
