@@ -1,6 +1,6 @@
 # ────────────────────────────────────────────────────────────────────────────────
-# 📌 scientific_calculator_interactive.py — Calculatrice scientifique interactive
-# Objectif : Calculatrice scientifique interactive avec mini-clavier Discord
+# 📌 scientific_calculator.py — Calculatrice scientifique interactive
+# Objectif : Calculatrice scientifique interactive avec mini-clavier et fonctions avancées
 # Catégorie : Utilitaire
 # Accès : Tous
 # Cooldown : 1 utilisation / 5 secondes / utilisateur
@@ -18,76 +18,97 @@ import math
 from utils.discord_utils import safe_send, safe_edit, safe_respond  
 
 # ────────────────────────────────────────────────────────────────────────────────
-# 🎛️ Vue de la calculatrice
+# 🎛️ UI — Mini-clavier interactif
 # ────────────────────────────────────────────────────────────────────────────────
 class CalculatorView(View):
     def __init__(self):
         super().__init__(timeout=180)
         self.expression = ""
         self.result = None
-        self.update_buttons()
+        self.add_buttons()
 
-    def update_buttons(self):
-        """Ajoute les boutons du mini-clavier scientifique"""
-        self.clear_items()
-        buttons = [
-            ["7", "8", "9", "/", "sqrt"],
-            ["4", "5", "6", "*", "^"],
-            ["1", "2", "3", "-", "log"],
-            ["0", ".", "(", ")", "+"],
-            ["sin", "cos", "tan", "ln", "exp"],
-            ["π", "e", "!", "C", "="]
+    def add_buttons(self):
+        rows = [
+            ["7","8","9","/","sqrt"],
+            ["4","5","6","*","^"],
+            ["1","2","3","-","ln"],
+            ["0",".","C","+","log"],
+            ["sin","cos","tan","!","="]
         ]
-        for row in buttons:
-            for btn_label in row:
-                self.add_item(CalcButton(btn_label, self))
+        for row in rows:
+            for label in row:
+                self.add_item(CalcButton(label, self))
 
 class CalcButton(Button):
-    def __init__(self, label, parent_view: CalculatorView):
+    def __init__(self, label, parent_view):
         super().__init__(label=label, style=discord.ButtonStyle.secondary)
         self.parent_view = parent_view
 
     async def callback(self, interaction: discord.Interaction):
-        label = self.label
         view = self.parent_view
+        label = self.label
 
         if label == "C":
             view.expression = ""
             view.result = None
         elif label == "=":
             try:
-                expr = view.expression.replace("π", str(math.pi)).replace("e", str(math.e))
-                expr = expr.replace("^", "**").replace("sqrt", "math.sqrt").replace("log", "math.log10")
-                expr = expr.replace("ln", "math.log").replace("sin", "math.sin(math.radians(").replace("cos", "math.cos(math.radians(").replace("tan", "math.tan(math.radians(")
-                expr = expr.replace("!", "math.factorial(")
-                # fermer les parenthèses pour fonctions trig/factorielle
-                open_funcs = expr.count("(")
+                expr = view.expression.replace("π", str(math.pi)).replace("e", str(math.e)).replace("^", "**")
+                funcs = {
+                    "sqrt": "math.sqrt",
+                    "log": "math.log10",
+                    "ln": "math.log",
+                    "sin": "math.sin(math.radians",
+                    "cos": "math.cos(math.radians",
+                    "tan": "math.tan(math.radians",
+                    "!": "math.factorial"
+                }
+                for k, v in funcs.items():
+                    expr = expr.replace(k+"(", v+"(")
+                open_parens = expr.count("(")
                 close_parens = expr.count(")")
-                expr += ")" * (open_funcs - close_parens)
-                view.result = eval(expr)
+                expr += ")" * (open_parens - close_parens)
+                view.result = eval(expr, {"math": math, "__builtins__": {}})
                 view.expression = str(view.result)
             except Exception as e:
-                view.result = f"Erreur : {e}"
+                view.result = f"Erreur"
                 view.expression = ""
         else:
-            view.expression += label if label not in ["sin","cos","tan","!"] else label+"("
-        await safe_edit(interaction.message, content=f"🧮 Expression : `{view.expression}`\n📊 Résultat : `{view.result}`", view=view)
+            if label in ["sin","cos","tan","sqrt","log","ln","!"]:
+                view.expression += label + "("
+            else:
+                view.expression += label
+
+        await safe_edit(
+            interaction.message,
+            content=f"🧮 Expression : `{view.expression}`\n📊 Résultat : `{view.result}`",
+            view=view
+        )
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🧠 Cog principal
 # ────────────────────────────────────────────────────────────────────────────────
-class ScientificCalculatorInteractive(commands.Cog):
+class ScientificCalculator(commands.Cog):
     """
     Commande /calc et !calc — Calculatrice scientifique interactive avec mini-clavier
     """
     def __init__(self, bot: commands.Bot):
         self.bot = bot
 
+    # ────────────────────────────────────────────────────────────────────────────
+    # 🔹 Envoi du mini-clavier
+    # ────────────────────────────────────────────────────────────────────────────
     async def _send_calculator(self, channel: discord.abc.Messageable):
         view = CalculatorView()
-        view.message = await safe_send(channel, "🧮 Calculatrice scientifique interactive :", view=view)
+        view.message = await safe_send(channel, "🧮 Calculatrice scientifique :", view=view)
 
-    @app_commands.command(name="calc", description="Calculatrice scientifique interactive")
+    # ────────────────────────────────────────────────────────────────────────────
+    # 🔹 Commande SLASH
+    # ────────────────────────────────────────────────────────────────────────────
+    @app_commands.command(
+        name="calc",
+        description="Calculatrice scientifique interactive"
+    )
     @app_commands.checks.cooldown(1, 5.0, key=lambda i: i.user.id)
     async def slash_calc(self, interaction: discord.Interaction):
         try:
@@ -100,6 +121,9 @@ class ScientificCalculatorInteractive(commands.Cog):
             print(f"[ERREUR /calc] {e}")
             await safe_respond(interaction, "❌ Une erreur est survenue.", ephemeral=True)
 
+    # ────────────────────────────────────────────────────────────────────────────
+    # 🔹 Commande PREFIX
+    # ────────────────────────────────────────────────────────────────────────────
     @commands.command(name="calc")
     @commands.cooldown(1, 5.0, commands.BucketType.user)
     async def prefix_calc(self, ctx: commands.Context):
@@ -115,7 +139,7 @@ class ScientificCalculatorInteractive(commands.Cog):
 # 🔌 Setup du Cog
 # ────────────────────────────────────────────────────────────────────────────────
 async def setup(bot: commands.Bot):
-    cog = ScientificCalculatorInteractive(bot)
+    cog = ScientificCalculator(bot)
     for command in cog.get_commands():
         if not hasattr(command, "category"):
             command.category = "Test"
