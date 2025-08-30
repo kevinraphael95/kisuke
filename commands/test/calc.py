@@ -17,7 +17,6 @@ import math
 
 from utils.discord_utils import safe_send, safe_edit, safe_respond  
 
-
 # ────────────────────────────────────────────────────────────────────────────────
 # 🎛️ UI — Mini-clavier interactif
 # ────────────────────────────────────────────────────────────────────────────────
@@ -25,7 +24,7 @@ class CalculatorView(View):
     def __init__(self):
         super().__init__(timeout=180)
         self.expression = ""
-        self.result = ""
+        self.result = None
         self.add_buttons()
 
     def add_buttons(self):
@@ -40,31 +39,21 @@ class CalculatorView(View):
             for label in row:
                 self.add_item(CalcButton(label, self))
 
-    def render_screen(self) -> str:
-        """Affichage formaté façon écran de calculatrice"""
-        return (
-            "```\n"
-            "╔════════════════════════╗\n"
-            f"║ {self.expression or ''}\n"
-            f"║ = {self.result or ''}\n"
-            "╚════════════════════════╝\n"
-            "```"
-        )
-
-
 class CalcButton(Button):
     def __init__(self, label, parent_view):
         super().__init__(label=label, style=discord.ButtonStyle.secondary)
         self.parent_view = parent_view
 
     async def callback(self, interaction: discord.Interaction):
+        # ✅ Accuser réception pour éviter "Échec de l’interaction"
         await interaction.response.defer()
+
         view = self.parent_view
         label = self.label
 
         if label == "C":
             view.expression = ""
-            view.result = ""
+            view.result = None
         elif label == "=":
             try:
                 expr = (
@@ -84,13 +73,16 @@ class CalcButton(Button):
                 }
                 for k, v in funcs.items():
                     expr = expr.replace(k+"(", v+"(")
-                # Équilibrer les parenthèses
-                expr += ")" * (expr.count("(") - expr.count(")"))
+                # Équilibrer les parenthèses si manquantes
+                open_parens = expr.count("(")
+                close_parens = expr.count(")")
+                expr += ")" * (open_parens - close_parens)
                 # Calcul sécurisé
-                res = eval(expr, {"math": math, "__builtins__": {}})
-                view.result = str(res)
+                view.result = eval(expr, {"math": math, "__builtins__": {}})
+                view.expression = str(view.result)
             except Exception:
                 view.result = "Erreur"
+                view.expression = ""
         else:
             if label in ["sin","cos","tan","sqrt","log","ln","!"]:
                 view.expression += label + "("
@@ -99,7 +91,13 @@ class CalcButton(Button):
 
         await safe_edit(
             interaction.message,
-            content="🧮 **Calculatrice scientifique**\n" + view.render_screen(),
+            content=(
+                "╔════════════════════════╗\n"
+                f"║ {view.expression or ''}\n"
+                f"║ = {view.result if view.result is not None else ''}\n"
+                f"╚════════════════════════╝\n"
+                "```"
+            ),
             view=view
         )
 
@@ -109,18 +107,17 @@ class CalcButton(Button):
 # ────────────────────────────────────────────────────────────────────────────────
 class ScientificCalculator(commands.Cog):
     """
-    Commande /calc et !calc — Calculatrice scientifique interactive avec écran
+    Commande /calc et !calc — Calculatrice scientifique interactive avec mini-clavier
     """
     def __init__(self, bot: commands.Bot):
         self.bot = bot
 
+    # ────────────────────────────────────────────────────────────────────────────
+    # 🔹 Envoi du mini-clavier
+    # ────────────────────────────────────────────────────────────────────────────
     async def _send_calculator(self, channel: discord.abc.Messageable):
         view = CalculatorView()
-        view.message = await safe_send(
-            channel,
-            "🧮 **Calculatrice scientifique**\n" + view.render_screen(),
-            view=view
-        )
+        view.message = await safe_send(channel, "🧮 Calculatrice scientifique :", view=view)
 
     # ────────────────────────────────────────────────────────────────────────────
     # 🔹 Commande SLASH
@@ -154,7 +151,6 @@ class ScientificCalculator(commands.Cog):
         except Exception as e:
             print(f"[ERREUR !calc] {e}")
             await safe_send(ctx.channel, "❌ Une erreur est survenue.")
-
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🔌 Setup du Cog
