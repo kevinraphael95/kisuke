@@ -382,7 +382,7 @@ class JardinView(discord.ui.View):
             potions_data = user_data.data[0]["potions"]
 
         embed = build_potions_embed(potions_data)
-        await interaction.response.send_message(embed=embed, ephemeral=True)
+        await interaction.response.send_message(embed=embed, ephemeral=False)
 
 
 # ────────────────────────────────────────────────────────────────────────────────
