@@ -130,6 +130,25 @@ def couper_fleurs(lines: list[str], garden: dict) -> tuple[list[str], dict]:
     garden["inventory"] = inv
     return new_lines, garden
 
+def build_potions_embed(potions: dict) -> discord.Embed:
+    if not potions:
+        desc = "🧪 Tu n’as aucune potion."
+    else:
+        # Tri par valeur croissante
+        sorted_potions = dict(sorted(
+            potions.items(),
+            key=lambda x: next((int(v) for v, n in POTIONS.items() if n == x[0]), 0)
+        ))
+        desc = "\n".join(f"{name} x{qty}" for name, qty in sorted_potions.items())
+
+    embed = discord.Embed(
+        title="🧪 Tes potions",
+        description=desc,
+        color=discord.Color.teal()
+    )
+    return embed
+
+
 # ────────────────────────────────────────────────────────────────────────────────
 # 🎛️ UI — Alchimie interactive
 # ────────────────────────────────────────────────────────────────────────────────
@@ -214,19 +233,44 @@ class AlchimieView(discord.ui.View):
             return await interaction.response.send_message("❌ Tu n’as plus de 🌻 !", ephemeral=True)
         await self.update_message(interaction)
 
+
     # ───────── Concocter & Reset ─────────
     @discord.ui.button(label="Concocter", emoji="⚗️", style=discord.ButtonStyle.blurple)
     async def concocter(self, interaction, button):
         potion = POTIONS.get(str(self.value))
 
-        # 🔥 On met à jour l'inventaire réel seulement ici
-        supabase.table(TABLE_NAME).update({"inventory": self.temp_inventory}).eq("user_id", self.user_id).execute()
+        # 🔥 Mise à jour de l'inventaire réel
+        garden_update = {"inventory": self.temp_inventory.copy()}
 
         if potion:
+            # Récupérer les potions existantes
+            user_data = supabase.table(TABLE_NAME).select("potions").eq("user_id", self.user_id).execute()
+            potions_data = {}
+            if user_data.data and user_data.data[0].get("potions"):
+                potions_data = user_data.data[0]["potions"]
+
+            # Ajouter la potion créée
+            potions_data[potion] = potions_data.get(potion, 0) + 1
+
+            # Trier les potions par valeur croissante
+            sorted_potions = dict(sorted(
+                potions_data.items(),
+                key=lambda x: next((int(v) for v, n in POTIONS.items() if n == x[0]), 0)
+            ))
+
+            # Ajouter les potions triées à la mise à jour
+            garden_update["potions"] = sorted_potions
+
             await interaction.response.send_message(f"✨ Tu as créé : **{potion}** !", ephemeral=False)
         else:
             await interaction.response.send_message("💥 Ta mixture explose ! Rien obtenu...", ephemeral=False)
+
+        # 🔹 Mise à jour dans Supabase
+        supabase.table(TABLE_NAME).update(garden_update).eq("user_id", self.user_id).execute()
+
         self.stop()
+
+
 
     @discord.ui.button(label="Reset", emoji="🔄", style=discord.ButtonStyle.red)
     async def reset(self, interaction, button):
@@ -324,6 +368,22 @@ class JardinView(discord.ui.View):
         view = AlchimieView(self.garden, self.user_id)
         embed = view.build_embed()
         await interaction.response.send_message(embed=embed, view=view)
+
+
+    @discord.ui.button(label="Potions", emoji="🧪", style=discord.ButtonStyle.green)
+    async def potions(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if interaction.user.id != self.user_id:
+            return await interaction.response.send_message("❌ Ce jardin n'est pas à toi !", ephemeral=True)
+
+        # Récupérer les potions depuis Supabase
+        user_data = supabase.table(TABLE_NAME).select("potions").eq("user_id", self.user_id).execute()
+        potions_data = {}
+        if user_data.data and user_data.data[0].get("potions"):
+            potions_data = user_data.data[0]["potions"]
+
+        embed = build_potions_embed(potions_data)
+        await interaction.response.send_message(embed=embed, ephemeral=True)
+
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🧠 Cog principal
