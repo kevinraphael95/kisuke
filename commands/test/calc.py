@@ -79,10 +79,10 @@ class CalcButton(Button):
                 expr += ")" * (open_parens - close_parens)
                 # Calcul sécurisé
                 view.result = eval(expr, {"math": math, "__builtins__": {}})
-                view.expression = str(view.result)
+                # ❌ Laisser l'expression affichée pour que l'utilisateur la voie
             except Exception:
                 view.result = "Erreur"
-                view.expression = ""
+                # garder l'expression affichée même si erreur
         else:
             if label in ["sin","cos","tan","sqrt","log","ln","!"]:
                 view.expression += label + "("
@@ -96,7 +96,7 @@ class CalcButton(Button):
                 f"║ {view.expression or ''}\n"
                 f"║ = {view.result if view.result is not None else ''}\n"
                 f"╚════════════════════════╝"
-                        ),
+            ),
             view=view
         )
 
@@ -156,6 +156,7 @@ class ScientificCalculator(commands.Cog):
         except Exception as e:
             print(f"[ERREUR !calc] {e}")
             await safe_send(ctx.channel, "❌ Une erreur est survenue.")
+
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🔌 Setup du Cog
