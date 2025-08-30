@@ -8,15 +8,15 @@
 # ────────────────────────────────────────────────────────────────────────────────
 # 📦 Imports nécessaires
 # ────────────────────────────────────────────────────────────────────────────────
-import discord
-from discord import app_commands
-from discord.ext import commands
 import os
 import random
 import datetime
 import json
-from utils.discord_utils import safe_send, safe_respond
+import discord
+from discord import app_commands
+from discord.ext import commands
 from supabase import create_client, Client
+from utils.discord_utils import safe_send, safe_respond
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🔌 Connexion Supabase
@@ -28,55 +28,25 @@ supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 TABLE_NAME = "gardens"
 
 # ────────────────────────────────────────────────────────────────────────────────
-# 🌱 Constantes du jeu
+# 🌱 Chargement des constantes depuis un JSON
 # ────────────────────────────────────────────────────────────────────────────────
-DEFAULT_GRID = [
-    "🌱🌱🌱🌱🌱🌱🌱🌱",
-    "🌱🌱🌱🌱🌱🌱🌱🌱",
-    "🌱🌱🌱🌱🌱🌱🌱🌱",
-]
-DEFAULT_INVENTORY = {
-    "tulipes": 0,
-    "roses": 0,
-    "jacinthes": 0,
-    "hibiscus": 0,
-    "paquerettes": 0,
-    "tournesols": 0,
-}
+with open("data/jardin_config.json", "r", encoding="utf-8") as f:
+    CONFIG = json.load(f)
 
-FLEUR_EMOJIS = {
-    "tulipes": "🌷",
-    "roses": "🌹",
-    "jacinthes": "🪻",
-    "hibiscus": "🌺",
-    "paquerettes": "🌼",
-    "tournesols": "🌻"
-}
+DEFAULT_GRID = CONFIG["DEFAULT_GRID"]
+DEFAULT_INVENTORY = CONFIG["DEFAULT_INVENTORY"]
+
+FLEUR_EMOJIS = CONFIG["FLEUR_EMOJIS"]
+FLEUR_VALUES = CONFIG["FLEUR_VALUES"]
+FLEUR_SIGNS = CONFIG["FLEUR_SIGNS"]
+
 FLEUR_LIST = list(FLEUR_EMOJIS.items())
 
-FLEUR_VALUES = {
-    "tulipes": 1,
-    "roses": 2,
-    "jacinthes": 2,
-    "hibiscus": 3,
-    "paquerettes": 1,   # valeur positive ici, le signe gère le + ou -
-    "tournesols": 2,
-}
+FERTILIZE_COOLDOWN = datetime.timedelta(minutes=CONFIG["FERTILIZE_COOLDOWN_MINUTES"])
+FERTILIZE_PROBABILITY = CONFIG["FERTILIZE_PROBABILITY"]
 
-FLEUR_SIGNS = {
-    "tulipes": "+",
-    "roses": "+",
-    "jacinthes": "×",
-    "hibiscus": "×",
-    "paquerettes": "-",
-    "tournesols": "-",
-}
+POTIONS = CONFIG["POTIONS"]
 
-with open("data/potions.json", "r", encoding="utf-8") as f:
-    POTIONS = json.load(f)
-
-FERTILIZE_COOLDOWN = datetime.timedelta(minutes=10)
-FERTILIZE_PROBABILITY = 0.39
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🧠 Fonctions utilitaires
@@ -97,6 +67,7 @@ async def get_or_create_garden(user_id: int, username: str):
     }
     supabase.table(TABLE_NAME).insert(new_garden).execute()
     return new_garden
+
 
 def build_garden_embed(garden: dict, viewer_id: int) -> discord.Embed:
     lines = garden["garden_grid"]
