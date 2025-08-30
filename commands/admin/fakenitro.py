@@ -1,134 +1,164 @@
 # ────────────────────────────────────────────────────────────────────────────────
-# 📌 fakenitro_admin.py — Commande interactive /fakenitro et !fakenitro
-# Objectif : Simuler un Nitro ultra réaliste et choisir le gagnant par ID
+# 📌 fakenitro_proof.py — Commande interactive /proof et !proof
+# Objectif : Générer un faux message Discord Nitro ultra réaliste (image HTML→PNG)
 # Catégorie : Autre
-# Accès : Admin uniquement
+# Accès : Admin (optionnel) / Tous
 # Cooldown : 1 utilisation / 5 secondes / utilisateur
 # ────────────────────────────────────────────────────────────────────────────────
 
+# ────────────────────────────────────────────────────────────────────────────────
+# 📦 Imports nécessaires
+# ────────────────────────────────────────────────────────────────────────────────
 import discord
 from discord import app_commands
 from discord.ext import commands
-from discord.ui import View, Button
-import random
-import string
+import datetime, random, traceback, json, os, base64
+from html2image import Html2Image
 
-from utils.discord_utils import safe_send, safe_respond  
+# ────────────────────────────────────────────────────────────────────────────────
+# 📂 Configuration
+# ────────────────────────────────────────────────────────────────────────────────
+hti = Html2Image(custom_flags=["--default-background-color=ffffff"])
+hti.browser.use_new_headless = None
+config = json.load(open("config/config.json"))
+current_directory = os.path.abspath(os.path.dirname(__file__))
+
+def encode_font(font_path):
+    with open(font_path, "rb") as font_file:
+        return base64.b64encode(font_file.read()).decode("utf-8")
+
+font_b64 = encode_font(f"{current_directory}/assets/fonts/ggsans-regular.ttf")
+fontmed_base64 = encode_font(f"{current_directory}/assets/fonts/ggsans-medium.ttf")
+
+# ────────────────────────────────────────────────────────────────────────────────
+# 🖼️ Génération HTML → Image (BoostPage)
+# ────────────────────────────────────────────────────────────────────────────────
+class BoostPage:
+    def __init__(self, nitro_type, authorname, authoravatar, authortext, receiveravatar, receivername, receivertext):
+        self.actual_datetime = datetime.datetime.now()
+        self.proof = ""
+        self.nitro_type = nitro_type
+        self.authorname = authorname
+        self.authoravatar = authoravatar
+        self.authortext = authortext
+        self.sender_message_datetime = (self.actual_datetime - datetime.timedelta(minutes=random.randint(1, 300))).strftime('Today at %I:%M %p')
+        self.receivername = receivername
+        self.receiveravatar = receiveravatar
+        self.receivertext = receivertext
+        self.receiver_message_datetime = (self.actual_datetime + datetime.timedelta(minutes=random.randint(1, 120))).strftime('Today at %I:%M %p')
+
+    def get_proof(self):
+        nitro_links = {
+            "classic": ("https://discord.gift/", f"file://{current_directory}/assets/nitro_presets/nitro_classic_preset.png"),
+            "promo": ("https://discord.com/billing/promotions/", f"file://{current_directory}/assets/nitro_presets/nitro_promo_preset.png"),
+            "boost": ("https://discord.gift/", f"file://{current_directory}/assets/nitro_presets/nitro_boost_preset.png")
+        }
+        nitro_link, nitro_image = nitro_links.get(self.nitro_type.lower(), nitro_links["boost"])
+
+        with open(f"{current_directory}/assets/index.html", 'r') as boost_page:
+            self.proof = boost_page.read() \
+                .replace('GGSANSFONT', f"data:font/ttf;base64,{font_b64}") \
+                .replace('GGSANSMEDIUMFONT', f"data:font/ttf;base64,{fontmed_base64}") \
+                .replace('AUTHORNAME', self.authorname) \
+                .replace('AUTHORAVATAR', self.authoravatar) \
+                .replace('AUTHORDATETIME', self.sender_message_datetime) \
+                .replace('AUTHORTEXT', self.authortext) \
+                .replace('USERNAME', self.receivername) \
+                .replace('USERAVATAR', self.receiveravatar) \
+                .replace('USERDATETIME', self.receiver_message_datetime) \
+                .replace('USERTEXT', self.receivertext) \
+                .replace('NITROLINK', nitro_link) \
+                .replace('NITROCODE', ''.join(random.choice('0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ') for _ in range(16))) \
+                .replace('NITROIMAGESRC', nitro_image)
+        return self.proof
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🧠 Cog principal
 # ────────────────────────────────────────────────────────────────────────────────
-class FakeNitroAdmin(commands.Cog):
+class FakeNitroProof(commands.Cog):
     """
-    Commande /fakenitro et !fakenitro — Simule un Nitro ultra réaliste et permet de choisir le gagnant
+    Commande /proof et !proof — Génère un faux message Nitro ultra réaliste
     """
-    NITRO_LOGO_URL = "https://cdn.discordapp.com/attachments/1070/1070/nitro_logo.png"
-    NITRO_EMOJI = "nitrowumpus"
-
     def __init__(self, bot: commands.Bot):
         self.bot = bot
 
     # ────────────────────────────────────────────────────────────────────────────
-    # 🔹 Génération d'un compte Nitro
+    # 🔹 Modal pour receiver custom
     # ────────────────────────────────────────────────────────────────────────────
-    def generate_nitro_account(self, user: discord.Member):
-        # On prend le pseudo du membre choisi pour plus de réalisme
-        username = user.name
-        discriminator = user.discriminator
-        nitro_type = random.choice(["Nitro Classic", "Nitro Boost"])
-        expires_in = f"{random.randint(1, 30)} jours restants"
-        return {
-            "Pseudo": f"{username}#{discriminator}",
-            "Type Nitro": nitro_type,
-            "Expiration": expires_in,
-            "Lien": "https://www.youtube.com/watch?v=dQw4w9WgXcQ"  # Rick Roll
-        }
+    class NitroProofCustom(discord.ui.Modal, title='Fake Nitro Proof System'):
+        nitrotype = discord.ui.TextInput(label='Type of Nitro code', style=discord.TextStyle.short, placeholder='classic/boost/promo', required=True)
+        authortext = discord.ui.TextInput(label='Text sent by you', style=discord.TextStyle.long, required=False)
+        receivername = discord.ui.TextInput(label='Receiver Name', style=discord.TextStyle.short, required=True)
+        receiveravatar = discord.ui.TextInput(label='Receiver Avatar URL', style=discord.TextStyle.short, required=False)
+        receivertext = discord.ui.TextInput(label='Text sent by receiver', style=discord.TextStyle.paragraph, required=True)
+
+        async def on_submit(self, interaction: discord.Interaction):
+            await interaction.response.defer(ephemeral=True)
+            recv_avatar = self.receiveravatar.value or config["default_avatar"]
+            proof_html = BoostPage(
+                self.nitrotype.value, 
+                interaction.user.display_name, 
+                interaction.user.avatar.url, 
+                self.authortext.value, 
+                recv_avatar, 
+                self.receivername.value, 
+                self.receivertext.value
+            ).get_proof()
+            hti.screenshot(html_str=proof_html, size=(random.randint(730, 1100), random.randint(450, 470)), save_as='proof.png')
+            await interaction.user.send(file=discord.File('proof.png'))
+            await interaction.followup.send("✅ Proof generated! Check your DMs.", ephemeral=True)
 
     # ────────────────────────────────────────────────────────────────────────────
-    # 🔹 Création de l'embed ultra réaliste
+    # 🔹 Modal pour receiver par ID
     # ────────────────────────────────────────────────────────────────────────────
-    def create_nitro_embed(self, account: dict):
-        embed = discord.Embed(
-            title=f"🎉 {self.NITRO_EMOJI} Vous avez reçu un Nitro !",
-            description="Merci d’utiliser Discord ! Réclame ton Nitro ci-dessous.",
-            color=discord.Color.purple()
-        )
-        embed.set_thumbnail(url=self.NITRO_LOGO_URL)
-        for key, value in account.items():
-            if key != "Lien":
-                embed.add_field(name=key, value=value, inline=False)
-        embed.set_footer(text="Discord • Nitro Gratuit", icon_url=self.NITRO_LOGO_URL)
-        return embed
+    class NitroProofId(discord.ui.Modal, title='Fake Nitro Proof System'):
+        nitrotype = discord.ui.TextInput(label='Type of Nitro code', style=discord.TextStyle.short, placeholder='classic/boost/promo', required=True)
+        authortext = discord.ui.TextInput(label='Text sent by you', style=discord.TextStyle.long, required=False)
+        receiverid = discord.ui.TextInput(label='Receiver ID', style=discord.TextStyle.short, required=True)
+        receivertext = discord.ui.TextInput(label='Text sent by receiver', style=discord.TextStyle.paragraph, required=True)
+
+        async def on_submit(self, interaction: discord.Interaction):
+            await interaction.response.defer(ephemeral=True)
+            try:
+                user = await interaction.client.fetch_user(int(self.receiverid.value))
+                author_avatar = interaction.user.display_avatar.url if interaction.user.avatar else config["default_avatar"]
+                recv_avatar = user.display_avatar.url if user.avatar else config["default_avatar"]
+                proof_html = BoostPage(
+                    self.nitrotype.value, 
+                    interaction.user.name, 
+                    author_avatar, 
+                    self.authortext.value, 
+                    recv_avatar, 
+                    user.name, 
+                    self.receivertext.value
+                ).get_proof()
+                hti.screenshot(html_str=proof_html, size=(random.randint(730, 1100), random.randint(450, 470)), save_as='proof.png')
+                await interaction.user.send(file=discord.File('proof.png'))
+                await interaction.followup.send("✅ Proof generated! Check your DMs.", ephemeral=True)
+            except Exception as e:
+                await interaction.followup.send(f"❌ Error: {e}", ephemeral=True)
 
     # ────────────────────────────────────────────────────────────────────────────
-    # 🔹 Vérifie si l'utilisateur est admin
+    # 🔹 Commande Slash
     # ────────────────────────────────────────────────────────────────────────────
-    def is_admin():
-        async def predicate(interaction: discord.Interaction):
-            return interaction.user.guild_permissions.administrator
-        return app_commands.check(predicate)
-
-    # ────────────────────────────────────────────────────────────────────────────
-    # 🔹 Commande SLASH
-    # ────────────────────────────────────────────────────────────────────────────
-    @app_commands.command(
-        name="fakenitro",
-        description="Simule un Nitro ultra réaliste pour un membre spécifique !"
-    )
-    @is_admin()
-    async def slash_fakenitro(self, interaction: discord.Interaction, member: discord.Member):
-        """Commande slash pour envoyer un faux Nitro à un membre précis"""
-        try:
-            await interaction.response.defer()
-            account = self.generate_nitro_account(member)
-            embed = self.create_nitro_embed(account)
-
-            view = View()
-            button = Button(
-                label="Réclamer mon Nitro",
-                url=account["Lien"],
-                style=discord.ButtonStyle.link
-            )
-            view.add_item(button)
-
-            await safe_send(interaction.channel, embed=embed, view=view)
-            await interaction.delete_original_response()
-        except Exception as e:
-            print(f"[ERREUR /fakenitro] {e}")
-            await safe_respond(interaction, "❌ Une erreur est survenue.", ephemeral=True)
-
-    # ────────────────────────────────────────────────────────────────────────────
-    # 🔹 Commande PREFIX
-    # ────────────────────────────────────────────────────────────────────────────
-    @commands.command(name="fakenitro")
-    @commands.has_permissions(administrator=True)
-    async def prefix_fakenitro(self, ctx: commands.Context, member: discord.Member):
-        """Commande préfixe pour envoyer un faux Nitro à un membre précis"""
-        try:
-            account = self.generate_nitro_account(member)
-            embed = self.create_nitro_embed(account)
-
-            view = View()
-            button = Button(
-                label="Réclamer mon Nitro",
-                url=account["Lien"],
-                style=discord.ButtonStyle.link
-            )
-            view.add_item(button)
-
-            await safe_send(ctx.channel, embed=embed, view=view)
-        except commands.MissingPermissions:
-            await safe_send(ctx.channel, "❌ Vous devez être administrateur pour utiliser cette commande.")
-        except Exception as e:
-            print(f"[ERREUR !fakenitro] {e}")
-            await safe_send(ctx.channel, "❌ Une erreur est survenue.")
+    @app_commands.command(name="proof", description="Generate a Giveaway Nitro Proof")
+    @app_commands.describe(receiverinfo="Choose receiver by ID or custom")
+    @app_commands.choices(receiverinfo=[
+        app_commands.Choice(name='Receiver ID', value='id'),
+        app_commands.Choice(name='Custom Receiver', value='custom')
+    ])
+    async def slash_proof(self, interaction: discord.Interaction, receiverinfo: str):
+        if receiverinfo == 'custom':
+            await interaction.response.send_modal(self.NitroProofCustom())
+        elif receiverinfo == 'id':
+            await interaction.response.send_modal(self.NitroProofId())
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🔌 Setup du Cog
 # ────────────────────────────────────────────────────────────────────────────────
 async def setup(bot: commands.Bot):
-    cog = FakeNitroAdmin(bot)
+    cog = FakeNitroProof(bot)
     for command in cog.get_commands():
         if not hasattr(command, "category"):
-            command.category = "Admin"
+            command.category = "Autre"
     await bot.add_cog(cog)
