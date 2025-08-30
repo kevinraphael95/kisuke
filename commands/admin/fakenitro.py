@@ -13,7 +13,7 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 from discord.ui import Modal, TextInput
-import datetime, random, json, os, base64
+import datetime, random, os, base64
 from html2image import Html2Image
 import traceback
 
@@ -24,7 +24,11 @@ from utils.discord_utils import safe_send, safe_respond
 # ────────────────────────────────────────────────────────────────────────────────
 hti = Html2Image(custom_flags=["--default-background-color=ffffff"])
 hti.browser.use_new_headless = None
-config = json.load(open("config/config.json"))
+
+# Lecture du token depuis les variables d'environnement (Render)
+BOT_TOKEN = os.environ.get("DISCORD_TOKEN")
+DEFAULT_AVATAR = "https://cdn.discordapp.com/embed/avatars/0.png"
+
 current_directory = os.path.abspath(os.path.dirname(__file__))
 
 def encode_font(font_path):
@@ -98,11 +102,11 @@ class FakeNitroProof(commands.Cog):
 
         async def on_submit(self, interaction: discord.Interaction):
             await interaction.response.defer(ephemeral=True)
-            recv_avatar = self.receiveravatar.value or config["default_avatar"]
+            recv_avatar = self.receiveravatar.value or DEFAULT_AVATAR
             proof_html = BoostPage(
                 self.nitrotype.value,
                 interaction.user.display_name,
-                interaction.user.avatar.url,
+                interaction.user.avatar.url if interaction.user.avatar else DEFAULT_AVATAR,
                 self.authortext.value,
                 recv_avatar,
                 self.receivername.value,
@@ -125,8 +129,8 @@ class FakeNitroProof(commands.Cog):
             await interaction.response.defer(ephemeral=True)
             try:
                 user = await interaction.client.fetch_user(int(self.receiverid.value))
-                author_avatar = interaction.user.display_avatar.url if interaction.user.avatar else config["default_avatar"]
-                recv_avatar = user.display_avatar.url if user.avatar else config["default_avatar"]
+                author_avatar = interaction.user.display_avatar.url if interaction.user.avatar else DEFAULT_AVATAR
+                recv_avatar = user.display_avatar.url if user.avatar else DEFAULT_AVATAR
                 proof_html = BoostPage(
                     self.nitrotype.value,
                     interaction.user.display_name,
@@ -142,11 +146,26 @@ class FakeNitroProof(commands.Cog):
             except Exception as e:
                 await interaction.followup.send(f"❌ Error: {e}", ephemeral=True)
 
+
+    # ────────────────────────────────────────────────────────────────────────────
+    # 🔹 Commande avec préfixe !fakenitro
+    # ────────────────────────────────────────────────────────────────────────────
+    @commands.command(name="fakenitro", help="Generate a Giveaway Nitro Proof")
+    @commands.cooldown(1, 5.0, commands.BucketType.user)
+    async def prefixed_proof(self, ctx, receiverinfo: str = "custom"):
+        if receiverinfo.lower() == 'custom':
+            await ctx.send_modal(self.NitroProofCustom())
+        elif receiverinfo.lower() == 'id':
+            await ctx.send_modal(self.NitroProofId())
+        else:
+            await ctx.send("❌ Invalid option. Use `custom` or `id`.")
+
+
     # ────────────────────────────────────────────────────────────────────────────
     # 🔹 Slash command /proof
     # ────────────────────────────────────────────────────────────────────────────
     @app_commands.command(
-        name="proof",
+        name="fakenitro",
         description="Generate a Giveaway Nitro Proof"
     )
     @app_commands.describe(receiverinfo="Choose receiver by ID or custom")
@@ -160,9 +179,6 @@ class FakeNitroProof(commands.Cog):
             await interaction.response.send_modal(self.NitroProofCustom())
         elif receiverinfo == 'id':
             await interaction.response.send_modal(self.NitroProofId())
-
-
-
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🔌 Setup du Cog
