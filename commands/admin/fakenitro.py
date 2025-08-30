@@ -4,6 +4,7 @@
 # Catégorie : Autre
 # Accès : Admin (optionnel) / Tous
 # Cooldown : 1 utilisation / 5 secondes / utilisateur
+# source du code https://github.com/AstraaDev/NitroProof-Gen
 # ────────────────────────────────────────────────────────────────────────────────
 
 # ────────────────────────────────────────────────────────────────────────────────
