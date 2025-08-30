@@ -1,41 +1,42 @@
-import datetime, random
-from supabase import create_client, Client
-import os, json
+# ────────────────────────────────────────────────────────────────────────────────
+# 📌 jardin_utils.py — Fonctions utilitaires pour le jardin
+# ────────────────────────────────────────────────────────────────────────────────
 import discord
+import datetime
+import os
+from supabase import create_client
+import json
+import random
 
-# ──────────────────────
+# ────────────────────────────────────────────────────────────────────────────────
 # 🔌 Connexion Supabase
-# ──────────────────────
+# ────────────────────────────────────────────────────────────────────────────────
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY")
-supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
+supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 
-TABLE_NAME = "gardens"
+# ────────────────────────────────────────────────────────────────────────────────
+# 📦 Chargement des constantes depuis JSON
+# ────────────────────────────────────────────────────────────────────────────────
+with open("data/jardin.json", "r", encoding="utf-8") as f:
+    DATA = json.load(f)
 
-# ──────────────────────
-# 📦 Chargement config
-# ──────────────────────
-with open("data/potions.json", "r", encoding="utf-8") as f:
-    CONFIG = json.load(f)
-
-DEFAULT_GRID = CONFIG["default_grid"]
-DEFAULT_INVENTORY = CONFIG["default_inventory"]
-FLOWERS = CONFIG["flowers"]
-FERTILIZE_CFG = CONFIG["fertilize"]
-POTIONS = CONFIG["potions"]
-
-FERTILIZE_COOLDOWN = datetime.timedelta(minutes=FERTILIZE_CFG["cooldown_minutes"])
-FERTILIZE_PROBABILITY = FERTILIZE_CFG["probability"]
-
-FLEUR_EMOJIS = {k: v["emoji"] for k, v in FLOWERS.items()}
-FLEUR_VALUES = {k: v["value"] for k, v in FLOWERS.items()}
-FLEUR_SIGNS = {k: v["sign"] for k, v in FLOWERS.items()}
+DEFAULT_GRID = DATA["DEFAULT_GRID"]
+DEFAULT_INVENTORY = DATA["DEFAULT_INVENTORY"]
+FLEUR_EMOJIS = DATA["FLEUR_EMOJIS"]
 FLEUR_LIST = list(FLEUR_EMOJIS.items())
+FLEUR_VALUES = DATA["FLEUR_VALUES"]
+FLEUR_SIGNS = DATA["FLEUR_SIGNS"]
+POTIONS = DATA["POTIONS"]
+TABLE_NAME = DATA.get("TABLE_NAME", "gardens")
+FERTILIZE_PROBABILITY = DATA["FERTILIZE_PROBABILITY"]
+FERTILIZE_COOLDOWN = datetime.timedelta(seconds=DATA["FERTILIZE_COOLDOWN"])
 
-# ──────────────────────
+# ────────────────────────────────────────────────────────────────────────────────
 # 🧠 Fonctions utilitaires
-# ──────────────────────
+# ────────────────────────────────────────────────────────────────────────────────
 async def get_or_create_garden(user_id: int, username: str):
+    """Récupère le jardin d’un utilisateur ou le crée si inexistant."""
     res = supabase.table(TABLE_NAME).select("*").eq("user_id", user_id).execute()
     if res.data:
         return res.data[0]
@@ -53,9 +54,9 @@ async def get_or_create_garden(user_id: int, username: str):
     return new_garden
 
 def build_garden_embed(garden: dict, viewer_id: int) -> discord.Embed:
+    """Construit l’embed représentant le jardin."""
     lines = garden["garden_grid"]
-    inv_dict = garden["inventory"]
-    inv = " / ".join(f"{FLEUR_EMOJIS[f]}{inv_dict.get(f, 0)}" for f in FLEUR_EMOJIS)
+    inv = " / ".join(f"{FLEUR_EMOJIS[f]}{garden['inventory'].get(f, 0)}" for f in FLEUR_EMOJIS)
 
     cd_str = "✅ Disponible"
     if garden.get("last_fertilize"):
@@ -64,11 +65,12 @@ def build_garden_embed(garden: dict, viewer_id: int) -> discord.Embed:
             now = datetime.datetime.now(datetime.timezone.utc)
             remain = last_dt + FERTILIZE_COOLDOWN - now
             if remain.total_seconds() > 0:
-                h, m = divmod(int(remain.total_seconds()) // 60, 60)
-                s = int(remain.total_seconds()) % 60
-                cd_str = f"⏳ {h}h {m}m {s}s"
-        except Exception:
-            pass
+                total_seconds = int(remain.total_seconds())
+                minutes, seconds = divmod(total_seconds, 60)
+                hours, minutes = divmod(minutes, 60)
+                cd_str = f"⏳ {hours}h {minutes}m {seconds}s"
+        except Exception as e:
+            print(f"[ERREUR parse last_fertilize] {e}")
 
     embed = discord.Embed(
         title=f"🏡 Jardin de {garden['username']}",
@@ -77,7 +79,7 @@ def build_garden_embed(garden: dict, viewer_id: int) -> discord.Embed:
     )
     embed.add_field(
         name="Infos",
-        value=f"Fleurs : {inv}\n"
+        value=f"Fleurs possédées : {inv}\n"
               f"Armée : {garden['armee'] or '—'} | Argent : {garden['argent']}💰\n"
               f"Cooldown engrais : {cd_str}",
         inline=False
@@ -85,6 +87,7 @@ def build_garden_embed(garden: dict, viewer_id: int) -> discord.Embed:
     return embed
 
 def pousser_fleurs(lines: list[str]) -> list[str]:
+    """Fait pousser de nouvelles fleurs sur le jardin."""
     new_lines = []
     for line in lines:
         chars = []
@@ -98,6 +101,7 @@ def pousser_fleurs(lines: list[str]) -> list[str]:
     return new_lines
 
 def couper_fleurs(lines: list[str], garden: dict) -> tuple[list[str], dict]:
+    """Coupe les fleurs et met à jour l’inventaire."""
     new_lines = []
     inv = garden["inventory"]
     for line in lines:
