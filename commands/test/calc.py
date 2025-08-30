@@ -92,10 +92,10 @@ class CalcButton(Button):
         await safe_edit(
             interaction.message,
             content=(
-                "╔════════════════════════╗\n"
+                "╔══════════════════════════╗\n"
                 f"║ {view.expression or ''}\n"
                 f"║ = {view.result if view.result is not None else ''}\n"
-                f"╚════════════════════════╝"
+                f"╚═════════════════════════╝"
             ),
             view=view
         )
@@ -117,10 +117,10 @@ class ScientificCalculator(commands.Cog):
     async def _send_calculator(self, channel: discord.abc.Messageable):
         view = CalculatorView()
         screen = (
-            "╔════════════════════════╗\n"
+            "╔══════════════════════════╗\n"
             "║ \n"
             "║ = \n"
-            "╚════════════════════════╝"
+            "╚══════════════════════════╝"
         )
         view.message = await safe_send(channel, screen, view=view)
 
