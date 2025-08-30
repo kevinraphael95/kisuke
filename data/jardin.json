@@ -1,10 +1,11 @@
 {
-  "default_grid": [
+  "TABLE_NAME": "gardens",
+  "DEFAULT_GRID": [
     "🌱🌱🌱🌱🌱🌱🌱🌱",
     "🌱🌱🌱🌱🌱🌱🌱🌱",
     "🌱🌱🌱🌱🌱🌱🌱🌱"
   ],
-  "default_inventory": {
+  "DEFAULT_INVENTORY": {
     "tulipes": 0,
     "roses": 0,
     "jacinthes": 0,
@@ -12,19 +13,31 @@
     "paquerettes": 0,
     "tournesols": 0
   },
-  "flowers": {
-    "tulipes": {"emoji": "🌷", "value": 1, "sign": "+"},
-    "roses": {"emoji": "🌹", "value": 2, "sign": "+"},
-    "jacinthes": {"emoji": "🪻", "value": 2, "sign": "×"},
-    "hibiscus": {"emoji": "🌺", "value": 3, "sign": "×"},
-    "paquerettes": {"emoji": "🌼", "value": 1, "sign": "-"},
-    "tournesols": {"emoji": "🌻", "value": 2, "sign": "-"}
+  "FLEUR_EMOJIS": {
+    "tulipes": "🌷",
+    "roses": "🌹",
+    "jacinthes": "🪻",
+    "hibiscus": "🌺",
+    "paquerettes": "🌼",
+    "tournesols": "🌻"
   },
-  "fertilize": {
-    "cooldown_minutes": 10,
-    "probability": 0.39
+  "FLEUR_VALUES": {
+    "tulipes": 1,
+    "roses": 2,
+    "jacinthes": 2,
+    "hibiscus": 3,
+    "paquerettes": 1,
+    "tournesols": 2
   },
-  "potions": {
+  "FLEUR_SIGNS": {
+    "tulipes": "+",
+    "roses": "+",
+    "jacinthes": "×",
+    "hibiscus": "×",
+    "paquerettes": "-",
+    "tournesols": "-"
+  },
+  "POTIONS": {
     "-16": "🪨 Potion Peau de Pierre",
     "-15": "🪁 Potion Lévitation",
     "-14": "🪄 Potion Charme",
@@ -57,5 +70,11 @@
     "14": "🌸 Potion de Parfum",
     "15": "⛸️ Potion de Glisse",
     "16": "🤹 Potion de Dextérité"
-  }
+  },
+  "FERTILIZE_COOLDOWN": 600,
+  "FERTILIZE_PROBABILITY": 0.39
+
+
+  
+
 }
