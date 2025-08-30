@@ -1,5 +1,5 @@
 # ────────────────────────────────────────────────────────────────────────────────
-# 📌 fakenitro_proof.py — Commande interactive /proof et !proof
+# 📌 fakenitro_proof.py — Commande interactive /fakenitro et !fakenitro
 # Objectif : Générer un faux message Discord Nitro ultra réaliste (image HTML→PNG)
 # Catégorie : Autre
 # Accès : Tous
@@ -82,55 +82,38 @@ class FakeNitroProof(commands.Cog):
         print("✅ Cog FakeNitroProof chargé")  # debug pour vérifier le chargement
 
     # ────────────────────────────────────────────────────────────────────────────
-    # 🔹 Modal Custom Receiver
+    # 🔹 Modal unique (fusion custom + id)
     # ────────────────────────────────────────────────────────────────────────────
-    class NitroProofCustom(Modal, title='Fake Nitro Proof System'):
+    class NitroProofModal(Modal, title='Fake Nitro Proof System'):
         nitrotype = TextInput(label='Type of Nitro code', style=discord.TextStyle.short, placeholder='classic/boost/promo', required=True)
         authortext = TextInput(label='Text sent by you', style=discord.TextStyle.long, required=False)
-        receivername = TextInput(label='Receiver Name', style=discord.TextStyle.short, required=True)
-        receiveravatar = TextInput(label='Receiver Avatar URL', style=discord.TextStyle.short, required=False)
-        receivertext = TextInput(label='Text sent by receiver', style=discord.TextStyle.paragraph, required=True)
-
-        async def on_submit(self, interaction: discord.Interaction):
-            await interaction.response.defer(ephemeral=True)
-            recv_avatar = self.receiveravatar.value or DEFAULT_AVATAR
-            proof_html = BoostPage(
-                self.nitrotype.value,
-                interaction.user.display_name,
-                interaction.user.avatar.url if interaction.user.avatar else DEFAULT_AVATAR,
-                self.authortext.value,
-                recv_avatar,
-                self.receivername.value,
-                self.receivertext.value
-            ).get_proof()
-            hti.screenshot(html_str=proof_html, size=(random.randint(730, 1100), random.randint(450, 470)), save_as='proof.png')
-            await interaction.user.send(file=discord.File('proof.png'))
-            await interaction.followup.send("✅ Proof generated! Check your DMs.", ephemeral=True)
-
-    # ────────────────────────────────────────────────────────────────────────────
-    # 🔹 Modal Receiver by ID
-    # ────────────────────────────────────────────────────────────────────────────
-    class NitroProofId(Modal, title='Fake Nitro Proof System'):
-        nitrotype = TextInput(label='Type of Nitro code', style=discord.TextStyle.short, placeholder='classic/boost/promo', required=True)
-        authortext = TextInput(label='Text sent by you', style=discord.TextStyle.long, required=False)
-        receiverid = TextInput(label='Receiver ID', style=discord.TextStyle.short, required=True)
+        receiver_input = TextInput(label='Receiver (ID or Name)', style=discord.TextStyle.short, required=True)
+        receiveravatar = TextInput(label='Receiver Avatar URL (optional)', style=discord.TextStyle.short, required=False)
         receivertext = TextInput(label='Text sent by receiver', style=discord.TextStyle.paragraph, required=True)
 
         async def on_submit(self, interaction: discord.Interaction):
             await interaction.response.defer(ephemeral=True)
             try:
-                user = await interaction.client.fetch_user(int(self.receiverid.value))
+                # Si c'est un ID, fetch user
+                try:
+                    receiver = await interaction.client.fetch_user(int(self.receiver_input.value))
+                    receiver_name = receiver.name
+                    receiver_avatar = receiver.display_avatar.url if receiver.avatar else DEFAULT_AVATAR
+                except:
+                    receiver_name = self.receiver_input.value
+                    receiver_avatar = self.receiveravatar.value or DEFAULT_AVATAR
+
                 author_avatar = interaction.user.display_avatar.url if interaction.user.avatar else DEFAULT_AVATAR
-                recv_avatar = user.display_avatar.url if user.avatar else DEFAULT_AVATAR
                 proof_html = BoostPage(
                     self.nitrotype.value,
                     interaction.user.display_name,
                     author_avatar,
                     self.authortext.value,
-                    recv_avatar,
-                    user.name,
+                    receiver_avatar,
+                    receiver_name,
                     self.receivertext.value
                 ).get_proof()
+
                 hti.screenshot(html_str=proof_html, size=(random.randint(730, 1100), random.randint(450, 470)), save_as='proof.png')
                 await interaction.user.send(file=discord.File('proof.png'))
                 await interaction.followup.send("✅ Proof generated! Check your DMs.", ephemeral=True)
@@ -142,13 +125,8 @@ class FakeNitroProof(commands.Cog):
     # ────────────────────────────────────────────────────────────────────────────
     @commands.command(name="fakenitro", help="Generate a Giveaway Nitro Proof")
     @commands.cooldown(1, 5.0, commands.BucketType.user)
-    async def prefixed_proof(self, ctx, receiverinfo: str = "custom"):
-        if receiverinfo.lower() == 'custom':
-            await ctx.send_modal(self.NitroProofCustom())
-        elif receiverinfo.lower() == 'id':
-            await ctx.send_modal(self.NitroProofId())
-        else:
-            await ctx.send("❌ Invalid option. Use `custom` or `id`.")
+    async def prefixed_proof(self, ctx):
+        await ctx.send_modal(self.NitroProofModal())
 
     # ────────────────────────────────────────────────────────────────────────────
     # 🔹 Slash command /fakenitro
@@ -157,26 +135,18 @@ class FakeNitroProof(commands.Cog):
         name="fakenitro",
         description="Generate a Giveaway Nitro Proof"
     )
-    @app_commands.describe(receiverinfo="Choose receiver by ID or custom")
-    @app_commands.choices(receiverinfo=[
-        app_commands.Choice(name='Receiver ID', value='id'),
-        app_commands.Choice(name='Custom Receiver', value='custom')
-    ])
-    @app_commands.checks.cooldown(1, 5.0, key=lambda i: i.user.id)
-    async def slash_proof(self, interaction: discord.Interaction, receiverinfo: str):
-        if receiverinfo == 'custom':
-            await interaction.response.send_modal(self.NitroProofCustom())
-        elif receiverinfo == 'id':
-            await interaction.response.send_modal(self.NitroProofId())
-
-
+    async def slash_proof(self, interaction: discord.Interaction):
+        await interaction.response.send_modal(self.NitroProofModal())
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🔌 Setup du Cog
 # ────────────────────────────────────────────────────────────────────────────────
 async def setup(bot: commands.Bot):
     cog = FakeNitroProof(bot)
-    for command in cog.get_commands():
-        if not hasattr(command, "category"):
-            command.category = "Admin"
     await bot.add_cog(cog)
+    try:
+        bot.tree.add_command(cog.slash_proof)
+        await bot.tree.sync()
+        print("✅ Slash command /fakenitro enregistrée et synchronisée")
+    except Exception as e:
+        print(f"❌ Impossible d'ajouter la slash command: {e}")
