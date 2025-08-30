@@ -164,9 +164,15 @@ class FakeNitroProof(commands.Cog):
             print(f"[ERREUR /proof] {e}")
             await safe_respond(interaction, "❌ Une erreur est survenue.", ephemeral=True)
 
+
+
+
 # ────────────────────────────────────────────────────────────────────────────────
 # 🔌 Setup du Cog
 # ────────────────────────────────────────────────────────────────────────────────
 async def setup(bot: commands.Bot):
     cog = FakeNitroProof(bot)
+    for command in cog.get_commands():
+        if not hasattr(command, "category"):
+            command.category = "Admin"
     await bot.add_cog(cog)
