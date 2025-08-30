@@ -6,16 +6,12 @@
 # Cooldown : 1 utilisation / 5 secondes / utilisateur
 # ────────────────────────────────────────────────────────────────────────────────
 
-# ────────────────────────────────────────────────────────────────────────────────
-# 📦 Imports nécessaires
-# ────────────────────────────────────────────────────────────────────────────────
 import discord
 from discord import app_commands
 from discord.ext import commands
 from discord.ui import Modal, TextInput
 import datetime, random, os, base64
 from html2image import Html2Image
-import traceback
 
 from utils.discord_utils import safe_send, safe_respond
 
@@ -25,10 +21,7 @@ from utils.discord_utils import safe_send, safe_respond
 hti = Html2Image(custom_flags=["--default-background-color=ffffff"])
 hti.browser.use_new_headless = None
 
-# Lecture du token depuis les variables d'environnement (Render)
-BOT_TOKEN = os.environ.get("DISCORD_TOKEN")
 DEFAULT_AVATAR = "https://cdn.discordapp.com/embed/avatars/0.png"
-
 current_directory = os.path.abspath(os.path.dirname(__file__))
 
 def encode_font(font_path):
@@ -62,7 +55,6 @@ class BoostPage:
             "boost": ("https://discord.gift/", f"file://{current_directory}/assets/nitro_presets/nitro_boost_preset.png")
         }
         nitro_link, nitro_image = nitro_links.get(self.nitro_type.lower(), nitro_links["boost"])
-
         with open(f"{current_directory}/assets/index.html", 'r') as boost_page:
             self.proof = boost_page.read() \
                 .replace('GGSANSFONT', f"data:font/ttf;base64,{font_b64}") \
@@ -84,11 +76,10 @@ class BoostPage:
 # 🧠 Cog principal
 # ────────────────────────────────────────────────────────────────────────────────
 class FakeNitroProof(commands.Cog):
-    """
-    Commande /proof et !proof — Génère un faux message Nitro ultra réaliste
-    """
+    """Commande /fakenitro et !fakenitro — Génère un faux message Nitro ultra réaliste"""
     def __init__(self, bot: commands.Bot):
         self.bot = bot
+        print("✅ Cog FakeNitroProof chargé")  # debug pour vérifier le chargement
 
     # ────────────────────────────────────────────────────────────────────────────
     # 🔹 Modal Custom Receiver
@@ -146,9 +137,8 @@ class FakeNitroProof(commands.Cog):
             except Exception as e:
                 await interaction.followup.send(f"❌ Error: {e}", ephemeral=True)
 
-
     # ────────────────────────────────────────────────────────────────────────────
-    # 🔹 Commande avec préfixe !fakenitro
+    # 🔹 Commande préfixe !fakenitro
     # ────────────────────────────────────────────────────────────────────────────
     @commands.command(name="fakenitro", help="Generate a Giveaway Nitro Proof")
     @commands.cooldown(1, 5.0, commands.BucketType.user)
@@ -160,9 +150,8 @@ class FakeNitroProof(commands.Cog):
         else:
             await ctx.send("❌ Invalid option. Use `custom` or `id`.")
 
-
     # ────────────────────────────────────────────────────────────────────────────
-    # 🔹 Slash command /proof
+    # 🔹 Slash command /fakenitro
     # ────────────────────────────────────────────────────────────────────────────
     @app_commands.command(
         name="fakenitro",
@@ -179,6 +168,8 @@ class FakeNitroProof(commands.Cog):
             await interaction.response.send_modal(self.NitroProofCustom())
         elif receiverinfo == 'id':
             await interaction.response.send_modal(self.NitroProofId())
+
+
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🔌 Setup du Cog
