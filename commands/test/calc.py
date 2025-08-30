@@ -45,6 +45,9 @@ class CalcButton(Button):
         self.parent_view = parent_view
 
     async def callback(self, interaction: discord.Interaction):
+        # ✅ Accuser réception pour éviter "Échec de l’interaction"
+        await interaction.response.defer()
+
         view = self.parent_view
         label = self.label
 
@@ -53,7 +56,12 @@ class CalcButton(Button):
             view.result = None
         elif label == "=":
             try:
-                expr = view.expression.replace("π", str(math.pi)).replace("e", str(math.e)).replace("^", "**")
+                expr = (
+                    view.expression
+                    .replace("π", str(math.pi))
+                    .replace("e", str(math.e))
+                    .replace("^", "**")
+                )
                 funcs = {
                     "sqrt": "math.sqrt",
                     "log": "math.log10",
@@ -65,13 +73,15 @@ class CalcButton(Button):
                 }
                 for k, v in funcs.items():
                     expr = expr.replace(k+"(", v+"(")
+                # Équilibrer les parenthèses si manquantes
                 open_parens = expr.count("(")
                 close_parens = expr.count(")")
                 expr += ")" * (open_parens - close_parens)
+                # Calcul sécurisé
                 view.result = eval(expr, {"math": math, "__builtins__": {}})
                 view.expression = str(view.result)
-            except Exception as e:
-                view.result = f"Erreur"
+            except Exception:
+                view.result = "Erreur"
                 view.expression = ""
         else:
             if label in ["sin","cos","tan","sqrt","log","ln","!"]:
