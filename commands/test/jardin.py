@@ -15,16 +15,12 @@ import json
 import discord
 from discord import app_commands
 from discord.ext import commands
-from supabase import create_client, Client
+from utils.supabase_client import supabase
 from utils.discord_utils import safe_send, safe_respond
 
 # ────────────────────────────────────────────────────────────────────────────────
-# 🔌 Connexion Supabase
+# 🔌 table name
 # ────────────────────────────────────────────────────────────────────────────────
-SUPABASE_URL = os.getenv("SUPABASE_URL")
-SUPABASE_KEY = os.getenv("SUPABASE_KEY")
-supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
-
 TABLE_NAME = "gardens"
 
 # ────────────────────────────────────────────────────────────────────────────────
