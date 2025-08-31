@@ -15,15 +15,8 @@ from discord.ext import commands
 from discord.ui import View, Select
 import os
 import json
-from supabase import create_client, Client
+from utils.supabase_client import supabase
 from utils.discord_utils import safe_send, safe_respond, safe_edit
-
-# ────────────────────────────────────────────────────────────────────────────────
-# 🔧 Configuration Supabase
-# ────────────────────────────────────────────────────────────────────────────────
-SUPABASE_URL = os.getenv("SUPABASE_URL")
-SUPABASE_KEY = os.getenv("SUPABASE_KEY")
-supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 📊 Données des classes Reiatsu
