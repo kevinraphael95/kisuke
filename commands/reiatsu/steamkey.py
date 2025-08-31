@@ -14,7 +14,7 @@ from discord.ext import commands
 from discord.ui import View, Button
 import os
 import random
-from supabase import create_client
+from utils.supabase_client import supabase
 from utils.discord_utils import safe_send, safe_edit, safe_respond  # ✅ Utilisation safe_* functions
 
 # ────────────────────────────────────────────────────────────────────────────────
