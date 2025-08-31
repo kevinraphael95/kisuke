@@ -14,7 +14,7 @@ import asyncio
 import random
 from datetime import datetime
 from discord.ext import commands
-from supabase_client import supabase
+from utils.supabase_client import supabase
 from utils.discord_utils import safe_send, safe_reply, safe_edit, safe_delete
 
 # ──────────────────────────────────────────────────────────────
