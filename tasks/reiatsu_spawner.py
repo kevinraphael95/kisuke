@@ -12,7 +12,7 @@ from datetime import datetime
 from dateutil import parser
 
 from discord.ext import commands, tasks
-from supabase_client import supabase
+from utils.supabase_client import supabase
 
 from utils.discord_utils import safe_send  # <-- Import fonctions sécurisées
 
