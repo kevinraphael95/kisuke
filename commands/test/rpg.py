@@ -13,7 +13,7 @@ from discord.ext import commands
 import asyncio
 import json
 import os
-from supabase_client import supabase
+from utils.supabase_client import supabase
 from utils.discord_utils import safe_send, safe_edit, safe_add_reaction, safe_clear_reactions  # ajout safe_clear_reactions
 
 # ────────────────────────────────────────────────────────────────────────────────
