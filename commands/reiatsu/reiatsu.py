@@ -18,7 +18,7 @@ from datetime import datetime, timedelta
 import time
 import json
 
-from supabase_client import supabase
+from utils.supabase_client import supabase
 from utils.discord_utils import safe_send, safe_respond  # Fonctions sécurisées anti-429
 
 # ────────────────────────────────────────────────────────────────────────────────
