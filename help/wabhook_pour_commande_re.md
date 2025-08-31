@@ -1,4 +1,4 @@
-# 🔃 Redémarrage du bot avec redeploy Render via webhook
+# 🔃 Redémarrer le bot sur render via webhook
 
 ---
 
@@ -46,11 +46,6 @@ self.render_service_api = os.getenv("RENDER_SERVICE_API")
 ````
 
 Lorsque `!re` est exécuté :
-
 * ✅ Le bot prévient les membres que le redeploy est imminent.
 * ✅ Envoie la requête au webhook Render.
 * ✅ Attend que le service soit de nouveau en ligne et notifie (optionnel).
-
-```
-
----
