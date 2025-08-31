@@ -11,7 +11,7 @@
 import discord
 from discord.ext import commands
 from datetime import datetime, timedelta
-from supabase_client import supabase
+from utils.supabase_client import supabase
 import random
 
 # ────────────────────────────────────────────────────────────────────────────────
