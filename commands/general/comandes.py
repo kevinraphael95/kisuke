@@ -1,6 +1,6 @@
 # ────────────────────────────────────────────────────────────────────────────────
 # 📌 commandes.py — Commande simple /commandes et !commandes
-# Objectif : Affiche la liste de toutes les commandes et leurs descriptions
+# Objectif : Affiche la liste de toutes les commandes et leurs descriptions (Markdown paginé)
 # Catégorie : Utilitaire
 # Accès : Tous
 # Cooldown : 1 utilisation / 5 secondes / utilisateur
@@ -19,21 +19,18 @@ from utils.discord_utils import safe_send, safe_respond
 # ────────────────────────────────────────────────────────────────────────────────
 class Commandes(commands.Cog):
     """
-    Commande /commandes et !commandes — Affiche la liste des commandes et descriptions
+    Commande /commandes et !commandes — Affiche la liste des commandes et descriptions en Markdown paginé
     """
     def __init__(self, bot: commands.Bot):
         self.bot = bot
 
     # ────────────────────────────────────────────────────────────────────────────
-    # 🔹 Fonction interne pour créer l'embed
+    # 🔹 Fonction interne pour créer les pages Markdown
     # ────────────────────────────────────────────────────────────────────────────
-    def build_embed(self):
-        embed = discord.Embed(
-            title="📜 Liste des commandes",
-            description="Voici toutes les commandes disponibles avec leurs descriptions :",
-            color=discord.Color.blue()
-        )
-        # Regrouper par catégorie
+    def build_markdown_pages(self, max_chars=1000):
+        """Renvoie une liste de blocs Markdown prêts à copier-coller dans un README.md"""
+        pages = []
+        current_page = ""
         categories = {}
         for cmd in self.bot.commands:
             cat = getattr(cmd, "category", "Autre")
@@ -43,23 +40,34 @@ class Commandes(commands.Cog):
             categories[cat].append((cmd.name, desc))
 
         for cat, cmds in categories.items():
-            value = "\n".join(f"**{name}** — {desc}" for name, desc in cmds)
-            embed.add_field(name=f"📂 {cat}", value=value, inline=False)
-
-        return embed
+            cat_text = f"### 📂 {cat}\n\n"
+            for name, desc in cmds:
+                cmd_text = f"**{name}**\n{desc}\n\n"
+                # Si le bloc dépasse la limite, on commence une nouvelle page
+                if len(current_page) + len(cat_text) + len(cmd_text) > max_chars:
+                    pages.append(current_page.strip())
+                    current_page = cat_text + cmd_text
+                    cat_text = ""  # On ne répète pas le titre de catégorie sur la nouvelle page
+                else:
+                    current_page += cat_text + cmd_text
+                    cat_text = ""
+        if current_page:
+            pages.append(current_page.strip())
+        return pages
 
     # ────────────────────────────────────────────────────────────────────────────
     # 🔹 Commande SLASH
     # ────────────────────────────────────────────────────────────────────────────
     @app_commands.command(
         name="commandes",
-        description="Affiche toutes les commandes disponibles avec leurs descriptions."
+        description="Affiche toutes les commandes disponibles avec leurs descriptions en Markdown (paginé)."
     )
     @app_commands.checks.cooldown(1, 5.0, key=lambda i: (i.user.id))
     async def slash_commandes(self, interaction: discord.Interaction):
         try:
-            embed = self.build_embed()
-            await safe_respond(interaction, embed=embed)
+            pages = self.build_markdown_pages()
+            response_text = "\n\n---\n\n".join(f"```md\n{p}\n```" for p in pages)
+            await safe_respond(interaction, response_text)
         except app_commands.CommandOnCooldown as e:
             await safe_respond(interaction, f"⏳ Attends encore {e.retry_after:.1f}s.", ephemeral=True)
         except Exception as e:
@@ -71,13 +79,14 @@ class Commandes(commands.Cog):
     # ────────────────────────────────────────────────────────────────────────────
     @commands.command(
         name="commandes",
-        help="Affiche toutes les commandes disponibles avec leurs descriptions."
+        help="Affiche toutes les commandes disponibles avec leurs descriptions en Markdown (paginé)."
     )
     @commands.cooldown(1, 5.0, commands.BucketType.user)
     async def prefix_commandes(self, ctx: commands.Context):
         try:
-            embed = self.build_embed()
-            await safe_send(ctx.channel, embed=embed)
+            pages = self.build_markdown_pages()
+            for p in pages:
+                await safe_send(ctx.channel, f"```md\n{p}\n```")
         except commands.CommandOnCooldown as e:
             await safe_send(ctx.channel, f"⏳ Attends encore {e.retry_after:.1f}s.")
         except Exception as e:
