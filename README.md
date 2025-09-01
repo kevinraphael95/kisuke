@@ -7,6 +7,8 @@
 
 ---
 
+# Commandes
+
 ### 📂 Admin
 - **heartbeat :** (Admin) Gère le heartbeat : pause, resume, status, set, unset.
 - **re :** (Admin) Préviens les membres et redémarre le bot via Render.
