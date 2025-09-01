@@ -32,7 +32,7 @@ class Commandes(commands.Cog):
         pages = []
         current_page = ""
         categories = {}
-    
+
         # Regrouper les commandes par catégorie
         for cmd in self.bot.commands:
             cat = getattr(cmd, "category", "Autre")
@@ -40,15 +40,15 @@ class Commandes(commands.Cog):
                 categories[cat] = []
             desc = cmd.help if cmd.help else "Pas de description."
             categories[cat].append((cmd.name, desc))
-    
+
         # Parcourir chaque catégorie
         for cat, cmds in categories.items():
             # Trier les commandes par nom
             sorted_cmds = sorted(cmds, key=lambda x: x[0].lower())
-        
-            cat_text = f"### 📂 {cat}\n\n"
+
+            cat_text = f"### 📂 {cat}\n"
             for name, desc in sorted_cmds:
-                cmd_text = f"**{name}**\n{desc}\n\n"
+                cmd_text = f"**{name}** : {desc}\n"
                 # Vérifier si le bloc dépasse la limite
                 if len(current_page) + len(cat_text) + len(cmd_text) > max_chars:
                     pages.append(current_page.strip())
@@ -57,7 +57,8 @@ class Commandes(commands.Cog):
                 else:
                     current_page += cat_text + cmd_text
                     cat_text = ""
-        
+            current_page += "\n"  # saut de ligne entre catégories
+
         if current_page:
             pages.append(current_page.strip())
         return pages
