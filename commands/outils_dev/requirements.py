@@ -1,6 +1,6 @@
 # ────────────────────────────────────────────────────────────────────────────────
 # 📌 tools_requirements.py — Commande simple /requirements et !requirements
-# Objectif : Génère automatiquement un fichier requirements.txt avec les packages installés et l'envoie sur Discord
+# Objectif : Génère automatiquement un fichier requirements.txt minimal avec les packages utilisés et l'envoie sur Discord
 # Catégorie : Outils_dev
 # Accès : Tous
 # Cooldown : 1 utilisation / 10 secondes / utilisateur
@@ -13,30 +13,70 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 from utils.discord_utils import safe_send, safe_respond
-import subprocess
 import tempfile
+import os
+import ast
+import pkg_resources
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🧠 Cog principal
 # ────────────────────────────────────────────────────────────────────────────────
 class ToolsRequirements(commands.Cog):
     """
-    Commande /requirements et !requirements — Crée un requirements.txt et l'envoie sur Discord
+    Commande /requirements et !requirements — Crée un requirements.txt minimal et l'envoie sur Discord
     """
     def __init__(self, bot: commands.Bot):
         self.bot = bot
 
     # ────────────────────────────────────────────────────────────────────────────
-    # 🔹 Fonction interne pour générer et envoyer requirements.txt
+    # 🔹 Récupère les packages importés dans le projet (exclut stdlib)
+    # ────────────────────────────────────────────────────────────────────────────
+    def _get_used_packages(self, directory="."):
+        stdlib_modules = {
+            "os", "sys", "json", "time", "datetime", "re", "math", "random", "pathlib",
+            "subprocess", "tempfile", "collections", "itertools", "functools", "typing"
+        }
+
+        used_packages = set()
+        for root, _, files in os.walk(directory):
+            for file in files:
+                if file.endswith(".py"):
+                    try:
+                        with open(os.path.join(root, file), "r", encoding="utf-8") as f:
+                            tree = ast.parse(f.read(), filename=file)
+                    except Exception:
+                        continue
+                    for node in ast.walk(tree):
+                        if isinstance(node, ast.Import):
+                            for alias in node.names:
+                                pkg = alias.name.split(".")[0]
+                                if pkg not in stdlib_modules:
+                                    used_packages.add(pkg)
+                        elif isinstance(node, ast.ImportFrom):
+                            if node.module:
+                                pkg = node.module.split(".")[0]
+                                if pkg not in stdlib_modules:
+                                    used_packages.add(pkg)
+        return used_packages
+
+    # ────────────────────────────────────────────────────────────────────────────
+    # 🔹 Génère et envoie requirements.txt minimal
     # ────────────────────────────────────────────────────────────────────────────
     async def _generate_requirements(self, channel: discord.abc.Messageable):
         try:
-            # Crée un fichier temporaire pour requirements
+            used_packages = self._get_used_packages()
+            installed_packages = {pkg.key: pkg.version for pkg in pkg_resources.working_set}
+
+            minimal_requirements = []
+            for pkg in used_packages:
+                key = pkg.lower()
+                if key in installed_packages:
+                    minimal_requirements.append(f"{pkg}=={installed_packages[key]}")
+
             with tempfile.NamedTemporaryFile(mode="w+", delete=False, suffix=".txt") as tmp_file:
-                subprocess.run(["pip", "freeze"], stdout=tmp_file, check=True)
+                tmp_file.write("\n".join(sorted(minimal_requirements)))
                 tmp_file_path = tmp_file.name
 
-            # Envoie le fichier sur Discord
             await channel.send(file=discord.File(tmp_file_path, filename="requirements.txt"))
 
         except Exception as e:
@@ -48,9 +88,9 @@ class ToolsRequirements(commands.Cog):
     # ────────────────────────────────────────────────────────────────────────────
     @app_commands.command(
         name="requirements",
-        description="Génère et envoie un fichier requirements.txt avec tous les packages installés"
+        description="Génère et envoie un fichier requirements.txt minimal avec les packages utilisés"
     )
-    @app_commands.checks.cooldown(1, 10.0, key=lambda i: (i.user.id))
+    @app_commands.checks.cooldown(1, 10.0, key=lambda i: i.user.id)
     async def slash_requirements(self, interaction: discord.Interaction):
         try:
             await interaction.response.defer()
