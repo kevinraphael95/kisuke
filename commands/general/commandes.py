@@ -48,7 +48,7 @@ class Commandes(commands.Cog):
 
             cat_text = f"### 📂 {cat}\n"
             for name, desc in sorted_cmds:
-                cmd_text = f"{name} : {desc}\n"
+                cmd_text = f"- **{name} :** {desc}\n"
                 # Vérifier la limite de caractères
                 if len(current_page) + len(cat_text) + len(cmd_text) > max_chars:
                     pages.append(current_page.strip())
