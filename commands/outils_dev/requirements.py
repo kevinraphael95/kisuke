@@ -85,7 +85,7 @@ class GenerateRequirements(commands.Cog):
     # 🔹 Commande SLASH
     # ────────────────────────────────────────────────────────────────────────────
     @app_commands.command(
-        name="generate_requirements",
+        name="requirements",
         description="Génère automatiquement un fichier requirements.txt téléchargeable."
     )
     @app_commands.checks.cooldown(1, 30.0, key=lambda i: (i.user.id))
@@ -102,7 +102,7 @@ class GenerateRequirements(commands.Cog):
     # ────────────────────────────────────────────────────────────────────────────
     # 🔹 Commande PREFIX
     # ────────────────────────────────────────────────────────────────────────────
-    @commands.command(name="generate_requirements")
+    @commands.command(name="requirements")
     @commands.cooldown(1, 30.0, commands.BucketType.user)
     async def prefix_generate(self, ctx: commands.Context):
         """Commande préfixe pour générer requirements.txt"""
