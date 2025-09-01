@@ -8,6 +8,9 @@
 # Cooldown : 1 / 30 secondes / utilisateur
 # ────────────────────────────────────────────────────────────────────────────────
 
+# ────────────────────────────────────────────────────────────────────────────────
+# 📦 Imports nécessaires
+# ────────────────────────────────────────────────────────────────────────────────
 import discord
 from discord import app_commands
 from discord.ext import commands
@@ -92,7 +95,9 @@ class Eveil(commands.Cog):
         view = PouvoirView(self, user_id)
         embed = discord.Embed(
             title="✨ Éveil Spirituel",
-            description="Choisis ton pouvoir spirituel en cliquant sur l'un des boutons ci-dessous :",
+            description=
+            "Tu peux dépenser 300 reiatsu pour éveiller tes pouvoirs spirituels.\n"
+            "Choisis ton pouvoir spirituel :",
             color=discord.Color.blue()
         )
         view.message = await safe_send(channel, embed=embed, view=view)
