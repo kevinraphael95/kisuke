@@ -75,14 +75,25 @@ class ToolsRequirements(commands.Cog):
             used_packages = self._get_used_packages()
             installed_packages = {pkg.key: pkg.version for pkg in pkg_resources.working_set}
 
+            # Packages "bruit" à exclure (dépendances indirectes)
+            exclude = {
+                "certifi", "idna", "urllib3", "charset_normalizer",
+                "multidict", "yarl", "h11", "h2", "hpack", "hyperframe",
+                "frozenlist", "aiosignal", "sniffio", "markupsafe",
+                "blinker", "itsdangerous", "jinja2", "werkzeug"
+            }
+
             minimal_requirements = []
             for pkg in used_packages:
                 key = pkg.lower()
-                if key in installed_packages:
+                if key in installed_packages and key not in exclude:
                     minimal_requirements.append(f"{pkg}=={installed_packages[key]}")
 
+            # Tri et suppression doublons
+            minimal_requirements = sorted(set(minimal_requirements))
+
             with tempfile.NamedTemporaryFile(mode="w+", delete=False, suffix=".txt") as tmp_file:
-                tmp_file.write("\n".join(sorted(minimal_requirements)))
+                tmp_file.write("\n".join(minimal_requirements))
                 tmp_file_path = tmp_file.name
 
             await channel.send(file=discord.File(tmp_file_path, filename="requirements.txt"))
