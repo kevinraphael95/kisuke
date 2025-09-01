@@ -1,9 +1,6 @@
-![kisuke](assets/kisuke.jpg)
-
----
 # Kisuke Urahara - Bot Discord
 
-👍 Kisuke Urahara est un bot discord à la con et inutile en python. Il propose quelques commandes simples, peu de commandes amusantes et parfois inspirées du manga bleach, et un petit jeu de collecte de "reiatsu" qui ne sert à rien. Les commande fonctionnent avec le préfixe et certaines aussi en mode slash.
+👍 Kisuke Urahara est un bot discord à la con et inutile en python. Il propose quelques commandes simples, peu de commandes amusantes et parfois inspirées du manga bleach, et un petit jeu de collecte de 'reiatsu' qui ne sert à rien. Les commandes fonctionnent avec le préfixe et certaines aussi en mode slash.
 
 ---
 
@@ -34,10 +31,10 @@ Usage: !say_as <user_id> <message>
 
 ### 📂 Général
 - **code :** Affiche un lien vers le code source du bot.
-- **commandes :** Affiche toutes les commandes disponibles avec leurs descriptions en Markdown (paginé).
 - **emoji :** 😄 Affiche un ou plusieurs emojis du serveur.
 - **help :** Affiche la liste des commandes ou une commande spécifique.
 - **react :** Réagit à un message avec un ou plusieurs emojis.
+- **readme :** Génère un README.md avec toutes les commandes et les envoie en fichier.
 - **say :** Fait répéter un message par le bot. Utilise `embed` au début pour forcer un embed.
 - **say_as_user :** Fait répéter un message par le bot comme si c'était vous.
 
@@ -51,3 +48,4 @@ Usage: !say_as <user_id> <message>
 - **calc :** Pas de description.
 - **jardin :** Pas de description.
 - **rpg :** Commence ton aventure dans la Division Z à Karakura.
+
