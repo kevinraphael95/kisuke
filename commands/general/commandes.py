@@ -28,7 +28,7 @@ class Commandes(commands.Cog):
     # 🔹 Fonction interne pour créer les pages Markdown
     # ────────────────────────────────────────────────────────────────────────────
     def build_markdown_pages(self, max_chars=1000):
-        """Renvoie une liste de blocs Markdown prêts à copier-coller dans un README.md, triés par ordre alphabétique"""
+        """Renvoie une liste de blocs Markdown triés par catégories et commandes (ordre alphabétique)."""
         pages = []
         current_page = ""
         categories = {}
@@ -41,19 +41,19 @@ class Commandes(commands.Cog):
             desc = cmd.help if cmd.help else "Pas de description."
             categories[cat].append((cmd.name, desc))
 
-        # Parcourir chaque catégorie
-        for cat, cmds in categories.items():
-            # Trier les commandes par nom
-            sorted_cmds = sorted(cmds, key=lambda x: x[0].lower())
+        # Trier les catégories par ordre alphabétique
+        for cat in sorted(categories.keys(), key=lambda c: c.lower()):
+            # Trier les commandes par ordre alphabétique
+            sorted_cmds = sorted(categories[cat], key=lambda x: x[0].lower())
 
             cat_text = f"### 📂 {cat}\n"
             for name, desc in sorted_cmds:
-                cmd_text = f"**{name}** : {desc}\n"
-                # Vérifier si le bloc dépasse la limite
+                cmd_text = f"{name} : {desc}\n"
+                # Vérifier la limite de caractères
                 if len(current_page) + len(cat_text) + len(cmd_text) > max_chars:
                     pages.append(current_page.strip())
                     current_page = cat_text + cmd_text
-                    cat_text = ""  # ne pas répéter le titre de catégorie sur la nouvelle page
+                    cat_text = ""  # éviter de répéter le titre sur une nouvelle page
                 else:
                     current_page += cat_text + cmd_text
                     cat_text = ""
@@ -62,7 +62,6 @@ class Commandes(commands.Cog):
         if current_page:
             pages.append(current_page.strip())
         return pages
-
 
     # ────────────────────────────────────────────────────────────────────────────
     # 🔹 Commande SLASH
