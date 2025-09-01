@@ -29,7 +29,7 @@ class ToolsRequirements(commands.Cog):
         self.bot = bot
 
     # ────────────────────────────────────────────────────────────────────────────
-    # 🔹 Récupère les packages importés dans le projet (exclut stdlib)
+    # 🔹 Récupère les packages importés dans le projet (exclut stdlib et modules locaux)
     # ────────────────────────────────────────────────────────────────────────────
     def _get_used_packages(self, directory="."):
         stdlib_modules = {
@@ -38,6 +38,14 @@ class ToolsRequirements(commands.Cog):
         }
 
         used_packages = set()
+        local_modules = set()
+
+        # Collecte tous les noms de fichiers python pour ignorer les imports locaux
+        for root, _, files in os.walk(directory):
+            for file in files:
+                if file.endswith(".py"):
+                    local_modules.add(os.path.splitext(file)[0])
+
         for root, _, files in os.walk(directory):
             for file in files:
                 if file.endswith(".py"):
@@ -50,12 +58,12 @@ class ToolsRequirements(commands.Cog):
                         if isinstance(node, ast.Import):
                             for alias in node.names:
                                 pkg = alias.name.split(".")[0]
-                                if pkg not in stdlib_modules:
+                                if pkg not in stdlib_modules and pkg not in local_modules:
                                     used_packages.add(pkg)
                         elif isinstance(node, ast.ImportFrom):
                             if node.module:
                                 pkg = node.module.split(".")[0]
-                                if pkg not in stdlib_modules:
+                                if pkg not in stdlib_modules and pkg not in local_modules:
                                     used_packages.add(pkg)
         return used_packages
 
