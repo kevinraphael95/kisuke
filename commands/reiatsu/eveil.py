@@ -1,102 +1,146 @@
 # ────────────────────────────────────────────────────────────────────────────────
-# 📌 eveil.py — Commande /eveil et !eveil
-# Objectif : Choisir son éveil spirituel (Shinigami, Hollow, Quincy, Fullbring)
-# Condition : Nécessite 300 reiatsu (consommés)
-# Table : reiatsu2 (user_id, pouvoir)
-# Catégorie : RPG
-# Accès : Tous
-# Cooldown : 1 / 30 secondes / utilisateur
-# ────────────────────────────────────────────────────────────────────────────────
-
-# ────────────────────────────────────────────────────────────────────────────────
 # 📦 Imports nécessaires
 # ────────────────────────────────────────────────────────────────────────────────
 import discord
 from discord import app_commands
 from discord.ext import commands
-import aiosqlite
-from utils.discord_utils import safe_send, safe_respond
+from discord.ui import View, Select
 
+import sqlite3
+
+from utils.discord_utils import safe_send, safe_edit, safe_respond  # ✅ tes sécurités anti-429
+
+# ────────────────────────────────────────────────────────────────────────────────
+# 🎛️ UI — Menu de sélection des pouvoirs
+# ────────────────────────────────────────────────────────────────────────────────
 POUVOIRS = ["Shinigami", "Hollow", "Quincy", "Fullbring"]
+
+class PouvoirSelectView(View):
+    def __init__(self, cog, user_id: int):
+        super().__init__(timeout=60)
+        self.cog = cog
+        self.user_id = user_id
+        self.message = None
+        self.add_item(PouvoirSelect(self))
+
+    async def on_timeout(self):
+        """Désactive le menu après expiration."""
+        for child in self.children:
+            child.disabled = True
+        if self.message:
+            await safe_edit(self.message, view=self)
+
+
+class PouvoirSelect(Select):
+    def __init__(self, parent_view: PouvoirSelectView):
+        self.parent_view = parent_view
+        options = [discord.SelectOption(label=pouvoir, value=pouvoir) for pouvoir in POUVOIRS]
+        super().__init__(placeholder="Choisis ton pouvoir spirituel :", options=options)
+
+    async def callback(self, interaction: discord.Interaction):
+        choix = self.values[0]
+        result = await self.parent_view.cog._do_eveil(interaction.user.id, choix)
+
+        await safe_edit(
+            interaction.message,
+            content=result,
+            embed=None,
+            view=None
+        )
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🧠 Cog principal
 # ────────────────────────────────────────────────────────────────────────────────
-class EveilCog(commands.Cog):
+class Eveil(commands.Cog):
+    """
+    Commande /eveil et !eveil — Permet d’éveiller ses pouvoirs spirituels
+    """
     def __init__(self, bot: commands.Bot):
         self.bot = bot
 
-    async def get_reiatsu(self, user_id: int):
-        """Retourne le score de reiatsu du joueur."""
-        async with aiosqlite.connect("database.db") as db:
-            cur = await db.execute("SELECT reiatsu FROM reiatsu WHERE user_id = ?", (user_id,))
-            row = await cur.fetchone()
-            return row[0] if row else 0
+    # ────────────────────────────────────────────────────────────────────────────
+    # 🔹 Fonction interne : gestion BDD
+    # ────────────────────────────────────────────────────────────────────────────
+    async def _do_eveil(self, user_id: int, pouvoir: str) -> str:
+        """Vérifie la BDD et applique l’éveil si possible."""
 
-    async def add_pouvoir(self, user_id: int, pouvoir: str):
-        """Enregistre l'éveil du joueur dans reiatsu2."""
-        async with aiosqlite.connect("database.db") as db:
-            await db.execute("""
-                INSERT INTO reiatsu2 (user_id, pouvoir)
-                VALUES (?, ?)
-                ON CONFLICT(user_id) DO UPDATE SET pouvoir = excluded.pouvoir
-            """, (user_id, pouvoir))
-            await db.commit()
+        # Connexion
+        conn = sqlite3.connect("data/reiatsu.db")
+        cursor = conn.cursor()
 
-    async def update_reiatsu(self, user_id: int, amount: int):
-        """Met à jour le reiatsu après consommation."""
-        async with aiosqlite.connect("database.db") as db:
-            await db.execute("UPDATE reiatsu SET reiatsu = reiatsu - ? WHERE user_id = ?", (amount, user_id))
-            await db.commit()
+        # Création table si elle n’existe pas
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS reiatsu2 (
+                user_id INTEGER PRIMARY KEY,
+                pouvoir TEXT
+            )
+        """)
 
-    async def _do_eveil(self, user: discord.User, pouvoir: str, channel: discord.abc.Messageable):
-        reiatsu = await self.get_reiatsu(user.id)
-        if reiatsu < 300:
-            await safe_send(channel, f"❌ Yo {user.mention}, tu as besoin de **300 reiatsu** pour éveiller tes pouvoirs (il te manque {300 - reiatsu}).")
-            return
+        # Vérifie le reiatsu actuel dans la table principale
+        cursor.execute("SELECT reiatsu FROM reiatsu WHERE user_id = ?", (user_id,))
+        row = cursor.fetchone()
 
-        # Consommer le reiatsu et enregistrer l'éveil
-        await self.update_reiatsu(user.id, 300)
-        await self.add_pouvoir(user.id, pouvoir)
+        if not row:
+            conn.close()
+            return "❌ Tu n’as pas encore de reiatsu enregistré."
 
-        embed = discord.Embed(
-            title="🌌 Éveil Spirituel",
-            description=f"{user.mention} a éveillé ses pouvoirs spirituels et est devenu **{pouvoir}** !",
-            color=discord.Color.gold()
-        )
-        await safe_send(channel, embed=embed)
+        reiatsu_actuel = row[0]
+        if reiatsu_actuel < 300:
+            conn.close()
+            return f"⛔ Il te faut **300 reiatsu** pour éveiller un pouvoir. Actuel : {reiatsu_actuel}."
+
+        # Déduit 300 et enregistre l’éveil
+        cursor.execute("UPDATE reiatsu SET reiatsu = reiatsu - 300 WHERE user_id = ?", (user_id,))
+        cursor.execute("INSERT OR REPLACE INTO reiatsu2 (user_id, pouvoir) VALUES (?, ?)", (user_id, pouvoir))
+        conn.commit()
+        conn.close()
+
+        return f"🌌 Tu as éveillé ton pouvoir spirituel : **{pouvoir}** ! (-300 reiatsu)"
 
     # ────────────────────────────────────────────────────────────────────────────
-    # Slash command
+    # 🔹 Envoi du menu
+    # ────────────────────────────────────────────────────────────────────────────
+    async def _send_menu(self, channel: discord.abc.Messageable, user_id: int):
+        """Envoie le menu interactif pour choisir le pouvoir."""
+        view = PouvoirSelectView(self, user_id)
+        view.message = await safe_send(channel, "✨ Choisis ton éveil spirituel :", view=view)
+
+    # ────────────────────────────────────────────────────────────────────────────
+    # 🔹 Commande SLASH
     # ────────────────────────────────────────────────────────────────────────────
     @app_commands.command(name="eveil", description="Éveille tes pouvoirs spirituels (300 reiatsu requis).")
-    @app_commands.describe(pouvoir="Choisis ton éveil spirituel")
-    @app_commands.choices(pouvoir=[
-        app_commands.Choice(name=p, value=p) for p in POUVOIRS
-    ])
-    @app_commands.checks.cooldown(1, 30.0, key=lambda i: i.user.id)
-    async def slash_eveil(self, interaction: discord.Interaction, pouvoir: app_commands.Choice[str]):
-        await interaction.response.defer()
-        await self._do_eveil(interaction.user, pouvoir.value, interaction.channel)
-        await interaction.delete_original_response()
+    @app_commands.checks.cooldown(1, 30.0, key=lambda i: i.user.id)  # ⏳ Cooldown 30s
+    async def slash_eveil(self, interaction: discord.Interaction):
+        try:
+            await interaction.response.defer()
+            await self._send_menu(interaction.channel, interaction.user.id)
+            await interaction.delete_original_response()
+        except app_commands.CommandOnCooldown as e:
+            await safe_respond(interaction, f"⏳ Attends encore {e.retry_after:.1f}s.", ephemeral=True)
+        except Exception as e:
+            print(f"[ERREUR /eveil] {e}")
+            await safe_respond(interaction, "❌ Une erreur est survenue.", ephemeral=True)
 
     # ────────────────────────────────────────────────────────────────────────────
-    # Prefix command
+    # 🔹 Commande PREFIX
     # ────────────────────────────────────────────────────────────────────────────
     @commands.command(name="eveil")
-    @commands.cooldown(1, 30.0, commands.BucketType.user)
-    async def prefix_eveil(self, ctx: commands.Context, pouvoir: str = None):
-        if not pouvoir or pouvoir.capitalize() not in POUVOIRS:
-            await safe_send(ctx.channel, f"❌ Utilisation : `!eveil <{'|'.join(POUVOIRS)}>`")
-            return
-        await self._do_eveil(ctx.author, pouvoir.capitalize(), ctx.channel)
+    @commands.cooldown(1, 30.0, commands.BucketType.user)  # ⏳ Cooldown 30s
+    async def prefix_eveil(self, ctx: commands.Context):
+        try:
+            await self._send_menu(ctx.channel, ctx.author.id)
+        except commands.CommandOnCooldown as e:
+            await safe_send(ctx.channel, f"⏳ Attends encore {e.retry_after:.1f}s.")
+        except Exception as e:
+            print(f"[ERREUR !eveil] {e}")
+            await safe_send(ctx.channel, "❌ Une erreur est survenue.")
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🔌 Setup du Cog
 # ────────────────────────────────────────────────────────────────────────────────
 async def setup(bot: commands.Bot):
-    cog = EveilCog(bot)
+    cog = Eveil(bot)
     for command in cog.get_commands():
         if not hasattr(command, "category"):
-            command.category = "RPG"
+            command.category = "Reiatsu"
     await bot.add_cog(cog)
