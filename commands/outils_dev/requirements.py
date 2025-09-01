@@ -17,14 +17,14 @@ import stdlib_list
 import discord
 from discord import app_commands
 from discord.ext import commands
-from utils.discord_utils import safe_send, safe_respond  
+from utils.discord_utils import safe_send, safe_respond
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🧠 Cog principal
 # ────────────────────────────────────────────────────────────────────────────────
 class GenerateRequirements(commands.Cog):
     """
-    Commande /requirements et !requirements — génère un fichier requirements.txt
+    Commande /requirements et !requirements — génère un fichier requirements.txt téléchargeable
     """
     def __init__(self, bot: commands.Bot):
         self.bot = bot
@@ -32,7 +32,9 @@ class GenerateRequirements(commands.Cog):
     # ────────────────────────────────────────────────────────────────────────────
     # 🔹 Fonction interne commune
     # ────────────────────────────────────────────────────────────────────────────
-    async def _generate(self, channel: discord.abc.Messageable):
+    async def _generate_requirements(self, channel: discord.abc.Messageable):
+        """Scan le projet et envoie un fichier requirements.txt"""
+        # Librairies stdlib pour ignorer
         stdlib = set(stdlib_list.stdlib_list(f"{sys.version_info.major}.{sys.version_info.minor}"))
         internal_dirs = {"utils", "cogs", "extensions"}
         import_re = re.compile(r"^(?:from|import)\s+([a-zA-Z0-9_\.]+)")
@@ -81,7 +83,7 @@ class GenerateRequirements(commands.Cog):
     async def slash_requirements(self, interaction: discord.Interaction):
         try:
             await interaction.response.defer()
-            await self._generate(interaction.channel)
+            await self._generate_requirements(interaction.channel)
             await interaction.delete_original_response()
         except Exception as e:
             print(f"[ERREUR /requirements] {e}")
@@ -94,7 +96,7 @@ class GenerateRequirements(commands.Cog):
     @commands.cooldown(1, 30.0, commands.BucketType.user)
     async def prefix_requirements(self, ctx: commands.Context):
         try:
-            await self._generate(ctx.channel)
+            await self._generate_requirements(ctx.channel)
         except Exception as e:
             print(f"[ERREUR !requirements] {e}")
             await safe_send(ctx.channel, "❌ Une erreur est survenue.")
