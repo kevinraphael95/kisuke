@@ -28,32 +28,40 @@ class Commandes(commands.Cog):
     # 🔹 Fonction interne pour créer les pages Markdown
     # ────────────────────────────────────────────────────────────────────────────
     def build_markdown_pages(self, max_chars=1000):
-        """Renvoie une liste de blocs Markdown prêts à copier-coller dans un README.md"""
+        """Renvoie une liste de blocs Markdown prêts à copier-coller dans un README.md, triés par ordre alphabétique"""
         pages = []
         current_page = ""
         categories = {}
+    
+        # Regrouper les commandes par catégorie
         for cmd in self.bot.commands:
             cat = getattr(cmd, "category", "Autre")
             if cat not in categories:
                 categories[cat] = []
             desc = cmd.help if cmd.help else "Pas de description."
             categories[cat].append((cmd.name, desc))
-
+    
+        # Parcourir chaque catégorie
         for cat, cmds in categories.items():
+            # Trier les commandes par nom
+            sorted_cmds = sorted(cmds, key=lambda x: x[0].lower())
+        
             cat_text = f"### 📂 {cat}\n\n"
-            for name, desc in cmds:
+            for name, desc in sorted_cmds:
                 cmd_text = f"**{name}**\n{desc}\n\n"
-                # Si le bloc dépasse la limite, on commence une nouvelle page
+                # Vérifier si le bloc dépasse la limite
                 if len(current_page) + len(cat_text) + len(cmd_text) > max_chars:
                     pages.append(current_page.strip())
                     current_page = cat_text + cmd_text
-                    cat_text = ""  # On ne répète pas le titre de catégorie sur la nouvelle page
+                    cat_text = ""  # ne pas répéter le titre de catégorie sur la nouvelle page
                 else:
                     current_page += cat_text + cmd_text
                     cat_text = ""
+        
         if current_page:
             pages.append(current_page.strip())
         return pages
+
 
     # ────────────────────────────────────────────────────────────────────────────
     # 🔹 Commande SLASH
