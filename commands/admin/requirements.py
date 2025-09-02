@@ -1,8 +1,8 @@
 # ────────────────────────────────────────────────────────────────────────────────
 # 📌 tools_requirements.py — Commande simple /requirements et !requirements
 # Objectif : Génère automatiquement un fichier requirements.txt minimal avec les packages utilisés et l'envoie sur Discord
-# Catégorie : Outils_dev
-# Accès : Tous
+# Catégorie : Admin
+# Accès : Administrateurs seulement
 # Cooldown : 1 utilisation / 10 secondes / utilisateur
 # ────────────────────────────────────────────────────────────────────────────────
 
@@ -24,6 +24,7 @@ import pkg_resources
 class ToolsRequirements(commands.Cog):
     """
     Commande /requirements et !requirements — Crée un requirements.txt minimal et l'envoie sur Discord
+    Accessible uniquement aux administrateurs.
     """
     def __init__(self, bot: commands.Bot):
         self.bot = bot
@@ -103,8 +104,9 @@ class ToolsRequirements(commands.Cog):
             await safe_send(channel, "❌ Impossible de générer requirements.txt.")
 
     # ────────────────────────────────────────────────────────────────────────────
-    # 🔹 Commande SLASH
+    # 🔹 Commande SLASH (admin seulement)
     # ────────────────────────────────────────────────────────────────────────────
+    @app_commands.checks.has_permissions(administrator=True)
     @app_commands.command(
         name="requirements",
         description="Génère et envoie un fichier requirements.txt minimal avec les packages utilisés"
@@ -121,8 +123,9 @@ class ToolsRequirements(commands.Cog):
             await safe_respond(interaction, "❌ Une erreur est survenue.", ephemeral=True)
 
     # ────────────────────────────────────────────────────────────────────────────
-    # 🔹 Commande PREFIX
+    # 🔹 Commande PREFIX (admin seulement)
     # ────────────────────────────────────────────────────────────────────────────
+    @commands.has_permissions(administrator=True)
     @commands.command(name="requirements")
     @commands.cooldown(1, 10.0, commands.BucketType.user)
     async def prefix_requirements(self, ctx: commands.Context):
@@ -135,5 +138,5 @@ async def setup(bot: commands.Bot):
     cog = ToolsRequirements(bot)
     for command in cog.get_commands():
         if not hasattr(command, "category"):
-            command.category = "Outils_dev"
+            command.category = "Admin"
     await bot.add_cog(cog)
