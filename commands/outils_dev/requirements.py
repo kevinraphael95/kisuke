@@ -29,7 +29,7 @@ class ToolsRequirements(commands.Cog):
         self.bot = bot
 
     # ────────────────────────────────────────────────────────────────────────────
-    # 🔹 Récupère les packages importés dans le projet (exclut stdlib et modules locaux)
+    # 🔹 Récupère les packages externes réellement utilisés
     # ────────────────────────────────────────────────────────────────────────────
     def _get_used_packages(self, directory="."):
         stdlib_modules = {
@@ -40,7 +40,7 @@ class ToolsRequirements(commands.Cog):
         used_packages = set()
         local_modules = set()
 
-        # Collecte tous les noms de fichiers python pour ignorer les imports locaux
+        # Récupère tous les modules locaux pour les exclure
         for root, _, files in os.walk(directory):
             for file in files:
                 if file.endswith(".py"):
@@ -75,7 +75,7 @@ class ToolsRequirements(commands.Cog):
             used_packages = self._get_used_packages()
             installed_packages = {pkg.key: pkg.version for pkg in pkg_resources.working_set}
 
-            # Packages "bruit" à exclure (dépendances indirectes)
+            # Exclut les dépendances indirectes connues
             exclude = {
                 "certifi", "idna", "urllib3", "charset_normalizer",
                 "multidict", "yarl", "h11", "h2", "hpack", "hyperframe",
@@ -89,9 +89,9 @@ class ToolsRequirements(commands.Cog):
                 if key in installed_packages and key not in exclude:
                     minimal_requirements.append(f"{pkg}=={installed_packages[key]}")
 
-            # Tri et suppression doublons
             minimal_requirements = sorted(set(minimal_requirements))
 
+            # Création d’un fichier temporaire
             with tempfile.NamedTemporaryFile(mode="w+", delete=False, suffix=".txt") as tmp_file:
                 tmp_file.write("\n".join(minimal_requirements))
                 tmp_file_path = tmp_file.name
