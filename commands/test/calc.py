@@ -22,7 +22,7 @@ from utils.discord_utils import safe_send, safe_edit, safe_respond
 # ────────────────────────────────────────────────────────────────────────────────
 class CalculatorView(View):
     def __init__(self):
-        super().__init__(timeout=180)
+        super().__init__(timeout=300)
         self.expression = ""
         self.result = None
         self.add_buttons()
@@ -31,13 +31,15 @@ class CalculatorView(View):
         rows = [
             ["7","8","9","/","sqrt"],
             ["4","5","6","*","^"],
-            ["1","2","3","-","ln"],
-            ["0",".","C","+","log"],
-            ["sin","cos","tan","!","="]
+            ["1","2","3","-","("],
+            ["0",".","C","+"," )"],
+            ["sin","cos","tan","ln","log"],
+            ["!","π","e","="]
         ]
         for row in rows:
             for label in row:
                 self.add_item(CalcButton(label, self))
+
 
 class CalcButton(Button):
     def __init__(self, label, parent_view):
@@ -45,11 +47,9 @@ class CalcButton(Button):
         self.parent_view = parent_view
 
     async def callback(self, interaction: discord.Interaction):
-        # ✅ Accuser réception pour éviter "Échec de l’interaction"
         await interaction.response.defer()
-
         view = self.parent_view
-        label = self.label
+        label = self.label.strip()  # enlever espaces éventuels
 
         if label == "C":
             view.expression = ""
@@ -63,6 +63,7 @@ class CalcButton(Button):
                     .replace("e", str(math.e))
                     .replace("^", "**")
                 )
+
                 funcs = {
                     "sqrt": "math.sqrt",
                     "log": "math.log10",
@@ -72,54 +73,49 @@ class CalcButton(Button):
                     "tan": "math.tan(math.radians",
                     "!": "math.factorial"
                 }
+
                 for k, v in funcs.items():
                     expr = expr.replace(k+"(", v+"(")
-                # Équilibrer les parenthèses si manquantes
+
+                # Fermer les parenthèses ouvertes
                 open_parens = expr.count("(")
                 close_parens = expr.count(")")
                 expr += ")" * (open_parens - close_parens)
 
-                # Calcul sécurisé
                 view.result = eval(expr, {"math": math, "__builtins__": {}})
-                # ✅ Après =, le résultat devient la nouvelle expression
                 view.expression = str(view.result)
 
             except Exception:
                 view.result = "Erreur"
-                # On garde l'expression pour que l'utilisateur voie ce qu'il a tapé
 
         else:
-            if label in ["sin","cos","tan","sqrt","log","ln","!"]:
+            # Fonctions automatiques avec ouverture de parenthèse
+            if label in ["sin","cos","tan","sqrt","log","ln"]:
                 view.expression += label + "("
+            # Factorielle
+            elif label == "!":
+                view.expression += "!("
             else:
                 view.expression += label
 
-        # Affichage
-        await safe_edit(
-            interaction.message,
-            content=(
-                "╔══════════════════════════╗\n"
-                f"║ = {view.result if view.result is not None else ''}\n"
-                f"║ {view.expression or ''}\n"
-                f"╚══════════════════════════╝"
-            ),
-            view=view
+        screen = (
+            "╔══════════════════════════╗\n"
+            f"║ = {view.result if view.result is not None else ''}\n"
+            f"║ {view.expression or ''}\n"
+            "╚══════════════════════════╝"
         )
+        await safe_edit(interaction.message, content=screen, view=view)
 
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🧠 Cog principal
 # ────────────────────────────────────────────────────────────────────────────────
 class ScientificCalculator(commands.Cog):
-    """
-    Commande /calc et !calc — Calculatrice scientifique interactive avec mini-clavier
-    """
+    """Calculatrice scientifique interactive avec mini-clavier"""
+
     def __init__(self, bot: commands.Bot):
         self.bot = bot
 
-    # ────────────────────────────────────────────────────────────────────────────
-    # 🔹 Envoi du mini-clavier avec écran vide
-    # ────────────────────────────────────────────────────────────────────────────
     async def _send_calculator(self, channel: discord.abc.Messageable):
         view = CalculatorView()
         screen = (
@@ -151,7 +147,7 @@ class ScientificCalculator(commands.Cog):
 
     # ────────────────────────────────────────────────────────────────────────────
     # 🔹 Commande PREFIX
-    # ────────────────────────────────────────────────────────────────────────────
+    # ────────────────────────────────────────────────────────────────────────────    
     @commands.command(name="calc")
     @commands.cooldown(1, 5.0, commands.BucketType.user)
     async def prefix_calc(self, ctx: commands.Context):
@@ -162,6 +158,7 @@ class ScientificCalculator(commands.Cog):
         except Exception as e:
             print(f"[ERREUR !calc] {e}")
             await safe_send(ctx.channel, "❌ Une erreur est survenue.")
+
 
 
 # ────────────────────────────────────────────────────────────────────────────────
