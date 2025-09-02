@@ -1,7 +1,7 @@
 # ────────────────────────────────────────────────────────────────────────────────
 # 📌 readme_creator.py — Commande /commandes qui crée un README.md
 # Objectif : Génère un fichier README.md avec toutes les commandes triées et formatées
-# Catégorie : Général
+# Catégorie : Admin
 # Accès : Administrateurs seulement
 # Cooldown : 1 utilisation / 5 secondes / utilisateur
 # ────────────────────────────────────────────────────────────────────────────────
@@ -97,5 +97,5 @@ async def setup(bot: commands.Bot):
     cog = Commandes(bot)
     for command in cog.get_commands():
         if not hasattr(command, "category"):
-            command.category = "Outils_dev"
+            command.category = "Admin"
     await bot.add_cog(cog)
