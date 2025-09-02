@@ -86,7 +86,6 @@ class CalcButton(Button):
 
             except Exception:
                 view.result = "Erreur"
-                # On garde l'expression pour que l'utilisateur voie ce qu'il a tapé
 
         else:
             if label in ["sin","cos","tan","sqrt","log","ln","!"]:
@@ -94,15 +93,12 @@ class CalcButton(Button):
             else:
                 view.expression += label
 
-        # Affichage
+        # 🔹 Affichage façon Google : résultat au-dessus, expression en dessous
+        display = f"{view.result if view.result is not None else ''}\n{view.expression or ''}"
+
         await safe_edit(
             interaction.message,
-            content=(
-                "╔══════════════════════════╗\n"
-                f"║ = {view.result if view.result is not None else ''}\n"
-                f"║ {view.expression or ''}\n"
-                f"╚══════════════════════════╝"
-            ),
+            content=display,
             view=view
         )
 
@@ -122,12 +118,7 @@ class ScientificCalculator(commands.Cog):
     # ────────────────────────────────────────────────────────────────────────────
     async def _send_calculator(self, channel: discord.abc.Messageable):
         view = CalculatorView()
-        screen = (
-            "╔══════════════════════════╗\n"
-            "║ = \n"
-            "║ \n"
-            "╚══════════════════════════╝"
-        )
+        screen = "\n"  # Écran vide
         view.message = await safe_send(channel, screen, view=view)
 
     # ────────────────────────────────────────────────────────────────────────────
@@ -173,5 +164,3 @@ async def setup(bot: commands.Bot):
         if not hasattr(command, "category"):
             command.category = "Test"
     await bot.add_cog(cog)
-
-
