@@ -56,17 +56,12 @@ class EveilButton(Button):
             if points < EVEIL_COST:
                 return await safe_respond(interaction, f"⛔ Tu n'as pas assez de points ({EVEIL_COST} requis).", ephemeral=True)
 
-            # Déduire les points et enregistrer le pouvoir
+            # Déduire les points et enregistrer le pouvoir directement dans la table reiatsu
             supabase.table("reiatsu").update({
                 "points": points - EVEIL_COST,
-                "classe": self.label
-            }).eq("user_id", str(self.parent_view.user_id)).execute()
-
-            # Enregistrer aussi dans reiatsu2 si tu veux garder la trace
-            supabase.table("reiatsu2").upsert({
-                "user_id": int(self.parent_view.user_id),
+                "classe": self.label,
                 "pouvoir": self.label
-            }).execute()
+            }).eq("user_id", str(self.parent_view.user_id)).execute()
 
             embed = discord.Embed(
                 title="✨ Éveil réussi !",
