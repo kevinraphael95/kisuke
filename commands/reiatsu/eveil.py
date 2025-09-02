@@ -56,16 +56,15 @@ class EveilButton(Button):
             if points < EVEIL_COST:
                 return await safe_respond(interaction, f"⛔ Tu n'as pas assez de points ({EVEIL_COST} requis).", ephemeral=True)
 
-            # Déduire les points et enregistrer le pouvoir directement dans la table reiatsu
+            # Déduire les points et enregistrer uniquement le pouvoir (sans toucher à 'classe')
             supabase.table("reiatsu").update({
                 "points": points - EVEIL_COST,
-                "classe": self.label,
                 "pouvoir": self.label
             }).eq("user_id", str(self.parent_view.user_id)).execute()
 
             embed = discord.Embed(
                 title="✨ Éveil réussi !",
-                description=f"Tu as choisi le pouvoir **{self.label}**.\n💰 Tu as dépensé {EVEIL_COST} reiatsu.",
+                description=f"Tu as éveillé ton pouvoir : **{self.label}**.\n💰 Tu as dépensé {EVEIL_COST} reiatsu.",
                 color=discord.Color.green()
             )
             await interaction.response.edit_message(embed=embed, view=None)
@@ -86,9 +85,10 @@ class Eveil(commands.Cog):
         view = EveilView(user_id)
         embed = discord.Embed(
             title="💠 Éveil",
-            description=
-            f"Tu peux éveiller tes pouvoirs spirituels."
-            f"Choisis ton pouvoir. Coût : **{EVEIL_COST} points**.",
+            description=(
+                f"Tu peux éveiller tes pouvoirs spirituels.\n"
+                f"Choisis ton pouvoir. Coût : **{EVEIL_COST} points**."
+            ),
             color=discord.Color.blue()
         )
         if isinstance(ctx_or_interaction, discord.Interaction):
