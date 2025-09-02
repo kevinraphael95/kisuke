@@ -1,7 +1,3 @@
-Parfait 👍 je vais te réécrire ton tuto de manière **claire, concise et facile**.
-
----
-
 # 🔃 Redémarrer le bot Render via webhook + API
 
 ---
@@ -78,7 +74,3 @@ Quand tu tapes `!re` :
 2. Il envoie la requête au webhook Render (redeploy).
 3. Il vérifie l’état via l’API Render (grâce à la clé API).
 4. Il confirme quand il est de nouveau **en ligne** 🎉
-
----
-
-Veux-tu que je t’écrive aussi la **liste des statuts Render** que l’API peut renvoyer (`deploying`, `live`, `failed`, etc.), pour que tu puisses personnaliser les messages du bot ?
