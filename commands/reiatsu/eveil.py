@@ -43,7 +43,7 @@ class EveilButton(Button):
             return await interaction.response.send_message("❌ Tu ne peux pas utiliser ce bouton.", ephemeral=True)
         try:
             # Vérifier les points
-            user_data = supabase.table("reiatsu").select("points").eq("user_id", self.parent_view.user_id).execute()
+            user_data = supabase.table("reiatsu2").select("points").eq("user_id", int(self.parent_view.user_id)).execute()
             if not user_data.data:
                 return await safe_respond(interaction, "❌ Tu n'as pas de points enregistrés.", ephemeral=True)
             points = user_data.data[0]["points"]
@@ -51,10 +51,10 @@ class EveilButton(Button):
                 return await safe_respond(interaction, "⛔ Tu n'as pas assez de points (300 requis).", ephemeral=True)
 
             # Déduire 300 points et enregistrer le pouvoir
-            supabase.table("reiatsu").update({
+            supabase.table("reiatsu2").update({
                 "points": points - 300,
-                "classe": self.label
-            }).eq("user_id", self.parent_view.user_id).execute()
+                "pouvoir": self.label
+            }).eq("user_id", int(self.parent_view.user_id)).execute()
 
             embed = discord.Embed(
                 title="✨ Éveil réussi !",
@@ -92,4 +92,16 @@ class Eveil(commands.Cog):
             await safe_respond(interaction, "❌ Une erreur est survenue.", ephemeral=True)
 
     @commands.command(name="eveil")
-    @commands.cooldown(1, 5.0, comma
+    @commands.cooldown(1, 5.0, commands.BucketType.user)
+    async def prefix_eveil(self, ctx: commands.Context):
+        await self._send_menu(ctx, str(ctx.author.id))
+
+# ────────────────────────────────────────────────────────────────────────────────
+# 🔌 Setup du Cog
+# ────────────────────────────────────────────────────────────────────────────────
+async def setup(bot: commands.Bot):
+    cog = Eveil(bot)
+    for command in cog.get_commands():
+        if not hasattr(command, "category"):
+            command.category = "Reiatsu"
+    await bot.add_cog(cog)
