@@ -120,5 +120,5 @@ async def setup(bot: commands.Bot):
     cog = Eveil(bot)
     for command in cog.get_commands():
         if not hasattr(command, "category"):
-            command.category = "RPG"
+            command.category = "Reiatsu"
     await bot.add_cog(cog)
