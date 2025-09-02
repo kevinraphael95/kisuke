@@ -20,7 +20,7 @@ from utils.discord_utils import safe_send, safe_respond
 # ────────────────────────────────────────────────────────────────────────────────
 # 💰 Coût de l'éveil (modifiable facilement)
 # ────────────────────────────────────────────────────────────────────────────────
-EVEIL_COST = 1
+EVEIL_COST = 300
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🎛️ UI — Menu de sélection du pouvoir
@@ -65,7 +65,7 @@ class EveilButton(Button):
 
             embed = discord.Embed(
                 title="✨ Éveil réussi !",
-                description=f"Tu as choisi le pouvoir **{self.label}**.\n💰 {EVEIL_COST} points ont été retirés.",
+                description=f"Tu as choisi le pouvoir **{self.label}**.\n💰 Tu as dépensé {EVEIL_COST} reiatsu.",
                 color=discord.Color.green()
             )
             await interaction.response.edit_message(embed=embed, view=None)
@@ -86,7 +86,9 @@ class Eveil(commands.Cog):
         view = EveilView(user_id)
         embed = discord.Embed(
             title="💠 Éveil",
-            description=f"Choisis ton pouvoir. Coût : **{EVEIL_COST} points**.",
+            description=
+            f"Tu peux éveiller tes pouvoirs spirituels."
+            f"Choisis ton pouvoir. Coût : **{EVEIL_COST} points**.",
             color=discord.Color.blue()
         )
         if isinstance(ctx_or_interaction, discord.Interaction):
