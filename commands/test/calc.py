@@ -58,7 +58,7 @@ class CalcButton(Button):
 
         elif label == "=":
             try:
-                view.result = safe_eval(view.expression)
+                view.result = self.safe_eval(view.expression)
                 view.expression = str(view.result)
             except Exception:
                 view.result = "Erreur"
@@ -68,62 +68,62 @@ class CalcButton(Button):
 
         screen = (
             "╔══════════════════════════╗\n"
-            f"║ = {view.result if view.result is not None else ''}\n"
             f"║ {view.expression or ''}\n"
+            f"║ = {view.result if view.result is not None else ''}\n"
             "╚══════════════════════════╝"
         )
         await safe_edit(interaction.message, content=screen, view=view)
 
+    def safe_eval(self, expr: str):
+        """
+        Évalue une expression scientifique de manière sécurisée.
+        Supporte : +, -, *, /, ^, (, ), sin, cos, tan, log, ln, sqrt, !, π, e
+        """
+        expr = expr.replace("^", "**").replace("π", str(math.pi)).replace("e", str(math.e))
 
-# ────────────────────────────────────────────────────────────────────────────────
-# 🧠 Évaluation sécurisée
-# ────────────────────────────────────────────────────────────────────────────────
-def safe_eval(expr: str):
-    """
-    Évalue une expression scientifique de manière sécurisée.
-    Supporte : +, -, *, /, ^, (, ), sin, cos, tan, log, ln, sqrt, !, π, e
-    """
-    expr = expr.replace("^", "**").replace("π", str(math.pi)).replace("e", str(math.e))
+        # Factorielle : remplacer x! par math.factorial(x)
+        expr = re.sub(r"(\d+)!","math.factorial(\\1)", expr)
 
-    # Factorielle : remplacer x! par math.factorial(x)
-    expr = re.sub(r"(\d+)!","math.factorial(\\1)", expr)
+        # Fonctions : sin, cos, tan, sqrt, log, ln
+        funcs = {
+            "sin": "math.sin(math.radians",
+            "cos": "math.cos(math.radians",
+            "tan": "math.tan(math.radians",
+            "sqrt": "math.sqrt",
+            "log": "math.log10",
+            "ln": "math.log"
+        }
 
-    # Fonctions : sin, cos, tan, sqrt, log, ln
-    funcs = {
-        "sin": "math.sin(math.radians",
-        "cos": "math.cos(math.radians",
-        "tan": "math.tan(math.radians",
-        "sqrt": "math.sqrt",
-        "log": "math.log10",
-        "ln": "math.log"
-    }
+        for k, v in funcs.items():
+            expr = re.sub(rf"{k}\(", v+"(", expr)
 
-    for k, v in funcs.items():
-        expr = re.sub(rf"{k}\(", v+"(", expr)
+        # Équilibrer parenthèses
+        open_parens = expr.count("(")
+        close_parens = expr.count(")")
+        expr += ")" * (open_parens - close_parens)
 
-    # Équilibrer parenthèses
-    open_parens = expr.count("(")
-    close_parens = expr.count(")")
-    expr += ")" * (open_parens - close_parens)
-
-    return eval(expr, {"math": math, "__builtins__": {}})
+        return eval(expr, {"math": math, "__builtins__": {}})
 
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🧠 Cog principal
 # ────────────────────────────────────────────────────────────────────────────────
 class ScientificCalculator(commands.Cog):
-    """Calculatrice scientifique interactive avec mini-clavier"""
-
+    """
+    Commande /calc et !calc — Calculatrice scientifique interactive avec mini-clavier
+    """
     def __init__(self, bot: commands.Bot):
         self.bot = bot
 
+    # ────────────────────────────────────────────────────────────────────────────
+    # 🔹 Envoi du mini-clavier avec écran vide
+    # ────────────────────────────────────────────────────────────────────────────
     async def _send_calculator(self, channel: discord.abc.Messageable):
         view = CalculatorView()
         screen = (
             "╔══════════════════════════╗\n"
-            "║ = \n"
             "║ \n"
+            "║ = \n"
             "╚══════════════════════════╝"
         )
         view.message = await safe_send(channel, screen, view=view)
@@ -149,7 +149,7 @@ class ScientificCalculator(commands.Cog):
 
     # ────────────────────────────────────────────────────────────────────────────
     # 🔹 Commande PREFIX
-    # ────────────────────────────────────────────────────────────────────────────    
+    # ────────────────────────────────────────────────────────────────────────────
     @commands.command(name="calc")
     @commands.cooldown(1, 5.0, commands.BucketType.user)
     async def prefix_calc(self, ctx: commands.Context):
