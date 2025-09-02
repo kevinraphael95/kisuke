@@ -129,15 +129,16 @@ class ReiatsuCommand(commands.Cog):
 
         embed = discord.Embed(
             title="__**Profil de {user.display_name}**__",
-            description=
+            description=(
                 f"• 💠 Reiatsu : **{points}**\n"
                 f"• 🕵️ Cooldown vol : {cooldown_text} (reiatsuvol pour voler du reiatsu à quelqu'un)\n"
-                f"• 🕵️ **Classe**__\n{classe_text}\n\n
-                f"• Pouvoirs de : ?"\n,
+                f"• 🕵️ **Classe**__\n{classe_text}\n\n"
+                f"• Pouvoirs de : ?\n"
                 f"• ⓘ __**Infos Reiatsu**__\n"
                 f"• 📍 Lieu d'apparition : {salon_text}\n"
                 f"• ⏳ Temps avant apparition : {temps_text}",
             color=discord.Color.purple()
+            )
         )
         embed.set_footer(text="Utilise les boutons ci-dessous pour interagir.")
         view = ReiatsuView(author, spawn_link=spawn_link)
