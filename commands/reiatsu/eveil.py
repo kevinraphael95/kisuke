@@ -42,19 +42,26 @@ class EveilButton(Button):
         if str(interaction.user.id) != self.parent_view.user_id:
             return await interaction.response.send_message("❌ Tu ne peux pas utiliser ce bouton.", ephemeral=True)
         try:
-            # Vérifier les points
-            user_data = supabase.table("reiatsu2").select("points").eq("user_id", int(self.parent_view.user_id)).execute()
+            # Récupérer les données utilisateur dans la table 'reiatsu'
+            user_data = supabase.table("reiatsu").select("*").eq("user_id", str(self.parent_view.user_id)).execute()
             if not user_data.data:
-                return await safe_respond(interaction, "❌ Tu n'as pas de points enregistrés.", ephemeral=True)
-            points = user_data.data[0]["points"]
+                return await safe_respond(interaction, "❌ Tu n'as pas de compte Reiatsu.", ephemeral=True)
+
+            points = int(user_data.data[0]["points"])
             if points < 300:
                 return await safe_respond(interaction, "⛔ Tu n'as pas assez de points (300 requis).", ephemeral=True)
 
             # Déduire 300 points et enregistrer le pouvoir
-            supabase.table("reiatsu2").update({
+            supabase.table("reiatsu").update({
                 "points": points - 300,
+                "classe": self.label
+            }).eq("user_id", str(self.parent_view.user_id)).execute()
+
+            # Enregistrer aussi dans reiatsu2 si tu veux garder la trace
+            supabase.table("reiatsu2").upsert({
+                "user_id": int(self.parent_view.user_id),
                 "pouvoir": self.label
-            }).eq("user_id", int(self.parent_view.user_id)).execute()
+            }).execute()
 
             embed = discord.Embed(
                 title="✨ Éveil réussi !",
@@ -103,5 +110,5 @@ async def setup(bot: commands.Bot):
     cog = Eveil(bot)
     for command in cog.get_commands():
         if not hasattr(command, "category"):
-            command.category = "Reiatsu"
+            command.category = "RPG"
     await bot.add_cog(cog)
