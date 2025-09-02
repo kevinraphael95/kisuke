@@ -1,11 +1,14 @@
 # ────────────────────────────────────────────────────────────────────────────────
 # 📌 tools_sqlschema.py — Commande /sqlschema et !sqlschema
 # Objectif : Analyse le code du bot, détecte les tables Supabase utilisées et génère un SQL CREATE TABLE détaillé
-# Catégorie : Outils_dev
-# Accès : Tous
+# Catégorie : Admin
+# Accès : Administrateurs seulement
 # Cooldown : 1 utilisation / 20 secondes / utilisateur
 # ────────────────────────────────────────────────────────────────────────────────
 
+# ────────────────────────────────────────────────────────────────────────────────
+# 📦 Imports nécessaires
+# ────────────────────────────────────────────────────────────────────────────────
 import discord
 from discord import app_commands
 from discord.ext import commands
@@ -15,9 +18,13 @@ import os
 import re
 import ast
 
+# ────────────────────────────────────────────────────────────────────────────────
+# 🧠 Cog principal
+# ────────────────────────────────────────────────────────────────────────────────
 class ToolsSQLSchema(commands.Cog):
     """
     Commande /sqlschema et !sqlschema — Génère un schéma SQL détaillé pour les tables Supabase utilisées
+    Accessible uniquement aux administrateurs.
     """
     def __init__(self, bot: commands.Bot):
         self.bot = bot
@@ -44,7 +51,6 @@ class ToolsSQLSchema(commands.Cog):
     # ────────────────────────────────────────────────────────────────────────────
     def _get_tables_and_columns(self, directory="."):
         tables = {}
-
         supabase_pattern = re.compile(r'supabase\.(?:table|from_)\(["\'](\w+)["\']\)')
 
         for root, _, files in os.walk(directory):
@@ -160,8 +166,9 @@ class ToolsSQLSchema(commands.Cog):
             await safe_send(channel, "❌ Impossible de générer schema.sql.")
 
     # ────────────────────────────────────────────────────────────────────────────
-    # 🔹 Commande SLASH
+    # 🔹 Commande SLASH (admin seulement)
     # ────────────────────────────────────────────────────────────────────────────
+    @app_commands.checks.has_permissions(administrator=True)
     @app_commands.command(
         name="sqlschema",
         description="Analyse le code et génère un schéma SQL détaillé pour les tables Supabase utilisées"
@@ -178,8 +185,9 @@ class ToolsSQLSchema(commands.Cog):
             await safe_respond(interaction, "❌ Une erreur est survenue.", ephemeral=True)
 
     # ────────────────────────────────────────────────────────────────────────────
-    # 🔹 Commande PREFIX
+    # 🔹 Commande PREFIX (admin seulement)
     # ────────────────────────────────────────────────────────────────────────────
+    @commands.has_permissions(administrator=True)
     @commands.command(name="sqlschema")
     @commands.cooldown(1, 20.0, commands.BucketType.user)
     async def prefix_sqlschema(self, ctx: commands.Context):
@@ -192,5 +200,5 @@ async def setup(bot: commands.Bot):
     cog = ToolsSQLSchema(bot)
     for command in cog.get_commands():
         if not hasattr(command, "category"):
-            command.category = "Outils_dev"
+            command.category = "Admin"
     await bot.add_cog(cog)
