@@ -1,6 +1,6 @@
 # ────────────────────────────────────────────────────────────────────────────────
 # 📌 reiatsu.py — Commande interactive /reiatsu et !reiatsu
-# Objectif : Affiche le score Reiatsu d’un membre, le salon de spawn et le temps restant
+# Objectif : Affiche le profil complet Reiatsu et propose toutes les actions
 # Catégorie : Reiatsu
 # Accès : Public
 # Cooldown : 1 utilisation / 3 secondes / utilisateur
@@ -12,14 +12,15 @@
 import discord
 from discord import app_commands
 from discord.ext import commands
-from discord.ui import View, Button
+from discord.ui import View, Button, Select
 from dateutil import parser
 from datetime import datetime, timedelta
 import time
 import json
+import random
 
 from utils.supabase_client import supabase
-from utils.discord_utils import safe_send, safe_respond  # Fonctions sécurisées anti-429
+from utils.discord_utils import safe_send, safe_respond
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🎛️ UI — Boutons interactifs Reiatsu
@@ -28,14 +29,22 @@ class ReiatsuView(View):
     def __init__(self, author: discord.Member, spawn_link: str = None):
         super().__init__(timeout=None)
         self.author = author
+        # Boutons disponibles
         if spawn_link:
             self.add_item(Button(label="💠 Aller au spawn", style=discord.ButtonStyle.link, url=spawn_link))
+        self.add_item(Button(label="📊 Classement", style=discord.ButtonStyle.primary, custom_id="reiatsu:classement"))
+        self.add_item(Button(label="⚡ Éveil", style=discord.ButtonStyle.success, custom_id="reiatsu:eveil"))
+        self.add_item(Button(label="🎭 Changer de classe", style=discord.ButtonStyle.secondary, custom_id="reiatsu:classe"))
 
+    async def interaction_check(self, interaction: discord.Interaction) -> bool:
+        if interaction.user != self.author:
+            await interaction.response.send_message("❌ Tu ne peux pas utiliser ce bouton.", ephemeral=True)
+            return False
+        return True
+
+    # ── Classement
     @discord.ui.button(label="📊 Classement", style=discord.ButtonStyle.primary, custom_id="reiatsu:classement")
     async def classement_button(self, interaction: discord.Interaction, button: discord.ui.Button):
-        if interaction.user != self.author:
-            return await interaction.response.send_message("❌ Tu ne peux pas utiliser ce bouton.", ephemeral=True)
-
         classement_data = supabase.table("reiatsu").select("user_id, points").order("points", desc=True).limit(10).execute()
         if not classement_data.data:
             return await interaction.response.send_message("Aucun classement disponible pour le moment.", ephemeral=True)
@@ -49,19 +58,58 @@ class ReiatsuView(View):
             description += f"**{i}. {name}** — {points} points\n"
 
         embed = discord.Embed(title="📊 Classement Reiatsu", description=description, color=discord.Color.purple())
-        await interaction.response.send_message(embed=embed)
+        await interaction.response.send_message(embed=embed, ephemeral=True)
+
+    # ── Éveil
+    @discord.ui.button(label="⚡ Éveil", style=discord.ButtonStyle.success, custom_id="reiatsu:eveil")
+    async def eveil_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        user_id = str(interaction.user.id)
+        user_data = supabase.table("reiatsu").select("points").eq("user_id", user_id).execute()
+        if not user_data.data:
+            return await interaction.response.send_message("❌ Pas de compte Reiatsu.", ephemeral=True)
+        points = user_data.data[0]["points"]
+        EVEIL_COST = 1
+        if points < EVEIL_COST:
+            return await interaction.response.send_message(f"⛔ Pas assez de points ({EVEIL_COST} requis).", ephemeral=True)
+
+        # Menu choix de pouvoir
+        view = View()
+        for pouvoir in ["Shinigami", "Hollow", "Quincy", "Fullbring"]:
+            view.add_item(Button(label=pouvoir, style=discord.ButtonStyle.primary, custom_id=f"eveil:{pouvoir}"))
+        await interaction.response.send_message("Choisis ton pouvoir :", view=view, ephemeral=True)
+
+    # ── Changer de classe
+    @discord.ui.button(label="🎭 Changer de classe", style=discord.ButtonStyle.secondary, custom_id="reiatsu:classe")
+    async def classe_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        user_id = interaction.user.id
+        with open("data/classes.json", "r", encoding="utf-8") as f:
+            CLASSES = json.load(f)
+        options = [discord.SelectOption(label=f"{data.get('Symbole','🌀')} {classe}", description=data['Passive'][:100], value=classe) for classe, data in CLASSES.items()]
+        select = Select(placeholder="Choisis ta classe", options=options, min_values=1, max_values=1)
+
+        async def select_callback(i: discord.Interaction):
+            classe = select.values[0]
+            nouveau_cd = 19 if classe == "Voleur" else 24
+            supabase.table("reiatsu").update({"classe": classe, "steal_cd": nouveau_cd}).eq("user_id", str(user_id)).execute()
+            symbole = CLASSES[classe].get("Symbole","🌀")
+            embed = discord.Embed(title=f"✅ Classe choisie : {symbole} {classe}", color=discord.Color.green())
+            await i.response.edit_message(embed=embed, view=None)
+
+        select.callback = select_callback
+        view = View()
+        view.add_item(select)
+        await interaction.response.send_message("Sélectionne ta classe :", view=view, ephemeral=True)
+
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🧠 Cog principal
 # ────────────────────────────────────────────────────────────────────────────────
 class ReiatsuCommand(commands.Cog):
-    """Commande /reiatsu et !reiatsu — Affiche le profil Reiatsu complet"""
+    """Commande /reiatsu et !reiatsu — Affiche le profil Reiatsu complet et actions disponibles"""
     def __init__(self, bot: commands.Bot):
         self.bot = bot
 
-    # ────────────────────────────────────────────────────────────────────────────
-    # 🔹 Fonction interne commune
-    # ────────────────────────────────────────────────────────────────────────────
+    # ── Profil complet
     async def _send_profile(self, ctx_or_interaction, author, guild, target_user):
         user = target_user or author
         user_id = str(user.id)
@@ -78,9 +126,9 @@ class ReiatsuCommand(commands.Cog):
             CLASSES = json.load(f)
 
         if classe_nom and classe_nom in CLASSES:
-            classe_text = f"• Classe : **{classe_nom}**\n• Compétence passive : {CLASSES[classe_nom]['Passive']}\n• Compétence active : {CLASSES[classe_nom]['Active']}\n(les compétences actives ne sont pas ajoutées)"
+            classe_text = f"• Classe : **{classe_nom}**\n• Compétence passive : {CLASSES[classe_nom]['Passive']}\n• Compétence active : {CLASSES[classe_nom]['Active']}"
         else:
-            classe_text = "Aucune classe sélectionnée.\nUtilise la commande `!classe` pour en choisir une."
+            classe_text = "Aucune classe sélectionnée."
 
         cooldown_text = "Disponible ✅"
         if classe_nom and steal_cd is None:
@@ -113,7 +161,7 @@ class ReiatsuCommand(commands.Cog):
                         spawn_link = f"https://discord.com/channels/{guild_id}/{channel_id}/{msg_id}"
                         temps_text = f"Un Reiatsu 💠 est **déjà apparu** !"
                     else:
-                        temps_text = "Un Reiatsu 💠 est **déjà apparu** ! (Lien indisponible)"
+                        temps_text = "Un Reiatsu 💠 est déjà apparu (lien indisponible)"
                 else:
                     last_spawn = config.get("last_spawn_at")
                     delay = config.get("delay_minutes", 1800)
@@ -125,11 +173,14 @@ class ReiatsuCommand(commands.Cog):
                             minutes, seconds = divmod(remaining, 60)
                             temps_text = f"**{minutes}m {seconds}s**"
                     else:
-                        temps_text = "Un Reiatsu 💠 peut apparaître **à tout moment** !"
+                        temps_text = "💠 Un Reiatsu peut apparaître **à tout moment** !"
 
         embed = discord.Embed(
             title="__**💠 Profil**__",
-            description=f"**{user.display_name}** a actuellement :\n**{points}** points de Reiatsu\n• 🕵️ Cooldown vol : {cooldown_text} (!!reiatsuvol pour voler du reiatsu à quelqu'un)\n\n__**Classe**__\n{classe_text}\n\n__**Spawn du reiatsu**__\n• 📍 Lieu d'apparition : {salon_text}\n• ⏳ Temps avant apparition : {temps_text}",
+            description=f"**{user.display_name}** a actuellement : **{points}** points de Reiatsu\n"
+                        f"• 🕵️ Cooldown vol : {cooldown_text}\n"
+                        f"\n__**Classe**__\n{classe_text}\n"
+                        f"\n__**Spawn du reiatsu**__\n• 📍 Lieu : {salon_text}\n• ⏳ Temps avant apparition : {temps_text}",
             color=discord.Color.purple()
         )
         embed.set_footer(text="Utilise les boutons ci-dessous pour interagir.")
@@ -140,10 +191,8 @@ class ReiatsuCommand(commands.Cog):
         else:
             await safe_send(ctx_or_interaction, embed=embed, view=view)
 
-    # ────────────────────────────────────────────────────────────────────────────
-    # Commande SLASH
-    # ────────────────────────────────────────────────────────────────────────────
-    @app_commands.command(name="reiatsu", description="💠 Affiche le score de Reiatsu d’un membre (ou soi-même).")
+    # ── Commande SLASH
+    @app_commands.command(name="reiatsu", description="💠 Affiche le score de Reiatsu d’un membre")
     @app_commands.describe(member="Membre dont vous voulez voir le Reiatsu")
     @app_commands.checks.cooldown(1, 3.0, key=lambda i: i.user.id)
     async def slash_reiatsu(self, interaction: discord.Interaction, member: discord.Member = None):
@@ -155,9 +204,7 @@ class ReiatsuCommand(commands.Cog):
             print(f"[ERREUR /reiatsu] {e}")
             await safe_respond(interaction, "❌ Une erreur est survenue.", ephemeral=True)
 
-    # ────────────────────────────────────────────────────────────────────────────
-    # Commande PREFIX
-    # ────────────────────────────────────────────────────────────────────────────
+    # ── Commande PREFIX
     @commands.command(name="reiatsu", aliases=["rts"])
     @commands.cooldown(1, 3.0, commands.BucketType.user)
     async def prefix_reiatsu(self, ctx: commands.Context, member: discord.Member = None):
@@ -176,5 +223,3 @@ async def setup(bot: commands.Bot):
         if not hasattr(command, "category"):
             command.category = "Reiatsu"
     await bot.add_cog(cog)
-
-
