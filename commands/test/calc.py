@@ -14,6 +14,7 @@ from discord import app_commands
 from discord.ext import commands
 from discord.ui import View, Button
 import math
+import re
 
 from utils.discord_utils import safe_send, safe_edit, safe_respond  
 
@@ -43,13 +44,13 @@ class CalculatorView(View):
 
 class CalcButton(Button):
     def __init__(self, label, parent_view):
-        super().__init__(label=label, style=discord.ButtonStyle.secondary)
+        super().__init__(label=label.strip(), style=discord.ButtonStyle.secondary)
         self.parent_view = parent_view
 
     async def callback(self, interaction: discord.Interaction):
         await interaction.response.defer()
         view = self.parent_view
-        label = self.label.strip()  # enlever espaces éventuels
+        label = self.label
 
         if label == "C":
             view.expression = ""
@@ -57,46 +58,13 @@ class CalcButton(Button):
 
         elif label == "=":
             try:
-                expr = (
-                    view.expression
-                    .replace("π", str(math.pi))
-                    .replace("e", str(math.e))
-                    .replace("^", "**")
-                )
-
-                funcs = {
-                    "sqrt": "math.sqrt",
-                    "log": "math.log10",
-                    "ln": "math.log",
-                    "sin": "math.sin(math.radians",
-                    "cos": "math.cos(math.radians",
-                    "tan": "math.tan(math.radians",
-                    "!": "math.factorial"
-                }
-
-                for k, v in funcs.items():
-                    expr = expr.replace(k+"(", v+"(")
-
-                # Fermer les parenthèses ouvertes
-                open_parens = expr.count("(")
-                close_parens = expr.count(")")
-                expr += ")" * (open_parens - close_parens)
-
-                view.result = eval(expr, {"math": math, "__builtins__": {}})
+                view.result = safe_eval(view.expression)
                 view.expression = str(view.result)
-
             except Exception:
                 view.result = "Erreur"
 
         else:
-            # Fonctions automatiques avec ouverture de parenthèse
-            if label in ["sin","cos","tan","sqrt","log","ln"]:
-                view.expression += label + "("
-            # Factorielle
-            elif label == "!":
-                view.expression += "!("
-            else:
-                view.expression += label
+            view.expression += label
 
         screen = (
             "╔══════════════════════════╗\n"
@@ -105,6 +73,40 @@ class CalcButton(Button):
             "╚══════════════════════════╝"
         )
         await safe_edit(interaction.message, content=screen, view=view)
+
+
+# ────────────────────────────────────────────────────────────────────────────────
+# 🧠 Évaluation sécurisée
+# ────────────────────────────────────────────────────────────────────────────────
+def safe_eval(expr: str):
+    """
+    Évalue une expression scientifique de manière sécurisée.
+    Supporte : +, -, *, /, ^, (, ), sin, cos, tan, log, ln, sqrt, !, π, e
+    """
+    expr = expr.replace("^", "**").replace("π", str(math.pi)).replace("e", str(math.e))
+
+    # Factorielle : remplacer x! par math.factorial(x)
+    expr = re.sub(r"(\d+)!","math.factorial(\\1)", expr)
+
+    # Fonctions : sin, cos, tan, sqrt, log, ln
+    funcs = {
+        "sin": "math.sin(math.radians",
+        "cos": "math.cos(math.radians",
+        "tan": "math.tan(math.radians",
+        "sqrt": "math.sqrt",
+        "log": "math.log10",
+        "ln": "math.log"
+    }
+
+    for k, v in funcs.items():
+        expr = re.sub(rf"{k}\(", v+"(", expr)
+
+    # Équilibrer parenthèses
+    open_parens = expr.count("(")
+    close_parens = expr.count(")")
+    expr += ")" * (open_parens - close_parens)
+
+    return eval(expr, {"math": math, "__builtins__": {}})
 
 
 # ────────────────────────────────────────────────────────────────────────────────
@@ -158,7 +160,6 @@ class ScientificCalculator(commands.Cog):
         except Exception as e:
             print(f"[ERREUR !calc] {e}")
             await safe_send(ctx.channel, "❌ Une erreur est survenue.")
-
 
 
 # ────────────────────────────────────────────────────────────────────────────────
