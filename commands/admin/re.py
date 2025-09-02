@@ -1,6 +1,7 @@
 # ────────────────────────────────────────────────────────────────────────────────
-# 📌 redemarrage_command.py — Commande simple /re et !re
-# Objectif : Prévenir les membres et déclencher un redeploy Render via webhook
+# 📌 redemarrage_command.py — Commande /re et !re avec confirmation API
+# Objectif : Prévenir les membres, déclencher un redeploy Render via webhook
+#            et notifier quand le bot est de nouveau en ligne via l’API Render.
 # Catégorie : ⚙️ Admin
 # Accès : Administrateur
 # Cooldown : 1 utilisation / 5 secondes / utilisateur
@@ -26,8 +27,9 @@ class RedemarrageCommand(commands.Cog):
     """
     def __init__(self, bot: commands.Bot):
         self.bot = bot
-        self.render_webhook = os.getenv("RENDER_REDEPLOY_WEBHOOK")  # URL du webhook Render
+        self.render_webhook = os.getenv("RENDER_REDEPLOY_WEBHOOK")   # URL du webhook Render
         self.render_service_api = os.getenv("RENDER_SERVICE_API")    # API Render pour vérifier l'état du service
+        self.render_api_key = os.getenv("RENDER_API_KEY")            # Clé API Render pour authentification
 
     # ────────────────────────────────────────────────────────────────────────────
     # 🔹 Commande SLASH
@@ -87,21 +89,27 @@ class RedemarrageCommand(commands.Cog):
                         await safe_send(channel, f"❌ Échec du redeploy. Code HTTP : {resp.status}")
                         return
 
-                # 3️⃣ Attente que le service soit redeployé
-                if not self.render_service_api:
-                    await safe_send(channel, "⚠️ API Render pour le service non configurée. Impossible de vérifier l'état du redeploy.")
+                # 3️⃣ Vérifie l'état via l'API Render
+                if not self.render_service_api or not self.render_api_key:
+                    await safe_send(channel, "⚠️ Impossible de vérifier le redeploy : API ou clé non configurée.")
                     return
 
-                # Polling du service
+                headers = {"Authorization": f"Bearer {self.render_api_key}"}
                 max_checks = 100
+
                 for i in range(max_checks):
-                    async with session.get(self.render_service_api) as status_resp:
+                    async with session.get(self.render_service_api, headers=headers) as status_resp:
                         if status_resp.status == 200:
-                            await safe_send(channel, "🎉 Le bot a été redeployé et est de nouveau en ligne !")
-                            return
+                            data = await status_resp.json()
+                            status = data.get("service", {}).get("deploy", {}).get("status")
+
+                            if status == "live":
+                                await safe_send(channel, "🎉 Le bot a été redeployé et est de nouveau en ligne !")
+                                return
+
                     await asyncio.sleep(5)  # attendre 5s avant le prochain check
 
-                await safe_send(channel, "⚠️ Timeout : le bot ne semble pas être redeployé dans les temps attendu.")
+                await safe_send(channel, "⚠️ Timeout : le bot ne semble pas être redeployé dans le temps imparti.")
 
         except Exception as e:
             print(f"[REDEPLOY] Erreur : {e}")
