@@ -1,6 +1,6 @@
 # ────────────────────────────────────────────────────────────────────────────────
 # 📌 eveil.py — Commande interactive /eveil et !eveil
-# Objectif : Permet à un utilisateur de dépenser 300 points pour choisir un pouvoir
+# Objectif : Permet à un utilisateur de dépenser des points pour choisir un pouvoir
 # Catégorie : RPG
 # Accès : Public
 # Cooldown : 1 utilisation / 5 secondes / utilisateur
@@ -16,6 +16,11 @@ from discord.ui import View, Button
 
 from utils.supabase_client import supabase
 from utils.discord_utils import safe_send, safe_respond
+
+# ────────────────────────────────────────────────────────────────────────────────
+# 💰 Coût de l'éveil (modifiable facilement)
+# ────────────────────────────────────────────────────────────────────────────────
+EVEIL_COST = 300  # <-- Change ce nombre pour modifier le coût
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🎛️ UI — Menu de sélection du pouvoir
@@ -48,12 +53,12 @@ class EveilButton(Button):
                 return await safe_respond(interaction, "❌ Tu n'as pas de compte Reiatsu.", ephemeral=True)
 
             points = int(user_data.data[0]["points"])
-            if points < 300:
-                return await safe_respond(interaction, "⛔ Tu n'as pas assez de points (300 requis).", ephemeral=True)
+            if points < EVEIL_COST:
+                return await safe_respond(interaction, f"⛔ Tu n'as pas assez de points ({EVEIL_COST} requis).", ephemeral=True)
 
-            # Déduire 300 points et enregistrer le pouvoir
+            # Déduire les points et enregistrer le pouvoir
             supabase.table("reiatsu").update({
-                "points": points - 300,
+                "points": points - EVEIL_COST,
                 "classe": self.label
             }).eq("user_id", str(self.parent_view.user_id)).execute()
 
@@ -65,7 +70,7 @@ class EveilButton(Button):
 
             embed = discord.Embed(
                 title="✨ Éveil réussi !",
-                description=f"Tu as choisi le pouvoir **{self.label}**.\n300 points ont été retirés.",
+                description=f"Tu as choisi le pouvoir **{self.label}**.\n💰 {EVEIL_COST} points ont été retirés.",
                 color=discord.Color.green()
             )
             await interaction.response.edit_message(embed=embed, view=None)
@@ -78,18 +83,23 @@ class EveilButton(Button):
 # 🧠 Cog principal
 # ────────────────────────────────────────────────────────────────────────────────
 class Eveil(commands.Cog):
-    """Commande /eveil et !eveil — Dépenser 300 points pour choisir un pouvoir"""
+    """Commande /eveil et !eveil — Dépenser des points pour choisir un pouvoir"""
     def __init__(self, bot: commands.Bot):
         self.bot = bot
 
     async def _send_menu(self, ctx_or_interaction, user_id: str):
         view = EveilView(user_id)
+        embed = discord.Embed(
+            title="💠 Éveil",
+            description=f"Choisis ton pouvoir. Coût : **{EVEIL_COST} points**.",
+            color=discord.Color.blue()
+        )
         if isinstance(ctx_or_interaction, discord.Interaction):
-            view.message = await ctx_or_interaction.response.send_message("Choisis ton pouvoir :", view=view)
+            view.message = await ctx_or_interaction.response.send_message(embed=embed, view=view)
         else:
-            view.message = await safe_send(ctx_or_interaction, "Choisis ton pouvoir :", view=view)
+            view.message = await safe_send(ctx_or_interaction, embed=embed, view=view)
 
-    @app_commands.command(name="eveil", description="💠 Dépenser 300 points pour choisir un pouvoir")
+    @app_commands.command(name="eveil", description=f"💠 Dépenser {EVEIL_COST} points pour choisir un pouvoir")
     @app_commands.checks.cooldown(1, 5.0, key=lambda i: i.user.id)
     async def slash_eveil(self, interaction: discord.Interaction):
         try:
@@ -99,7 +109,7 @@ class Eveil(commands.Cog):
             await safe_respond(interaction, "❌ Une erreur est survenue.", ephemeral=True)
 
     @commands.command(name="eveil")
-    @commands.cooldown(1, 5.0, commands.BucketType.user)
+    @commands.cooldown(1, 5, commands.BucketType.user)
     async def prefix_eveil(self, ctx: commands.Context):
         await self._send_menu(ctx, str(ctx.author.id))
 
