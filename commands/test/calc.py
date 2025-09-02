@@ -45,16 +45,17 @@ class CalcButton(Button):
         self.parent_view = parent_view
 
     async def callback(self, interaction: discord.Interaction):
-        # ✅ Accuser réception pour éviter "Échec de l’interaction"
         await interaction.response.defer()
 
         view = self.parent_view
         label = self.label
 
+        # 🔹 Réinitialiser
         if label == "C":
             view.expression = ""
             view.result = None
 
+        # 🔹 Calculer
         elif label == "=":
             try:
                 expr = (
@@ -74,34 +75,37 @@ class CalcButton(Button):
                 }
                 for k, v in funcs.items():
                     expr = expr.replace(k+"(", v+"(")
-                # Équilibrer les parenthèses si manquantes
-                open_parens = expr.count("(")
-                close_parens = expr.count(")")
-                expr += ")" * (open_parens - close_parens)
-
-                # Calcul sécurisé
+                # Équilibrer les parenthèses
+                expr += ")" * (expr.count("(") - expr.count(")"))
                 view.result = eval(expr, {"math": math, "__builtins__": {}})
-                # ✅ Après =, l'expression reste la même, résultat mis à jour
+                # 🔹 Après =, le résultat devient la base
+                view.expression = str(view.result)
             except Exception:
                 view.result = "Erreur"
 
+        # 🔹 Ajouter chiffre ou opération
         else:
             if label in ["sin","cos","tan","sqrt","log","ln","!"]:
+                if view.result not in [None, "Erreur"]:
+                    # Commence avec le résultat précédent si on continue un calcul
+                    view.expression = str(view.result)
                 view.expression += label + "("
+                view.result = None
             else:
+                if view.result not in [None, "Erreur"]:
+                    # Commence avec le résultat précédent si on continue un calcul
+                    view.expression = str(view.result)
+                    view.result = None
                 view.expression += label
 
-        # 🔹 Affichage façon calculatrice Google avec ASCII-art
-        await safe_edit(
-            interaction.message,
-            content=(
-                "╔══════════════════════════╗\n"
-                f"║ {view.expression or ''}\n"           # Ligne du haut = expression complète
-                f"║ = {view.result if view.result is not None else ''}\n"  # Ligne du bas = résultat
-                "╚══════════════════════════╝"
-            ),
-            view=view
+        # 🔹 Affichage style Google avec ASCII
+        display = (
+            "╔══════════════════════════╗\n"
+            f"║ {view.expression or ''}\n"
+            f"║ = {view.result if view.result is not None else ''}\n"
+            "╚══════════════════════════╝"
         )
+        await safe_edit(interaction.message, content=display, view=view)
 
 
 # ────────────────────────────────────────────────────────────────────────────────
@@ -114,9 +118,6 @@ class ScientificCalculator(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
 
-    # ────────────────────────────────────────────────────────────────────────────
-    # 🔹 Envoi du mini-clavier avec écran vide
-    # ────────────────────────────────────────────────────────────────────────────
     async def _send_calculator(self, channel: discord.abc.Messageable):
         view = CalculatorView()
         screen = (
@@ -127,9 +128,6 @@ class ScientificCalculator(commands.Cog):
         )
         view.message = await safe_send(channel, screen, view=view)
 
-    # ────────────────────────────────────────────────────────────────────────────
-    # 🔹 Commande SLASH
-    # ────────────────────────────────────────────────────────────────────────────
     @app_commands.command(
         name="calc",
         description="Calculatrice scientifique interactive"
@@ -146,9 +144,6 @@ class ScientificCalculator(commands.Cog):
             print(f"[ERREUR /calc] {e}")
             await safe_respond(interaction, "❌ Une erreur est survenue.", ephemeral=True)
 
-    # ────────────────────────────────────────────────────────────────────────────
-    # 🔹 Commande PREFIX
-    # ────────────────────────────────────────────────────────────────────────────
     @commands.command(name="calc")
     @commands.cooldown(1, 5.0, commands.BucketType.user)
     async def prefix_calc(self, ctx: commands.Context):
