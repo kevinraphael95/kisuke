@@ -137,8 +137,9 @@ class ReiatsuCommand(commands.Cog):
                 f"• ⓘ __**Infos Reiatsu**__\n"
                 f"• 📍 Lieu d'apparition : {salon_text}\n"
                 f"• ⏳ Temps avant apparition : {temps_text}",
-            color=discord.Color.purple()
         )
+            color=discord.Color.purple()
+    
         )
         embed.set_footer(text="Utilise les boutons ci-dessous pour interagir.")
         view = ReiatsuView(author, spawn_link=spawn_link)
