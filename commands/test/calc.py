@@ -81,9 +81,7 @@ class CalcButton(Button):
 
                 # Calcul sécurisé
                 view.result = eval(expr, {"math": math, "__builtins__": {}})
-                # ✅ Après =, le résultat devient la nouvelle expression
-                view.expression = str(view.result)
-
+                # ✅ Après =, l'expression reste la même, résultat mis à jour
             except Exception:
                 view.result = "Erreur"
 
@@ -93,12 +91,15 @@ class CalcButton(Button):
             else:
                 view.expression += label
 
-        # 🔹 Affichage façon Google : résultat au-dessus, expression en dessous
-        display = f"{view.result if view.result is not None else ''}\n{view.expression or ''}"
-
+        # 🔹 Affichage façon calculatrice Google avec ASCII-art
         await safe_edit(
             interaction.message,
-            content=display,
+            content=(
+                "╔══════════════════════════╗\n"
+                f"║ {view.expression or ''}\n"           # Ligne du haut = expression complète
+                f"║ = {view.result if view.result is not None else ''}\n"  # Ligne du bas = résultat
+                "╚══════════════════════════╝"
+            ),
             view=view
         )
 
@@ -118,7 +119,12 @@ class ScientificCalculator(commands.Cog):
     # ────────────────────────────────────────────────────────────────────────────
     async def _send_calculator(self, channel: discord.abc.Messageable):
         view = CalculatorView()
-        screen = "\n"  # Écran vide
+        screen = (
+            "╔══════════════════════════╗\n"
+            "║ \n"
+            "║ = \n"
+            "╚══════════════════════════╝"
+        )
         view.message = await safe_send(channel, screen, view=view)
 
     # ────────────────────────────────────────────────────────────────────────────
