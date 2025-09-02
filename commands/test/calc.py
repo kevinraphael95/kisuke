@@ -58,27 +58,30 @@ class CalcButton(Button):
         # 🔹 Calculer
         elif label == "=":
             try:
-                expr = (
-                    view.expression
-                    .replace("π", str(math.pi))
-                    .replace("e", str(math.e))
-                    .replace("^", "**")
-                )
-                funcs = {
-                    "sqrt": "math.sqrt",
-                    "log": "math.log10",
-                    "ln": "math.log",
-                    "sin": "math.sin(math.radians",
-                    "cos": "math.cos(math.radians",
-                    "tan": "math.tan(math.radians",
-                    "!": "math.factorial"
-                }
-                for k, v in funcs.items():
-                    expr = expr.replace(k+"(", v+"(")
-                # Équilibrer les parenthèses
-                expr += ")" * (expr.count("(") - expr.count(")"))
-                view.result = eval(expr, {"math": math, "__builtins__": {}})
-                # 🔹 Ne réinitialise pas l’expression pour continuer le calcul
+                # 🔹 Easter egg : si l'utilisateur tape exactement "1+1"
+                if view.expression.strip() == "1+1":
+                    view.result = 11
+                else:
+                    expr = (
+                        view.expression
+                        .replace("π", str(math.pi))
+                        .replace("e", str(math.e))
+                        .replace("^", "**")
+                    )
+                    funcs = {
+                        "sqrt": "math.sqrt",
+                        "log": "math.log10",
+                        "ln": "math.log",
+                        "sin": "math.sin(math.radians",
+                        "cos": "math.cos(math.radians",
+                        "tan": "math.tan(math.radians",
+                        "!": "math.factorial"
+                    }
+                    for k, v in funcs.items():
+                        expr = expr.replace(k+"(", v+"(")
+                    # Équilibrer les parenthèses
+                    expr += ")" * (expr.count("(") - expr.count(")"))
+                    view.result = eval(expr, {"math": math, "__builtins__": {}})
             except Exception:
                 view.result = "Erreur"
 
