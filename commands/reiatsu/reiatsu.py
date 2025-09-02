@@ -28,13 +28,15 @@ class ReiatsuView(View):
         self.author = author
         self.guild = guild
 
+        # Ligne 0 : Lien spawn si disponible
         if spawn_link:
-            self.add_item(Button(label="💠 Aller au spawn", style=discord.ButtonStyle.link, url=spawn_link))
+            self.add_item(Button(label="💠 Aller au spawn", style=discord.ButtonStyle.link, url=spawn_link, row=0))
 
-        self.add_item(Button(label="📊 Classement", style=discord.ButtonStyle.primary, custom_id="reiatsu:classement"))
-        self.add_item(Button(label="⚡ Éveil", style=discord.ButtonStyle.success, custom_id="reiatsu:eveil"))
-        self.add_item(Button(label="🎭 Changer de classe", style=discord.ButtonStyle.secondary, custom_id="reiatsu:classe"))
-        self.add_item(Button(label="🕵️ Voler du Reiatsu", style=discord.ButtonStyle.danger, custom_id="reiatsu:vol"))
+        # Ligne 1 : Classe + Éveil + Vol + Classement
+        self.add_item(Button(label="🎭 Changer de classe", style=discord.ButtonStyle.secondary, custom_id="reiatsu:classe", row=1))
+        self.add_item(Button(label="⚡ Éveil", style=discord.ButtonStyle.success, custom_id="reiatsu:eveil", row=1))
+        self.add_item(Button(label="🕵️ Voler du Reiatsu", style=discord.ButtonStyle.danger, custom_id="reiatsu:vol", row=1))
+        self.add_item(Button(label="📊 Classement", style=discord.ButtonStyle.primary, custom_id="reiatsu:classement", row=1))
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🧠 Cog principal
@@ -62,7 +64,7 @@ class ReiatsuCommand(commands.Cog):
         with open("data/classes.json", "r", encoding="utf-8") as f:
             CLASSES = json.load(f)
         if classe_nom and classe_nom in CLASSES:
-            classe_text = f"• Classe : {classe_nom}\n• Passive : {CLASSES[classe_nom]['Passive']}\n• Active : {CLASSES[classe_nom]['Active']}"
+            classe_text = f"• Passive : {CLASSES[classe_nom]['Passive']}\n• Active : {CLASSES[classe_nom]['Active']}"
         else:
             classe_text = "Aucune classe sélectionnée."
 
@@ -107,14 +109,15 @@ class ReiatsuCommand(commands.Cog):
                     else:
                         temps_text = "💠 Un Reiatsu peut apparaître à tout moment !"
 
-        embed = discord.Embed(
-            title="__**💠 Profil**__",
-            description=f"**{user.display_name}** a actuellement : **{points}** points de Reiatsu\n"
-                        f"• 🕵️ Cooldown vol : {cooldown_text}\n\n__**Classe**__\n{classe_text}\n\n"
-                        f"__**Spawn du reiatsu**__\n• 📍 Lieu : {salon_text}\n• ⏳ Temps avant apparition : {temps_text}",
-            color=discord.Color.purple()
-        )
+        # ─ Embed structuré
+        embed = discord.Embed(title=f"💠 Profil de {user.display_name}", color=discord.Color.purple())
+        embed.add_field(name="Reiatsu", value=f"{points} points", inline=True)
+        embed.add_field(name="Classe", value=classe_nom or "Aucune classe", inline=True)
+        embed.add_field(name="Cooldown vol", value=cooldown_text, inline=True)
+        embed.add_field(name="Pouvoirs", value=classe_text, inline=False)
+        embed.add_field(name="Infos Reiatsu", value=f"📍 Salon : {salon_text}\n⏳ Temps avant apparition : {temps_text}", inline=False)
         embed.set_footer(text="Utilise les boutons ci-dessous pour interagir.")
+
         view = ReiatsuView(author, guild, spawn_link=spawn_link)
 
         if isinstance(ctx_or_interaction, discord.Interaction):
@@ -132,12 +135,6 @@ class ReiatsuCommand(commands.Cog):
         custom_id = interaction.data.get("custom_id")
         if not custom_id:
             return
-        user_id = str(interaction.user.id)
-
-        # Vérification utilisateur
-        if interaction.user != interaction.user:
-            await interaction.response.send_message("❌ Tu ne peux pas utiliser ce bouton.", ephemeral=True)
-            return
 
         if custom_id == "reiatsu:classement":
             await self.handle_classement(interaction)
@@ -148,6 +145,9 @@ class ReiatsuCommand(commands.Cog):
         elif custom_id == "reiatsu:vol":
             await self.handle_vol(interaction)
 
+    # ────────────────────────────────────────────────────────────────────────────
+    # 🔹 Handlers (classement, éveil, classe, vol) restent identiques
+    # ────────────────────────────────────────────────────────────────────────────
     async def handle_classement(self, interaction: discord.Interaction):
         data = supabase.table("reiatsu").select("user_id, points").order("points", desc=True).limit(10).execute()
         if not data.data:
