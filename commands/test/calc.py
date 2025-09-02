@@ -54,6 +54,7 @@ class CalcButton(Button):
         if label == "C":
             view.expression = ""
             view.result = None
+
         elif label == "=":
             try:
                 expr = (
@@ -77,24 +78,29 @@ class CalcButton(Button):
                 open_parens = expr.count("(")
                 close_parens = expr.count(")")
                 expr += ")" * (open_parens - close_parens)
+
                 # Calcul sécurisé
                 view.result = eval(expr, {"math": math, "__builtins__": {}})
-                # ❌ Laisser l'expression affichée pour que l'utilisateur la voie
+                # ✅ Après =, le résultat devient la nouvelle expression
+                view.expression = str(view.result)
+
             except Exception:
                 view.result = "Erreur"
-                # garder l'expression affichée même si erreur
+                # On garde l'expression pour que l'utilisateur voie ce qu'il a tapé
+
         else:
             if label in ["sin","cos","tan","sqrt","log","ln","!"]:
                 view.expression += label + "("
             else:
                 view.expression += label
 
+        # Affichage
         await safe_edit(
             interaction.message,
             content=(
                 "╔══════════════════════════╗\n"
-                f"║ {view.expression or ''}\n"
                 f"║ = {view.result if view.result is not None else ''}\n"
+                f"║ {view.expression or ''}\n"
                 f"╚══════════════════════════╝"
             ),
             view=view
@@ -118,8 +124,8 @@ class ScientificCalculator(commands.Cog):
         view = CalculatorView()
         screen = (
             "╔══════════════════════════╗\n"
-            "║ \n"
             "║ = \n"
+            "║ \n"
             "╚══════════════════════════╝"
         )
         view.message = await safe_send(channel, screen, view=view)
@@ -167,3 +173,6 @@ async def setup(bot: commands.Bot):
         if not hasattr(command, "category"):
             command.category = "Test"
     await bot.add_cog(cog)
+
+
+
