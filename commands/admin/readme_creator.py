@@ -2,7 +2,7 @@
 # 📌 readme_creator.py — Commande /commandes qui crée un README.md
 # Objectif : Génère un fichier README.md avec toutes les commandes triées et formatées
 # Catégorie : Général
-# Accès : Tous
+# Accès : Administrateurs seulement
 # Cooldown : 1 utilisation / 5 secondes / utilisateur
 # ────────────────────────────────────────────────────────────────────────────────
 
@@ -17,7 +17,8 @@ from utils.discord_utils import safe_send, safe_respond
 
 class Commandes(commands.Cog):
     """
-    Commande /commandes et !commandes — Génère un README.md complet avec toutes les commandes.
+    Commande /readme et !readme — Génère un README.md complet avec toutes les commandes.
+    Accessible uniquement aux administrateurs.
     """
     def __init__(self, bot: commands.Bot):
         self.bot = bot
@@ -50,13 +51,14 @@ class Commandes(commands.Cog):
         return content
 
     # ────────────────────────────────────────────────────────────────────────────
-    # 🔹 Commande SLASH
+    # 🔹 Commande SLASH (admin uniquement)
     # ────────────────────────────────────────────────────────────────────────────
+    @app_commands.checks.has_permissions(administrator=True)
     @app_commands.command(
         name="readme",
         description="Génère un README.md avec toutes les commandes et les envoie en fichier."
     )
-    @app_commands.checks.cooldown(1, 5.0, key=lambda i: (i.user.id))
+    @app_commands.checks.cooldown(1, 5.0, key=lambda i: i.user.id)
     async def slash_commandes(self, interaction: discord.Interaction):
         try:
             markdown_content = self.build_markdown_content()
@@ -65,12 +67,13 @@ class Commandes(commands.Cog):
         except app_commands.CommandOnCooldown as e:
             await safe_respond(interaction, f"⏳ Attends encore {e.retry_after:.1f}s.", ephemeral=True)
         except Exception as e:
-            print(f"[ERREUR /commandes] {e}")
+            print(f"[ERREUR /readme] {e}")
             await safe_respond(interaction, "❌ Une erreur est survenue.", ephemeral=True)
 
     # ────────────────────────────────────────────────────────────────────────────
-    # 🔹 Commande PREFIX
+    # 🔹 Commande PREFIX (admin uniquement)
     # ────────────────────────────────────────────────────────────────────────────
+    @commands.has_permissions(administrator=True)
     @commands.command(
         name="readme",
         help="Génère un README.md avec toutes les commandes et les envoie en fichier."
@@ -84,7 +87,7 @@ class Commandes(commands.Cog):
         except commands.CommandOnCooldown as e:
             await safe_send(ctx.channel, f"⏳ Attends encore {e.retry_after:.1f}s.")
         except Exception as e:
-            print(f"[ERREUR !commandes] {e}")
+            print(f"[ERREUR !readme] {e}")
             await safe_send(ctx.channel, "❌ Une erreur est survenue.")
 
 # ────────────────────────────────────────────────────────────────────────────────
