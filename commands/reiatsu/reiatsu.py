@@ -127,19 +127,19 @@ class ReiatsuCommand(commands.Cog):
                     else:
                         temps_text = "Un Reiatsu 💠 peut apparaître **à tout moment** !"
 
+
         embed = discord.Embed(
             title=f"__**Profil de {user.display_name}**__",
             description=(
                 f"• 💠 Reiatsu : **{points}**\n"
                 f"• 🕵️ Cooldown vol : {cooldown_text} (reiatsuvol pour voler du reiatsu à quelqu'un)\n"
-                f"• 🕵️ **Classe**__\n{classe_text}\n\n"
-                f"• Pouvoirs de : ?\n"
+                f"• 🕵️ Classe : {classe_nom or 'Aucune'}\n"
+                f"• Pouvoirs de : ?\n\n"
                 f"• ⓘ __**Infos Reiatsu**__\n"
                 f"• 📍 Lieu d'apparition : {salon_text}\n"
-                f"• ⏳ Temps avant apparition : {temps_text}",
-        )
+                f"• ⏳ Temps avant apparition : {temps_text}"
+            ),
             color=discord.Color.purple()
-    
         )
         embed.set_footer(text="Utilise les boutons ci-dessous pour interagir.")
         view = ReiatsuView(author, spawn_link=spawn_link)
