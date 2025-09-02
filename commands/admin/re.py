@@ -1,7 +1,6 @@
 # ────────────────────────────────────────────────────────────────────────────────
-# 📌 redemarrage_command.py — Commande /re et !re avec confirmation API
-# Objectif : Prévenir les membres, déclencher un redeploy Render via webhook
-#            et notifier quand le bot est de nouveau en ligne via l’API Render.
+# 📌 redemarrage_command.py — Commande /re et !re via webhook Render
+# Objectif : Prévenir les membres et déclencher un redeploy Render via webhook.
 # Catégorie : ⚙️ Admin
 # Accès : Administrateur
 # Cooldown : 1 utilisation / 5 secondes / utilisateur
@@ -23,13 +22,11 @@ import asyncio
 # ────────────────────────────────────────────────────────────────────────────────
 class RedemarrageCommand(commands.Cog):
     """
-    Commande /re et !re — Préviens les membres, déclenche un redeploy sur Render et notifie quand le bot est redeployé.
+    Commande /re et !re — Préviens les membres et déclenche un redeploy sur Render.
     """
     def __init__(self, bot: commands.Bot):
         self.bot = bot
         self.render_webhook = os.getenv("RENDER_REDEPLOY_WEBHOOK")   # URL du webhook Render
-        self.render_service_api = os.getenv("RENDER_SERVICE_API")    # API Render pour vérifier l'état du service
-        self.render_api_key = os.getenv("RENDER_API_KEY")            # Clé API Render pour authentification
 
     # ────────────────────────────────────────────────────────────────────────────
     # 🔹 Commande SLASH
@@ -66,7 +63,7 @@ class RedemarrageCommand(commands.Cog):
     # 🔹 Fonction interne de redeploy
     # ────────────────────────────────────────────────────────────────────────────
     async def _trigger_restart(self, channel: discord.abc.Messageable):
-        """Annonce le redémarrage, déclenche le redeploy Render et confirme quand le bot est redeployé."""
+        """Annonce le redémarrage et déclenche le redeploy Render via webhook."""
         try:
             # 1️⃣ Préviens les membres
             embed = discord.Embed(
@@ -89,27 +86,8 @@ class RedemarrageCommand(commands.Cog):
                         await safe_send(channel, f"❌ Échec du redeploy. Code HTTP : {resp.status}")
                         return
 
-                # 3️⃣ Vérifie l'état via l'API Render
-                if not self.render_service_api or not self.render_api_key:
-                    await safe_send(channel, "⚠️ Impossible de vérifier le redeploy : API ou clé non configurée.")
-                    return
-
-                headers = {"Authorization": f"Bearer {self.render_api_key}"}
-                max_checks = 100
-
-                for i in range(max_checks):
-                    async with session.get(self.render_service_api, headers=headers) as status_resp:
-                        if status_resp.status == 200:
-                            data = await status_resp.json()
-                            status = data.get("service", {}).get("deploy", {}).get("status")
-
-                            if status == "live":
-                                await safe_send(channel, "🎉 Le bot a été redeployé et est de nouveau en ligne !")
-                                return
-
-                    await asyncio.sleep(5)  # attendre 5s avant le prochain check
-
-                await safe_send(channel, "⚠️ Timeout : le bot ne semble pas être redeployé dans le temps imparti.")
+            # ⚠️ Impossible de vérifier la fin du redeploy depuis le bot lui-même
+            await safe_send(channel, "🔔 Le bot va redémarrer et sera bientôt de retour !")
 
         except Exception as e:
             print(f"[REDEPLOY] Erreur : {e}")
