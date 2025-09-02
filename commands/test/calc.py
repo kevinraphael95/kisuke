@@ -78,8 +78,7 @@ class CalcButton(Button):
                 # Équilibrer les parenthèses
                 expr += ")" * (expr.count("(") - expr.count(")"))
                 view.result = eval(expr, {"math": math, "__builtins__": {}})
-                # 🔹 Après =, le résultat devient la base
-                view.expression = str(view.result)
+                # 🔹 Ne réinitialise pas l’expression pour continuer le calcul
             except Exception:
                 view.result = "Erreur"
 
@@ -87,13 +86,13 @@ class CalcButton(Button):
         else:
             if label in ["sin","cos","tan","sqrt","log","ln","!"]:
                 if view.result not in [None, "Erreur"]:
-                    # Commence avec le résultat précédent si on continue un calcul
+                    # Continue à partir du résultat précédent
                     view.expression = str(view.result)
+                    view.result = None
                 view.expression += label + "("
-                view.result = None
             else:
                 if view.result not in [None, "Erreur"]:
-                    # Commence avec le résultat précédent si on continue un calcul
+                    # Continue à partir du résultat précédent
                     view.expression = str(view.result)
                     view.result = None
                 view.expression += label
