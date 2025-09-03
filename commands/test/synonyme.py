@@ -12,7 +12,7 @@
 import discord
 from discord import app_commands
 from discord.ext import commands
-import requests
+import aiohttp
 import random
 from utils.discord_utils import safe_send, safe_respond  
 
@@ -27,28 +27,28 @@ class Synonyme(commands.Cog):
         self.bot = bot
 
     # ────────────────────────────────────────────────────────────────────────────
-    # 🔹 Fonction interne
+    # 🔹 Fonction interne pour récupérer les synonymes
     # ────────────────────────────────────────────────────────────────────────────
-    def get_synonymes(self, word: str):
-        """Récupère des synonymes via l'API Dicolink."""
+    async def get_synonymes(self, word: str):
+        """Récupère des synonymes via l'API Datamuse (max 5)."""
+        url = f"https://api.datamuse.com/words?rel_syn={word}&max=5"
         try:
-            url = f"https://api.dicolink.com/v1/mot/{word}/synonymes?limite=5&api_key=VOTRECLEFAPI"
-            response = requests.get(url, timeout=5)
-            if response.status_code == 200:
-                data = response.json()
-                if isinstance(data, list) and len(data) > 0:
-                    return [syn['synonyme'] for syn in data]
+            async with aiohttp.ClientSession() as session:
+                async with session.get(url, timeout=5) as resp:
+                    if resp.status == 200:
+                        data = await resp.json()
+                        return [item['word'] for item in data]
         except Exception:
             pass
         return []
 
-    def remplacer_par_synonymes(self, texte: str):
+    async def remplacer_par_synonymes(self, texte: str):
         """Remplace tous les mots >3 lettres par un synonyme aléatoire."""
         mots = texte.split()
         texte_modifie = []
         for mot in mots:
             if len(mot) > 3:
-                synonymes = self.get_synonymes(mot)
+                synonymes = await self.get_synonymes(mot)
                 if synonymes:
                     mot = random.choice(synonymes)
             texte_modifie.append(mot)
@@ -61,21 +61,26 @@ class Synonyme(commands.Cog):
         name="synonyme",
         description="Remplace tous les mots >3 lettres par un synonyme aléatoire"
     )
-    @app_commands.checks.cooldown(1, 5.0, key=lambda i: (i.user.id))
+    @app_commands.checks.cooldown(1, 5.0, key=lambda i: i.user.id)
     async def slash_synonyme(self, interaction: discord.Interaction):
         try:
             await interaction.response.defer()
             # Récupérer le dernier message non-bot ou message répondu
-            msg = interaction.message.reference
-            if msg:
-                message = await interaction.channel.fetch_message(msg.message_id)
-            else:
+            message = None
+            if interaction.message and interaction.message.reference:
+                message = await interaction.channel.fetch_message(interaction.message.reference.message_id)
+            if not message:
                 async for m in interaction.channel.history(limit=10):
                     if not m.author.bot:
                         message = m
                         break
-            texte_modifie = self.remplacer_par_synonymes(message.content)
+            if not message:
+                await safe_respond(interaction, "❌ Aucun message à modifier trouvé.", ephemeral=True)
+                return
+
+            texte_modifie = await self.remplacer_par_synonymes(message.content)
             await safe_respond(interaction, f"**Original:** {message.content}\n**Modifié:** {texte_modifie}")
+
         except app_commands.CommandOnCooldown as e:
             await safe_respond(interaction, f"⏳ Attends encore {e.retry_after:.1f}s.", ephemeral=True)
         except Exception as e:
@@ -89,17 +94,21 @@ class Synonyme(commands.Cog):
     @commands.cooldown(1, 5.0, commands.BucketType.user)
     async def prefix_synonyme(self, ctx: commands.Context):
         try:
-            # Récupérer le dernier message non-bot ou message répondu
-            message = ctx.message.reference
-            if message:
-                msg = await ctx.channel.fetch_message(message.message_id)
-            else:
+            message = None
+            if ctx.message.reference:
+                message = await ctx.channel.fetch_message(ctx.message.reference.message_id)
+            if not message:
                 async for m in ctx.channel.history(limit=10):
                     if not m.author.bot:
-                        msg = m
+                        message = m
                         break
-            texte_modifie = self.remplacer_par_synonymes(msg.content)
-            await safe_send(ctx.channel, f"**Original:** {msg.content}\n**Modifié:** {texte_modifie}")
+            if not message:
+                await safe_send(ctx.channel, "❌ Aucun message à modifier trouvé.")
+                return
+
+            texte_modifie = await self.remplacer_par_synonymes(message.content)
+            await safe_send(ctx.channel, f"**Original:** {message.content}\n**Modifié:** {texte_modifie}")
+
         except commands.CommandOnCooldown as e:
             await safe_send(ctx.channel, f"⏳ Attends encore {e.retry_after:.1f}s.")
         except Exception as e:
@@ -113,5 +122,5 @@ async def setup(bot: commands.Bot):
     cog = Synonyme(bot)
     for command in cog.get_commands():
         if not hasattr(command, "category"):
-            command.category = "Test"
+            command.category = "Fun"
     await bot.add_cog(cog)
