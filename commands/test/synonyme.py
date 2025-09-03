@@ -1,24 +1,19 @@
 # ────────────────────────────────────────────────────────────────────────────────
 # 📌 synonyme.py — Commande /synonyme et !synonyme
-# Objectif : Remplacer tous les mots de plus de 3 lettres par un synonyme aléatoire
+# Objectif : Remplacer tous les mots >3 lettres par un synonyme aléatoire
 # Catégorie : Fun
 # Accès : Tous
 # Cooldown : 1 utilisation / 5 secondes / utilisateur
 # ────────────────────────────────────────────────────────────────────────────────
 
-# ────────────────────────────────────────────────────────────────────────────────
-# 📦 Imports nécessaires
-# ────────────────────────────────────────────────────────────────────────────────
 import discord
 from discord import app_commands
 from discord.ext import commands
 import aiohttp
 import random
+import re
 from utils.discord_utils import safe_send, safe_respond  
 
-# ────────────────────────────────────────────────────────────────────────────────
-# 🧠 Cog principal
-# ────────────────────────────────────────────────────────────────────────────────
 class Synonyme(commands.Cog):
     """
     Commande /synonyme et !synonyme — Remplace les mots >3 lettres par des synonymes
@@ -26,9 +21,6 @@ class Synonyme(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
 
-    # ────────────────────────────────────────────────────────────────────────────
-    # 🔹 Fonction interne pour récupérer les synonymes
-    # ────────────────────────────────────────────────────────────────────────────
     async def get_synonymes(self, word: str):
         """Récupère des synonymes via l'API Datamuse (max 5)."""
         url = f"https://api.datamuse.com/words?rel_syn={word}&max=5"
@@ -43,20 +35,24 @@ class Synonyme(commands.Cog):
         return []
 
     async def remplacer_par_synonymes(self, texte: str):
-        """Remplace tous les mots >3 lettres par un synonyme aléatoire."""
-        mots = texte.split()
-        texte_modifie = []
-        for mot in mots:
-            if len(mot) > 3:
-                synonymes = await self.get_synonymes(mot)
+        """Remplace chaque mot >3 lettres par un synonyme aléatoire sans toucher aux autres éléments."""
+        async def replace_word(match):
+            mot = match.group(0)
+            if len(mot) > 3 and mot.isalpha():
+                synonymes = await self.get_synonymes(mot.lower())
                 if synonymes:
-                    mot = random.choice(synonymes)
-            texte_modifie.append(mot)
-        return ' '.join(texte_modifie)
+                    mot_syn = random.choice(synonymes)
+                    # Respecte la majuscule initiale
+                    if mot[0].isupper():
+                        mot_syn = mot_syn.capitalize()
+                    return mot_syn
+            return mot  # ne change rien pour les mots <=3 lettres ou chiffres/ponctuation
 
-    # ────────────────────────────────────────────────────────────────────────────
-    # 🔹 Commande SLASH
-    # ────────────────────────────────────────────────────────────────────────────
+        # regex pour capturer les mots uniquement, on laisse les emojis, chiffres, ponctuation intacts
+        pattern = r'\b\w+\b'
+        texte_modifie = await re.sub(pattern, replace_word, texte)
+        return texte_modifie
+
     @app_commands.command(
         name="synonyme",
         description="Remplace tous les mots >3 lettres par un synonyme aléatoire"
@@ -65,7 +61,6 @@ class Synonyme(commands.Cog):
     async def slash_synonyme(self, interaction: discord.Interaction):
         try:
             await interaction.response.defer()
-            # Récupérer le dernier message non-bot ou message répondu
             message = None
             if interaction.message and interaction.message.reference:
                 message = await interaction.channel.fetch_message(interaction.message.reference.message_id)
@@ -87,9 +82,6 @@ class Synonyme(commands.Cog):
             print(f"[ERREUR /synonyme] {e}")
             await safe_respond(interaction, "❌ Une erreur est survenue.", ephemeral=True)
 
-    # ────────────────────────────────────────────────────────────────────────────
-    # 🔹 Commande PREFIX
-    # ────────────────────────────────────────────────────────────────────────────
     @commands.command(name="synonyme")
     @commands.cooldown(1, 5.0, commands.BucketType.user)
     async def prefix_synonyme(self, ctx: commands.Context):
@@ -115,9 +107,6 @@ class Synonyme(commands.Cog):
             print(f"[ERREUR !synonyme] {e}")
             await safe_send(ctx.channel, "❌ Une erreur est survenue.")
 
-# ────────────────────────────────────────────────────────────────────────────────
-# 🔌 Setup du Cog
-# ────────────────────────────────────────────────────────────────────────────────
 async def setup(bot: commands.Bot):
     cog = Synonyme(bot)
     for command in cog.get_commands():
