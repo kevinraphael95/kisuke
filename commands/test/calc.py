@@ -33,7 +33,8 @@ class CalculatorView(View):
             ["4","5","6","*","^"],
             ["1","2","3","-","ln"],
             ["0",".","C","+","log"],
-            ["sin","cos","tan","!","="]
+            ["π","e","(",")","="],
+            ["sin","cos","tan","exp","!"]
         ]
         for row in rows:
             for label in row:
@@ -46,7 +47,6 @@ class CalcButton(Button):
 
     async def callback(self, interaction: discord.Interaction):
         await interaction.response.defer()
-
         view = self.parent_view
         label = self.label
 
@@ -58,7 +58,6 @@ class CalcButton(Button):
         # 🔹 Calculer
         elif label == "=":
             try:
-                # 🔹 Easter egg : si l'utilisateur tape exactement "1+1"
                 if view.expression.strip() == "1+1":
                     view.result = 11
                 else:
@@ -72,34 +71,33 @@ class CalcButton(Button):
                         "sqrt": "math.sqrt",
                         "log": "math.log10",
                         "ln": "math.log",
+                        "exp": "math.exp",
                         "sin": "math.sin(math.radians",
                         "cos": "math.cos(math.radians",
                         "tan": "math.tan(math.radians",
                         "!": "math.factorial"
                     }
                     for k, v in funcs.items():
-                        expr = expr.replace(k+"(", v+"(")
-                    # Équilibrer les parenthèses
+                        expr = expr.replace(k + "(", v + "(")
+                    # équilibrage auto des parenthèses
                     expr += ")" * (expr.count("(") - expr.count(")"))
                     view.result = eval(expr, {"math": math, "__builtins__": {}})
             except Exception:
                 view.result = "Erreur"
 
-        # 🔹 Ajouter chiffre ou opération (style Google Calculator)
+        # 🔹 Ajouter chiffre / constante / fonction
         else:
             if view.result not in [None, "Erreur"]:
                 if label in ["+", "-", "*", "/", "^"]:
-                    # ➝ continuer à partir du résultat précédent
                     view.expression = str(view.result) + label
                 else:
-                    # ➝ chiffre, fonction, etc. ➝ démarrer un nouveau calcul
                     view.expression = (
-                        label if label not in ["sin","cos","tan","sqrt","log","ln","!"]
+                        label if label not in ["sin","cos","tan","sqrt","log","ln","exp","!"]
                         else label + "("
                     )
                 view.result = None
             else:
-                if label in ["sin","cos","tan","sqrt","log","ln","!"]:
+                if label in ["sin","cos","tan","sqrt","log","ln","exp","!"]:
                     view.expression += label + "("
                 else:
                     view.expression += label
