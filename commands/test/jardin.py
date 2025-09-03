@@ -148,53 +148,237 @@ def build_potions_embed(potions: dict) -> discord.Embed:
 # ────────────────────────────────────────────────────────────────────────────────
 # 🎛️ UI — Alchimie interactive
 # ────────────────────────────────────────────────────────────────────────────────
-# (inchangé, identique à ta version précédente)
-# … code AlchimieView ici …
-# ────────────────────────────────────────────────────────────────────────────────
-
-
-# ────────────────────────────────────────────────────────────────────────────────
-# 🎛️ UI — Jardin interactif (boutons par fleur)
-# ────────────────────────────────────────────────────────────────────────────────
-class JardinInteractifView(discord.ui.View):
+class AlchimieView(discord.ui.View):
     def __init__(self, garden: dict, user_id: int, timeout=180):
         super().__init__(timeout=timeout)
         self.garden = garden
         self.user_id = user_id
-        self.build_buttons()
+        self.original_inventory = garden["inventory"].copy()  # inventaire réel sauvegardé
+        self.temp_inventory = garden["inventory"].copy()      # inventaire temporaire
+        self.value = 0
+        self.selected_flowers = []
 
-    def build_buttons(self):
-        self.clear_items()
-        for row_idx, line in enumerate(self.garden["garden_grid"]):
-            for col_idx, char in enumerate(line):
-                button = discord.ui.Button(label=char, style=discord.ButtonStyle.green, row=row_idx)
-                button.callback = self.make_callback(row_idx, col_idx, char)
-                self.add_item(button)
-        # Ajouter boutons supplémentaires (engrais, couper, alchimie, potions)
-        self.add_item(discord.ui.Button(label="Engrais", emoji="💩", style=discord.ButtonStyle.green))
-        self.add_item(discord.ui.Button(label="Couper", emoji="✂️", style=discord.ButtonStyle.secondary))
-        self.add_item(discord.ui.Button(label="Alchimie", emoji="⚗️", style=discord.ButtonStyle.blurple))
-        self.add_item(discord.ui.Button(label="Potions", emoji="🧪", style=discord.ButtonStyle.green))
+    def build_embed(self):
+        fleurs_grouped = {"+" : [], "×" : [], "-" : []}
+        for f in FLEUR_EMOJIS:
+            sign = FLEUR_SIGNS[f]
+            val = FLEUR_VALUES[f]
+            fleurs_grouped[sign].append(f"{FLEUR_EMOJIS[f]}{sign}{val}")
+        fleurs = "  ".join(" ".join(fleurs_grouped[s]) for s in ("+", "×", "-"))
+        chosen = " ".join(FLEUR_EMOJIS[f] for f in self.selected_flowers) if self.selected_flowers else "—"
 
-    def make_callback(self, row, col, char):
-        async def callback(interaction: discord.Interaction):
-            if interaction.user.id != self.user_id:
-                return await interaction.response.send_message("❌ Ce jardin n'est pas à toi !", ephemeral=True)
+        return discord.Embed(
+            title="⚗️ Alchimie",
+            description=f"Valeurs de fleurs : {fleurs}\n\n⚗️ {chosen}\nValeur : **{self.value}**",
+            color=discord.Color.purple()
+        )
 
-            if char in FLEUR_EMOJIS.values():
-                # Cueille la fleur
-                for name, emoji in FLEUR_EMOJIS.items():
-                    if emoji == char:
-                        self.garden["inventory"][name] = self.garden["inventory"].get(name, 0) + 1
-                self.garden["garden_grid"][row] = self.garden["garden_grid"][row][:col] + "🌱" + self.garden["garden_grid"][row][col+1:]
-                await self.update_message(interaction)
-            else:
-                await interaction.response.send_message("❌ Rien à cueillir ici !", ephemeral=True)
-        return callback
+    async def update_message(self, interaction: discord.Interaction):
+        await interaction.response.edit_message(embed=self.build_embed(), view=self)
 
-    async def update_message(self, interaction):
+    def use_flower(self, flower: str) -> bool:
+        if self.temp_inventory.get(flower, 0) <= 0:
+            return False
+        self.temp_inventory[flower] -= 1
+        self.selected_flowers.append(flower)
+
+        sign = FLEUR_SIGNS[flower]
+        val = FLEUR_VALUES[flower]
+        if sign == "+":
+            self.value += val
+        elif sign == "-":
+            self.value -= val
+        elif sign == "×":
+            self.value = self.value * val if self.value != 0 else val
+        return True
+
+    # ───────── Boutons fleurs ─────────
+    @discord.ui.button(label="🌷", style=discord.ButtonStyle.green)
+    async def add_tulipe(self, interaction, button):
+        if not self.use_flower("tulipes"):
+            return await interaction.response.send_message("❌ Tu n’as plus de 🌷 !", ephemeral=True)
+        await self.update_message(interaction)
+
+    @discord.ui.button(label="🌹", style=discord.ButtonStyle.green)
+    async def add_rose(self, interaction, button):
+        if not self.use_flower("roses"):
+            return await interaction.response.send_message("❌ Tu n’as plus de 🌹 !", ephemeral=True)
+        await self.update_message(interaction)
+
+    @discord.ui.button(label="🪻", style=discord.ButtonStyle.green)
+    async def add_jacinthe(self, interaction, button):
+        if not self.use_flower("jacinthes"):
+            return await interaction.response.send_message("❌ Tu n’as plus de 🪻 !", ephemeral=True)
+        await self.update_message(interaction)
+
+    @discord.ui.button(label="🌺", style=discord.ButtonStyle.green)
+    async def add_hibiscus(self, interaction, button):
+        if not self.use_flower("hibiscus"):
+            return await interaction.response.send_message("❌ Tu n’as plus de 🌺 !", ephemeral=True)
+        await self.update_message(interaction)
+
+    @discord.ui.button(label="🌼", style=discord.ButtonStyle.green)
+    async def add_paquerette(self, interaction, button):
+        if not self.use_flower("paquerettes"):
+            return await interaction.response.send_message("❌ Tu n’as plus de 🌼 !", ephemeral=True)
+        await self.update_message(interaction)
+
+    @discord.ui.button(label="🌻", style=discord.ButtonStyle.green)
+    async def add_tournesol(self, interaction, button):
+        if not self.use_flower("tournesols"):
+            return await interaction.response.send_message("❌ Tu n’as plus de 🌻 !", ephemeral=True)
+        await self.update_message(interaction)
+
+
+    # ───────── Concocter & Reset ─────────
+    @discord.ui.button(label="Concocter", emoji="⚗️", style=discord.ButtonStyle.blurple)
+    async def concocter(self, interaction, button):
+        potion = POTIONS.get(str(self.value))
+
+        # 🔥 Mise à jour de l'inventaire réel
+        garden_update = {"inventory": self.temp_inventory.copy()}
+
+        if potion:
+            # Récupérer les potions existantes
+            user_data = supabase.table(TABLE_NAME).select("potions").eq("user_id", self.user_id).execute()
+            potions_data = {}
+            if user_data.data and user_data.data[0].get("potions"):
+                potions_data = user_data.data[0]["potions"]
+
+            # Ajouter la potion créée
+            potions_data[potion] = potions_data.get(potion, 0) + 1
+
+            # Trier les potions par valeur croissante
+            sorted_potions = dict(sorted(
+                potions_data.items(),
+                key=lambda x: next((int(v) for v, n in POTIONS.items() if n == x[0]), 0)
+            ))
+
+            # Ajouter les potions triées à la mise à jour
+            garden_update["potions"] = sorted_potions
+
+            await interaction.response.send_message(f"✨ Tu as créé : **{potion}** !", ephemeral=False)
+        else:
+            await interaction.response.send_message("💥 Ta mixture explose ! Rien obtenu...", ephemeral=False)
+
+        # 🔹 Mise à jour dans Supabase
+        supabase.table(TABLE_NAME).update(garden_update).eq("user_id", self.user_id).execute()
+
+        self.stop()
+
+
+
+    @discord.ui.button(label="Reset", emoji="🔄", style=discord.ButtonStyle.red)
+    async def reset(self, interaction, button):
+        self.temp_inventory = self.original_inventory.copy()
+        self.value = 0
+        self.selected_flowers = []
+        await self.update_message(interaction)
+
+    async def interaction_check(self, interaction):
+        return interaction.user.id == self.user_id
+
+# ────────────────────────────────────────────────────────────────────────────────
+# 🎛️ UI — Boutons Jardin
+# ────────────────────────────────────────────────────────────────────────────────
+class JardinView(discord.ui.View):
+    def __init__(self, garden: dict, user_id: int):
+        super().__init__(timeout=120)
+        self.garden = garden
+        self.user_id = user_id
+
+    def update_buttons(self):
+        last = self.garden.get("last_fertilize")
+        disabled = False
+        if last:
+            try:
+                last_dt = datetime.datetime.fromisoformat(last)
+                now = datetime.datetime.now(datetime.timezone.utc)
+                if now < last_dt + FERTILIZE_COOLDOWN:
+                    disabled = True
+            except Exception:
+                pass
+        for child in self.children:
+            if isinstance(child, discord.ui.Button) and child.label == "Engrais":
+                child.disabled = disabled
+
+    async def update_garden_db(self):
+        supabase.table(TABLE_NAME).update({
+            "garden_grid": self.garden["garden_grid"],
+            "inventory": self.garden["inventory"],
+            "last_fertilize": self.garden["last_fertilize"],
+            "argent": self.garden["argent"],
+            "armee": self.garden["armee"]
+        }).eq("user_id", self.user_id).execute()
+
+    @discord.ui.button(label="Engrais", emoji="💩", style=discord.ButtonStyle.green)
+    async def engrais(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if interaction.user.id != self.user_id:
+            return await interaction.response.send_message("❌ Ce jardin n'est pas à toi !", ephemeral=True)
+
+        last = self.garden.get("last_fertilize")
+        if last:
+            try:
+                last_dt = datetime.datetime.fromisoformat(last)
+                now = datetime.datetime.now(datetime.timezone.utc)
+                if now < last_dt + FERTILIZE_COOLDOWN:
+                    remain = last_dt + FERTILIZE_COOLDOWN - now
+                    total_seconds = int(remain.total_seconds())
+                    minutes, seconds = divmod(total_seconds, 60)
+                    hours, minutes = divmod(minutes, 60)
+                    return await interaction.response.send_message(
+                        f"⏳ Tu dois attendre {hours}h {minutes}m {seconds}s avant d'utiliser de l'engrais !",
+                        ephemeral=True
+                    )
+            except Exception:
+                pass
+
+        self.garden["garden_grid"] = pousser_fleurs(self.garden["garden_grid"])
+        self.garden["last_fertilize"] = datetime.datetime.now(datetime.timezone.utc).isoformat()
+        await self.update_garden_db()
+
+        view = JardinView(self.garden, self.user_id)
+        view.update_buttons()
         embed = build_garden_embed(self.garden, self.user_id)
-        await interaction.response.edit_message(embed=embed, view=self)
+        await interaction.response.edit_message(embed=embed, view=view)
+
+    @discord.ui.button(label="Couper", emoji="✂️", style=discord.ButtonStyle.secondary)
+    async def couper(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if interaction.user.id != self.user_id:
+            return await interaction.response.send_message("❌ Ce jardin n'est pas à toi !", ephemeral=True)
+
+        new_lines, self.garden = couper_fleurs(self.garden["garden_grid"], self.garden)
+        self.garden["garden_grid"] = new_lines
+        await self.update_garden_db()
+
+        view = JardinView(self.garden, self.user_id)
+        view.update_buttons()
+        embed = build_garden_embed(self.garden, self.user_id)
+        await interaction.response.edit_message(embed=embed, view=view)
+
+    @discord.ui.button(label="Alchimie", emoji="⚗️", style=discord.ButtonStyle.blurple)
+    async def alchimie(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if interaction.user.id != self.user_id:
+            return await interaction.response.send_message("❌ Ce jardin n'est pas à toi !", ephemeral=True)
+
+        view = AlchimieView(self.garden, self.user_id)
+        embed = view.build_embed()
+        await interaction.response.send_message(embed=embed, view=view)
+
+
+    @discord.ui.button(label="Potions", emoji="🧪", style=discord.ButtonStyle.green)
+    async def potions(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if interaction.user.id != self.user_id:
+            return await interaction.response.send_message("❌ Ce jardin n'est pas à toi !", ephemeral=True)
+
+        # Récupérer les potions depuis Supabase
+        user_data = supabase.table(TABLE_NAME).select("potions").eq("user_id", self.user_id).execute()
+        potions_data = {}
+        if user_data.data and user_data.data[0].get("potions"):
+            potions_data = user_data.data[0]["potions"]
+
+        embed = build_potions_embed(potions_data)
+        await interaction.response.send_message(embed=embed, ephemeral=False)
 
 
 # ────────────────────────────────────────────────────────────────────────────────
@@ -212,7 +396,8 @@ class Jardin(commands.Cog):
             embed = build_garden_embed(garden, viewer_id)
             view = None
             if target_user.id == viewer_id:
-                view = JardinInteractifView(garden, viewer_id)
+                view = JardinView(garden, viewer_id)
+                view.update_buttons()
             await respond_func(embed=embed, view=view)
         except Exception as e:
             print(f"[ERREUR jardin] {e}")
@@ -233,6 +418,7 @@ class Jardin(commands.Cog):
         target = user or ctx.author
         await self._send_garden(target, ctx.author.id, lambda **kwargs: safe_send(ctx.channel, **kwargs))
 
+ 
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🔌 Setup du Cog
@@ -241,5 +427,5 @@ async def setup(bot: commands.Bot):
     cog = Jardin(bot)
     for command in cog.get_commands():
         if not hasattr(command, "category"):
-            command.category = "Jeu"
+            command.category = "Test"
     await bot.add_cog(cog)
