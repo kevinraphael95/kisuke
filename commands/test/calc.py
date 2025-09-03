@@ -85,20 +85,24 @@ class CalcButton(Button):
             except Exception:
                 view.result = "Erreur"
 
-        # 🔹 Ajouter chiffre ou opération
+        # 🔹 Ajouter chiffre ou opération (style Google Calculator)
         else:
-            if label in ["sin","cos","tan","sqrt","log","ln","!"]:
-                if view.result not in [None, "Erreur"]:
-                    # Continue à partir du résultat précédent
-                    view.expression = str(view.result)
-                    view.result = None
-                view.expression += label + "("
+            if view.result not in [None, "Erreur"]:
+                if label in ["+", "-", "*", "/", "^"]:
+                    # ➝ continuer à partir du résultat précédent
+                    view.expression = str(view.result) + label
+                else:
+                    # ➝ chiffre, fonction, etc. ➝ démarrer un nouveau calcul
+                    view.expression = (
+                        label if label not in ["sin","cos","tan","sqrt","log","ln","!"]
+                        else label + "("
+                    )
+                view.result = None
             else:
-                if view.result not in [None, "Erreur"]:
-                    # Continue à partir du résultat précédent
-                    view.expression = str(view.result)
-                    view.result = None
-                view.expression += label
+                if label in ["sin","cos","tan","sqrt","log","ln","!"]:
+                    view.expression += label + "("
+                else:
+                    view.expression += label
 
         # 🔹 Affichage style Google avec ASCII
         display = (
