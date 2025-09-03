@@ -132,10 +132,10 @@ class ReiatsuCommand(commands.Cog):
             title=f"__**Profil de {user.display_name}**__",
             description=(
                 f"• 💠 Reiatsu : **{points}**\n"
-                f"• 🕵️ Cooldown vol : {cooldown_text} (reiatsuvol pour voler du reiatsu à quelqu'un)\n"
-                f"• 🕵️ Classe : {classe_nom or 'Aucune'}\n"
+                f"• Cooldown vol : {cooldown_text} (reiatsuvol pour voler du reiatsu à quelqu'un)\n"
+                f"• Classe : {classe_nom or 'Aucune'}\n"
                 f"• Pouvoirs de : ?\n\n"
-                f"• ⓘ __**Infos Reiatsu**__\n"
+                f"• ℹ️ __**Infos Reiatsu**__\n"
                 f"• 📍 Lieu d'apparition : {salon_text}\n"
                 f"• ⏳ Temps avant apparition : {temps_text}"
             ),
