@@ -25,54 +25,45 @@ with open("data/classes.json", "r", encoding="utf-8") as f:
     CLASSES = json.load(f)
 
 # ────────────────────────────────────────────────────────────────────────────────
-# 🎛️ UI — Menu interactif de sélection de classe
+# 🎛️ UI — Boutons interactifs de sélection de classe
 # ────────────────────────────────────────────────────────────────────────────────
-class ClasseSelect(Select):
-    def __init__(self, user_id: int):
+class ClasseButton(discord.ui.Button):
+    def __init__(self, user_id: int, classe: str, data: dict):
         self.user_id = user_id
-        options = [
-            discord.SelectOption(
-                label=f"{data.get('Symbole', '🌀')} {classe}",
-                description=data["Passive"][:100],
-                value=classe
-            )
-            for classe, data in CLASSES.items()
-        ]
-        super().__init__(
-            placeholder="Choisis ta classe Reiatsu",
-            options=options,
-            min_values=1,
-            max_values=1
-        )
+        self.classe = classe
+        self.data = data
+        label = f"{data.get('Symbole', '🌀')} {classe}"
+        super().__init__(label=label, style=discord.ButtonStyle.primary)
 
     async def callback(self, interaction: discord.Interaction):
         if interaction.user.id != self.user_id:
             await safe_respond(interaction, "❌ Tu ne peux pas choisir une classe pour un autre joueur.", ephemeral=True)
             return
 
-        classe = self.values[0]
-        user_id = str(interaction.user.id)
         try:
-            nouveau_cd = 19 if classe == "Voleur" else 24
+            nouveau_cd = 19 if self.classe == "Voleur" else 24
             supabase.table("reiatsu").update({
-                "classe": classe,
+                "classe": self.classe,
                 "steal_cd": nouveau_cd
-            }).eq("user_id", user_id).execute()
+            }).eq("user_id", str(interaction.user.id)).execute()
 
-            symbole = CLASSES[classe].get("Symbole", "🌀")
+            symbole = self.data.get("Symbole", "🌀")
             embed = discord.Embed(
-                title=f"✅ Classe choisie : {symbole} {classe}",
-                description=f"**Passive** : {CLASSES[classe]['Passive']}\n**Active** : {CLASSES[classe]['Active']}",
+                title=f"✅ Classe choisie : {symbole} {self.classe}",
+                description=f"**Passive** : {self.data['Passive']}\n**Active** : {self.data['Active']}",
                 color=discord.Color.green()
             )
             await interaction.response.edit_message(embed=embed, view=None)
         except Exception as e:
             await safe_respond(interaction, f"❌ Erreur lors de l'enregistrement : {e}", ephemeral=True)
 
-class ClasseSelectView(View):
+
+class ClasseButtonsView(discord.ui.View):
     def __init__(self, user_id: int):
         super().__init__(timeout=60)
-        self.add_item(ClasseSelect(user_id))
+        for classe, data in CLASSES.items():
+            self.add_item(ClasseButton(user_id, classe, data))
+
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🧠 Cog principal
@@ -101,7 +92,7 @@ class ChoisirClasse(commands.Cog):
                 value=f"**Passive :** {details['Passive']}\n**Active :** {details['Active']}",
                 inline=False
             )
-        view = ClasseSelectView(user_id)
+        view = ClasseButtonsView(user_id)
         await safe_send(channel, embed=embed, view=view)
 
     # ────────────────────────────────────────────────────────────────────────────
