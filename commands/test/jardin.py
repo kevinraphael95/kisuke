@@ -290,14 +290,14 @@ class JardinView(discord.ui.View):
         self.add_control_buttons()
 
     def create_grid_buttons(self):
-        # Supprime les boutons existants liés à la grille
-        self.clear_items()
+        self.clear_items()  # supprime tous les boutons existants
+        # Pour chaque cellule de la grille 6x4
         for row_idx, row in enumerate(self.garden["garden_grid"]):
             for col_idx, emoji in enumerate(row):
                 button = discord.ui.Button(
                     label=emoji,
                     style=discord.ButtonStyle.secondary,
-                    row=row_idx,
+                    row=row_idx,  # ligne du bouton
                     custom_id=f"grid-{row_idx}-{col_idx}"
                 )
                 button.callback = self.make_cut_callback(row_idx, col_idx)
@@ -349,33 +349,36 @@ class JardinView(discord.ui.View):
         self.add_item(potions_btn)
 
     async def engrais(self, interaction: discord.Interaction):
-        # Copier la logique existante de JardinView.engrais
         last = self.garden.get("last_fertilize")
         if last:
-            try:
-                last_dt = datetime.datetime.fromisoformat(last)
-                now = datetime.datetime.now(datetime.timezone.utc)
-                if now < last_dt + FERTILIZE_COOLDOWN:
-                    remain = last_dt + FERTILIZE_COOLDOWN - now
-                    total_seconds = int(remain.total_seconds())
-                    minutes, seconds = divmod(total_seconds, 60)
-                    hours, minutes = divmod(minutes, 60)
-                    return await interaction.response.send_message(
-                        f"⏳ Tu dois attendre {hours}h {minutes}m {seconds}s avant d'utiliser de l'engrais !",
-                        ephemeral=True
-                    )
-            except Exception:
-                pass
+            last_dt = datetime.datetime.fromisoformat(last)
+            now = datetime.datetime.now(datetime.timezone.utc)
+            if now < last_dt + FERTILIZE_COOLDOWN:
+                remain = last_dt + FERTILIZE_COOLDOWN - now
+                total_seconds = int(remain.total_seconds())
+                minutes, seconds = divmod(total_seconds, 60)
+                hours, minutes = divmod(minutes, 60)
+                return await interaction.response.send_message(
+                    f"⏳ Tu dois attendre {hours}h {minutes}m {seconds}s avant d'utiliser de l'engrais !",
+                    ephemeral=True
+                )
+
+        # Faire pousser les fleurs
         self.garden["garden_grid"] = pousser_fleurs(self.garden["garden_grid"])
         self.garden["last_fertilize"] = datetime.datetime.now(datetime.timezone.utc).isoformat()
+
+        # Mettre à jour Supabase
         await supabase.table(TABLE_NAME).update({
             "garden_grid": self.garden["garden_grid"],
             "last_fertilize": self.garden["last_fertilize"]
         }).eq("user_id", self.user_id).execute()
+
+        # Recréer les boutons pour refléter la grille
         self.create_grid_buttons()
         self.add_control_buttons()
         embed = build_garden_embed(self.garden, self.user_id)
         await interaction.response.edit_message(embed=embed, view=self)
+
 
     async def alchimie(self, interaction: discord.Interaction):
         view = AlchimieView(self.garden, self.user_id)
@@ -408,7 +411,8 @@ class Jardin(commands.Cog):
             embed = build_garden_embed(garden, viewer_id)
             view = None
             if target_user.id == viewer_id:
-                view = JardinView(garden, viewer_id)  # ❌ plus de update_buttons()
+                view = JardinView(garden, viewer_id)  # la grille se crée automatiquement
+
             await respond_func(embed=embed, view=view)
         except Exception as e:
             print(f"[ERREUR jardin] {e}")
