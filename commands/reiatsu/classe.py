@@ -1,6 +1,6 @@
 # ────────────────────────────────────────────────────────────────────────────────
 # 📌 choisir_classe.py — Commande interactive !classe /classe
-# Objectif : Permet aux joueurs de choisir leur classe Reiatsu via un menu déroulant
+# Objectif : Permet aux joueurs de choisir leur classe Reiatsu via des boutons
 # Catégorie : Reiatsu
 # Accès : Public
 # Cooldown : 1 utilisation / 10 secondes / utilisateur
@@ -12,7 +12,7 @@
 import discord
 from discord import app_commands
 from discord.ext import commands
-from discord.ui import View, Select
+from discord.ui import View
 import os
 import json
 from utils.supabase_client import supabase
@@ -64,13 +64,12 @@ class ClasseButtonsView(discord.ui.View):
         for classe, data in CLASSES.items():
             self.add_item(ClasseButton(user_id, classe, data))
 
-
 # ────────────────────────────────────────────────────────────────────────────────
 # 🧠 Cog principal
 # ────────────────────────────────────────────────────────────────────────────────
 class ChoisirClasse(commands.Cog):
     """
-    Commande !classe ou /classe — Choisir sa classe Reiatsu via un menu interactif
+    Commande !classe ou /classe — Choisir sa classe Reiatsu via des boutons
     """
     def __init__(self, bot: commands.Bot):
         self.bot = bot
@@ -79,7 +78,7 @@ class ChoisirClasse(commands.Cog):
         embed = discord.Embed(
             title="🎭 Choisis ta classe Reiatsu",
             description=(
-                "Sélectionne une classe dans le menu déroulant ci-dessous. "
+                "Clique sur un bouton ci-dessous pour choisir ta classe.\n"
                 "Chaque classe possède une compétence passive et une active.\n\n"
                 "👉 Si tu n’as jamais choisi de classe, tu es **Travailleur** par défaut."
             ),
