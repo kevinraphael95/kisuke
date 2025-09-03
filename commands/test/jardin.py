@@ -408,12 +408,12 @@ class Jardin(commands.Cog):
             embed = build_garden_embed(garden, viewer_id)
             view = None
             if target_user.id == viewer_id:
-                view = JardinView(garden, viewer_id)
-                view.update_buttons()
+                view = JardinView(garden, viewer_id)  # ❌ plus de update_buttons()
             await respond_func(embed=embed, view=view)
         except Exception as e:
             print(f"[ERREUR jardin] {e}")
             await respond_func("❌ Une erreur est survenue.", ephemeral=True)
+
 
 
     # ───────── Commande Slash ─────────
