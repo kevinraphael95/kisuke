@@ -286,7 +286,9 @@ class JardinView(discord.ui.View):
         super().__init__(timeout=timeout)
         self.garden = garden
         self.user_id = user_id
+        # ───────── Grille des fleurs ─────────
         self.create_grid_buttons()
+        # ───────── Boutons de contrôle ─────────
         self.add_control_buttons()
 
     # ───────── Création de la grille interactive ─────────
@@ -329,7 +331,7 @@ class JardinView(discord.ui.View):
                 "inventory": self.garden["inventory"]
             }).eq("user_id", self.user_id).execute()
 
-            # Recréer la grille et l'afficher
+            # Recréer la grille pour refléter les changements
             self.create_grid_buttons()
             embed = build_garden_embed(self.garden, self.user_id)
             await interaction.response.edit_message(embed=embed, view=self)
@@ -368,17 +370,15 @@ class JardinView(discord.ui.View):
                     ephemeral=True
                 )
 
-        # Faire pousser les fleurs
         self.garden["garden_grid"] = pousser_fleurs(self.garden["garden_grid"])
         self.garden["last_fertilize"] = datetime.datetime.now(datetime.timezone.utc).isoformat()
 
-        # Mise à jour Supabase
         await supabase.table(TABLE_NAME).update({
             "garden_grid": self.garden["garden_grid"],
             "last_fertilize": self.garden["last_fertilize"]
         }).eq("user_id", self.user_id).execute()
 
-        # Recréer les boutons pour refléter la grille
+        # Recréer la grille et afficher le jardin
         self.create_grid_buttons()
         embed = build_garden_embed(self.garden, self.user_id)
         await interaction.response.edit_message(embed=embed, view=self)
