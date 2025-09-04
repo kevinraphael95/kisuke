@@ -22,6 +22,17 @@ from utils.supabase_client import supabase
 from utils.discord_utils import safe_send, safe_respond  # Fonctions sécurisées anti-429
 
 # ────────────────────────────────────────────────────────────────────────────────
+# Infos intervalles
+# ────────────────────────────────────────────────────────────────────────────────
+SPAWN_SPEED_INTERVALS = {
+    "Ultra_Rapide": "1-5 minutes",
+    "Rapide": "5-20 minutes",
+    "Normal": "30-60 minutes",
+    "Lent": "5-10 heures"
+}
+
+
+# ────────────────────────────────────────────────────────────────────────────────
 # 🎛️ UI — Boutons interactifs Reiatsu
 # ────────────────────────────────────────────────────────────────────────────────
 class ReiatsuView(View):
@@ -106,6 +117,13 @@ class ReiatsuCommand(commands.Cog):
             if config:
                 salon = guild.get_channel(int(config["channel_id"])) if config.get("channel_id") else None
                 salon_text = salon.mention if salon else "⚠️ Salon introuvable"
+                    
+                # ────── Ajout de la vitesse de spawn ──────
+                spawn_speed_text = "⚠️ Inconnu"
+                if config.get("spawn_speed"):
+                    speed_key = config["spawn_speed"]
+                    spawn_speed_text = f"{SPAWN_SPEED_INTERVALS.get(speed_key, '⚠️ Inconnu')} ({speed_key})"
+
                 if config.get("en_attente"):
                     channel_id = config.get("channel_id")
                     msg_id = config.get("spawn_message_id")
@@ -137,6 +155,7 @@ class ReiatsuCommand(commands.Cog):
                 f"• Pouvoirs de : ?\n\n"
                 f"• ℹ️ __**Infos Reiatsu**__\n"
                 f"• 📍 Lieu d'apparition : {salon_text}\n"
+                f"• ⏱️ Vitesse de spawn : {spawn_speed_text}\n"
                 f"• ⏳ Temps avant apparition : {temps_text}"
             ),
             color=discord.Color.purple()
