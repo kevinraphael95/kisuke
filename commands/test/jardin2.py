@@ -102,8 +102,7 @@ class Jardin2View(discord.ui.View):
         )
         return (
             f"**🏡 Jardin de {self.garden['username']}**\n"
-            "💩:engrais, ✂️:couper, 🛍️:inventaire, ⚗️:alchimie, 💵:magasin\n"
-            f"{grid_display}\n[💩][✂️][🛍️][⚗️][💵]"
+            "💩:engrais, ✂️:couper, 🛍️:inventaire, ⚗️:alchimie, 💵:magasin"
         )
 
 
