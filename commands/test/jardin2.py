@@ -1,13 +1,12 @@
 # ────────────────────────────────────────────────────────────────────────────────
-# 📌 jardin2.py — Commande interactive /jardin et !jardin
-# Objectif : Chaque utilisateur a un jardin persistant avec des fleurs
-# Catégorie : Jeu
-# Accès : Tout le monde
+# 📌 jardin2.py — Jardin interactif (alternative)
+# Objectif : Version alternative du jardin avec boutons pour chaque case (type calculatrice)
+# Catégorie : Fun / Jardin
+# Accès : Public
+# Cooldown : 1 utilisation / 5 secondes / utilisateur
 # ────────────────────────────────────────────────────────────────────────────────
 
-# ────────────────────────────────────────────────────────────────────────────────
-# 📦 Imports nécessaires
-# ────────────────────────────────────────────────────────────────────────────────
+# 📦 Imports
 import discord
 from discord.ext import commands
 import datetime
@@ -18,9 +17,7 @@ import regex
 from utils.supabase_client import supabase
 from utils.discord_utils import safe_send
 
-# ────────────────────────────────────────────────────────────────────────────────
-# 🌱 Chargement des constantes depuis un JSON
-# ────────────────────────────────────────────────────────────────────────────────
+# ⚙️ Config & Données
 with open("data/jardin_config.json", "r", encoding="utf-8") as f:
     CONFIG = json.load(f)
 
@@ -82,7 +79,7 @@ class Jardin2View(discord.ui.View):
             for col_idx, cell in enumerate(cells):
                 self.add_item(FlowerButton(row_idx, col_idx, cell, self))
 
-        # 🔹 Ligne des boutons globaux (style moins vif)
+        # 🔹 Ligne des boutons globaux (secondary = couleur plus douce)
         self.add_item(GlobalButton("💩", "engrais", self, style=discord.ButtonStyle.secondary))
         self.add_item(GlobalButton("✂️", "couper", self, style=discord.ButtonStyle.secondary))
         self.add_item(GlobalButton("🛍️", "inventaire", self, style=discord.ButtonStyle.secondary))
