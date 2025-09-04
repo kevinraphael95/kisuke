@@ -178,7 +178,7 @@ class ReiatsuCommand(commands.Cog):
                 else:
                     # Aucun Reiatsu actif → calcul du temps restant
                     last_spawn = config.get("last_spawn_at")
-                    delay = config.get("delay_minutes", 1800)
+                    delay = config.get("spawn_delay", 1800)
                     if last_spawn:
                         remaining = int(parser.parse(last_spawn).timestamp() + delay - time.time())
                         if remaining <= 0:
