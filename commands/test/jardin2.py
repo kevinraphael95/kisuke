@@ -6,9 +6,7 @@
 # Cooldown : 1 utilisation / 5 secondes / utilisateur
 # ────────────────────────────────────────────────────────────────────────────────
 
-# ────────────────────────────────────────────────────────────────────────────────
-# 📦 Imports nécessaires
-# ────────────────────────────────────────────────────────────────────────────────
+# 📦 Imports
 import discord
 from discord.ext import commands
 import datetime
@@ -18,10 +16,7 @@ import json
 from utils.supabase_client import supabase
 from utils.discord_utils import safe_send
 
-
-# ────────────────────────────────────────────────────────────────────────────────
 # ⚙️ Config & Données
-# ────────────────────────────────────────────────────────────────────────────────
 with open("data/jardin_config.json", "r", encoding="utf-8") as f:
     CONFIG = json.load(f)
 
@@ -30,7 +25,6 @@ FLEUR_EMOJIS = CONFIG["FLEUR_EMOJIS"]
 FERTILIZE_PROBABILITY = CONFIG["FERTILIZE_PROBABILITY"]
 FERTILIZE_COOLDOWN = datetime.timedelta(minutes=CONFIG["FERTILIZE_COOLDOWN_MINUTES"])
 TABLE_NAME = "gardens"
-
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🛠️ Fonctions utilitaires
@@ -70,7 +64,7 @@ def pousser_fleurs(grid: list[str]) -> list[str]:
 
 
 # ────────────────────────────────────────────────────────────────────────────────
-# 🎛️ UI — Vue Jardin2 (grille + boutons globaux)
+# 🎛️ UI — Vue Jardin2
 # ────────────────────────────────────────────────────────────────────────────────
 class Jardin2View(discord.ui.View):
     def __init__(self, garden: dict, user_id: int):
@@ -78,9 +72,8 @@ class Jardin2View(discord.ui.View):
         self.garden = garden
         self.user_id = user_id
 
-        # 🔹 Ajout des boutons de la grille (chaque fleur est cliquable)
+        # 🔹 Boutons de la grille
         for row_idx, row in enumerate(self.garden["garden_grid"]):
-            # PATCH : découpe par caractère Unicode complet (2 bytes pour les emojis 🌱, 🌸, etc.)
             cells = [row[i:i+2] for i in range(0, len(row), 2)]
             for col_idx, cell in enumerate(cells):
                 self.add_item(FlowerButton(row_idx, col_idx, cell, self))
@@ -92,12 +85,32 @@ class Jardin2View(discord.ui.View):
         self.add_item(GlobalButton("⚗️", "alchimie", self))
         self.add_item(GlobalButton("💵", "magasin", self))
 
+    # 🆕 Ajout des méthodes manquantes
+    async def refresh(self, interaction: discord.Interaction):
+        """Recharge le jardin avec une nouvelle vue"""
+        new_view = Jardin2View(self.garden, self.user_id)
+        await interaction.response.edit_message(
+            content=self.format_garden(),
+            view=new_view
+        )
+
+    def format_garden(self) -> str:
+        """Affiche le jardin au format ASCII"""
+        grid_display = "\n".join(
+            "[" + "][".join([row[i:i+2] for i in range(0, len(row), 2)]) + "]"
+            for row in self.garden["garden_grid"]
+        )
+        return (
+            f"**🏡 Jardin de {self.garden['username']}**\n"
+            "💩:engrais, ✂️:couper, 🛍️:inventaire, ⚗️:alchimie, 💵:magasin\n"
+            f"{grid_display}\n[💩][✂️][🛍️][⚗️][💵]"
+        )
+
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🎛️ Boutons individuels
 # ────────────────────────────────────────────────────────────────────────────────
 class FlowerButton(discord.ui.Button):
-    """Bouton pour couper une fleur (chaque case du jardin est un bouton)"""
     def __init__(self, row: int, col: int, emoji: str, parent_view: Jardin2View):
         super().__init__(label=emoji, style=discord.ButtonStyle.secondary, row=row)
         self.row = row
@@ -111,7 +124,7 @@ class FlowerButton(discord.ui.Button):
         current = self.parent_view.garden["garden_grid"][self.row]
         char = current[self.col]
 
-        # 🔹 Couper une fleur (si ce n’est pas une 🌱)
+        # Couper une fleur (si ≠ 🌱)
         if char != "🌱":
             inv = self.parent_view.garden["inventory"]
             inv[char] = inv.get(char, 0) + 1
@@ -119,7 +132,6 @@ class FlowerButton(discord.ui.Button):
             row_list[self.col] = "🌱"
             self.parent_view.garden["garden_grid"][self.row] = "".join(row_list)
 
-            # Sauvegarde en BDD
             supabase.table(TABLE_NAME).update({
                 "garden_grid": self.parent_view.garden["garden_grid"],
                 "inventory": self.parent_view.garden["inventory"]
@@ -129,7 +141,6 @@ class FlowerButton(discord.ui.Button):
 
 
 class GlobalButton(discord.ui.Button):
-    """Bouton global (engrais, inventaire, etc.)"""
     def __init__(self, emoji: str, action: str, parent_view: Jardin2View):
         super().__init__(label=emoji, style=discord.ButtonStyle.green, row=4)
         self.action = action
@@ -152,7 +163,7 @@ class GlobalButton(discord.ui.Button):
                 "last_fertilize": self.parent_view.garden["last_fertilize"]
             }).eq("user_id", self.parent_view.user_id).execute()
 
-        # 🔹 TODO : inventaire, alchimie, magasin (à compléter comme dans jardin1)
+        # TODO : inventaire, alchimie, magasin
 
         await self.parent_view.refresh(interaction)
 
@@ -161,10 +172,6 @@ class GlobalButton(discord.ui.Button):
 # 🧠 Cog principal
 # ────────────────────────────────────────────────────────────────────────────────
 class Jardin2Cog(commands.Cog):
-    """
-    Commande !jardin2 — Version alternative du jardin
-    Chaque case est un bouton cliquable (style calculatrice)
-    """
     def __init__(self, bot: commands.Bot):
         self.bot = bot
 
@@ -173,8 +180,6 @@ class Jardin2Cog(commands.Cog):
         garden = await get_or_create_garden(ctx.author.id, ctx.author.name)
         view = Jardin2View(garden, ctx.author.id)
         await safe_send(ctx.channel, content=view.format_garden(), view=view)
-
-
 
 
 # ────────────────────────────────────────────────────────────────────────────────
@@ -186,5 +191,3 @@ async def setup(bot: commands.Bot):
         if not hasattr(command, "category"):
             command.category = "Test"
     await bot.add_cog(cog)
-
-
