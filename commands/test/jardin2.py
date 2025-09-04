@@ -80,7 +80,9 @@ class Jardin2View(discord.ui.View):
 
         # 🔹 Ajout des boutons de la grille (chaque fleur est cliquable)
         for row_idx, row in enumerate(self.garden["garden_grid"]):
-            for col_idx, cell in enumerate(row):
+            # PATCH : découpe par caractère Unicode complet (2 bytes pour les emojis 🌱, 🌸, etc.)
+            cells = [row[i:i+2] for i in range(0, len(row), 2)]
+            for col_idx, cell in enumerate(cells):
                 self.add_item(FlowerButton(row_idx, col_idx, cell, self))
 
         # 🔹 Ligne des commandes globales
@@ -89,25 +91,6 @@ class Jardin2View(discord.ui.View):
         self.add_item(GlobalButton("🛍️", "inventaire", self))
         self.add_item(GlobalButton("⚗️", "alchimie", self))
         self.add_item(GlobalButton("💵", "magasin", self))
-
-    async def refresh(self, interaction: discord.Interaction):
-        """Recharge le jardin"""
-        new_view = Jardin2View(self.garden, self.user_id)
-        await interaction.response.edit_message(
-            content=self.format_garden(),
-            view=new_view
-        )
-
-    def format_garden(self) -> str:
-        """Affiche le jardin au format ASCII"""
-        grid_display = "\n".join(
-            "[" + "][".join(row) + "]" for row in self.garden["garden_grid"]
-        )
-        return (
-            f"**🏡 Jardin de {self.garden['username']}**\n"
-            "💩:engrais, ✂️:couper, 🛍️:inventaire, ⚗️:alchimie, 💵:magasin\n"
-            f"{grid_display}\n[💩][✂️][🛍️][⚗️][💵]"
-        )
 
 
 # ────────────────────────────────────────────────────────────────────────────────
