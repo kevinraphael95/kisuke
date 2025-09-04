@@ -15,6 +15,8 @@ import time
 import asyncio
 from datetime import datetime
 from dateutil import parser
+import json
+from pathlib import Path
 
 from discord.ext import commands, tasks
 from utils.supabase_client import supabase
@@ -23,20 +25,18 @@ from utils.discord_utils import safe_send, safe_delete  # 🔒 utils protégés
 # ────────────────────────────────────────────────────────────────────────────────
 # ⚙️ Paramètres globaux (facilement modifiables)
 # ────────────────────────────────────────────────────────────────────────────────
-SPAWN_LOOP_INTERVAL = 60             # Vérification toutes les 60s
-SUPER_REIATSU_CHANCE = 1             # 1% de chance
-SUPER_REIATSU_GAIN = 100
-NORMAL_REIATSU_GAIN = 1
+# Charger le JSON
+CONFIG_PATH = Path("data/reiatsu_config.json")
+with CONFIG_PATH.open("r", encoding="utf-8") as f:
+    CONFIG = json.load(f)
 
-# Définition des plages de spawn selon la vitesse
-SPAWN_SPEED_RANGES = {
-    "Ultra_Rapide": (60, 300),       # 1-5 min
-    "Rapide": (300, 1200),           # 5-20 min
-    "Normal": (1800, 3600),          # 30-60 min
-    "Lent": (18000, 36000)           # 5-10 h
-}
-
-DEFAULT_SPAWN_SPEED = "Normal"
+# Paramètres globaux (chargés depuis le JSON)
+SPAWN_LOOP_INTERVAL = CONFIG["SPAWN_LOOP_INTERVAL"]
+SUPER_REIATSU_CHANCE = CONFIG["SUPER_REIATSU_CHANCE"]
+SUPER_REIATSU_GAIN = CONFIG["SUPER_REIATSU_GAIN"]
+NORMAL_REIATSU_GAIN = CONFIG["NORMAL_REIATSU_GAIN"]
+SPAWN_SPEED_RANGES = CONFIG["SPAWN_SPEED_RANGES"]
+DEFAULT_SPAWN_SPEED = CONFIG["DEFAULT_SPAWN_SPEED"]
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🧠 Cog : ReiatsuSpawner
