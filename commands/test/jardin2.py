@@ -1,12 +1,13 @@
 # ────────────────────────────────────────────────────────────────────────────────
-# 📌 jardin2.py — Jardin interactif (alternative)
-# Objectif : Version alternative du jardin avec boutons pour chaque case (type calculatrice)
-# Catégorie : Fun / Jardin
-# Accès : Public
-# Cooldown : 1 utilisation / 5 secondes / utilisateur
+# 📌 jardin2.py — Commande interactive /jardin et !jardin
+# Objectif : Chaque utilisateur a un jardin persistant avec des fleurs
+# Catégorie : Jeu
+# Accès : Tout le monde
 # ────────────────────────────────────────────────────────────────────────────────
 
-# 📦 Imports
+# ────────────────────────────────────────────────────────────────────────────────
+# 📦 Imports nécessaires
+# ────────────────────────────────────────────────────────────────────────────────
 import discord
 from discord.ext import commands
 import datetime
@@ -16,6 +17,9 @@ import json
 from utils.supabase_client import supabase
 from utils.discord_utils import safe_send
 
+# ────────────────────────────────────────────────────────────────────────────────
+# 🌱 Chargement des constantes depuis un JSON
+# ────────────────────────────────────────────────────────────────────────────────
 # ⚙️ Config & Données
 with open("data/jardin_config.json", "r", encoding="utf-8") as f:
     CONFIG = json.load(f)
@@ -30,7 +34,6 @@ TABLE_NAME = "gardens"
 # 🛠️ Fonctions utilitaires
 # ────────────────────────────────────────────────────────────────────────────────
 async def get_or_create_garden(user_id: int, username: str):
-    """Récupère ou crée un jardin pour l’utilisateur"""
     res = supabase.table(TABLE_NAME).select("*").eq("user_id", user_id).execute()
     if res.data:
         return res.data[0]
@@ -49,7 +52,6 @@ async def get_or_create_garden(user_id: int, username: str):
 
 
 def pousser_fleurs(grid: list[str]) -> list[str]:
-    """Fait pousser aléatoirement des fleurs sur la grille"""
     new_grid = []
     for line in grid:
         new_line = ""
@@ -72,38 +74,32 @@ class Jardin2View(discord.ui.View):
         self.garden = garden
         self.user_id = user_id
 
-        # 🔹 Boutons de la grille
+        # 🔹 Boutons de la grille → un emoji = un bouton
         for row_idx, row in enumerate(self.garden["garden_grid"]):
-            cells = [row[i:i+2] for i in range(0, len(row), 2)]
-            for col_idx, cell in enumerate(cells):
-                self.add_item(FlowerButton(row_idx, col_idx, cell, self))
+            for col_idx, emoji in enumerate(list(row)):
+                self.add_item(FlowerButton(row_idx, col_idx, emoji, self))
 
-        # 🔹 Ligne des commandes globales
+        # 🔹 Ligne des commandes globales (style plus doux : primary = bleu clair)
         self.add_item(GlobalButton("💩", "engrais", self))
         self.add_item(GlobalButton("✂️", "couper", self))
         self.add_item(GlobalButton("🛍️", "inventaire", self))
         self.add_item(GlobalButton("⚗️", "alchimie", self))
         self.add_item(GlobalButton("💵", "magasin", self))
 
-    # 🆕 Ajout des méthodes manquantes
     async def refresh(self, interaction: discord.Interaction):
-        """Recharge le jardin avec une nouvelle vue"""
         new_view = Jardin2View(self.garden, self.user_id)
-        await interaction.response.edit_message(
-            content=self.format_garden(),
-            view=new_view
-        )
+        embed = self.format_embed()
+        await interaction.response.edit_message(embed=embed, view=new_view)
 
-    def format_garden(self) -> str:
-        """Affiche le jardin au format ASCII"""
-        grid_display = "\n".join(
-            "[" + "][".join([row[i:i+2] for i in range(0, len(row), 2)]) + "]"
-            for row in self.garden["garden_grid"]
+    def format_embed(self) -> discord.Embed:
+        grid_display = "\n".join("".join(list(row)) for row in self.garden["garden_grid"])
+        embed = discord.Embed(
+            title=f"🏡 Jardin de {self.garden['username']}",
+            description=grid_display,
+            color=discord.Color.green()
         )
-        return (
-            f"**🏡 Jardin de {self.garden['username']}**\n"
-            "💩:engrais, ✂️:couper, 🛍️:inventaire, ⚗️:alchimie, 💵:magasin"
-        )
+        embed.set_footer(text="💩:engrais | ✂️:couper | 🛍️:inventaire | ⚗️:alchimie | 💵:magasin")
+        return embed
 
 
 # ────────────────────────────────────────────────────────────────────────────────
@@ -123,7 +119,6 @@ class FlowerButton(discord.ui.Button):
         current = self.parent_view.garden["garden_grid"][self.row]
         char = current[self.col]
 
-        # Couper une fleur (si ≠ 🌱)
         if char != "🌱":
             inv = self.parent_view.garden["inventory"]
             inv[char] = inv.get(char, 0) + 1
@@ -141,7 +136,7 @@ class FlowerButton(discord.ui.Button):
 
 class GlobalButton(discord.ui.Button):
     def __init__(self, emoji: str, action: str, parent_view: Jardin2View):
-        super().__init__(label=emoji, style=discord.ButtonStyle.green, row=4)
+        super().__init__(label=emoji, style=discord.ButtonStyle.primary, row=4)
         self.action = action
         self.parent_view = parent_view
 
@@ -162,8 +157,6 @@ class GlobalButton(discord.ui.Button):
                 "last_fertilize": self.parent_view.garden["last_fertilize"]
             }).eq("user_id", self.parent_view.user_id).execute()
 
-        # TODO : inventaire, alchimie, magasin
-
         await self.parent_view.refresh(interaction)
 
 
@@ -178,7 +171,8 @@ class Jardin2Cog(commands.Cog):
     async def prefix_jardin2(self, ctx: commands.Context):
         garden = await get_or_create_garden(ctx.author.id, ctx.author.name)
         view = Jardin2View(garden, ctx.author.id)
-        await safe_send(ctx.channel, content=view.format_garden(), view=view)
+        embed = view.format_embed()
+        await safe_send(ctx.channel, embed=embed, view=view)
 
 
 # ────────────────────────────────────────────────────────────────────────────────
