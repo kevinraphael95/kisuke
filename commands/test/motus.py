@@ -1,6 +1,6 @@
 # ────────────────────────────────────────────────────────────────────────────────
 # 📌 motus.py — Commande interactive /motus et !motus
-# Objectif : Jeu du Motus avec proposition de mots et feedback coloré
+# Objectif : Jeu du Motus avec embed, tentatives limitées et feedback coloré
 # Catégorie : Jeux
 # Accès : Tous
 # Cooldown : 1 utilisation / 5 secondes / utilisateur
@@ -15,75 +15,130 @@ from discord.ext import commands
 from discord.ui import View, Modal, TextInput, Button
 import random
 
-# Utils sécurisés pour éviter erreurs 429
-from utils.discord_utils import safe_send, safe_edit, safe_respond, safe_delete  
+from utils.discord_utils import safe_send, safe_edit, safe_respond
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🎲 Mots possibles pour le jeu
 # ────────────────────────────────────────────────────────────────────────────────
-WORDS = ["ARBRE", "MAISON", "PYTHON", "DISCORD", "BOT", "MOTUS"]
+WORDS = ["ARBRE", "MAISON", "PYTHON", "DISCORD", "CAMION", "MOTUS"]
 
 # ────────────────────────────────────────────────────────────────────────────────
-# 🎛️ UI — Modal de saisie d’un mot
+# 🎛️ Modal pour proposer un mot
 # ────────────────────────────────────────────────────────────────────────────────
 class MotusModal(Modal):
-    def __init__(self, parent_view, target_word):
+    def __init__(self, parent_view):
         super().__init__(title="Propose un mot")
         self.parent_view = parent_view
-        self.target_word = target_word
         self.word_input = TextInput(
             label="Mot",
-            placeholder="Entre ton mot ici",
+            placeholder=f"Mot de {len(self.parent_view.target_word)} lettres",
             required=True,
-            max_length=len(target_word)
+            max_length=len(self.parent_view.target_word),
+            min_length=len(self.parent_view.target_word)
         )
         self.add_item(self.word_input)
 
     async def on_submit(self, interaction: discord.Interaction):
         guess = self.word_input.value.strip().upper()
-        feedback = self.parent_view.create_feedback_line(guess, self.target_word)
-
-        if guess == self.target_word:
-            await safe_respond(interaction, f"🎉 Bravo ! Tu as trouvé le mot : **{self.target_word}**\n\n{feedback}")
-            self.parent_view.stop()  # Fin du jeu
-        else:
-            await safe_respond(interaction, f"{feedback}\n\n❌ Ce n’est pas encore ça, réessaie !", ephemeral=True)
+        await self.parent_view.process_guess(interaction, guess)
 
 # ────────────────────────────────────────────────────────────────────────────────
-# 🎛️ UI — Bouton pour démarrer le jeu
+# 🎛️ Vue principale avec bouton
 # ────────────────────────────────────────────────────────────────────────────────
 class MotusView(View):
-    def __init__(self, target_word):
+    def __init__(self, target_word: str, max_attempts: int = 6):
         super().__init__(timeout=180)
         self.target_word = target_word
+        self.max_attempts = max_attempts
+        self.attempts = []
+        self.message = None
+        self.finished = False
         self.add_item(MotusButton(self))
 
-    def create_feedback_line(self, guess: str, target: str) -> str:
-        """Retourne une double ligne alignée : lettres 🇦 + couleurs en dessous"""
-
+    def create_feedback_line(self, guess: str) -> str:
+        """Retourne les deux lignes alignées 🇦 + 🟩"""
         def letter_to_emoji(c: str) -> str:
             if c.isalpha():
-                return chr(0x1F1E6 + (ord(c.upper()) - ord('A')))  # 🇦
+                return chr(0x1F1E6 + (ord(c.upper()) - ord('A')))
             return c.upper()
 
         letters = " ".join(letter_to_emoji(c) for c in guess)
         colors = []
         for i, c in enumerate(guess):
-            if i < len(target) and c == target[i]:
+            if i < len(self.target_word) and c == self.target_word[i]:
                 colors.append("🟩")
-            elif c in target:
+            elif c in self.target_word:
                 colors.append("🟨")
             else:
                 colors.append("⬛")
         return f"{letters}\n{' '.join(colors)}"
 
+    def build_embed(self) -> discord.Embed:
+        """Construit l'embed affichant l'état du jeu"""
+        embed = discord.Embed(
+            title="🎯 MOTUS",
+            description=f"Mot de **{len(self.target_word)}** lettres",
+            color=discord.Color.orange()
+        )
+
+        if self.attempts:
+            tries_text = "\n\n".join(self.create_feedback_line(guess) for guess in self.attempts)
+            embed.add_field(
+                name=f"Essais ({len(self.attempts)}/{self.max_attempts})",
+                value=tries_text,
+                inline=False
+            )
+        else:
+            embed.add_field(
+                name="Essais",
+                value="*(Aucun essai pour l’instant)*",
+                inline=False
+            )
+
+        if self.finished:
+            if self.attempts[-1] == self.target_word:
+                embed.color = discord.Color.green()
+                embed.set_footer(text="🎉 Bravo ! Tu as trouvé le mot.")
+            else:
+                embed.color = discord.Color.red()
+                embed.set_footer(text=f"💀 Partie terminée. Le mot était {self.target_word}.")
+        return embed
+
+    async def process_guess(self, interaction: discord.Interaction, guess: str):
+        """Traite un essai du joueur"""
+        if self.finished:
+            await safe_respond(interaction, "❌ La partie est terminée.", ephemeral=True)
+            return
+
+        if len(guess) != len(self.target_word):
+            await safe_respond(interaction, f"⚠️ Le mot doit avoir {len(self.target_word)} lettres.", ephemeral=True)
+            return 
+
+        self.attempts.append(guess)
+
+        # Vérifie la victoire ou la fin
+        if guess == self.target_word or len(self.attempts) >= self.max_attempts:
+            self.finished = True
+            for child in self.children:
+                child.disabled = True
+
+        await safe_edit(self.message, embed=self.build_embed(), view=self)
+
+        if self.finished:
+            await safe_respond(interaction, "✅ Partie terminée !", ephemeral=True)
+        else:
+            await safe_respond(interaction, "💡 Essai enregistré !", ephemeral=True)
+
+# ────────────────────────────────────────────────────────────────────────────────
+# 🎛️ Bouton principal
+# ────────────────────────────────────────────────────────────────────────────────
 class MotusButton(Button):
     def __init__(self, parent_view: MotusView):
         super().__init__(label="Proposer un mot", style=discord.ButtonStyle.primary)
         self.parent_view = parent_view
 
     async def callback(self, interaction: discord.Interaction):
-        await interaction.response.send_modal(MotusModal(self.parent_view, self.parent_view.target_word))
+        await interaction.response.send_modal(MotusModal(self.parent_view))
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🧠 Cog principal
@@ -95,11 +150,11 @@ class Motus(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
 
-    # Fonction interne
     async def _start_game(self, channel: discord.abc.Messageable):
         target_word = random.choice(WORDS)
         view = MotusView(target_word)
-        await safe_send(channel, "🎯 Motus lancé ! Propose un mot :", view=view)
+        embed = view.build_embed()
+        view.message = await safe_send(channel, embed=embed, view=view)
 
     # ────────────────────────────────────────────────────────────────────────────
     # 🔹 Commande SLASH
