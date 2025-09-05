@@ -1,7 +1,7 @@
 # ────────────────────────────────────────────────────────────────────────────────
 # 📌 pendu.py — Commande interactive !pendu
 # Objectif : Jeu du pendu simple avec propositions de lettres par message
-# Catégorie : Général
+# Catégorie : Jeux
 # Accès : Public
 # ────────────────────────────────────────────────────────────────────────────────
 
@@ -175,5 +175,5 @@ async def setup(bot: commands.Bot):
     cog = Pendu(bot)
     for command in cog.get_commands():
         if not hasattr(command, "category"):
-            command.category = "Fun"
+            command.category = "Jeux"
     await bot.add_cog(cog)
