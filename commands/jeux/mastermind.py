@@ -1,7 +1,7 @@
 # ────────────────────────────────────────────────────────────────────────────────
 # 📌 mastermind2.py — Commande interactive !mastermind /mastermind
 # Objectif : Jeu de logique Mastermind via boutons Discord avec difficulté et corruption
-# Catégorie : Fun
+# Catégorie : Jeux
 # Accès : Public
 # Cooldown : 1 utilisation / 10 secondes / utilisateur
 # ────────────────────────────────────────────────────────────────────────────────
@@ -258,5 +258,5 @@ async def setup(bot: commands.Bot):
     cog = Mastermind(bot)
     for command in cog.get_commands():
         if not hasattr(command, "category"):
-            command.category = "Fun"
+            command.category = "Jeux"
     await bot.add_cog(cog)
