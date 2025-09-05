@@ -1,6 +1,6 @@
 # ────────────────────────────────────────────────────────────────────────────────
 # 📌 motus.py — Commande interactive /motus et !motus
-# Objectif : Jeu du Motus avec embed, tentatives limitées, feedback coloré et image
+# Objectif : Jeu du Motus avec embed, tentatives limitées et feedback coloré
 # Catégorie : Jeux
 # Accès : Tous
 # Cooldown : 1 utilisation / 5 secondes / utilisateur
@@ -15,7 +15,6 @@ from discord.ext import commands
 from discord.ui import View, Modal, TextInput, Button
 import random
 import aiohttp   # 👈 pour l’API
-import os       # 👈 pour vérifier l’image
 from utils.discord_utils import safe_send, safe_edit, safe_respond
 
 # ────────────────────────────────────────────────────────────────────────────────
@@ -26,6 +25,7 @@ async def get_random_french_word(length: int | None = None) -> str:
     url = "https://trouve-mot.fr/api/random"
     if length:
         url += f"?size={length}"
+
     try:
         async with aiohttp.ClientSession() as session:
             async with session.get(url, timeout=5) as resp:
@@ -35,6 +35,7 @@ async def get_random_french_word(length: int | None = None) -> str:
                         return data[0]["name"].upper()
     except Exception as e:
         print(f"[ERREUR API Motus] {e}")
+
     # fallback si l’API échoue
     return "PYTHON"
 
@@ -77,6 +78,7 @@ class MotusView(View):
             if c.isalpha():
                 return chr(0x1F1E6 + (ord(c.upper()) - ord('A')))
             return c.upper()
+
         letters = " ".join(letter_to_emoji(c) for c in guess)
         colors = []
         for i, c in enumerate(guess):
@@ -95,12 +97,6 @@ class MotusView(View):
             description=f"Mot de **{len(self.target_word)}** lettres",
             color=discord.Color.orange()
         )
-
-        # Ajout de la miniature si l’image existe
-        image_path = "data/images/minijeux/motus.jpg"
-        if os.path.exists(image_path):
-            embed.set_thumbnail(url="attachment://motus.jpg")
-
         if self.attempts:
             tries_text = "\n\n".join(self.create_feedback_line(guess) for guess in self.attempts)
             embed.add_field(
@@ -132,20 +128,16 @@ class MotusView(View):
         if len(guess) != len(self.target_word):
             await safe_respond(interaction, f"⚠️ Le mot doit avoir {len(self.target_word)} lettres.", ephemeral=True)
             return
+
         self.attempts.append(guess)
+
         # Vérifie la victoire ou la fin
         if guess == self.target_word or len(self.attempts) >= self.max_attempts:
             self.finished = True
             for child in self.children:
                 child.disabled = True
 
-        # Prépare la pièce jointe si image
-        files = []
-        image_path = "data/images/minijeux/motus.jpg"
-        if os.path.exists(image_path):
-            files.append(discord.File(image_path, filename="motus.jpg"))
-
-        await safe_edit(self.message, embed=self.build_embed(), view=self, files=files if files else None)
+        await safe_edit(self.message, embed=self.build_embed(), view=self)
 
         if self.finished:
             await safe_respond(interaction, "✅ Partie terminée !", ephemeral=True)
@@ -178,13 +170,7 @@ class Motus(commands.Cog):
         target_word = await get_random_french_word(length=random.choice(range(5, 9)))
         view = MotusView(target_word)
         embed = view.build_embed()
-
-        files = []
-        image_path = "data/images/minijeux/motus.jpg"
-        if os.path.exists(image_path):
-            files.append(discord.File(image_path, filename="motus.jpg"))
-
-        view.message = await safe_send(channel, embed=embed, view=view, files=files if files else None)
+        view.message = await safe_send(channel, embed=embed, view=view)
 
     # ────────────────────────────────────────────────────────────────────────────
     # 🔹 Commande SLASH
@@ -228,5 +214,3 @@ async def setup(bot: commands.Bot):
         if not hasattr(command, "category"):
             command.category = "Jeux"
     await bot.add_cog(cog)
-
-
