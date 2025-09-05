@@ -14,13 +14,30 @@ from discord import app_commands
 from discord.ext import commands
 from discord.ui import View, Modal, TextInput, Button
 import random
-
+import aiohttp   # 👈 pour l’API
 from utils.discord_utils import safe_send, safe_edit, safe_respond
 
 # ────────────────────────────────────────────────────────────────────────────────
-# 🎲 Mots possibles pour le jeu
+# 🌐 Fonction pour récupérer un mot français aléatoire
 # ────────────────────────────────────────────────────────────────────────────────
-WORDS = ["ARBRE", "MAISON", "PYTHON", "DISCORD", "CAMION", "MOTUS"]
+async def get_random_french_word(length: int | None = None) -> str:
+    """Récupère un mot français aléatoire depuis l'API trouve-mot.fr"""
+    url = "https://trouve-mot.fr/api/random"
+    if length:
+        url += f"?size={length}"
+
+    try:
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url, timeout=5) as resp:
+                if resp.status == 200:
+                    data = await resp.json()
+                    if isinstance(data, list) and len(data) > 0:
+                        return data[0]["name"].upper()
+    except Exception as e:
+        print(f"[ERREUR API Motus] {e}")
+
+    # fallback si l’API échoue
+    return "PYTHON"
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🎛️ Modal pour proposer un mot
@@ -80,7 +97,6 @@ class MotusView(View):
             description=f"Mot de **{len(self.target_word)}** lettres",
             color=discord.Color.orange()
         )
-
         if self.attempts:
             tries_text = "\n\n".join(self.create_feedback_line(guess) for guess in self.attempts)
             embed.add_field(
@@ -109,10 +125,9 @@ class MotusView(View):
         if self.finished:
             await safe_respond(interaction, "❌ La partie est terminée.", ephemeral=True)
             return
-
         if len(guess) != len(self.target_word):
             await safe_respond(interaction, f"⚠️ Le mot doit avoir {len(self.target_word)} lettres.", ephemeral=True)
-            return 
+            return
 
         self.attempts.append(guess)
 
@@ -151,7 +166,8 @@ class Motus(commands.Cog):
         self.bot = bot
 
     async def _start_game(self, channel: discord.abc.Messageable):
-        target_word = random.choice(WORDS)
+        # récupère un mot FR aléatoire entre 5 et 8 lettres
+        target_word = await get_random_french_word(length=random.choice(range(5, 9)))
         view = MotusView(target_word)
         embed = view.build_embed()
         view.message = await safe_send(channel, embed=embed, view=view)
