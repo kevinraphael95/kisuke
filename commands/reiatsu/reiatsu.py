@@ -194,13 +194,14 @@ class ReiatsuCommand(commands.Cog):
             title=f"__**Profil de {user.display_name}**__",
             description=(
                 f"• 💠 Reiatsu : **{points}**\n"
-                f"• Cooldown vol : {cooldown_text} (reiatsuvol pour voler du reiatsu à quelqu'un)\n"
+                f"• Cooldown vol : {cooldown_text} \n"
+                f"(reiatsuvol pour voler du reiatsu à quelqu'un)\n"
                 f"• Classe : {classe_nom or 'Aucune'}\n"
-                f"• Pouvoirs de : ?\n\n"
+                f"(classe pour changer de classe)"\n\n"
                 f"• ℹ️ __**Infos Reiatsu**__\n"
-                f"• 📍 Lieu d'apparition : {salon_text}\n"
-                f"• ⏱️ Vitesse de spawn : {spawn_speed_text}\n"
-                f"• ⏳ Temps avant apparition : {temps_text}"
+                f"• 📍 Le reiatsu apparaît sur la salon : {salon_text}\n"
+                f"• ⏱️ Intervalle entre deux apparitions : {spawn_speed_text}\n"
+                f"• ⏳ Le prochain reiatsu va apparaître dans : {temps_text}"
             ),
             color=discord.Color.purple()
         )
