@@ -1,9 +1,9 @@
 # ────────────────────────────────────────────────────────────────────────────────
-# 📌 motus.py — Jeu interactif Motus /motus et !motus
-# Objectif : Jouer au jeu Motus façon télé avec grille colorée et mot aléatoire
-# Catégorie : Fun
+# 📌 motus.py — Commande interactive /motus et !motus
+# Objectif : Jeu du Motus avec proposition de mots et feedback coloré
+# Catégorie : Jeux
 # Accès : Tous
-# Cooldown : 1 utilisation / 30 secondes / utilisateur
+# Cooldown : 1 utilisation / 5 secondes / utilisateur
 # ────────────────────────────────────────────────────────────────────────────────
 
 # ────────────────────────────────────────────────────────────────────────────────
@@ -12,113 +12,110 @@
 import discord
 from discord import app_commands
 from discord.ext import commands
+from discord.ui import View, Modal, TextInput, Button
 import random
-import asyncio
 
 # Utils sécurisés pour éviter erreurs 429
-from utils.discord_utils import safe_send, safe_respond, safe_edit
+from utils.discord_utils import safe_send, safe_edit, safe_respond, safe_delete  
 
 # ────────────────────────────────────────────────────────────────────────────────
-# 📂 Liste de mots possibles
+# 🎲 Mots possibles pour le jeu
 # ────────────────────────────────────────────────────────────────────────────────
-WORDS = [
-    "piano", "chat", "maison", "arbre", "porte", "bouteille", "fleur", "soleil", "lune", "village"
-]
+WORDS = ["ARBRE", "MAISON", "PYTHON", "DISCORD", "BOT", "MOTUS"]
+
+# ────────────────────────────────────────────────────────────────────────────────
+# 🎛️ UI — Modal de saisie d’un mot
+# ────────────────────────────────────────────────────────────────────────────────
+class MotusModal(Modal):
+    def __init__(self, parent_view, target_word):
+        super().__init__(title="Propose un mot")
+        self.parent_view = parent_view
+        self.target_word = target_word
+        self.word_input = TextInput(
+            label="Mot",
+            placeholder="Entre ton mot ici",
+            required=True,
+            max_length=len(target_word)
+        )
+        self.add_item(self.word_input)
+
+    async def on_submit(self, interaction: discord.Interaction):
+        guess = self.word_input.value.strip().upper()
+        feedback = self.parent_view.create_feedback_line(guess, self.target_word)
+
+        if guess == self.target_word:
+            await safe_respond(interaction, f"🎉 Bravo ! Tu as trouvé le mot : **{self.target_word}**\n\n{feedback}")
+            self.parent_view.stop()  # Fin du jeu
+        else:
+            await safe_respond(interaction, f"{feedback}\n\n❌ Ce n’est pas encore ça, réessaie !", ephemeral=True)
+
+# ────────────────────────────────────────────────────────────────────────────────
+# 🎛️ UI — Bouton pour démarrer le jeu
+# ────────────────────────────────────────────────────────────────────────────────
+class MotusView(View):
+    def __init__(self, target_word):
+        super().__init__(timeout=180)
+        self.target_word = target_word
+        self.add_item(MotusButton(self))
+
+    def create_feedback_line(self, guess: str, target: str) -> str:
+        """Retourne une double ligne alignée : lettres 🇦 + couleurs en dessous"""
+
+        def letter_to_emoji(c: str) -> str:
+            if c.isalpha():
+                return chr(0x1F1E6 + (ord(c.upper()) - ord('A')))  # 🇦
+            return c.upper()
+
+        letters = " ".join(letter_to_emoji(c) for c in guess)
+        colors = []
+        for i, c in enumerate(guess):
+            if i < len(target) and c == target[i]:
+                colors.append("🟩")
+            elif c in target:
+                colors.append("🟨")
+            else:
+                colors.append("⬛")
+        return f"{letters}\n{' '.join(colors)}"
+
+class MotusButton(Button):
+    def __init__(self, parent_view: MotusView):
+        super().__init__(label="Proposer un mot", style=discord.ButtonStyle.primary)
+        self.parent_view = parent_view
+
+    async def callback(self, interaction: discord.Interaction):
+        await interaction.response.send_modal(MotusModal(self.parent_view, self.parent_view.target_word))
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🧠 Cog principal
 # ────────────────────────────────────────────────────────────────────────────────
 class Motus(commands.Cog):
     """
-    Commande /motus et !motus — Jeu Motus interactif façon télé
+    Commande /motus et !motus — Lance une partie de Motus
     """
     def __init__(self, bot: commands.Bot):
         self.bot = bot
 
-    # ────────────────────────────────────────────────────────────────────────────
-    # 🔹 Fonction interne : vérifier le mot et créer la ligne colorée
-    # ────────────────────────────────────────────────────────────────────────────
-    def create_feedback_line(self, guess: str, target: str) -> str:
-        """Retourne la ligne du mot avec des blocs colorés."""
-        line = []
-        for i, c in enumerate(guess):
-            if i < len(target) and c == target[i]:
-                line.append(f"🟩{c.upper()}🟩")  # Correct et bien placé
-            elif c in target:
-                line.append(f"🟨{c.upper()}🟨")  # Présent mais mal placé
-            else:
-                line.append(f"⬛{c.upper()}⬛")  # Absente
-        return ' '.join(line)
-
-    # ────────────────────────────────────────────────────────────────────────────
-    # 🔹 Fonction interne : jouer Motus
-    # ────────────────────────────────────────────────────────────────────────────
-    async def play_game(self, channel: discord.abc.Messageable, author: discord.User):
-        word = random.choice(WORDS).lower()
-        max_attempts = 6
-        attempts = 0
-        lines = []
-
-        embed = discord.Embed(
-            title="🎯 Motus - Devine le mot !",
-            description=f"Mot de {len(word)} lettres.",
-            color=discord.Color.blue()
-        )
-        embed.set_footer(text=f"Joueur : {author.display_name} | Essais restants : {max_attempts - attempts}")
-        game_message = await safe_send(channel, embed=embed)
-
-        def check(m):
-            return m.author == author and m.channel == channel and len(m.content) == len(word)
-
-        while attempts < max_attempts:
-            try:
-                guess_msg = await self.bot.wait_for('message', check=check, timeout=60.0)
-                guess = guess_msg.content.lower()
-
-                line = self.create_feedback_line(guess, word)
-                lines.append(line)
-                attempts += 1
-
-                # Mise à jour de l'embed avec toutes les lignes
-                embed.clear_fields()
-                for idx, l in enumerate(lines, 1):
-                    embed.add_field(name=f"Essai {idx}", value=l, inline=False)
-                embed.set_footer(text=f"Joueur : {author.display_name} | Essais restants : {max_attempts - attempts}")
-
-                await safe_edit(game_message, embed=embed)
-
-                if guess == word:
-                    embed.color = discord.Color.green()
-                    embed.title = f"🎉 Bravo {author.display_name} ! Tu as trouvé le mot !"
-                    await safe_edit(game_message, embed=embed)
-                    return
-
-            except asyncio.TimeoutError:
-                embed.color = discord.Color.red()
-                embed.title = f"⏰ Temps écoulé ! Le mot était **{word.upper()}**"
-                await safe_edit(game_message, embed=embed)
-                return
-
-        # Si échec complet
-        embed.color = discord.Color.red()
-        embed.title = f"❌ Plus d'essais ! Le mot était **{word.upper()}**"
-        await safe_edit(game_message, embed=embed)
+    # Fonction interne
+    async def _start_game(self, channel: discord.abc.Messageable):
+        target_word = random.choice(WORDS)
+        view = MotusView(target_word)
+        await safe_send(channel, "🎯 Motus lancé ! Propose un mot :", view=view)
 
     # ────────────────────────────────────────────────────────────────────────────
     # 🔹 Commande SLASH
     # ────────────────────────────────────────────────────────────────────────────
     @app_commands.command(
         name="motus",
-        description="Joue au jeu Motus façon télé et devine le mot !"
+        description="Lance une partie de Motus."
     )
-    @app_commands.checks.cooldown(1, 30.0, key=lambda i: (i.user.id))
+    @app_commands.checks.cooldown(1, 5.0, key=lambda i: (i.user.id))
     async def slash_motus(self, interaction: discord.Interaction):
         try:
             await interaction.response.defer()
-            await self.play_game(interaction.channel, interaction.user)
+            await self._start_game(interaction.channel)
             await interaction.delete_original_response()
         except app_commands.CommandOnCooldown as e:
-            await safe_respond(interaction, f"⏳ Attends encore {e.retry_after:.1f}s avant de rejouer.", ephemeral=True)
+            await safe_respond(interaction, f"⏳ Attends encore {e.retry_after:.1f}s.", ephemeral=True)
         except Exception as e:
             print(f"[ERREUR /motus] {e}")
             await safe_respond(interaction, "❌ Une erreur est survenue.", ephemeral=True)
@@ -127,12 +124,12 @@ class Motus(commands.Cog):
     # 🔹 Commande PREFIX
     # ────────────────────────────────────────────────────────────────────────────
     @commands.command(name="motus")
-    @commands.cooldown(1, 30.0, commands.BucketType.user)
+    @commands.cooldown(1, 5.0, commands.BucketType.user)
     async def prefix_motus(self, ctx: commands.Context):
         try:
-            await self.play_game(ctx.channel, ctx.author)
+            await self._start_game(ctx.channel)
         except commands.CommandOnCooldown as e:
-            await safe_send(ctx.channel, f"⏳ Attends encore {e.retry_after:.1f}s avant de rejouer.")
+            await safe_send(ctx.channel, f"⏳ Attends encore {e.retry_after:.1f}s.")
         except Exception as e:
             print(f"[ERREUR !motus] {e}")
             await safe_send(ctx.channel, "❌ Une erreur est survenue.")
@@ -144,5 +141,5 @@ async def setup(bot: commands.Bot):
     cog = Motus(bot)
     for command in cog.get_commands():
         if not hasattr(command, "category"):
-            command.category = "Fun"
+            command.category = "Jeux"
     await bot.add_cog(cog)
