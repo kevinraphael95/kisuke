@@ -9,10 +9,14 @@
 ### 📂 Admin
 - **heartbeat :** (Admin) Gère le heartbeat : pause, resume, status, set, unset.
 - **re :** (Admin) Préviens les membres et redémarre le bot via Render.
-- **reiatsuadmin :** (Admin) Gère le Reiatsu : set, unset, change, spawn.
+- **readme :** Génère un README.md avec toutes les commandes et les envoie en fichier.
+- **reiatsuadmin :** (Admin) Gère le Reiatsu : set, unset, change, spawn, speed.
 - **rpgreset :** ♻️ Réinitialise ta progression RPG, ou celle d’un autre joueur (admin uniquement).
 - **say_as :** (Admin) Fait répéter un message par le bot comme si c'était un autre membre.
 Usage: !say_as <user_id> <message>
+
+### 📂 Autre
+- **1000 :** Pas de description.
 
 ### 📂 Bleach
 - **bmoji :** Devine quel personnage Bleach se cache derrière ces emojis.
@@ -25,8 +29,6 @@ Usage: !say_as <user_id> <message>
 ### 📂 Fun
 - **couleur :** 🎨 Affiche une couleur aléatoire avec ses codes HEX et RGB.
 - **gay :** 🌈 Calcule ton taux de gaytitude.
-- **mastermind :** Jouer au Mastermind interactif.
-- **pendu :** Démarre une partie du jeu du pendu.
 - **pizza :** Génère une pizza aléatoire.
 
 ### 📂 Général
@@ -34,18 +36,24 @@ Usage: !say_as <user_id> <message>
 - **emoji :** 😄 Affiche un ou plusieurs emojis du serveur.
 - **help :** Affiche la liste des commandes ou une commande spécifique.
 - **react :** Réagit à un message avec un ou plusieurs emojis.
-- **readme :** Génère un README.md avec toutes les commandes et les envoie en fichier.
 - **say :** Fait répéter un message par le bot. Utilise `embed` au début pour forcer un embed.
 - **say_as_user :** Fait répéter un message par le bot comme si c'était vous.
+
+### 📂 Jeux
+- **jardin :** Pas de description.
+- **mastermind :** Jouer au Mastermind interactif.
+- **motus :** Pas de description.
+- **pendu :** Démarre une partie du jeu du pendu.
 
 ### 📂 Reiatsu
 - **classe :** Choisir sa classe Reiatsu
 - **reiatsu :** Pas de description.
-- **reiatsuvol :** 💠 Tente de voler 10% du Reiatsu d’un autre membre. 25% de réussite. Cooldown : 24h.
 - **steamkey :** Pas de description.
+- **volreiatsu :** 💠 Tente de voler 10% du Reiatsu d’un autre membre. 25% de réussite. Cooldown : 24h.
 
 ### 📂 Test
 - **calc :** Pas de description.
-- **jardin :** Pas de description.
-- **rpg :** Commence ton aventure dans la Division Z à Karakura.
+- **jardin2 :** Pas de description.
 
+README.md
+3 Ko
