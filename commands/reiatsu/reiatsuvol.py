@@ -106,7 +106,7 @@ class ReiatsuVol(commands.Cog):
     # 🔹 Commande SLASH
     # ────────────────────────────────────────────────────────────────────────────
     @app_commands.command(
-        name="volreiatsu",
+        name="reiatsuvol",
         description="💠 Tente de voler 10% du Reiatsu d’un autre membre (25% de réussite). Cooldown : 24h."
     )
     async def slash_volreiatsu(self, interaction: discord.Interaction, cible: discord.Member):
@@ -119,29 +119,29 @@ class ReiatsuVol(commands.Cog):
             await self._volreiatsu_logic(interaction.user, cible, interaction.channel)
             await interaction.delete_original_response()
         except Exception as e:
-            print(f"[ERREUR /volreiatsu] {e}")
+            print(f"[ERREUR /reiatsuvol] {e}")
             await safe_respond(interaction, "❌ Une erreur est survenue.", ephemeral=True)
 
     # ────────────────────────────────────────────────────────────────────────────
     # 🔹 Commande PREFIX
     # ────────────────────────────────────────────────────────────────────────────
     @commands.command(
-        name="volreiatsu",
-        aliases=["reiatsuvol", "rtsv", "vrts"],
+        name="reiatsuvol",
+        aliases=["rtsv", "volreiatsu", "vrts"],
         help="💠 Tente de voler 10% du Reiatsu d’un autre membre. 25% de réussite. Cooldown : 24h."
     )
     async def prefix_volreiatsu(self, ctx: commands.Context, cible: discord.Member = None):
         """Commande préfixe pour voler du Reiatsu."""
         try:
             if not cible:
-                await safe_send(ctx.channel, "ℹ️ Utilisation : `!volreiatsu @membre`")
+                await safe_send(ctx.channel, "ℹ️ Utilisation : `!reiatsuvol @membre`")
                 return
             if ctx.author.id == cible.id:
                 await safe_send(ctx.channel, "❌ Tu ne peux pas te voler toi-même.")
                 return
             await self._volreiatsu_logic(ctx.author, cible, ctx.channel)
         except Exception as e:
-            print(f"[ERREUR !volreiatsu] {e}")
+            print(f"[ERREUR !reiatsuvol] {e}")
             await safe_send(ctx.channel, "❌ Une erreur est survenue.")
 
 # ────────────────────────────────────────────────────────────────────────────────
