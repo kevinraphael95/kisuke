@@ -15,7 +15,8 @@ from discord.ext import commands
 from discord.ui import View, Modal, TextInput, Button
 import random
 import aiohttp   # 👈 pour l’API
-from utils.discord_utils import safe_send, safe_edit, safe_respond
+import os
+from utils.discord_utils import safe_send, safe_edit
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🌐 Fonction pour récupérer un mot français aléatoire
@@ -36,8 +37,7 @@ async def get_random_french_word(length: int | None = None) -> str:
     except Exception as e:
         print(f"[ERREUR API Motus] {e}")
 
-    # fallback si l’API échoue
-    return "PYTHON"
+    return "PYTHON"  # fallback si l’API échoue
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🎛️ Modal pour proposer un mot
@@ -97,6 +97,7 @@ class MotusView(View):
             description=f"Mot de **{len(self.target_word)}** lettres",
             color=discord.Color.orange()
         )
+
         if self.attempts:
             tries_text = "\n\n".join(self.create_feedback_line(guess) for guess in self.attempts)
             embed.add_field(
@@ -118,16 +119,21 @@ class MotusView(View):
             else:
                 embed.color = discord.Color.red()
                 embed.set_footer(text=f"💀 Partie terminée. Le mot était {self.target_word}.")
+
+        # Ajout de l'image en coin droit si elle existe
+        image_path = "data/images/jeux/motus.jpg"
+        if os.path.exists(image_path):
+            embed.set_thumbnail(url="attachment://motus.jpg")
+
         return embed
 
     async def process_guess(self, interaction: discord.Interaction, guess: str):
         """Traite un essai du joueur"""
         if self.finished:
-            await safe_respond(interaction, "❌ La partie est terminée.", ephemeral=True)
-            return
+            return  # plus aucun message
+
         if len(guess) != len(self.target_word):
-            await safe_respond(interaction, f"⚠️ Le mot doit avoir {len(self.target_word)} lettres.", ephemeral=True)
-            return
+            return  # ignore essais invalides
 
         self.attempts.append(guess)
 
@@ -137,12 +143,14 @@ class MotusView(View):
             for child in self.children:
                 child.disabled = True
 
-        await safe_edit(self.message, embed=self.build_embed(), view=self)
+        # Préparer le fichier image si elle existe
+        files = []
+        image_path = "data/images/jeux/motus.jpg"
+        if os.path.exists(image_path):
+            files.append(discord.File(image_path, filename="motus.jpg"))
 
-        if self.finished:
-            await safe_respond(interaction, "✅ Partie terminée !", ephemeral=True)
-        else:
-            await safe_respond(interaction, "💡 Essai enregistré !", ephemeral=True)
+        # Mettre à jour l'embed
+        await safe_edit(self.message, embed=self.build_embed(), view=self, files=files if files else None)
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🎛️ Bouton principal
@@ -170,7 +178,14 @@ class Motus(commands.Cog):
         target_word = await get_random_french_word(length=random.choice(range(5, 9)))
         view = MotusView(target_word)
         embed = view.build_embed()
-        view.message = await safe_send(channel, embed=embed, view=view)
+
+        # Préparer le fichier image si elle existe
+        files = []
+        image_path = "data/images/jeux/motus.jpg"
+        if os.path.exists(image_path):
+            files.append(discord.File(image_path, filename="motus.jpg"))
+
+        view.message = await safe_send(channel, embed=embed, view=view, files=files if files else None)
 
     # ────────────────────────────────────────────────────────────────────────────
     # 🔹 Commande SLASH
@@ -185,11 +200,8 @@ class Motus(commands.Cog):
             await interaction.response.defer()
             await self._start_game(interaction.channel)
             await interaction.delete_original_response()
-        except app_commands.CommandOnCooldown as e:
-            await safe_respond(interaction, f"⏳ Attends encore {e.retry_after:.1f}s.", ephemeral=True)
         except Exception as e:
             print(f"[ERREUR /motus] {e}")
-            await safe_respond(interaction, "❌ Une erreur est survenue.", ephemeral=True)
 
     # ────────────────────────────────────────────────────────────────────────────
     # 🔹 Commande PREFIX
@@ -199,11 +211,8 @@ class Motus(commands.Cog):
     async def prefix_motus(self, ctx: commands.Context):
         try:
             await self._start_game(ctx.channel)
-        except commands.CommandOnCooldown as e:
-            await safe_send(ctx.channel, f"⏳ Attends encore {e.retry_after:.1f}s.")
         except Exception as e:
             print(f"[ERREUR !motus] {e}")
-            await safe_send(ctx.channel, "❌ Une erreur est survenue.")
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🔌 Setup du Cog
