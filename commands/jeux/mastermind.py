@@ -65,8 +65,9 @@ class MastermindView(View):
         embed.set_footer(text=f"Essais restants : {self.max_attempts - len(self.attempts)}")
         return embed
 
+
     def format_attempts(self):
-        return [f"{''.join(guess)} → {''.join(feedback)}" for guess, feedback in self.attempts]
+        return [f"{''.join(guess)}\n{''.join(feedback)}" for guess, feedback in self.attempts]
 
     def generate_feedback(self, guess):
         feedback = []
@@ -96,7 +97,7 @@ class MastermindView(View):
                 feedback[i] = "❌"
 
         if self.corruption:
-            feedback = [f if random.random() > 0.5 else "💀" for f in feedback]
+            feedback = [f if random.random() > 0.20 else "💀" for f in feedback]
 
         return feedback
 
