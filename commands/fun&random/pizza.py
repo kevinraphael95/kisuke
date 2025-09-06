@@ -1,7 +1,7 @@
 # ────────────────────────────────────────────────────────────────────────────────
 # 📌 pizza_aléatoire.py — Commande interactive /pizza et !pizza
 # Objectif : Générer une pizza aléatoire simple (pâte, sauce, fromage, garnitures, toppings)
-# Catégorie : Fun
+# Catégorie : Fun&Random
 # Accès : Tous
 # Cooldown : 1 utilisation / 3 secondes / utilisateur
 # ────────────────────────────────────────────────────────────────────────────────
@@ -139,5 +139,5 @@ async def setup(bot: commands.Bot):
     cog = PizzaAleatoire(bot)
     for command in cog.get_commands():
         if not hasattr(command, "category"):
-            command.category = "Fun"
+            command.category = "Fun&Random"
     await bot.add_cog(cog)
