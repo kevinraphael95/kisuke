@@ -235,10 +235,6 @@ class ReiatsuCommand(commands.Cog):
     @commands.command(name="reiatsu", aliases=["rts"])
     @commands.cooldown(1, 3.0, commands.BucketType.user)
     async def prefix_reiatsu(self, ctx: commands.Context, member: discord.Member = None):
-        try:
-            await ctx.message.delete()  # Supprime la commande pour éviter le spam
-        except:
-            pass
         await self._send_profile(ctx.channel, ctx.author, ctx.guild, member)
 
 # ────────────────────────────────────────────────────────────────────────────────
