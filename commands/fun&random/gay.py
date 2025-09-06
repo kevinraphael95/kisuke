@@ -1,7 +1,7 @@
 # ────────────────────────────────────────────────────────────────────────────────
 # 📌 gay.py — Commande simple /gay et !gay
 # Objectif : Calcule un taux de gaytitude fixe et fun pour un utilisateur Discord
-# Catégorie : 🌈 Fun
+# Catégorie : 🌈 Fun&Random
 # Accès : Tous
 # Cooldown : 1 utilisation / 3 secondes / utilisateur
 # ────────────────────────────────────────────────────────────────────────────────
@@ -128,5 +128,5 @@ async def setup(bot: commands.Bot):
     cog = GayCommand(bot)
     for command in cog.get_commands():
         if not hasattr(command, "category"):
-            command.category = "Fun"
+            command.category = "Fun&Random"
     await bot.add_cog(cog)
