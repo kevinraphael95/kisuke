@@ -107,7 +107,7 @@ class MotusView(View):
     def build_embed(self) -> discord.Embed:
         """Construit l'embed affichant l'état du jeu"""
         embed = discord.Embed(
-            title="🎯 MOTUS",
+            title="🎯 M🟡TUS",
             description=f"Mot de **{len(self.target_word)}** lettres",
             color=discord.Color.orange()
         )
