@@ -427,5 +427,5 @@ async def setup(bot: commands.Bot):
     cog = Jardin(bot)
     for command in cog.get_commands():
         if not hasattr(command, "category"):
-            command.category = "Test"
+            command.category = "Jeux"
     await bot.add_cog(cog)
