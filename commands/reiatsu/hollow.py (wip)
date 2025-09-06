@@ -1,7 +1,7 @@
 # ────────────────────────────────────────────────────────────────────────────────
 # 📌 hollow.py — Commande interactive !hollow
 # Objectif : Faire apparaître un Hollow, attaquer (1 reiatsu), réussir 3 tâches.
-# Catégorie : Hollow
+# Catégorie : Reiatsu
 # Accès : Public
 # Cooldown : 1 utilisation / 10 sec / utilisateur
 # ────────────────────────────────────────────────────────────────────────────────
@@ -139,5 +139,5 @@ async def setup(bot: commands.Bot):
     cog = HollowCommand(bot)
     for command in cog.get_commands():
         if not hasattr(command, "category"):
-            command.category = "Test"
+            command.category = "Reiatsu"
     await bot.add_cog(cog)
