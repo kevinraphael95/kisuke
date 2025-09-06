@@ -126,16 +126,32 @@ class MastermindView(View):
             pass
 
     async def show_result(self, interaction: discord.Interaction, win: bool):
+        # Stoppe la vue pour éviter de continuer à recevoir des callbacks
         self.stop()
-        embed = discord.Embed(
-            title="🎉 Gagné !" if win else "💀 Perdu !",
-            description=f"La combinaison était : {' '.join(self.code)}",
-            color=discord.Color.green() if win else discord.Color.red()
+
+        # Désactive tous les boutons
+        for item in self.children:
+            item.disabled = True
+
+        # Récupère l'embed actuel avec l'historique
+        embed = self.build_embed()
+
+        # Ajoute une section Résultat en bas
+        embed.add_field(
+            name="🏁 Résultat",
+            value=f"**{'Gagné ! 🎉' if win else 'Perdu ! 💀'}**\n"
+                  f"La combinaison était : {' '.join(self.code)}",
+            inline=False
         )
+
+        # Change la couleur de l'embed selon le résultat
+        embed.color = discord.Color.green() if win else discord.Color.red()
+
+        # Met à jour le message avec l'embed et les boutons désactivés
         try:
-            await interaction.response.edit_message(embed=embed, view=None)
+            await interaction.response.edit_message(embed=embed, view=self)
         except discord.InteractionResponded:
-            await interaction.edit_original_response(embed=embed, view=None)
+            await interaction.edit_original_response(embed=embed, view=self)
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🔵 Boutons interactifs
