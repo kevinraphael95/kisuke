@@ -139,10 +139,7 @@ class MotusView(View):
 
         await safe_edit(self.message, embed=self.build_embed(), view=self)
 
-        if self.finished:
-            await safe_respond(interaction, "✅ Partie terminée !", ephemeral=True)
-        else:
-            await safe_respond(interaction, "💡 Essai enregistré !", ephemeral=True)
+        
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🎛️ Bouton principal
