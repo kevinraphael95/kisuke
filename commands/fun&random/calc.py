@@ -1,7 +1,7 @@
 # ────────────────────────────────────────────────────────────────────────────────
 # 📌 scientific_calculator.py — Calculatrice scientifique interactive
 # Objectif : Calculatrice scientifique interactive avec mini-clavier et fonctions avancées
-# Catégorie : Utilitaire
+# Catégorie : Fun&Random
 # Accès : Tous
 # Cooldown : 1 utilisation / 5 secondes / utilisateur
 # ────────────────────────────────────────────────────────────────────────────────
@@ -169,5 +169,5 @@ async def setup(bot: commands.Bot):
     cog = ScientificCalculator(bot)
     for command in cog.get_commands():
         if not hasattr(command, "category"):
-            command.category = "Test"
+            command.category = "Fun&Random"
     await bot.add_cog(cog)
