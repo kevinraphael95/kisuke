@@ -123,11 +123,10 @@ class MotusView(View):
     async def process_guess(self, interaction: discord.Interaction, guess: str):
         """Traite un essai du joueur"""
         if self.finished:
-            await safe_respond(interaction, "❌ La partie est terminée.", ephemeral=True)
-            return
+            return  # plus de réponse, la partie est finie
+
         if len(guess) != len(self.target_word):
-            await safe_respond(interaction, f"⚠️ Le mot doit avoir {len(self.target_word)} lettres.", ephemeral=True)
-            return
+            return  # mot invalide, on ignore simplement
 
         self.attempts.append(guess)
 
@@ -137,9 +136,8 @@ class MotusView(View):
             for child in self.children:
                 child.disabled = True
 
+        # Mettre à jour l'embed
         await safe_edit(self.message, embed=self.build_embed(), view=self)
-
-        
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🎛️ Bouton principal
