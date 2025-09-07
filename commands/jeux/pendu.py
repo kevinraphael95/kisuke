@@ -66,31 +66,32 @@ class PenduGame:
         lettre = lettre.lower()
         if lettre in self.trouve or lettre in self.rate:
             return None
-
         if lettre in self.mot:
             self.trouve.add(lettre)
         else:
             self.rate.add(lettre)
-
         if all(l in self.trouve for l in set(self.mot)):
             self.terminee = True
             return "gagne"
-
         if len(self.rate) >= self.max_erreurs:
             self.terminee = True
             return "perdu"
-
         return "continue"
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🧩 Classe PenduSession (pour solo et multi)
 # ────────────────────────────────────────────────────────────────────────────────
 class PenduSession:
-    def __init__(self, game: PenduGame, message: discord.Message, mode: str = "solo"):
+    def __init__(self, game: PenduGame, message: discord.Message, mode: str = "solo", author_id: int = None):
         self.game = game
         self.message = message
         self.mode = mode  # "solo" ou "multi"
-        self.players = set() if mode == "multi" else None  # uniquement multi
+        if mode == "multi":
+            self.players = set()
+            if author_id:
+                self.players.add(author_id)
+        else:
+            self.player_id = author_id  # solo : stocke juste le joueur qui a lancé la partie
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🧠 Cog principal
@@ -100,7 +101,7 @@ class Pendu(commands.Cog):
     Commande !pendu — Jeu du pendu interactif, mode solo ou multi.
     """
 
-    CATEGORIES = {"animaux": 19}  # → facile à étendre
+    CATEGORIES = {"animaux": 19}
 
     def __init__(self, bot: commands.Bot):
         self.bot = bot
@@ -112,7 +113,11 @@ class Pendu(commands.Cog):
         help="Démarre une partie du jeu du pendu.",
         description="Lance une partie, puis propose des lettres par message."
     )
-    async def pendu_cmd(self, ctx: commands.Context, mode: str = "solo"):
+    async def pendu_cmd(self, ctx: commands.Context, mode: str = ""):
+        mode = mode.lower()
+        if mode not in ("multi", "m"):
+            mode = "solo"
+
         channel_id = ctx.channel.id
         if channel_id in self.sessions:
             await safe_send(ctx.channel, "❌ Une partie est déjà en cours dans ce salon.")
@@ -127,11 +132,12 @@ class Pendu(commands.Cog):
         embed = game.create_embed()
         message = await safe_send(ctx.channel, embed=embed)
 
-        session = PenduSession(game, message, mode)
         if mode == "multi":
-            session.players.add(ctx.author.id)
-        self.sessions[channel_id] = session
+            session = PenduSession(game, message, mode="multi", author_id=ctx.author.id)
+        else:
+            session = PenduSession(game, message, mode="solo", author_id=ctx.author.id)
 
+        self.sessions[channel_id] = session
         await safe_send(ctx.channel, f"✅ Partie démarrée en mode **{mode}** !")
 
     async def _fetch_random_word(self) -> str | None:
@@ -155,10 +161,13 @@ class Pendu(commands.Cog):
         if not session:
             return
 
-        if session.mode == "solo" and message.author.id not in session.players and session.players is not None:
-            # Solo : seulement le joueur initial
-            if message.author.id not in session.players:
-                return
+        # Solo : uniquement le joueur qui a lancé la partie
+        if session.mode == "solo" and message.author.id != session.player_id:
+            return
+
+        # Multi : tous les joueurs peuvent proposer
+        if session.mode == "multi" and session.players is not None and message.author.id not in session.players:
+            session.players.add(message.author.id)  # ajoute le joueur si nouveau
 
         content = message.content.strip().lower()
         if len(content) != 1 or not content.isalpha():
