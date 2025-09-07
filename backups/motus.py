@@ -15,6 +15,7 @@ from discord.ext import commands
 from discord.ui import View, Modal, TextInput, Button
 import random
 import aiohttp   # 👈 pour l’API
+import unicodedata
 from utils.discord_utils import safe_send, safe_edit, safe_respond
 
 # ────────────────────────────────────────────────────────────────────────────────
@@ -72,28 +73,41 @@ class MotusView(View):
         self.finished = False
         self.add_item(MotusButton(self))
 
+    # ───────────── Helper pour enlever accents ─────────────
+    def remove_accents(self, text: str) -> str:
+        return ''.join(
+            c for c in unicodedata.normalize('NFD', text)
+            if unicodedata.category(c) != 'Mn'
+        ).upper()
+
+    # ───────────── Feedback avec emojis ─────────────
     def create_feedback_line(self, guess: str) -> str:
         """Retourne les deux lignes alignées 🇦 + 🟩"""
         def letter_to_emoji(c: str) -> str:
-            if c.isalpha():
-                return chr(0x1F1E6 + (ord(c.upper()) - ord('A')))
+            c_clean = ''.join(
+                ch for ch in unicodedata.normalize('NFD', c)
+                if unicodedata.category(ch) != 'Mn'
+            ).upper()
+            if c_clean.isalpha():
+                return chr(0x1F1E6 + (ord(c_clean) - ord('A')))
             return c.upper()
 
         letters = " ".join(letter_to_emoji(c) for c in guess)
         colors = []
         for i, c in enumerate(guess):
-            if i < len(self.target_word) and c == self.target_word[i]:
+            if i < len(self.target_word) and self.remove_accents(c) == self.remove_accents(self.target_word[i]):
                 colors.append("🟩")
-            elif c in self.target_word:
+            elif self.remove_accents(c) in self.remove_accents(self.target_word):
                 colors.append("🟨")
             else:
                 colors.append("⬛")
         return f"{letters}\n{' '.join(colors)}"
 
+    # ───────────── Construire l'embed ─────────────
     def build_embed(self) -> discord.Embed:
         """Construit l'embed affichant l'état du jeu"""
         embed = discord.Embed(
-            title="🎯 MOTUS",
+            title="🎯 M🟡TUS",
             description=f"Mot de **{len(self.target_word)}** lettres",
             color=discord.Color.orange()
         )
@@ -112,7 +126,7 @@ class MotusView(View):
             )
 
         if self.finished:
-            if self.attempts[-1] == self.target_word:
+            if self.remove_accents(self.attempts[-1]) == self.remove_accents(self.target_word):
                 embed.color = discord.Color.green()
                 embed.set_footer(text="🎉 Bravo ! Tu as trouvé le mot.")
             else:
@@ -120,29 +134,29 @@ class MotusView(View):
                 embed.set_footer(text=f"💀 Partie terminée. Le mot était {self.target_word}.")
         return embed
 
+    # ───────────── Processus d'un essai ─────────────
     async def process_guess(self, interaction: discord.Interaction, guess: str):
         """Traite un essai du joueur"""
         if self.finished:
-            await safe_respond(interaction, "❌ La partie est terminée.", ephemeral=True)
-            return
+            return  # plus de réponse, la partie est finie
+
         if len(guess) != len(self.target_word):
-            await safe_respond(interaction, f"⚠️ Le mot doit avoir {len(self.target_word)} lettres.", ephemeral=True)
-            return
+            return  # mot invalide, on ignore simplement
 
         self.attempts.append(guess)
 
         # Vérifie la victoire ou la fin
-        if guess == self.target_word or len(self.attempts) >= self.max_attempts:
+        if self.remove_accents(guess) == self.remove_accents(self.target_word) or len(self.attempts) >= self.max_attempts:
             self.finished = True
             for child in self.children:
                 child.disabled = True
 
+        # Mettre à jour l'embed
         await safe_edit(self.message, embed=self.build_embed(), view=self)
 
-        if self.finished:
-            await safe_respond(interaction, "✅ Partie terminée !", ephemeral=True)
-        else:
-            await safe_respond(interaction, "💡 Essai enregistré !", ephemeral=True)
+        # 👇 Réponse silencieuse pour éviter le bug du modal
+        if not interaction.response.is_done():
+            await interaction.response.defer(ephemeral=True)
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🎛️ Bouton principal
