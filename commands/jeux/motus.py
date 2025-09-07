@@ -41,23 +41,6 @@ async def get_random_french_word(length: int | None = None) -> str:
     return "PYTHON"
 
 # ────────────────────────────────────────────────────────────────────────────────
-# 🌐 Vérifie si un mot est français via l’API
-# ────────────────────────────────────────────────────────────────────────────────
-async def is_valid_word(word: str) -> bool:
-    """Retourne True si le mot existe (API trouve-mot.fr)"""
-    url = f"https://trouve-mot.fr/api/word/{word.lower()}"
-    try:
-        async with aiohttp.ClientSession() as session:
-            async with session.get(url, timeout=5) as resp:
-                if resp.status == 200:
-                    data = await resp.json()
-                    return isinstance(data, dict) and data.get("exists", False)
-    except Exception as e:
-        print(f"[ERREUR Vérif Motus] {e}")
-    return False
-
-
-# ────────────────────────────────────────────────────────────────────────────────
 # 🎛️ Modal pour proposer un mot
 # ────────────────────────────────────────────────────────────────────────────────
 class MotusModal(Modal):
@@ -160,13 +143,7 @@ class MotusView(View):
         if len(guess) != len(self.target_word):
             return  # mot invalide, on ignore simplement
 
-        # ✅ Vérifie que le mot existe
-        if not await is_valid_word(guess):
-            await safe_respond(interaction, "❌ Ce mot n’existe pas dans le dictionnaire.", ephemeral=True)
-            return
-
         self.attempts.append(guess)
-
 
         # Vérifie la victoire ou la fin
         if self.remove_accents(guess) == self.remove_accents(self.target_word) or len(self.attempts) >= self.max_attempts:
