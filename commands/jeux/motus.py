@@ -16,7 +16,13 @@ from discord.ui import View, Modal, TextInput, Button
 import random
 import aiohttp   # 👈 pour l’API
 import unicodedata
+from spellchecker import SpellChecker  # 👈 Correcteur orthographique
 from utils.discord_utils import safe_send, safe_edit, safe_respond
+
+# ────────────────────────────────────────────────────────────────────────────────
+# 🌐 Initialisation du spellchecker français
+# ────────────────────────────────────────────────────────────────────────────────
+spell = SpellChecker(language='fr')
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🌐 Fonction pour récupérer un mot français aléatoire
@@ -39,6 +45,13 @@ async def get_random_french_word(length: int | None = None) -> str:
 
     # fallback si l’API échoue
     return "PYTHON"
+
+# ────────────────────────────────────────────────────────────────────────────────
+# 🌐 Fonction pour vérifier qu’un mot existe via SpellChecker
+# ────────────────────────────────────────────────────────────────────────────────
+def is_valid_word(word: str) -> bool:
+    """Retourne True si le mot est reconnu par SpellChecker"""
+    return word.lower() in spell.word_frequency
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🎛️ Modal pour proposer un mot
@@ -141,7 +154,12 @@ class MotusView(View):
             return  # plus de réponse, la partie est finie
 
         if len(guess) != len(self.target_word):
-            return  # mot invalide, on ignore simplement
+            await safe_respond(interaction, f"⚠️ Le mot doit faire {len(self.target_word)} lettres.", ephemeral=True)
+            return
+
+        if not is_valid_word(guess):
+            await safe_respond(interaction, f"❌ `{guess}` n’est pas reconnu comme un mot valide.", ephemeral=True)
+            return
 
         self.attempts.append(guess)
 
