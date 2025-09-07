@@ -1,7 +1,7 @@
 # ────────────────────────────────────────────────────────────────────────────────
 # 📌 animal_race.py — Mini-jeu de course d'animaux ultra-animé
 # Objectif : Lancer une course animée entre plusieurs animaux avec mouvements fluides
-# Catégorie : Fun
+# Catégorie : Jeux
 # Accès : Tous
 # Cooldown : 1 utilisation / 10 secondes / utilisateur
 # ────────────────────────────────────────────────────────────────────────────────
@@ -114,5 +114,5 @@ async def setup(bot: commands.Bot):
     cog = AnimalRace(bot)
     for command in cog.get_commands():
         if not hasattr(command, "category"):
-            command.category = "Fun"
+            command.category = "Jeux"
     await bot.add_cog(cog)
