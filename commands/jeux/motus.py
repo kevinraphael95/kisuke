@@ -148,7 +148,6 @@ class MotusView(View):
                 embed.set_footer(text=f"💀 Partie terminée. Le mot était {self.target_word}.")
         return embed
 
-
     # ───────────── Processus d'un essai ─────────────
     async def process_guess(self, interaction: discord.Interaction, guess: str):
         if self.finished:
@@ -173,6 +172,22 @@ class MotusView(View):
 
         if not interaction.response.is_done():
             await interaction.response.defer(ephemeral=True)
+
+    # ───────────── Timeout (fin de partie sans réponse) ─────────────
+    async def on_timeout(self):
+        if self.finished:
+            return
+        self.finished = True
+        for child in self.children:
+            child.disabled = True
+
+        embed = self.build_embed()
+        embed.color = discord.Color.red()
+        embed.set_footer(text=f"⏳ Temps écoulé ! Le mot était {self.target_word}.")
+        try:
+            await safe_edit(self.message, embed=embed, view=self)
+        except Exception as e:
+            print(f"[ERREUR Timeout Motus] {e}")
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🎛️ Bouton principal
