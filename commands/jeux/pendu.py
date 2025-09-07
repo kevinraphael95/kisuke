@@ -33,11 +33,12 @@ MAX_ERREURS = 7
 # 🧩 Classe PenduGame
 # ────────────────────────────────────────────────────────────────────────────────
 class PenduGame:
-    def __init__(self, mot: str):
+    def __init__(self, mot: str, mode: str = "solo"):
         self.mot = mot.lower()
         self.trouve = set()
         self.rate = set()
         self.terminee = False
+        self.mode = mode
         self.max_erreurs = min(len(mot) + 1, MAX_ERREURS)
 
     def get_display_word(self) -> str:
@@ -52,7 +53,7 @@ class PenduGame:
 
     def create_embed(self) -> discord.Embed:
         embed = discord.Embed(
-            title="🕹️ Jeu du Pendu",
+            title=f"🕹️ Jeu du Pendu — mode {self.mode.capitalize()}",
             description=f"```\n{self.get_pendu_ascii()}\n```",
             color=discord.Color.blue()
         )
@@ -101,8 +102,6 @@ class Pendu(commands.Cog):
     Commande !pendu — Jeu du pendu interactif, mode solo ou multi.
     """
 
-    CATEGORIES = {"animaux": 19}
-
     def __init__(self, bot: commands.Bot):
         self.bot = bot
         self.sessions = {}  # dict channel_id -> PenduSession
@@ -128,7 +127,7 @@ class Pendu(commands.Cog):
             await safe_send(ctx.channel, "❌ Impossible de récupérer un mot, réessaie plus tard.")
             return
 
-        game = PenduGame(mot)
+        game = PenduGame(mot, mode=mode)
         embed = game.create_embed()
         message = await safe_send(ctx.channel, embed=embed)
 
@@ -138,10 +137,9 @@ class Pendu(commands.Cog):
             session = PenduSession(game, message, mode="solo", author_id=ctx.author.id)
 
         self.sessions[channel_id] = session
-        await safe_send(ctx.channel, f"✅ Partie démarrée en mode **{mode}** !")
 
     async def _fetch_random_word(self) -> str | None:
-        url = f"https://trouve-mot.fr/api/categorie/{self.CATEGORIES['animaux']}/1"
+        url = "https://trouve-mot.fr/api/random/1"
         try:
             async with self.http_session.get(url) as resp:
                 if resp.status != 200:
