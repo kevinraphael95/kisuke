@@ -1,0 +1,66 @@
+{
+  "Affaire du Zanpakuto brisé": {
+    "intro": "Un Zanpakuto a été retrouvé brisé dans le Seireitei... Ichigo doit découvrir la vérité.",
+    "scenes": [
+      {
+        "id": "scene_1",
+        "character": "Ichigo",
+        "expression": "serieux",
+        "dialogue": "Quelqu’un a osé briser un Zanpakuto ?! Je dois savoir qui est derrière ça.",
+        "choices": [
+          {
+            "text": "Demander à Rukia",
+            "next_scene": "scene_2"
+          },
+          {
+            "text": "Inspecter la zone",
+            "next_scene": "scene_3"
+          }
+        ]
+      },
+      {
+        "id": "scene_2",
+        "character": "Rukia",
+        "expression": "inquiete",
+        "dialogue": "Je n’ai rien vu… mais Renji rôdait près de la zone.",
+        "choices": [
+          {
+            "text": "Aller interroger Renji",
+            "next_scene": "scene_4"
+          }
+        ]
+      },
+      {
+        "id": "scene_3",
+        "character": "Ichigo",
+        "expression": "concentre",
+        "dialogue": "Il y a des fragments de lame… et des traces de Reiatsu étranges.",
+        "choices": [
+          {
+            "text": "Comparer avec le Reiatsu de Renji",
+            "next_scene": "scene_4"
+          }
+        ]
+      },
+      {
+        "id": "scene_4",
+        "character": "Renji",
+        "expression": "enerve",
+        "dialogue": "Tu m’accuses, Ichigo ?! Zabimaru n’a rien à voir avec ça !",
+        "choices": [
+          {
+            "text": "Présenter la preuve",
+            "next_scene": "scene_5"
+          }
+        ]
+      },
+      {
+        "id": "scene_5",
+        "character": "Ichigo",
+        "expression": "determine",
+        "dialogue": "Les fragments de Reiatsu prouvent le contraire ! Renji, tu caches quelque chose !",
+        "choices": []
+      }
+    ]
+  }
+}
