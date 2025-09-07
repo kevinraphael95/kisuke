@@ -1,6 +1,6 @@
 # ────────────────────────────────────────────────────────────────────────────────
 # 📌 mastermind2.py — Commande interactive !mastermind /mastermind
-# Objectif : Jeu de logique Mastermind via boutons Discord avec difficulté et corruption
+# Objectif : Jeu de logique Mastermind via boutons Discord avec mode solo/multi
 # Catégorie : Jeux
 # Accès : Public
 # Cooldown : 1 utilisation / 10 secondes / utilisateur
@@ -22,10 +22,24 @@ from utils.discord_utils import safe_send, safe_edit, safe_respond
 COLORS = ["🟥", "🟦", "🟩", "🟨", "🟪", "🟧"]
 
 # ────────────────────────────────────────────────────────────────────────────────
+# 🟢 Liste des difficultés pour faciliter la modification
+# ────────────────────────────────────────────────────────────────────────────────
+DIFFICULTIES = [
+    {"label": "Facile", "code_length": 3, "corruption": False},
+    {"label": "Normal", "code_length": 4, "corruption": False},
+    {"label": "Difficile", "code_length": 5, "corruption": False},
+    {"label": "Cauchemar", "code_length": random.randint(8, 10), "corruption": True},
+]
+
+# ────────────────────────────────────────────────────────────────────────────────
 # 🧩 Vue principale du jeu Mastermind
 # ────────────────────────────────────────────────────────────────────────────────
 class MastermindView(View):
-    def __init__(self, author: discord.User, code_length: int, corruption: bool):
+    def __init__(self, author: discord.User | None, code_length: int, corruption: bool):
+        """
+        author = None → mode multi (tout le monde peut jouer)
+        author = discord.User → mode solo (seul le lanceur peut jouer)
+        """
         super().__init__(timeout=180)
         self.author = author
         self.code_length = code_length
@@ -43,8 +57,9 @@ class MastermindView(View):
         self.add_item(ClearButton(self))
 
     def build_embed(self) -> discord.Embed:
+        mode_text = "Multi" if self.author is None else "Solo"
         embed = discord.Embed(
-            title="🎯 Mastermind — Trouve la combinaison !",
+            title=f"🎯 Mastermind - mode {mode_text}",
             description=(
                 "🔴 : bonne couleur et bonne position\n"
                 "⚪ : bonne couleur mais mauvaise position\n"
@@ -64,7 +79,6 @@ class MastermindView(View):
         )
         embed.set_footer(text=f"Essais restants : {self.max_attempts - len(self.attempts)}")
         return embed
-
 
     def format_attempts(self):
         return [f"{''.join(guess)}\n{''.join(feedback)}" for guess, feedback in self.attempts]
@@ -127,28 +141,17 @@ class MastermindView(View):
             pass
 
     async def show_result(self, interaction: discord.Interaction, win: bool):
-        # Stoppe la vue pour éviter de continuer à recevoir des callbacks
         self.stop()
-
-        # Désactive tous les boutons
         for item in self.children:
             item.disabled = True
-
-        # Récupère l'embed actuel avec l'historique
         embed = self.build_embed()
-
-        # Ajoute une section Résultat en bas
         embed.add_field(
             name="🏁 Résultat",
             value=f"**{'Gagné ! 🎉' if win else 'Perdu ! 💀'}**\n"
                   f"La combinaison était : {' '.join(self.code)}",
             inline=False
         )
-
-        # Change la couleur de l'embed selon le résultat
         embed.color = discord.Color.green() if win else discord.Color.red()
-
-        # Met à jour le message avec l'embed et les boutons désactivés
         try:
             await interaction.response.edit_message(embed=embed, view=self)
         except discord.InteractionResponded:
@@ -164,7 +167,7 @@ class ColorButton(Button):
         self.view_ref = view_ref
 
     async def callback(self, interaction: discord.Interaction):
-        if interaction.user != self.view_ref.author:
+        if self.view_ref.author and interaction.user != self.view_ref.author:
             return await safe_respond(interaction, "⛔ Ce jeu ne t'appartient pas.", ephemeral=True)
         if len(self.view_ref.current_guess) >= self.view_ref.code_length:
             return await safe_respond(interaction, "❗ Nombre de couleurs atteint.", ephemeral=True)
@@ -181,7 +184,7 @@ class ClearButton(Button):
         self.view_ref = view_ref
 
     async def callback(self, interaction: discord.Interaction):
-        if interaction.user != self.view_ref.author:
+        if self.view_ref.author and interaction.user != self.view_ref.author:
             return await safe_respond(interaction, "⛔ Ce jeu ne t'appartient pas.", ephemeral=True)
         self.view_ref.current_guess.clear()
         await self.view_ref.update_message()
@@ -196,7 +199,7 @@ class ValidateButton(Button):
         self.view_ref = view_ref
 
     async def callback(self, interaction: discord.Interaction):
-        if interaction.user != self.view_ref.author:
+        if self.view_ref.author and interaction.user != self.view_ref.author:
             return await safe_respond(interaction, "⛔ Ce jeu ne t'appartient pas.", ephemeral=True)
         if len(self.view_ref.current_guess) != self.view_ref.code_length:
             return await safe_respond(interaction, "⚠️ Nombre de couleurs insuffisant.", ephemeral=True)
@@ -206,24 +209,25 @@ class ValidateButton(Button):
 # 🎛️ Menu de sélection de difficulté
 # ────────────────────────────────────────────────────────────────────────────────
 class DifficultyView(View):
-    def __init__(self, author: discord.User):
+    def __init__(self, author: discord.User | None, mode: str = "solo"):
+        """
+        author = utilisateur qui lance le jeu
+        mode = "solo" ou "multi"
+        """
         super().__init__(timeout=60)
-        self.author = author
-        self.add_item(DifficultyButton("Facile", 3, False))
-        self.add_item(DifficultyButton("Normal", 4, False))
-        self.add_item(DifficultyButton("Difficile", 5, False))
-        self.add_item(DifficultyButton("Cauchemar", random.randint(8, 10), True))
+        self.author = author if mode.lower() == "solo" else None
+        for diff in DIFFICULTIES:
+            self.add_item(DifficultyButton(diff["label"], diff["code_length"], diff["corruption"], self.author))
 
 class DifficultyButton(Button):
-    def __init__(self, label, code_length, corruption):
+    def __init__(self, label, code_length, corruption, author):
         super().__init__(label=label, style=discord.ButtonStyle.primary)
         self.code_length = code_length
         self.corruption = corruption
+        self.author = author
 
     async def callback(self, interaction: discord.Interaction):
-        if interaction.user != self.view.author:
-            return await safe_respond(interaction, "⛔ Ce menu ne t'appartient pas.", ephemeral=True)
-        view = MastermindView(interaction.user, self.code_length, self.corruption)
+        view = MastermindView(self.author, self.code_length, self.corruption)
         embed = view.build_embed()
         await interaction.response.edit_message(embed=embed, view=view)
         view.message = interaction.message
@@ -242,10 +246,14 @@ class Mastermind(commands.Cog):
     # ────────────────────────────────────────────────────────────────────────────
     @commands.command(name="mastermind", aliases=["mm"], help="Jouer au Mastermind interactif.")
     @commands.cooldown(1, 10, commands.BucketType.user)
-    async def prefix_mastermind(self, ctx: commands.Context):
-        view = DifficultyView(ctx.author)
+    async def prefix_mastermind(self, ctx: commands.Context, mode: str = "solo"):
+        """
+        mode = "solo" → seul le lanceur peut jouer
+        mode = "multi" → tout le monde peut jouer
+        """
+        view = DifficultyView(ctx.author, mode)
         embed = discord.Embed(
-            title="🎮 Choisis la difficulté du Mastermind",
+            title=f"🎮 Choisis la difficulté — mode {'Multi' if mode.lower() != 'solo' else 'Solo'}",
             description="Clique sur un bouton ci-dessous :",
             color=discord.Color.orange()
         )
@@ -258,11 +266,12 @@ class Mastermind(commands.Cog):
         name="mastermind",
         description="Jouer au Mastermind interactif."
     )
+    @app_commands.describe(mode="Mode de jeu : solo ou multi")
     @app_commands.checks.cooldown(1, 10.0, key=lambda i: i.user.id)
-    async def slash_mastermind(self, interaction: discord.Interaction):
-        view = DifficultyView(interaction.user)
+    async def slash_mastermind(self, interaction: discord.Interaction, mode: str = "solo"):
+        view = DifficultyView(interaction.user, mode)
         embed = discord.Embed(
-            title="🎮 Choisis la difficulté du Mastermind",
+            title=f"🎮 Choisis la difficulté — mode {'Multi' if mode.lower() != 'solo' else 'Solo'}",
             description="Clique sur un bouton ci-dessous :",
             color=discord.Color.orange()
         )
