@@ -12,7 +12,7 @@
 import discord
 from discord import app_commands
 from discord.ext import commands
-from discord.ui import View, Button, Select
+from discord.ui import View, Button
 import json
 import os
 
@@ -32,7 +32,35 @@ def load_stories():
         return {}
 
 # ────────────────────────────────────────────────────────────────────────────────
-# 🎛️ UI — Objection et choix interactifs
+# 🎛️ UI — Sélection d'histoire et gameplay
+# ────────────────────────────────────────────────────────────────────────────────
+class StorySelectionView(View):
+    def __init__(self, bot, stories):
+        super().__init__(timeout=120)
+        self.bot = bot
+        self.stories = stories
+        self.message = None
+        for title in stories.keys():
+            self.add_item(StoryButton(self, title))
+
+    async def on_timeout(self):
+        for child in self.children:
+            child.disabled = True
+        if self.message:
+            await safe_edit(self.message, view=self)
+
+class StoryButton(Button):
+    def __init__(self, parent_view: StorySelectionView, story_title):
+        super().__init__(label=story_title, style=discord.ButtonStyle.primary)
+        self.parent_view = parent_view
+        self.story_title = story_title
+
+    async def callback(self, interaction: discord.Interaction):
+        story_data = self.parent_view.stories[self.story_title]
+        first_scene_id = story_data['scenes'][0]['id']
+        await self.parent_view.bot.get_cog('AceBleach')._start_scene(interaction.channel, story_data, first_scene_id)
+        await safe_edit(interaction.message, content=f"📚 Histoire choisie : **{self.story_title}**", embed=None, view=None)
+
 # ────────────────────────────────────────────────────────────────────────────────
 class GameButtonView(View):
     def __init__(self, bot, story_data, current_scene_id, evidence=[]):
@@ -47,13 +75,10 @@ class GameButtonView(View):
     def add_scene_buttons(self):
         self.clear_items()
         scene = self.story_data['scenes'][self.current_scene_id]
-        # Ajouter les choix normaux
         for choice in scene.get('choices', []):
             self.add_item(SceneChoiceButton(self, choice))
-        # Ajouter les boutons d'objection si disponibles
         for objection in scene.get('objections', []):
             self.add_item(ObjectionButton(self, objection))
-        # Ajouter bouton pour examiner preuves
         if self.evidence:
             self.add_item(ExamineEvidenceButton(self))
 
@@ -70,8 +95,7 @@ class SceneChoiceButton(Button):
         self.choice_data = choice_data
 
     async def callback(self, interaction: discord.Interaction):
-        next_scene_id = self.choice_data['next_scene']
-        self.parent_view.current_scene_id = next_scene_id
+        self.parent_view.current_scene_id = self.choice_data['next_scene']
         await self.parent_view.show_scene(interaction)
 
 class ObjectionButton(Button):
@@ -113,26 +137,8 @@ class AceBleach(commands.Cog):
         if not stories:
             await safe_send(channel, "❌ Aucune histoire disponible.")
             return
-        options_text = "\n".join([f"• {title}" for title in stories.keys()])
-        embed = discord.Embed(
-            title="📚 Mini-jeu Ace Attorney - Bleach",
-            description=f"Choisis ton histoire :\n{options_text}",
-            color=discord.Color.green()
-        )
-        message = await safe_send(channel, embed=embed)
-
-        def check(m):
-            return m.author != self.bot.user and m.channel == channel and m.content in stories.keys()
-
-        try:
-            msg = await self.bot.wait_for('message', check=check, timeout=60)
-            story_title = msg.content
-            story_data = stories[story_title]
-            first_scene_id = story_data['scenes'][0]['id']
-            await self._start_scene(channel, story_data, first_scene_id)
-
-        except Exception:
-            await safe_send(channel, "⏳ Temps écoulé ou erreur, recommence la commande.")
+        view = StorySelectionView(self.bot, stories)
+        view.message = await safe_send(channel, "📚 Choisis ton histoire Bleach :", view=view)
 
     async def _start_scene(self, channel, story_data, scene_id):
         scene = story_data['scenes'][scene_id]
@@ -142,7 +148,6 @@ class AceBleach(commands.Cog):
             color=discord.Color.orange()
         )
         embed.set_footer(text=f"Expression: {scene.get('expression', 'neutre')}")
-
         evidence = story_data.get('evidence', [])
         view = GameButtonView(self.bot, story_data, scene_id, evidence)
         view.message = await safe_send(channel, embed=embed, view=view)
