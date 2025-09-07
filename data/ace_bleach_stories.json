@@ -1,65 +1,64 @@
 {
-  "Affaire du Zanpakuto brisé": {
-    "intro": "Un Zanpakuto a été retrouvé brisé dans le Seireitei... Ichigo doit découvrir la vérité.",
+  "Affaire du Zanpakuto Brisé": {
+    "intro": "Un Zanpakuto a été retrouvé brisé dans le Seireitei. Ichigo doit découvrir la vérité et trouver le coupable.",
+    "evidence": [
+      "Fragments de Zanpakuto",
+      "Empreintes de Reiatsu suspectes",
+      "Témoin: Rukia"
+    ],
     "scenes": [
       {
-        "id": "scene_1",
+        "id": 0,
         "character": "Ichigo",
         "expression": "serieux",
-        "dialogue": "Quelqu’un a osé briser un Zanpakuto ?! Je dois savoir qui est derrière ça.",
+        "dialogue": "Quelqu'un a osé briser un Zanpakuto ? Je dois enquêter immédiatement.",
         "choices": [
-          {
-            "text": "Demander à Rukia",
-            "next_scene": "scene_2"
-          },
-          {
-            "text": "Inspecter la zone",
-            "next_scene": "scene_3"
-          }
-        ]
+          {"text": "Interroger Rukia", "next_scene": 1},
+          {"text": "Inspecter la zone", "next_scene": 2}
+        ],
+        "objections": []
       },
       {
-        "id": "scene_2",
+        "id": 1,
         "character": "Rukia",
         "expression": "inquiete",
-        "dialogue": "Je n’ai rien vu… mais Renji rôdait près de la zone.",
+        "dialogue": "Je n'ai rien vu… mais Renji était près de la zone.",
         "choices": [
-          {
-            "text": "Aller interroger Renji",
-            "next_scene": "scene_4"
-          }
+          {"text": "Aller interroger Renji", "next_scene": 3}
+        ],
+        "objections": [
+          {"text": "Rukia ment", "valid": true, "next_scene": 4}
         ]
       },
       {
-        "id": "scene_3",
+        "id": 2,
         "character": "Ichigo",
         "expression": "concentre",
-        "dialogue": "Il y a des fragments de lame… et des traces de Reiatsu étranges.",
+        "dialogue": "Il y a des fragments de lame et des traces de Reiatsu. Cela pourrait aider à identifier le coupable.",
         "choices": [
-          {
-            "text": "Comparer avec le Reiatsu de Renji",
-            "next_scene": "scene_4"
-          }
-        ]
+          {"text": "Comparer le Reiatsu avec Renji", "next_scene": 3}
+        ],
+        "objections": []
       },
       {
-        "id": "scene_4",
+        "id": 3,
         "character": "Renji",
         "expression": "enerve",
-        "dialogue": "Tu m’accuses, Ichigo ?! Zabimaru n’a rien à voir avec ça !",
+        "dialogue": "Tu m'accuses ? Zabimaru n'a rien à voir avec ça !",
         "choices": [
-          {
-            "text": "Présenter la preuve",
-            "next_scene": "scene_5"
-          }
+          {"text": "Présenter les preuves", "next_scene": 4}
+        ],
+        "objections": [
+          {"text": "Renji cache quelque chose", "valid": true, "next_scene": 4}
         ]
       },
       {
-        "id": "scene_5",
+        "id": 4,
         "character": "Ichigo",
         "expression": "determine",
-        "dialogue": "Les fragments de Reiatsu prouvent le contraire ! Renji, tu caches quelque chose !",
-        "choices": []
+        "dialogue": "Les fragments de Reiatsu prouvent que c'était Renji. L'affaire est résolue !",
+        "choices": [],
+        "objections": []
       }
     ]
   }
