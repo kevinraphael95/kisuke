@@ -14,9 +14,9 @@ from discord import app_commands
 from discord.ext import commands
 from discord.ui import View, Modal, TextInput, Button
 import random
-import aiohttp   # 👈 pour l’API
+import aiohttp
 import unicodedata
-from spellchecker import SpellChecker  # 👈 Correcteur orthographique
+from spellchecker import SpellChecker
 from utils.discord_utils import safe_send, safe_edit, safe_respond
 
 # ────────────────────────────────────────────────────────────────────────────────
@@ -43,7 +43,6 @@ async def get_random_french_word(length: int | None = None) -> str:
     except Exception as e:
         print(f"[ERREUR API Motus] {e}")
 
-    # fallback si l’API échoue
     return "PYTHON"
 
 # ────────────────────────────────────────────────────────────────────────────────
@@ -77,13 +76,14 @@ class MotusModal(Modal):
 # 🎛️ Vue principale avec bouton
 # ────────────────────────────────────────────────────────────────────────────────
 class MotusView(View):
-    def __init__(self, target_word: str, max_attempts: int = 6):
+    def __init__(self, target_word: str, max_attempts: int = 6, author_id: int | None = None):
         super().__init__(timeout=180)
         self.target_word = target_word
         self.max_attempts = max_attempts
         self.attempts = []
         self.message = None
         self.finished = False
+        self.author_id = author_id  # None si multi
         self.add_item(MotusButton(self))
 
     # ───────────── Helper pour enlever accents ─────────────
@@ -119,8 +119,9 @@ class MotusView(View):
     # ───────────── Construire l'embed ─────────────
     def build_embed(self) -> discord.Embed:
         """Construit l'embed affichant l'état du jeu"""
+        mode_text = "Multi" if self.author_id is None else "Solo"
         embed = discord.Embed(
-            title="🎯 M🟡TUS",
+            title=f"🎯 M🟡TUS - mode {mode_text}",
             description=f"Mot de **{len(self.target_word)}** lettres",
             color=discord.Color.orange()
         )
@@ -147,11 +148,11 @@ class MotusView(View):
                 embed.set_footer(text=f"💀 Partie terminée. Le mot était {self.target_word}.")
         return embed
 
+
     # ───────────── Processus d'un essai ─────────────
     async def process_guess(self, interaction: discord.Interaction, guess: str):
-        """Traite un essai du joueur"""
         if self.finished:
-            return  # plus de réponse, la partie est finie
+            return
 
         if len(guess) != len(self.target_word):
             await safe_respond(interaction, f"⚠️ Le mot doit faire {len(self.target_word)} lettres.", ephemeral=True)
@@ -163,16 +164,13 @@ class MotusView(View):
 
         self.attempts.append(guess)
 
-        # Vérifie la victoire ou la fin
         if self.remove_accents(guess) == self.remove_accents(self.target_word) or len(self.attempts) >= self.max_attempts:
             self.finished = True
             for child in self.children:
                 child.disabled = True
 
-        # Mettre à jour l'embed
         await safe_edit(self.message, embed=self.build_embed(), view=self)
 
-        # 👇 Réponse silencieuse pour éviter le bug du modal
         if not interaction.response.is_done():
             await interaction.response.defer(ephemeral=True)
 
@@ -185,6 +183,11 @@ class MotusButton(Button):
         self.parent_view = parent_view
 
     async def callback(self, interaction: discord.Interaction):
+        if self.parent_view.author_id and interaction.user.id != self.parent_view.author_id:
+            await interaction.response.send_message(
+                "❌ Seul le lanceur peut proposer un mot.", ephemeral=True
+            )
+            return
         await interaction.response.send_modal(MotusModal(self.parent_view))
 
 # ────────────────────────────────────────────────────────────────────────────────
@@ -197,10 +200,11 @@ class Motus(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
 
-    async def _start_game(self, channel: discord.abc.Messageable):
-        # récupère un mot FR aléatoire entre 5 et 8 lettres
+    async def _start_game(self, channel: discord.abc.Messageable, author_id: int, mode: str = "solo"):
         target_word = await get_random_french_word(length=random.choice(range(5, 9)))
-        view = MotusView(target_word)
+        # Si mode multi → author_id = None
+        author_filter = None if mode.lower() in ("multi", "multijoueur", "m") else author_id
+        view = MotusView(target_word, author_id=author_filter)
         embed = view.build_embed()
         view.message = await safe_send(channel, embed=embed, view=view)
 
@@ -209,13 +213,14 @@ class Motus(commands.Cog):
     # ────────────────────────────────────────────────────────────────────────────
     @app_commands.command(
         name="motus",
-        description="Lance une partie de Motus."
+        description="Lance une partie de Motus.  motus multi ou m pour jouer en multi"
     )
+    @app_commands.describe(mode="Mode de jeu : solo ou multi")
     @app_commands.checks.cooldown(1, 5.0, key=lambda i: (i.user.id))
-    async def slash_motus(self, interaction: discord.Interaction):
+    async def slash_motus(self, interaction: discord.Interaction, mode: str = "solo"):
         try:
             await interaction.response.defer()
-            await self._start_game(interaction.channel)
+            await self._start_game(interaction.channel, author_id=interaction.user.id, mode=mode)
             await interaction.delete_original_response()
         except app_commands.CommandOnCooldown as e:
             await safe_respond(interaction, f"⏳ Attends encore {e.retry_after:.1f}s.", ephemeral=True)
@@ -226,11 +231,11 @@ class Motus(commands.Cog):
     # ────────────────────────────────────────────────────────────────────────────
     # 🔹 Commande PREFIX
     # ────────────────────────────────────────────────────────────────────────────
-    @commands.command(name="motus")
+    @commands.command(name="motus"), help="Lance une partie de Motus. motus multi ou m pour jouer en multi."
     @commands.cooldown(1, 5.0, commands.BucketType.user)
-    async def prefix_motus(self, ctx: commands.Context):
+    async def prefix_motus(self, ctx: commands.Context, mode: str = "solo"):
         try:
-            await self._start_game(ctx.channel)
+            await self._start_game(ctx.channel, author_id=ctx.author.id, mode=mode)
         except commands.CommandOnCooldown as e:
             await safe_send(ctx.channel, f"⏳ Attends encore {e.retry_after:.1f}s.")
         except Exception as e:
