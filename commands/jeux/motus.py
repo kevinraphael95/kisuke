@@ -231,7 +231,8 @@ class Motus(commands.Cog):
     # ────────────────────────────────────────────────────────────────────────────
     # 🔹 Commande PREFIX
     # ────────────────────────────────────────────────────────────────────────────
-    @commands.command(name="motus"), help="Lance une partie de Motus. motus multi ou m pour jouer en multi."
+    @commands.command(name="motus", 
+                      help="Lance une partie de Motus. motus multi ou m pour jouer en multi.")
     @commands.cooldown(1, 5.0, commands.BucketType.user)
     async def prefix_motus(self, ctx: commands.Context, mode: str = "solo"):
         try:
