@@ -1,7 +1,7 @@
 # ────────────────────────────────────────────────────────────────────────────────
 # 📌 ace_bleach.py — Mini-jeu interactif complet Ace Attorney version Bleach
 # Objectif : Jeu complet avec dialogues, indices, témoignages, contradictions et objections
-# Catégorie : Jeux
+# Catégorie : Bleach
 # Accès : Tous
 # Cooldown : 1 utilisation / 15 secondes / utilisateur
 # ────────────────────────────────────────────────────────────────────────────────
@@ -195,5 +195,5 @@ async def setup(bot: commands.Bot):
     cog = AceBleach(bot)
     for command in cog.get_commands():
         if not hasattr(command, "category"):
-            command.category = "Jeux"
+            command.category = "Bleach"
     await bot.add_cog(cog)
