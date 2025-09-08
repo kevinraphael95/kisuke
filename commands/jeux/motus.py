@@ -81,7 +81,7 @@ class MotusView(View):
         self.target_word = target_word
         self.max_attempts = max_attempts
         self.attempts = []
-        self.message = None
+        self.message = None  # ← IMPORTANT pour griser les boutons
         self.finished = False
         self.author_id = author_id  # None si multi
         self.add_item(MotusButton(self))
@@ -168,6 +168,7 @@ class MotusView(View):
             for child in self.children:
                 child.disabled = True
 
+        # 🔹 Edit du message avec view pour griser les boutons
         await safe_edit(self.message, embed=self.build_embed(), view=self)
 
         if not interaction.response.is_done():
@@ -221,6 +222,7 @@ class Motus(commands.Cog):
         author_filter = None if mode.lower() in ("multi", "multijoueur", "m") else author_id
         view = MotusView(target_word, author_id=author_filter)
         embed = view.build_embed()
+        # 🔹 Important pour griser le bouton plus tard
         view.message = await safe_send(channel, embed=embed, view=view)
 
     # ────────────────────────────────────────────────────────────────────────────
