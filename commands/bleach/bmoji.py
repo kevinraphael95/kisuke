@@ -55,7 +55,7 @@ async def _run_bmoji(target):
         embed = discord.Embed(
             title="Bmoji",
             description="Devine le personnage de Bleach derrière ces emojis !",
-            color=discord.Color.light_grey()
+            color=discord.Color.purple()
         )
         embed.add_field(
             name=" ".join(emojis),
