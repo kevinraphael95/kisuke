@@ -1,5 +1,5 @@
 # ────────────────────────────────────────────────────────────────────────────────
-# 📌 ace_bleach.py — Mini-jeu interactif complet Ace Attorney version Bleach
+# 📌 bleach_attorney.py — Mini-jeu interactif complet Ace Attorney version Bleach
 # Objectif : Jeu complet avec dialogues, indices, témoignages, contradictions et objections
 # Catégorie : Bleach
 # Accès : Tous
@@ -166,7 +166,7 @@ class AceBleach(commands.Cog):
         view.show_scene = show_scene
 
     # ────────────────────────────────────────────────────────────────────────────
-    @app_commands.command(name="ace_bleach", description="Lance le mini-jeu Ace Attorney version Bleach.")
+    @app_commands.command(name="bleach_attorney", description="Lance le mini-jeu Ace Attorney version Bleach.")
     @app_commands.checks.cooldown(1, 15.0, key=lambda i: (i.user.id))
     async def slash_ace_bleach(self, interaction: discord.Interaction):
         try:
@@ -179,7 +179,7 @@ class AceBleach(commands.Cog):
             print(f"[ERREUR /ace_bleach] {e}")
             await safe_respond(interaction, "❌ Une erreur est survenue.", ephemeral=True)
 
-    @commands.command(name="ace_bleach")
+    @commands.command(name="bleach_attorney", aliases=["bleach attorney", "ba"])
     @commands.cooldown(1, 15.0, commands.BucketType.user)
     async def prefix_ace_bleach(self, ctx: commands.Context):
         try:
