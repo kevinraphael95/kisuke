@@ -73,7 +73,7 @@ class MotusModal(Modal):
         await self.parent_view.process_guess(interaction, guess)
 
 # ────────────────────────────────────────────────────────────────────────────────
-# 🎛️ Vue principale avec bouton
+# 🎛️ Vue principale avec bouton 
 # ────────────────────────────────────────────────────────────────────────────────
 class MotusView(View):
     def __init__(self, target_word: str, max_attempts: int = 6, author_id: int | None = None):
@@ -95,7 +95,6 @@ class MotusView(View):
 
     # ───────────── Feedback avec emojis ─────────────
     def create_feedback_line(self, guess: str) -> str:
-        """Retourne les deux lignes alignées 🇦 + 🟩"""
         def letter_to_emoji(c: str) -> str:
             c_clean = ''.join(
                 ch for ch in unicodedata.normalize('NFD', c)
@@ -118,7 +117,6 @@ class MotusView(View):
 
     # ───────────── Construire l'embed ─────────────
     def build_embed(self) -> discord.Embed:
-        """Construit l'embed affichant l'état du jeu"""
         mode_text = "Multi" if self.author_id is None else "Solo"
         embed = discord.Embed(
             title=f"🎯 M🟡TUS - mode {mode_text}",
@@ -148,7 +146,7 @@ class MotusView(View):
                 embed.set_footer(text=f"💀 Partie terminée. Le mot était {self.target_word}.")
         return embed
 
-    # ───────────── Processus d'un essai ─────────────
+    # ───────────── Processus d'un essai corrigé ─────────────
     async def process_guess(self, interaction: discord.Interaction, guess: str):
         if self.finished:
             return
@@ -163,17 +161,19 @@ class MotusView(View):
 
         self.attempts.append(guess)
 
+        # Partie terminée → griser les boutons
         if self.remove_accents(guess) == self.remove_accents(self.target_word) or len(self.attempts) >= self.max_attempts:
             self.finished = True
             for child in self.children:
                 child.disabled = True
 
-        await safe_edit(self.message, embed=self.build_embed(), view=self)
+        # ⚠️ EDITER le message de l'interaction pour que le bouton se grise
+        await safe_edit(interaction.message, embed=self.build_embed(), view=self)
 
         if not interaction.response.is_done():
             await interaction.response.defer(ephemeral=True)
 
-    # ───────────── Timeout (fin de partie sans réponse) ─────────────
+    # ───────────── Timeout (fin de partie sans réponse) corrigé ─────────────
     async def on_timeout(self):
         if self.finished:
             return
@@ -184,8 +184,10 @@ class MotusView(View):
         embed = self.build_embed()
         embed.color = discord.Color.red()
         embed.set_footer(text=f"⏳ Temps écoulé ! Le mot était {self.target_word}.")
+
         try:
-            await safe_edit(self.message, embed=embed, view=self)
+            if self.message:
+                await safe_edit(self.message, embed=embed, view=self)
         except Exception as e:
             print(f"[ERREUR Timeout Motus] {e}")
 
