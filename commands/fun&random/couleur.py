@@ -84,7 +84,7 @@ class CouleurCommand(commands.Cog):
         try:
             view = CouleurView(interaction.user)
             embed = view.generer_embed()
-            embed.timestamp = interaction.created_at
+        
 
             # Répond directement à l'interaction
             await interaction.response.send_message(embed=embed, view=view)
@@ -107,7 +107,7 @@ class CouleurCommand(commands.Cog):
         try:
             view = CouleurView(ctx.author)
             embed = view.generer_embed()
-            embed.timestamp = ctx.message.created_at
+ 
             view.message = await safe_send(ctx, embed=embed, view=view)
         except Exception as e:
             print(f"[ERREUR !couleur] {e}")
