@@ -17,7 +17,7 @@ from discord import app_commands
 from discord.ext import commands
 
 from utils.supabase_utils import supabase
-from utils.discord_utils import safe_send, safe_respond
+from utils.discord_utils import safe_send, safe_followup  # <-- safe_followup utilisé pour defer
 
 # Cooldowns par classe (heures → secondes)
 CLASS_CD = {
@@ -41,8 +41,13 @@ class Skill(commands.Cog):
     # 🔹 Fonction interne commune pour l'exécution
     # ────────────────────────────────────────────────────────────────────────────
     async def _execute_skill(self, user_id: str):
-        response = supabase.table("reiatsu").select("*").eq("user_id", user_id).single().execute()
-        data = getattr(response, "data", None)
+        try:
+            response = supabase.table("reiatsu").select("*").eq("user_id", user_id).single().execute()
+            data = getattr(response, "data", None)
+        except Exception as e:
+            print(f"[ERREUR SUPABASE] {e}")
+            return "❌ Impossible de récupérer les données."
+
         if not data:
             return "❌ Tu n'as pas encore commencé l'aventure. Utilise `!start`."
 
@@ -101,7 +106,11 @@ class Skill(commands.Cog):
         # 🔹 Mise à jour en base
         updated_fields["last_skill"] = now.isoformat()
         updated_fields["skill_cd"] = new_cd
-        supabase.table("reiatsu").update(updated_fields).eq("user_id", user_id).execute()
+        try:
+            supabase.table("reiatsu").update(updated_fields).eq("user_id", user_id).execute()
+        except Exception as e:
+            print(f"[ERREUR SUPABASE UPDATE] {e}")
+            return "❌ Impossible de mettre à jour les données."
 
         return result_message
 
@@ -112,17 +121,14 @@ class Skill(commands.Cog):
         name="skill",
         description="Active la compétence spécifique de ta classe avec cooldown."
     )
-    @app_commands.checks.cooldown(1, 5.0, key=lambda i: i.user.id)
     async def slash_skill(self, interaction: discord.Interaction):
         try:
             await interaction.response.defer()
             message = await self._execute_skill(str(interaction.user.id))
-            await safe_respond(interaction, message)
-        except app_commands.CommandOnCooldown as e:
-            await safe_respond(interaction, f"⏳ Attends encore {e.retry_after:.1f}s.", ephemeral=True)
+            await safe_followup(interaction, message)  # <-- safe_followup après defer
         except Exception as e:
             print(f"[ERREUR /skill] {e}")
-            await safe_respond(interaction, "❌ Une erreur est survenue.", ephemeral=True)
+            await safe_followup(interaction, "❌ Une erreur est survenue.")
 
     # ────────────────────────────────────────────────────────────────────────────
     # 🔹 Commande PREFIX
@@ -148,6 +154,9 @@ async def setup(bot: commands.Bot):
         if not hasattr(command, "category"):
             command.category = "Général"
     await bot.add_cog(cog)
-
+    try:
+        await bot.tree.sync()  # synchronisation slash
+    except Exception as e:
+        print(f"[SYNC SLASH] {e}")
 
 
