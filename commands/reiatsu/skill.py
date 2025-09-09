@@ -82,15 +82,17 @@ class Skill(commands.Cog):
             new_cd = CLASS_CD["Absorbeur"]
 
         elif classe == "Illusionniste":
-            if active_skill and isinstance(active_skill, dict) and active_skill.get("type") == "faux":
-                return "❌ Tu as déjà un faux Reiatsu actif."
-
-            # 🔹 Trouver un canal de spawn
+            # 🔹 Vérifier s'il existe déjà un faux Reiatsu pour ce serveur
             conf_data = supabase.table("reiatsu_config").select("*").limit(1).execute()
             if not conf_data.data:
                 return "❌ Impossible de trouver le canal pour le faux Reiatsu."
             channel_id = int(conf_data.data[0].get("channel_id"))
             guild_id = int(conf_data.data[0].get("guild_id"))
+            id_faux_reiatsu = conf_data.data[0].get("id_faux_reiatsu")
+
+            if id_faux_reiatsu:
+                return "❌ Un faux Reiatsu est déjà actif sur ce serveur !"
+
             guild = self.bot.get_guild(guild_id)
             if not guild:
                 return "❌ Guild introuvable."
@@ -123,6 +125,12 @@ class Skill(commands.Cog):
             result_message = "🎭 Tu as créé un faux Reiatsu ! Si quelqu’un le prend → tu gagnes **+10 points**."
             new_cd = CLASS_CD["Illusionniste"]
 
+            # 🔹 Mettre à jour l'id du faux dans reiatsu_config
+            try:
+                supabase.table("reiatsu_config").update({"id_faux_reiatsu": spawn_id}).execute()
+            except Exception as e:
+                print(f"[ERREUR SUPABASE UPDATE CONFIG] {e}")
+
             # 🔹 Supprimer le message de commande pour effacer les traces
             if ctx_or_interaction:
                 try:
@@ -152,8 +160,11 @@ class Skill(commands.Cog):
         updated_fields["last_skill"] = now.isoformat()
         updated_fields["skill_cd"] = new_cd
 
+        # 🔹 Update sécurisé Supabase
         try:
-            supabase.table("reiatsu").update(updated_fields).eq("user_id", user_id).execute()
+            response = supabase.table("reiatsu").upsert({**data, **updated_fields}, on_conflict="user_id").execute()
+            if getattr(response, "status_code", 200) >= 400:
+                return "❌ Impossible de mettre à jour les données (Supabase a renvoyé une erreur)."
         except Exception as e:
             print(f"[ERREUR SUPABASE UPDATE] {e}")
             return "❌ Impossible de mettre à jour les données."
@@ -195,13 +206,19 @@ class Skill(commands.Cog):
             return
 
         try:
-            # Récupérer les points actuels pour éviter l'écrasement
-            current_points = supabase.table("reiatsu").select("points").eq("user_id", str(faux_owner_id)).single().execute().data["points"]
-            supabase.table("reiatsu").update({
+            # 🔹 Récupérer les points actuels pour éviter l'écrasement et upsert
+            current = supabase.table("reiatsu").select("*").eq("user_id", str(faux_owner_id)).single().execute()
+            current_points = getattr(current.data, "points", 0) if current.data else 0
+
+            supabase.table("reiatsu").upsert({
+                "user_id": str(faux_owner_id),
                 "points": current_points + 10,
                 "active_skill": None,
                 "faux_block_user": None
-            }).eq("user_id", str(faux_owner_id)).execute()
+            }, on_conflict="user_id").execute()
+
+            # 🔹 Réinitialiser l'id du faux Reiatsu dans reiatsu_config
+            supabase.table("reiatsu_config").update({"id_faux_reiatsu": None}).execute()
         except Exception as e:
             print(f"[ERREUR SUPABASE UPDATE FAUX REIATSU] {e}")
             return
