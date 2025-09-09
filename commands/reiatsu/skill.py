@@ -53,6 +53,7 @@ class Skill(commands.Cog):
         reiatsu = data.get("points", 0)
         last_skill = data.get("last_skill")
         skill_cd = data.get("skill_cd", 0)
+        active_skill = data.get("active_skill")
 
         now = datetime.now(timezone.utc)
 
@@ -90,17 +91,16 @@ class Skill(commands.Cog):
 
         # ─ Illusionniste ─
         elif classe == "Illusionniste":
-            if data.get("faux_reiatsu_active", False):
+            if active_skill and isinstance(active_skill, dict) and active_skill.get("type") == "faux":
                 return await safe_send(ctx, "❌ Tu as déjà un faux Reiatsu actif.")
 
-            supabase.table("reiatsu_spawn").insert({
-                "user_id": user_id,
+            # Création du faux Reiatsu dans active_skill
+            updated_fields["active_skill"] = {
                 "type": "faux",
+                "owner_id": user_id,
                 "points": 0,
                 "created_at": now.isoformat()
-            }).execute()
-
-            updated_fields["faux_reiatsu_active"] = True
+            }
             result_message = "🎭 Tu as créé un faux Reiatsu ! Si quelqu’un le prend → tu gagnes 10."
             new_cd = CLASS_CD["Illusionniste"]
 
