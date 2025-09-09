@@ -3,7 +3,7 @@
 # Objectif : Utiliser la compétence active de la classe du joueur avec cooldown
 # Catégorie : Reiatsu
 # Accès : Tous
-# Cooldown : 1 utilisation / 5 secondes / utilisateur (préfixe & slash)
+# Cooldown : 1 utilisation / 5 secondes / utilisateur
 # ────────────────────────────────────────────────────────────────────────────────
 
 # ────────────────────────────────────────────────────────────────────────────────
@@ -11,15 +11,13 @@
 # ────────────────────────────────────────────────────────────────────────────────
 import random
 from datetime import datetime, timezone, timedelta
-
 import discord
 from discord import app_commands
 from discord.ext import commands
-
 from utils.supabase_utils import supabase
-from utils.discord_utils import safe_send, safe_followup  # pour defer et followup
+from utils.discord_utils import safe_send, safe_respond, safe_followup
 
-# Cooldowns par classe (heures → secondes)
+# Cooldowns par classe (en secondes)
 CLASS_CD = {
     "Travailleur": 0,
     "Voleur": 12 * 3600,
@@ -32,13 +30,14 @@ CLASS_CD = {
 # 🧠 Cog principal
 # ────────────────────────────────────────────────────────────────────────────────
 class Skill(commands.Cog):
-    """Commande /skill et !skill — Active la compétence spécifique de la classe du joueur avec cooldown"""
-
+    """
+    Commande /skill et !skill — Active la compétence spécifique de la classe du joueur avec cooldown
+    """
     def __init__(self, bot: commands.Bot):
         self.bot = bot
         print("[COG LOAD] Skill cog chargé ✅")
 
-    # 🔹 Fonction interne commune pour l'exécution
+    # 🔹 Fonction interne commune
     async def _execute_skill(self, user_id: str):
         try:
             response = supabase.table("reiatsu").select("*").eq("user_id", user_id).single().execute()
@@ -57,14 +56,13 @@ class Skill(commands.Cog):
         active_skill = data.get("active_skill")
         now = datetime.now(timezone.utc)
 
-        # ⏳ Vérification du cooldown
+        # ⏳ Cooldown
         if last_skill:
             elapsed = (now - datetime.fromisoformat(last_skill)).total_seconds()
             if elapsed < skill_cd:
                 remaining = timedelta(seconds=int(skill_cd - elapsed))
                 return f"⏳ Compétence encore en recharge ! Temps restant : **{remaining}**"
 
-        # 🔹 Gestion des compétences par classe
         updated_fields = {}
         result_message = ""
 
@@ -102,9 +100,9 @@ class Skill(commands.Cog):
             updated_fields["points"] = new_points
             new_cd = CLASS_CD["Parieur"]
 
-        # 🔹 Mise à jour en base
         updated_fields["last_skill"] = now.isoformat()
         updated_fields["skill_cd"] = new_cd
+
         try:
             supabase.table("reiatsu").update(updated_fields).eq("user_id", user_id).execute()
         except Exception as e:
@@ -154,11 +152,4 @@ async def setup(bot: commands.Bot):
     await bot.add_cog(cog)
     print("[COG SETUP] Skill cog ajouté ✅")
 
-    # 🔹 Synchronisation des slash commands
-    @bot.event
-    async def on_ready():
-        try:
-            await bot.tree.sync()
-            print("[SYNC SLASH] Slash commands synchronisées ✅")
-        except Exception as e:
-            print(f"[SYNC SLASH] {e}")
+
