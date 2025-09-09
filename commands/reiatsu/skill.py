@@ -15,7 +15,7 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 from utils.supabase_client import supabase
-from utils.discord_utils import safe_send, safe_respond, safe_followup
+from utils.discord_utils import safe_send, safe_respond, safe_followup, safe_delete
 
 # Cooldowns par classe (en secondes)
 CLASS_CD = {
@@ -38,7 +38,7 @@ class Skill(commands.Cog):
         print("[COG LOAD] Skill cog chargé ✅")
 
     # 🔹 Fonction interne commune
-    async def _execute_skill(self, user_id: str):
+    async def _execute_skill(self, user_id: str, ctx_or_interaction=None):
         try:
             response = supabase.table("reiatsu").select("*").eq("user_id", user_id).single().execute()
             data = getattr(response, "data", None)
@@ -66,28 +66,79 @@ class Skill(commands.Cog):
         updated_fields = {}
         result_message = ""
 
+        # ────── Gestion des compétences par classe ──────
         if classe == "Travailleur":
             result_message = "💼 Tu es Travailleur : pas de compétence active."
             new_cd = 0
+
         elif classe == "Voleur":
             updated_fields["vol_garanti"] = True
             result_message = "🥷 Ton prochain vol sera garanti."
             new_cd = CLASS_CD["Voleur"]
+
         elif classe == "Absorbeur":
             updated_fields["prochain_reiatsu"] = 100
             result_message = "🌀 Ton prochain Reiatsu absorbé sera un Super Reiatsu (100 points)."
             new_cd = CLASS_CD["Absorbeur"]
+
         elif classe == "Illusionniste":
             if active_skill and isinstance(active_skill, dict) and active_skill.get("type") == "faux":
                 return "❌ Tu as déjà un faux Reiatsu actif."
+
+            # 🔹 Trouver un canal de spawn (exemple : dernier channel utilisé)
+            conf_data = supabase.table("reiatsu_config").select("*").limit(1).execute()
+            if not conf_data.data:
+                return "❌ Impossible de trouver le canal pour le faux Reiatsu."
+            channel_id = int(conf_data.data[0].get("channel_id"))
+            guild_id = int(conf_data.data[0].get("guild_id"))
+            guild = self.bot.get_guild(guild_id)
+            if not guild:
+                return "❌ Guild introuvable."
+            channel = guild.get_channel(channel_id)
+            if not channel:
+                return "❌ Canal introuvable."
+
+            # 🔹 Créer le faux Reiatsu identique au spawn automatique
+            embed = discord.Embed(
+                title="💠 Un Reiatsu sauvage apparaît !",
+                description="Cliquez sur la réaction 💠 pour l'absorber.",
+                color=discord.Color.purple()
+            )
+            fake_message = await safe_send(channel, embed=embed)
+            if fake_message:
+                try:
+                    await fake_message.add_reaction("💠")
+                except discord.HTTPException:
+                    pass
+                spawn_id = str(fake_message.id)
+            else:
+                spawn_id = None
+
             updated_fields["active_skill"] = {
                 "type": "faux",
                 "owner_id": user_id,
                 "points": 0,
+                "spawn_id": spawn_id,
                 "created_at": now.isoformat()
             }
-            result_message = "🎭 Tu as créé un faux Reiatsu ! Si quelqu’un le prend → tu gagnes 10."
+
+            result_message = "🎭 Tu as créé un faux Reiatsu ! Si quelqu’un le prend → tu gagnes **+10 points**."
             new_cd = CLASS_CD["Illusionniste"]
+
+            # 🔹 Supprimer le message de commande pour effacer les traces
+            if ctx_or_interaction:
+                try:
+                    if isinstance(ctx_or_interaction, commands.Context):
+                        await ctx_or_interaction.message.delete()
+                    elif isinstance(ctx_or_interaction, discord.Interaction):
+                        if ctx_or_interaction.response.is_done():
+                            await ctx_or_interaction.delete_original_response()
+                        else:
+                            await ctx_or_interaction.response.defer()
+                            await ctx_or_interaction.delete_original_response()
+                except Exception:
+                    pass
+
         elif classe == "Parieur":
             if reiatsu < 10:
                 return "❌ Tu n'as pas assez de Reiatsu pour parier (10 requis)."
@@ -120,7 +171,7 @@ class Skill(commands.Cog):
     async def slash_skill(self, interaction: discord.Interaction):
         try:
             await interaction.response.defer()
-            message = await self._execute_skill(str(interaction.user.id))
+            message = await self._execute_skill(str(interaction.user.id), interaction)
             await safe_followup(interaction, message)
         except app_commands.CommandOnCooldown as e:
             await safe_followup(interaction, f"⏳ Attends encore {e.retry_after:.1f}s.", ephemeral=True)
@@ -133,7 +184,7 @@ class Skill(commands.Cog):
     @commands.cooldown(1, 5.0, commands.BucketType.user)
     async def prefix_skill(self, ctx: commands.Context):
         try:
-            message = await self._execute_skill(str(ctx.author.id))
+            message = await self._execute_skill(str(ctx.author.id), ctx)
             await safe_send(ctx.channel, message)
         except commands.CommandOnCooldown as e:
             await safe_send(ctx.channel, f"⏳ Attends encore {e.retry_after:.1f}s.")
@@ -151,5 +202,3 @@ async def setup(bot: commands.Bot):
             command.category = "Reiatsu"
     await bot.add_cog(cog)
     print("[COG SETUP] Skill cog ajouté ✅")
-
-
