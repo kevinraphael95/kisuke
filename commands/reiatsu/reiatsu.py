@@ -106,6 +106,20 @@ class ReiatsuCommand(commands.Cog):
                 h, m = divmod(minutes_total, 60)
                 cooldown_text = f"{restant.days}j {h}h{m}m" if restant.days else f"{h}h{m}m"
 
+
+        # ───────────── Cooldown compétence ─────────────
+        skill_cd_text = "Disponible ✅"
+        if last_skill_str and skill_cd:
+            last_skill = parser.parse(last_skill_str)
+            next_skill = last_skill + timedelta(seconds=skill_cd)
+            now = datetime.utcnow()
+            if now < next_skill:
+                restant = next_skill - now
+                minutes_total = int(restant.total_seconds() // 60)
+                h, m = divmod(minutes_total, 60)
+                skill_cd_text = f"{restant.days}j {h}h{m}m" if restant.days else f"{h}h{m}m"
+
+
         # ───────────── Cooldown compétence ─────────────
         skill_cd_text = "Disponible ✅"
         if last_skill_str and skill_cd:
@@ -166,7 +180,8 @@ class ReiatsuCommand(commands.Cog):
                 f"(reiatsuvol pour voler du reiatsu à quelqu'un)\n"
                 f"• Classe : {classe_nom or 'Aucune'}\n"
                 f"• Cooldown compétence : {skill_cd_text}\n"
-                f"(classe pour changer de classe)\n\n"
+                f"(classe pour changer de classe)\n"
+                f"• Cooldown compétence : {skill_cd_text}\n\n"
                 f"• ℹ️ __**Infos Reiatsu**__\n"
                 f"• 📍 Le reiatsu apparaît sur la salon : {salon_text}\n"
                 f"• ⏱️ Intervalle entre deux apparitions : {spawn_speed_text}\n"
