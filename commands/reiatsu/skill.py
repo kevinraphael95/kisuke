@@ -159,4 +159,3 @@ async def setup(bot: commands.Bot):
     except Exception as e:
         print(f"[SYNC SLASH] {e}")
 
-
