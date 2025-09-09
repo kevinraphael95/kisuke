@@ -122,6 +122,9 @@ class Skill(commands.Cog):
                 "created_at": now.isoformat()
             }
 
+            # 🔹 Interdire au créateur d'absorber son propre faux Reiatsu
+            updated_fields["faux_block_user"] = user_id
+
             result_message = "🎭 Tu as créé un faux Reiatsu ! Si quelqu’un le prend → tu gagnes **+10 points**."
             new_cd = CLASS_CD["Illusionniste"]
 
