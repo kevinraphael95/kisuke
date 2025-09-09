@@ -14,7 +14,7 @@ from datetime import datetime, timezone, timedelta
 import discord
 from discord import app_commands
 from discord.ext import commands
-from utils.supabase_utils import supabase
+from utils.supabase_client import supabase
 from utils.discord_utils import safe_send, safe_respond, safe_followup
 
 # Cooldowns par classe (en secondes)
