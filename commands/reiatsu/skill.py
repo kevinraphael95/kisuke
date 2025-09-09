@@ -120,7 +120,6 @@ class Skill(commands.Cog):
                 "created_at": now.isoformat()
             }
             updated_fields["faux_block_user"] = user_id
-
             result_message = "🎭 Tu as créé un faux Reiatsu ! Si quelqu’un le prend → tu gagnes **+10 points**."
             new_cd = CLASS_CD["Illusionniste"]
 
@@ -167,7 +166,6 @@ class Skill(commands.Cog):
         if str(payload.emoji) != "💠":
             return
 
-        # Récupérer le message
         guild = self.bot.get_guild(payload.guild_id)
         if not guild:
             return
@@ -191,16 +189,16 @@ class Skill(commands.Cog):
         if not faux_data:
             return
 
-        # Interdire au créateur de l’absorber
         faux_owner_id = faux_data["active_skill"].get("owner_id")
         faux_block_user = faux_data.get("faux_block_user")
         if str(payload.user_id) == str(faux_block_user):
             return
 
-        # Ajouter +10 points au créateur et supprimer le faux Reiatsu
         try:
+            # Récupérer les points actuels pour éviter l'écrasement
+            current_points = supabase.table("reiatsu").select("points").eq("user_id", str(faux_owner_id)).single().execute().data["points"]
             supabase.table("reiatsu").update({
-                "points": faux_data.get("points", 0) + 10,
+                "points": current_points + 10,
                 "active_skill": None,
                 "faux_block_user": None
             }).eq("user_id", str(faux_owner_id)).execute()
@@ -208,7 +206,6 @@ class Skill(commands.Cog):
             print(f"[ERREUR SUPABASE UPDATE FAUX REIATSU] {e}")
             return
 
-        # Supprimer le message du faux Reiatsu
         try:
             await message.delete()
         except Exception:
