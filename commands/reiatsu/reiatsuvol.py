@@ -76,13 +76,22 @@ class ReiatsuVol(commands.Cog):
 
         # 🎲 Calcul du vol
         montant = max(1, cible_points // 10)  # 10%
-        if voleur_classe == "Voleur" and random.random() < 0.15:  # 15% de chance de doubler le gain
-            montant *= 2
 
-        if voleur_classe == "Voleur":
-            succes = random.random() < 0.67
+        # 🔹 Si voleur a activé son skill → vol garanti
+        skill_actif = voleur_data.get("vol_garanti", False)
+
+        if skill_actif:
+            succes = True
+            # On désactive le skill après utilisation
+            supabase.table("reiatsu").update({"vol_garanti": False}).eq("user_id", voleur_id).execute()
         else:
-            succes = random.random() < 0.25
+            # Voleur normal
+            if voleur_classe == "Voleur":
+                succes = random.random() < 0.67
+                if random.random() < 0.15:  # 15% de chance de doubler le gain
+                    montant *= 2
+            else:
+                succes = random.random() < 0.25
 
         # Préparation du payload voleur
         payload_voleur = {"last_steal_attempt": now.isoformat()}
