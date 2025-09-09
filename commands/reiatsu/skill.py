@@ -15,7 +15,7 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 from utils.supabase_client import supabase
-from utils.discord_utils import safe_send, safe_respond, safe_followup, safe_delete
+from utils.discord_utils import safe_send, safe_followup
 
 # Cooldowns par classe (en secondes)
 CLASS_CD = {
@@ -85,7 +85,7 @@ class Skill(commands.Cog):
             if active_skill and isinstance(active_skill, dict) and active_skill.get("type") == "faux":
                 return "❌ Tu as déjà un faux Reiatsu actif."
 
-            # 🔹 Trouver un canal de spawn (exemple : dernier channel utilisé)
+            # 🔹 Trouver un canal de spawn
             conf_data = supabase.table("reiatsu_config").select("*").limit(1).execute()
             if not conf_data.data:
                 return "❌ Impossible de trouver le canal pour le faux Reiatsu."
@@ -105,14 +105,12 @@ class Skill(commands.Cog):
                 color=discord.Color.purple()
             )
             fake_message = await safe_send(channel, embed=embed)
+            spawn_id = str(fake_message.id) if fake_message else None
             if fake_message:
                 try:
                     await fake_message.add_reaction("💠")
                 except discord.HTTPException:
                     pass
-                spawn_id = str(fake_message.id)
-            else:
-                spawn_id = None
 
             updated_fields["active_skill"] = {
                 "type": "faux",
@@ -121,8 +119,6 @@ class Skill(commands.Cog):
                 "spawn_id": spawn_id,
                 "created_at": now.isoformat()
             }
-
-            # 🔹 Interdire au créateur d'absorber son propre faux Reiatsu
             updated_fields["faux_block_user"] = user_id
 
             result_message = "🎭 Tu as créé un faux Reiatsu ! Si quelqu’un le prend → tu gagnes **+10 points**."
@@ -164,6 +160,59 @@ class Skill(commands.Cog):
             return "❌ Impossible de mettre à jour les données."
 
         return result_message
+
+    # 🔹 Listener pour gérer l'absorption du faux Reiatsu
+    @commands.Cog.listener()
+    async def on_raw_reaction_add(self, payload: discord.RawReactionActionEvent):
+        if str(payload.emoji) != "💠":
+            return
+
+        # Récupérer le message
+        guild = self.bot.get_guild(payload.guild_id)
+        if not guild:
+            return
+        channel = guild.get_channel(payload.channel_id)
+        if not channel:
+            return
+        try:
+            message = await channel.fetch_message(payload.message_id)
+        except Exception:
+            return
+
+        # Vérifier si c'est un faux Reiatsu
+        response = supabase.table("reiatsu").select("*").execute()
+        data_list = getattr(response, "data", [])
+        faux_data = None
+        for data in data_list:
+            active_skill = data.get("active_skill")
+            if active_skill and active_skill.get("spawn_id") == str(payload.message_id):
+                faux_data = data
+                break
+        if not faux_data:
+            return
+
+        # Interdire au créateur de l’absorber
+        faux_owner_id = faux_data["active_skill"].get("owner_id")
+        faux_block_user = faux_data.get("faux_block_user")
+        if str(payload.user_id) == str(faux_block_user):
+            return
+
+        # Ajouter +10 points au créateur et supprimer le faux Reiatsu
+        try:
+            supabase.table("reiatsu").update({
+                "points": faux_data.get("points", 0) + 10,
+                "active_skill": None,
+                "faux_block_user": None
+            }).eq("user_id", str(faux_owner_id)).execute()
+        except Exception as e:
+            print(f"[ERREUR SUPABASE UPDATE FAUX REIATSU] {e}")
+            return
+
+        # Supprimer le message du faux Reiatsu
+        try:
+            await message.delete()
+        except Exception:
+            pass
 
     # 🔹 Commande SLASH
     @app_commands.command(
