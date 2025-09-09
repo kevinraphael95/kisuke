@@ -155,12 +155,13 @@ class ReiatsuSpawner(commands.Cog):
                         continue  # Ignore le faux si c'est son propre spawn
                     owner_id = skill.get("owner_id")
                     owner = guild.get_member(int(owner_id))
-                    # +10 points pour le créateur
-                    owner_data = supabase.table("reiatsu").select("points").eq("user_id", owner_id).single().execute()
-                    if owner_data.data:
-                        new_points = owner_data.data["points"] + 10
-                        supabase.table("reiatsu").update({"points": new_points}).eq("user_id", owner_id).execute()
-                    await safe_send(channel, f"🎭 Le faux Reiatsu a été absorbé par {user.mention}... {owner.mention} gagne **+10** points !")
+                    if owner:
+                        # +10 points pour le créateur
+                        owner_data = supabase.table("reiatsu").select("points").eq("user_id", owner_id).single().execute()
+                        if owner_data.data:
+                            new_points = owner_data.data["points"] + 10
+                            supabase.table("reiatsu").update({"points": new_points}).eq("user_id", owner_id).execute()
+                        await safe_send(channel, f"🎭 Le faux Reiatsu a été absorbé par {user.mention}... {owner.mention} gagne **+10** points !")
                     # Supprimer le faux Reiatsu
                     supabase.table("reiatsu").update({"active_skill": None}).eq("user_id", u["user_id"]).execute()
                     return
@@ -178,11 +179,13 @@ class ReiatsuSpawner(commands.Cog):
                 "spawn_delay": new_delay
             }).eq("guild_id", guild_id).execute()
 
-            try:
-                message = await channel.fetch_message(int(conf["spawn_message_id"]))
-                await safe_delete(message)
-            except Exception:
-                pass
+            spawn_message_id = conf.get("spawn_message_id")
+            if spawn_message_id:
+                try:
+                    message = await channel.fetch_message(int(spawn_message_id))
+                    await safe_delete(message)
+                except Exception:
+                    pass
 
     def _calculate_gain(self, user_id):
         is_super = random.randint(1, 100) <= SUPER_REIATSU_CHANCE
