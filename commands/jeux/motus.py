@@ -85,9 +85,9 @@ class MotusView(View):
         self.hinted_indices: set[int] = set()
 
         # Boutons
+        self.add_item(MotusButton(self))
         self.hint_button = HintButton(self)
         self.add_item(self.hint_button)
-        self.add_item(MotusButton(self))
 
     # ───────────── Helper pour enlever accents ─────────────
     def remove_accents(self, text: str) -> str:
