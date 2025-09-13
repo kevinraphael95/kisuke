@@ -202,6 +202,19 @@ class MotusView(View):
         await safe_edit(self.message, embed=embed, view=self)
 
 # ────────────────────────────────────────────────────────────────────────────────
+# 🎛️ Bouton Proposer
+# ────────────────────────────────────────────────────────────────────────────────
+class MotusButton(Button):
+    def __init__(self, parent_view: MotusView):
+        super().__init__(label="Proposer un mot", style=discord.ButtonStyle.primary)
+        self.parent_view = parent_view
+
+    async def callback(self, interaction: discord.Interaction):
+        if self.parent_view.author_id and interaction.user.id != self.parent_view.author_id:
+            return await interaction.response.send_message("❌ Seul le lanceur peut proposer un mot.", ephemeral=True)
+        await interaction.response.send_modal(MotusModal(self.parent_view))
+
+# ────────────────────────────────────────────────────────────────────────────────
 # 🎛️ Bouton Indice
 # ────────────────────────────────────────────────────────────────────────────────
 class HintButton(Button):
@@ -235,19 +248,6 @@ class HintButton(Button):
 
         await safe_edit(pv.message, embed=pv.build_embed(), view=pv)
         await interaction.response.send_message(f"🔎 Indice utilisé — lettre **{pv.target_word[idx]}** révélée.", ephemeral=True)
-
-# ────────────────────────────────────────────────────────────────────────────────
-# 🎛️ Bouton Proposer
-# ────────────────────────────────────────────────────────────────────────────────
-class MotusButton(Button):
-    def __init__(self, parent_view: MotusView):
-        super().__init__(label="Proposer un mot", style=discord.ButtonStyle.primary)
-        self.parent_view = parent_view
-
-    async def callback(self, interaction: discord.Interaction):
-        if self.parent_view.author_id and interaction.user.id != self.parent_view.author_id:
-            return await interaction.response.send_message("❌ Seul le lanceur peut proposer un mot.", ephemeral=True)
-        await interaction.response.send_modal(MotusModal(self.parent_view))
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🧠 Cog principal
