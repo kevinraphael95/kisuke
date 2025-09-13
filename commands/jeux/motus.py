@@ -59,10 +59,10 @@ class MotusModal(Modal):
         self.parent_view = parent_view
         self.word_input = TextInput(
             label="Mot",
-            placeholder=f"Mot de {len(self.parent_view.target_word)} lettres",
+            placeholder=f"Mot de {self.parent_view.display_length} lettres",
             required=True,
-            max_length=len(self.parent_view.target_word),
-            min_length=len(self.parent_view.target_word)
+            max_length=self.parent_view.display_length,
+            min_length=self.parent_view.display_length
         )
         self.add_item(self.word_input)
 
@@ -76,8 +76,17 @@ class MotusModal(Modal):
 class MotusView(View):
     def __init__(self, target_word: str, max_attempts: int | None = None, author_id: int | None = None):
         super().__init__(timeout=180)
-        self.target_word = target_word.upper()
-        self.max_attempts = max_attempts if max_attempts else len(self.target_word)
+
+        # 🔤 Normalisation du mot (œ → oe) et retrait des tirets
+        normalized = target_word.replace("Œ", "OE").replace("œ", "oe")
+        self.target_word = normalized.upper()
+        self.display_word = self.target_word  # Pour affichage avec tirets
+        self.display_length = len([c for c in self.target_word if c.isalpha()])  # Longueur sans tirets
+
+        # 🔢 Au moins 5 essais même pour les mots courts
+        base_attempts = max(self.display_length, 5)
+        self.max_attempts = max_attempts if max_attempts else base_attempts
+
         self.attempts: list[dict] = []  # {'word': str, 'hint': bool}
         self.message = None
         self.finished = False
@@ -102,6 +111,8 @@ class MotusView(View):
         is_hint = entry.get('hint', False)
 
         def letter_to_flag(c: str) -> str:
+            if c == "-":
+                return "-"  # conserve les tirets sans les compter
             c_clean = self.remove_accents(c)
             if c_clean.isalpha() and len(c_clean) == 1:
                 return chr(0x1F1E6 + (ord(c_clean) - ord('A')))
@@ -110,7 +121,7 @@ class MotusView(View):
         letters = " ".join(letter_to_flag(c) for c in word)
 
         if is_hint:
-            colors = ["🟦"] * len(word)  # aucune info sauf position révélée
+            colors = ["🟦"] * len(word)
             for i, c in enumerate(word):
                 if c != "_":
                     colors[i] = "🟩"
@@ -125,16 +136,21 @@ class MotusView(View):
         target_counts = {}
 
         for ch in self.target_word:
+            if ch == "-":  # ignore les tirets
+                continue
             c = self.remove_accents(ch)
             target_counts[c] = target_counts.get(c, 0) + 1
 
         for i, c in enumerate(word):
+            if self.target_word[i] == "-":  # Skip tirets
+                result[i] = "-"
+                continue
             if self.remove_accents(c) == self.remove_accents(self.target_word[i]):
                 result[i] = "🟩"
                 target_counts[self.remove_accents(c)] -= 1
 
         for i, c in enumerate(word):
-            if result[i]:
+            if result[i] or self.target_word[i] == "-":
                 continue
             c_clean = self.remove_accents(c)
             if target_counts.get(c_clean, 0) > 0:
@@ -149,7 +165,7 @@ class MotusView(View):
         mode_text = "Multi" if self.author_id is None else "Solo"
         embed = discord.Embed(
             title=f"🎯 M🟡TUS - mode {mode_text}",
-            description=f"Mot de **{len(self.target_word)}** lettres",
+            description=f"Mot de **{self.display_length}** lettres",
             color=discord.Color.orange()
         )
         if self.attempts:
@@ -173,15 +189,18 @@ class MotusView(View):
         if self.finished:
             return await safe_respond(interaction, "⚠️ La partie est terminée.", ephemeral=True)
 
-        if len(guess) != len(self.target_word):
-            return await safe_respond(interaction, f"⚠️ Le mot doit faire {len(self.target_word)} lettres.", ephemeral=True)
+        # Vérifie la longueur hors tirets
+        filtered_guess = guess.replace("-", "")
+        if len(filtered_guess) != self.display_length:
+            return await safe_respond(interaction, f"⚠️ Le mot doit faire {self.display_length} lettres.", ephemeral=True)
 
-        if not is_valid_word(guess):
+        if not is_valid_word(filtered_guess):
             return await safe_respond(interaction, f"❌ `{guess}` n’est pas reconnu comme un mot valide.", ephemeral=True)
 
         self.attempts.append({'word': guess.upper(), 'hint': False})
 
-        if self.remove_accents(guess) == self.remove_accents(self.target_word) or len(self.attempts) >= self.max_attempts:
+        if self.remove_accents(filtered_guess) == self.remove_accents(self.target_word.replace("-", "")) \
+                or len(self.attempts) >= self.max_attempts:
             self.finished = True
             for child in self.children:
                 child.disabled = True
@@ -229,7 +248,7 @@ class HintButton(Button):
         if pv.finished:
             return await interaction.response.send_message("⚠️ La partie est déjà terminée.", ephemeral=True)
 
-        available_indices = [i for i in range(len(pv.target_word)) if i not in pv.hinted_indices]
+        available_indices = [i for i in range(len(pv.target_word)) if i not in pv.hinted_indices and pv.target_word[i] != "-"]
         if not available_indices:
             return await interaction.response.send_message("ℹ️ Aucune lettre restante à révéler.", ephemeral=True)
 
@@ -254,7 +273,6 @@ class HintButton(Button):
 # ────────────────────────────────────────────────────────────────────────────────
 class Motus(commands.Cog):
     """Commande /motus et !motus — Lance une partie de Motus"""
-
     def __init__(self, bot: commands.Bot):
         self.bot = bot
 
@@ -262,8 +280,7 @@ class Motus(commands.Cog):
         length = random.choice(range(5, 9))
         target_word = await get_random_french_word(length=length)
         author_filter = None if mode.lower() in ("multi", "m") else author_id
-
-        view = MotusView(target_word, max_attempts=len(target_word), author_id=author_filter)
+        view = MotusView(target_word, max_attempts=None, author_id=author_filter)
         embed = view.build_embed()
         view.message = await safe_send(channel, embed=embed, view=view)
 
