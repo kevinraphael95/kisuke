@@ -1,0 +1,232 @@
+{
+  "intro": {
+    "description": "Bienvenue dans l'univers de Bleach ! Tu te réveilles sans souvenir mais avec un zanpakuto mystérieux.",
+    "options": {
+      "Explorer le monde humain": "human_street",
+      "Aller à la Soul Society": "soul_gate"
+    }
+  },
+  "human_street": {
+    "description": "Dans les rues de Karakura, tu aperçois un Hollow rôder.",
+    "options": {
+      "Combattre le Hollow": "fight_hollow_1",
+      "Chercher un allié": "find_friend_1"
+    }
+  },
+  "soul_gate": {
+    "description": "La porte de la Soul Society s'ouvre devant toi, gardée par un shinigami vigilant.",
+    "options": {
+      "Parler au shinigami": "talk_guard",
+      "Tenter de passer discrètement": "sneak_in"
+    }
+  },
+  "fight_hollow_1": {
+    "description": "Le Hollow attaque ! Ton zanpakuto brille d'une lumière étrange.",
+    "options": {
+      "Utiliser un Shikai": "shikai_attack",
+      "Fuir": "escape_hollow_1"
+    }
+  },
+  "find_friend_1": {
+    "description": "Tu rencontres un esprit amical qui te propose son aide.",
+    "options": {
+      "Accepter l'aide": "ally_join",
+      "Refuser poliment": "fight_hollow_2"
+    }
+  },
+  "talk_guard": {
+    "description": "Le shinigami te regarde avec suspicion mais sourit.",
+    "options": {
+      "Expliquer que tu es un shinigami débutant": "training_request",
+      "L'attaquer par surprise": "fight_guard"
+    }
+  },
+  "sneak_in": {
+    "description": "Tu te faufiles discrètement et arrives dans une salle secrète.",
+    "options": {
+      "Explorer la salle": "secret_room",
+      "Revenir en arrière": "intro"
+    }
+  },
+  "shikai_attack": {
+    "description": "Ton Shikai neutralise le Hollow ! Tu gagnes en confiance.",
+    "options": {
+      "Continuer à explorer": "human_street_2",
+      "Retourner à l'intro": "intro"
+    }
+  },
+  "escape_hollow_1": {
+    "description": "Tu t'échappes de justesse et trouves un petit café où te reposer.",
+    "options": {
+      "Prendre un café": "cafe_rest",
+      "Continuer ta route": "human_street_2"
+    }
+  },
+  "human_street_2": {
+    "description": "Un mystérieux portail apparaît devant toi.",
+    "options": {
+      "Passer le portail": "soul_portal",
+      "Ignorer le portail": "human_market"
+    }
+  },
+  "cafe_rest": {
+    "description": "Le café est étrange, rempli d'âmes perdues. Tu fais une sieste.",
+    "options": {
+      "Parler aux âmes": "talk_ghosts",
+      "Sortir discrètement": "human_street_2"
+    }
+  },
+  "ally_join": {
+    "description": "Ton nouvel allié est un shinigami maladroit mais loyal.",
+    "options": {
+      "Aller ensemble à la Soul Society": "soul_gate_with_ally",
+      "Explorer le monde humain": "human_street_2"
+    }
+  },
+  "fight_hollow_2": {
+    "description": "Seul, le Hollow te submerge. Heureusement, tu trouves un passage secret.",
+    "options": {
+      "Entrer dans le passage": "secret_room",
+      "Combattre jusqu'au bout": "hollow_defeat_end"
+    }
+  },
+  "fight_guard": {
+    "description": "Le shinigami est très puissant. Tu perds le combat et es expulsé.",
+    "options": {
+      "Recommencer": "intro"
+    }
+  },
+  "training_request": {
+    "description": "Le shinigami accepte de t'entraîner. Tu gagnes de nouvelles compétences.",
+    "options": {
+      "Continuer l'entraînement": "training_2",
+      "Explorer la Soul Society": "soul_society_explore"
+    }
+  },
+  "secret_room": {
+    "description": "La salle contient un trésor : un zanpakuto légendaire !",
+    "options": {
+      "Prendre le zanpakuto": "legendary_weapon",
+      "Laisser le trésor": "soul_society_explore"
+    }
+  },
+  "soul_portal": {
+    "description": "Tu arrives directement à la Soul Society !",
+    "options": {
+      "Aller voir les capitaines": "captain_meeting",
+      "Explorer les quartiers": "shinigami_quarters"
+    }
+  },
+  "human_market": {
+    "description": "Le marché humain est animé. Tu trouves des informations sur un Hollow puissant.",
+    "options": {
+      "Enquêter": "investigate_hollow",
+      "Acheter des provisions": "buy_supplies"
+    }
+  },
+  "talk_ghosts": {
+    "description": "Les âmes te racontent des histoires drôles et te donnent un objet magique.",
+    "options": {
+      "Prendre l'objet": "magic_item",
+      "Ignorer": "human_street_2"
+    }
+  },
+  "soul_gate_with_ally": {
+    "description": "Avec ton allié, tu franchis la porte de la Soul Society sans problème.",
+    "options": {
+      "Suivre le capitaine": "captain_meeting",
+      "Visiter les quartiers": "shinigami_quarters"
+    }
+  },
+  "legendary_weapon": {
+    "description": "Le zanpakuto légendaire te confère un pouvoir immense !",
+    "options": {
+      "Tester le pouvoir": "power_test",
+      "Ranger le zanpakuto": "soul_society_explore"
+    }
+  },
+  "power_test": {
+    "description": "Ton pouvoir est si grand que même un Hollow géant recule !",
+    "options": {
+      "Fin héroïque": "end_heroic",
+      "Revenir à l'aventure": "soul_society_explore"
+    }
+  },
+  "hollow_defeat_end": {
+    "description": "Le Hollow te vainc. Fin tragique.",
+    "options": {}
+  },
+  "end_heroic": {
+    "description": "Grâce à ton courage et ton zanpakuto, tu deviens un héros respecté de la Soul Society. Fin héroïque.",
+    "options": {}
+  },
+  "buy_supplies": {
+    "description": "Tu achètes des provisions et continues ton exploration du monde humain.",
+    "options": {
+      "Retourner à l'aventure": "human_street_2"
+    }
+  },
+  "investigate_hollow": {
+    "description": "Le Hollow apparaît soudainement ! Prépare-toi au combat.",
+    "options": {
+      "Combattre": "fight_hollow_3",
+      "Fuir": "human_street_2"
+    }
+  },
+  "fight_hollow_3": {
+    "description": "Avec ton expérience, tu réussis à vaincre le Hollow.",
+    "options": {
+      "Fin satisfaisante": "end_satisfying"
+    }
+  },
+  "end_satisfying": {
+    "description": "Tu as vaincu le Hollow et appris de précieuses leçons. Fin satisfaisante.",
+    "options": {}
+  },
+  "training_2": {
+    "description": "Après l'entraînement, tu es devenu beaucoup plus fort !",
+    "options": {
+      "Explorer la Soul Society": "soul_society_explore"
+    }
+  },
+  "soul_society_explore": {
+    "description": "Tu découvres des secrets fascinants de la Soul Society.",
+    "options": {
+      "Rejoindre un capitaine": "captain_meeting",
+      "S'aventurer seul": "solo_adventure"
+    }
+  },
+  "solo_adventure": {
+    "description": "Seul, tu trouves un trésor caché et un Hollow qui teste tes nouvelles compétences.",
+    "options": {
+      "Combattre": "fight_hollow_4",
+      "Fuir": "soul_society_explore"
+    }
+  },
+  "fight_hollow_4": {
+    "description": "Combat épique ! Tu l'emportes grâce à ton zanpakuto légendaire.",
+    "options": {
+      "Fin légendaire": "end_legendary"
+    }
+  },
+  "end_legendary": {
+    "description": "Tu deviens une légende de la Soul Society ! Fin légendaire.",
+    "options": {}
+  },
+  "captain_meeting": {
+    "description": "Le capitaine te félicite pour ton courage et t'offre un rôle honorifique.",
+    "options": {}
+  },
+  "shinigami_quarters": {
+    "description": "Tu observes les shinigamis en entraînement et apprends de nouvelles techniques.",
+    "options": {}
+  },
+  "find_friend_2": {
+    "description": "Un shinigami maladroit te rejoint et promet de t'aider.",
+    "options": {}
+  },
+  "magic_item": {
+    "description": "L'objet magique te donnera un avantage dans les combats futurs.",
+    "options": {}
+  }
+}
