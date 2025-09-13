@@ -150,7 +150,7 @@
       "Garder la glace pour plus tard": "park_entrance"
     }
   },
-  "park_entrance": {
+a  "park_entrance": {
     "description": "Tu arrives à l’entrée d’un parc mystérieux. Une affiche dit : 'Choisis ton destin !'",
     "options": {
       "Entrer dans le parc": "fun_park",
@@ -207,45 +207,7 @@
     }
   },
   "reverse_potion": {
-    "description": "La potion fonctionne, ton chat redevient normal, mais parle maintenant en rimes !",
-    "options": {
-      "Fin poétique": "poetic_end",
-      "Continuer l’aventure": "outside_street"
-    }
-  },
-  "dragon_fight": {
-    "description": "Le dragon crache des bonbons ! Tu gagnes le combat grâce à ton tutu magique.",
-    "options": {
-      "Fin héroïque": "heroic_end"
-    }
-  },
-  "dragon_ride": {
-    "description": "Tu chevauches le dragon et survoles tout le parc en riant.",
-    "options": {
-      "Fin épique": "epic_end"
-    }
-  },
-  "pigeon_guild": {
-    "description": "Tu deviens membre de la guilde des pigeons géants et accomplis des missions absurdes.",
-    "options": {
-      "Fin hilarante": "funny_end"
-    }
-  },
-  "tutu_magic": {
-    "description": "Le tutu te donne la capacité de danser parfaitement partout.",
-    "options": {
-      "Danser au parc": "roller_coaster",
-      "Danser en ville": "city_fly"
-    }
-  },
-  "candy_wand": {
-    "description": "La baguette lance des bonbons explosifs. Très utile contre les Hollow en colère.",
-    "options": {
-      "Continuer l’aventure": "outside_street"
-    }
-  },
-  "funny_end": {
-    "description": "Tu as vécu une aventure totalement absurde et hilarante. Fin comique !",
+ment absurde et hilarante. Fin comique !",
     "options": {}
   },
   "poetic_end": {
