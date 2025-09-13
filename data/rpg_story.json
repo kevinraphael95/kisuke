@@ -1,13 +1,13 @@
 {
   "intro": {
-    "description": "Tu te réveilles dans ton appartement, mais tout est étrange : ton chat parle et ton café t’a lancé un défi.",
+    "description": "Tu te réveilles dans ton appartement, mais tout est étrange : ton chat parle et ton café t'a lancé un défi.",
     "options": {
       "Parler au chat": "talk_cat",
       "Boire le café défiant": "drink_coffee"
     }
   },
   "talk_cat": {
-    "description": "Le chat te regarde avec ses grands yeux et dit : 'Si tu veux survivre aujourd’hui, choisis bien tes actions !'",
+    "description": "Le chat te regarde avec ses grands yeux et dit : 'Si tu veux survivre aujourd'hui, choisis bien tes actions !'",
     "options": {
       "Demander conseil": "cat_advice",
       "Ignorer le chat": "ignore_cat"
@@ -21,7 +21,7 @@
     }
   },
   "cat_advice": {
-    "description": "Le chat te conseille d’aller chercher un objet magique au grenier.",
+    "description": "Le chat te conseille d'aller chercher un objet magique au grenier.",
     "options": {
       "Monter au grenier": "attic",
       "Aller directement à l'extérieur": "outside_street"
@@ -230,8 +230,3 @@
     "options": {}
   }
 }
-
-
-
-
-
