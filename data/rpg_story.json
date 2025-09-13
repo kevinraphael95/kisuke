@@ -1,232 +1,232 @@
 {
   "intro": {
-    "description": "Tu te réveilles dans ton appartement, mais tout est étrange : ton chat parle et ton café t'a lancé un défi.",
+    "description": "Bienvenue dans l'univers de Bleach ! Tu te réveilles sans souvenir mais avec un zanpakuto mystérieux.",
     "options": {
-      "Parler au chat": "talk_cat",
-      "Boire le café défiant": "drink_coffee"
+      "Explorer le monde humain": "human_street",
+      "Aller à la Soul Society": "soul_gate"
     }
   },
-  "talk_cat": {
-    "description": "Le chat te regarde avec ses grands yeux et dit : 'Si tu veux survivre aujourd'hui, choisis bien tes actions !'",
+  "human_street": {
+    "description": "Dans les rues de Karakura, tu aperçois un Hollow rôder.",
     "options": {
-      "Demander conseil": "cat_advice",
-      "Ignorer le chat": "ignore_cat"
+      "Combattre le Hollow": "fight_hollow_1",
+      "Chercher un allié": "find_friend_1"
     }
   },
-  "drink_coffee": {
-    "description": "Le café te donne des super pouvoirs pendant 5 minutes ! Tu te sens invincible… ou presque.",
+  "soul_gate": {
+    "description": "La porte de la Soul Society s'ouvre devant toi, gardée par un shinigami vigilant.",
     "options": {
-      "Tester tes pouvoirs": "test_powers",
-      "Aller à l'extérieur": "outside_street"
+      "Parler au shinigami": "talk_guard",
+      "Tenter de passer discrètement": "sneak_in"
     }
   },
-  "cat_advice": {
-    "description": "Le chat te conseille d'aller chercher un objet magique au grenier.",
+  "fight_hollow_1": {
+    "description": "Le Hollow attaque ! Ton zanpakuto brille d'une lumière étrange.",
     "options": {
-      "Monter au grenier": "attic",
-      "Aller directement à l'extérieur": "outside_street"
+      "Utiliser un Shikai": "shikai_attack",
+      "Fuir": "escape_hollow_1"
     }
   },
-  "ignore_cat": {
-    "description": "Le chat soupire et se transforme en petit démon. Il te défie de résoudre une énigme.",
+  "find_friend_1": {
+    "description": "Tu rencontres un esprit amical qui te propose son aide.",
     "options": {
-      "Accepter l'énigme": "demon_riddle",
-      "Fuir": "outside_street"
+      "Accepter l'aide": "ally_join",
+      "Refuser poliment": "fight_hollow_2"
     }
   },
-  "test_powers": {
-    "description": "Tu lances des boulettes de papier dans la cuisine et tout explose. Bravo !",
+  "talk_guard": {
+    "description": "Le shinigami te regarde avec suspicion mais sourit.",
     "options": {
-      "Continuer l'aventure": "outside_street",
-      "Rentrer se cacher": "bedroom_hide"
+      "Expliquer que tu es un shinigami débutant": "training_request",
+      "L'attaquer par surprise": "fight_guard"
     }
   },
-  "outside_street": {
-    "description": "Dans la rue, tu rencontres un facteur qui prétend être un ninja secret.",
+  "sneak_in": {
+    "description": "Tu te faufiles discrètement et arrives dans une salle secrète.",
     "options": {
-      "Suivre le ninja": "follow_ninja",
-      "Continuer à marcher normalement": "walk_normal"
+      "Explorer la salle": "secret_room",
+      "Revenir en arrière": "intro"
     }
   },
-  "attic": {
-    "description": "Au grenier, tu trouves un vieux chapeau magique qui parle !",
+  "shikai_attack": {
+    "description": "Ton Shikai neutralise le Hollow ! Tu gagnes en confiance.",
     "options": {
-      "Mettre le chapeau": "hat_powers",
-      "Ignorer le chapeau": "outside_street"
+      "Continuer à explorer": "human_street_2",
+      "Retourner à l'intro": "intro"
     }
   },
-  "demon_riddle": {
-    "description": "L'énigme est : 'Qu'est-ce qui tombe mais ne se brise jamais ?'",
+  "escape_hollow_1": {
+    "description": "Tu t'échappes de justesse et trouves un petit café où te reposer.",
     "options": {
-      "Répondre 'la nuit'": "riddle_correct",
-      "Répondre 'le papier'": "riddle_wrong"
+      "Prendre un café": "cafe_rest",
+      "Continuer ta route": "human_street_2"
     }
   },
-  "riddle_correct": {
-    "description": "Le démon disparaît, te laissant un ticket doré pour le parc d'attractions !",
+  "human_street_2": {
+    "description": "Un mystérieux portail apparaît devant toi.",
     "options": {
-      "Aller au parc": "fun_park",
-      "Garder le ticket pour plus tard": "outside_street"
+      "Passer le portail": "soul_portal",
+      "Ignorer le portail": "human_market"
     }
   },
-  "riddle_wrong": {
-    "description": "Le démon te transforme en grenouille pendant 2 minutes… puis rit et te remet à la normale.",
+  "cafe_rest": {
+    "description": "Le café est étrange, rempli d'âmes perdues. Tu fais une sieste.",
     "options": {
-      "Aller dehors": "outside_street",
-      "Rester chez toi": "bedroom_hide"
+      "Parler aux âmes": "talk_ghosts",
+      "Sortir discrètement": "human_street_2"
     }
   },
-  "hat_powers": {
-    "description": "Le chapeau te permet de parler aux objets inanimés ! Ton grille-pain te félicite pour ton courage.",
+  "ally_join": {
+    "description": "Ton nouvel allié est un shinigami maladroit mais loyal.",
     "options": {
-      "Aller dehors avec le chapeau": "outside_street",
-      "Faire la cuisine avec le chapeau": "kitchen_adventure"
+      "Aller ensemble à la Soul Society": "soul_gate_with_ally",
+      "Explorer le monde humain": "human_street_2"
     }
   },
-  "bedroom_hide": {
-    "description": "Tu te caches sous la couette. Le chat démon te trouve et te propose de devenir son acolyte.",
+  "fight_hollow_2": {
+    "description": "Seul, le Hollow te submerge. Heureusement, tu trouves un passage secret.",
     "options": {
-      "Accepter": "cat_sidekick",
-      "Refuser et dormir": "sleep_end"
+      "Entrer dans le passage": "secret_room",
+      "Combattre jusqu'au bout": "hollow_defeat_end"
     }
   },
-  "follow_ninja": {
-    "description": "Le ninja te mène à une ruelle où un combat de chats géants a lieu !",
+  "fight_guard": {
+    "description": "Le shinigami est très puissant. Tu perds le combat et es expulsé.",
     "options": {
-      "Participer au combat": "cat_fight",
-      "Observer de loin": "cat_fight_spectate"
+      "Recommencer": "intro"
     }
   },
-  "walk_normal": {
-    "description": "Tu rencontres un vendeur de glaces qui prétend connaître ton futur.",
+  "training_request": {
+    "description": "Le shinigami accepte de t'entraîner. Tu gagnes de nouvelles compétences.",
     "options": {
-      "Écouter son futur": "ice_cream_future",
-      "Ignorer et continuer": "park_entrance"
+      "Continuer l'entraînement": "training_2",
+      "Explorer la Soul Society": "soul_society_explore"
     }
   },
-  "fun_park": {
-    "description": "Le parc est rempli de manèges étranges et d'animaux parlants.",
+  "secret_room": {
+    "description": "La salle contient un trésor : un zanpakuto légendaire !",
     "options": {
-      "Monter dans le grand huit magique": "roller_coaster",
-      "Parler aux animaux": "talk_animals"
+      "Prendre le zanpakuto": "legendary_weapon",
+      "Laisser le trésor": "soul_society_explore"
     }
   },
-  "kitchen_adventure": {
-    "description": "Ton grille-pain te guide dans une recette magique. Ça explose partout !",
+  "soul_portal": {
+    "description": "Tu arrives directement à la Soul Society !",
     "options": {
-      "Continuer à cuisiner": "magic_recipe_success",
-      "Abandonner": "outside_street"
+      "Aller voir les capitaines": "captain_meeting",
+      "Explorer les quartiers": "shinigami_quarters"
     }
   },
-  "cat_sidekick": {
-    "description": "Tu deviens l'acolyte du chat démon. Ensemble, vous organisez des farces incroyables.",
+  "human_market": {
+    "description": "Le marché humain est animé. Tu trouves des informations sur un Hollow puissant.",
     "options": {
-      "Fin hilarante": "funny_end",
-      "Continuer l'aventure": "outside_street"
+      "Enquêter": "investigate_hollow",
+      "Acheter des provisions": "buy_supplies"
     }
   },
-  "sleep_end": {
-    "description": "Tu dors paisiblement. Fin tranquille mais triste…",
+  "talk_ghosts": {
+    "description": "Les âmes te racontent des histoires drôles et te donnent un objet magique.",
+    "options": {
+      "Prendre l'objet": "magic_item",
+      "Ignorer": "human_street_2"
+    }
+  },
+  "soul_gate_with_ally": {
+    "description": "Avec ton allié, tu franchis la porte de la Soul Society sans problème.",
+    "options": {
+      "Suivre le capitaine": "captain_meeting",
+      "Visiter les quartiers": "shinigami_quarters"
+    }
+  },
+  "legendary_weapon": {
+    "description": "Le zanpakuto légendaire te confère un pouvoir immense !",
+    "options": {
+      "Tester le pouvoir": "power_test",
+      "Ranger le zanpakuto": "soul_society_explore"
+    }
+  },
+  "power_test": {
+    "description": "Ton pouvoir est si grand que même un Hollow géant recule !",
+    "options": {
+      "Fin héroïque": "end_heroic",
+      "Revenir à l'aventure": "soul_society_explore"
+    }
+  },
+  "hollow_defeat_end": {
+    "description": "Le Hollow te vainc. Fin tragique.",
     "options": {}
   },
-  "cat_fight": {
-    "description": "Les chats géants te reconnaissent comme un des leurs et t'invitent à la bataille finale !",
-    "options": {
-      "Participer à la bataille": "battle_cats_final",
-      "Refuser et fuir": "park_entrance"
-    }
-  },
-  "cat_fight_spectate": {
-    "description": "Tu observes les chats se battre, rigolant de leurs mouvements absurdes.",
-    "options": {
-      "Fin amusante": "funny_end",
-      "Intervenir malgré tout": "battle_cats_final"
-    }
-  },
-  "ice_cream_future": {
-    "description": "Le vendeur te dit : 'Demain tu trouveras un objet magique.' Il te donne une glace gratuite.",
-    "options": {
-      "Manger la glace": "magic_glass",
-      "Garder la glace pour plus tard": "park_entrance"
-    }
-  },
-  "park_entrance": {
-    "description": "Tu arrives à l'entrée d'un parc mystérieux. Une affiche dit : 'Choisis ton destin !'",
-    "options": {
-      "Entrer dans le parc": "fun_park",
-      "Faire demi-tour": "outside_street"
-    }
-  },
-  "roller_coaster": {
-    "description": "Le grand huit te propulse dans le ciel et tu croises un dragon de barbe à papa !",
-    "options": {
-      "Combattre le dragon": "dragon_fight",
-      "Monter sur le dos du dragon": "dragon_ride"
-    }
-  },
-  "talk_animals": {
-    "description": "Les animaux te racontent des blagues incroyables et te donnent un indice pour trouver un trésor.",
-    "options": {
-      "Chercher le trésor": "treasure_hunt",
-      "Rester avec les animaux": "funny_end"
-    }
-  },
-  "magic_recipe_success": {
-    "description": "La recette fonctionne ! Tu crées une potion qui transforme les gens en animaux rigolos.",
-    "options": {
-      "Tester la potion": "potion_test",
-      "Garder la potion": "outside_street"
-    }
-  },
-  "magic_glass": {
-    "description": "La glace te transforme temporairement en super-héros capable de voler !",
-    "options": {
-      "Voler vers le parc": "fun_park",
-      "Faire un tour en ville": "city_fly"
-    }
-  },
-  "city_fly": {
-    "description": "En volant, tu rencontres un pigeon géant qui te propose de rejoindre sa guilde.",
-    "options": {
-      "Accepter": "pigeon_guild",
-      "Refuser et atterrir": "outside_street"
-    }
-  },
-  "treasure_hunt": {
-    "description": "Tu trouves un coffre contenant un tutu magique et une baguette en réglisse.",
-    "options": {
-      "Mettre le tutu": "tutu_magic",
-      "Garder la baguette": "candy_wand"
-    }
-  },
-  "potion_test": {
-    "description": "Tu transformes accidentellement ton chat en licorne. Rigolo mais chaotique !",
-    "options": {
-      "Fin hilarante": "funny_end",
-      "Essayer de le transformer en humain": "reverse_potion"
-    }
-  },
-  "reverse_potion": {
-    "description": "La potion fonctionne, ton chat redevient normal, mais parle maintenant en rimes !",
-    "options": {
-      "Fin poétique": "poetic_end",
-      "Continuer l'aventure": "outside_street"
-    }
-  },
-  "poetic_end": {
-    "description": "Ton chat parlant en rimes t'accompagne dans une fin poétique et douce.",
+  "end_heroic": {
+    "description": "Grâce à ton courage et ton zanpakuto, tu deviens un héros respecté de la Soul Society. Fin héroïque.",
     "options": {}
   },
-  "heroic_end": {
-    "description": "Grâce à ton courage et ton tutu magique, tu deviens un héros reconnu par tous. Fin héroïque !",
+  "buy_supplies": {
+    "description": "Tu achètes des provisions et continues ton exploration du monde humain.",
+    "options": {
+      "Retourner à l'aventure": "human_street_2"
+    }
+  },
+  "investigate_hollow": {
+    "description": "Le Hollow apparaît soudainement ! Prépare-toi au combat.",
+    "options": {
+      "Combattre": "fight_hollow_3",
+      "Fuir": "human_street_2"
+    }
+  },
+  "fight_hollow_3": {
+    "description": "Avec ton expérience, tu réussis à vaincre le Hollow.",
+    "options": {
+      "Fin satisfaisante": "end_satisfying"
+    }
+  },
+  "end_satisfying": {
+    "description": "Tu as vaincu le Hollow et appris de précieuses leçons. Fin satisfaisante.",
     "options": {}
   },
-  "epic_end": {
-    "description": "Ton aventure devient légendaire. Tout le monde raconte tes exploits ! Fin épique !",
+  "training_2": {
+    "description": "Après l'entraînement, tu es devenu beaucoup plus fort !",
+    "options": {
+      "Explorer la Soul Society": "soul_society_explore"
+    }
+  },
+  "soul_society_explore": {
+    "description": "Tu découvres des secrets fascinants de la Soul Society.",
+    "options": {
+      "Rejoindre un capitaine": "captain_meeting",
+      "S'aventurer seul": "solo_adventure"
+    }
+  },
+  "solo_adventure": {
+    "description": "Seul, tu trouves un trésor caché et un Hollow qui teste tes nouvelles compétences.",
+    "options": {
+      "Combattre": "fight_hollow_4",
+      "Fuir": "soul_society_explore"
+    }
+  },
+  "fight_hollow_4": {
+    "description": "Combat épique ! Tu l'emportes grâce à ton zanpakuto légendaire.",
+    "options": {
+      "Fin légendaire": "end_legendary"
+    }
+  },
+  "end_legendary": {
+    "description": "Tu deviens une légende de la Soul Society ! Fin légendaire.",
     "options": {}
   },
-  "funny_end": {
-    "description": "Ton aventure se termine de façon absurde et hilarante !",
+  "captain_meeting": {
+    "description": "Le capitaine te félicite pour ton courage et t'offre un rôle honorifique.",
+    "options": {}
+  },
+  "shinigami_quarters": {
+    "description": "Tu observes les shinigamis en entraînement et apprends de nouvelles techniques.",
+    "options": {}
+  },
+  "find_friend_2": {
+    "description": "Un shinigami maladroit te rejoint et promet de t'aider.",
+    "options": {}
+  },
+  "magic_item": {
+    "description": "L'objet magique te donnera un avantage dans les combats futurs.",
     "options": {}
   }
 }
