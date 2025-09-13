@@ -17,27 +17,27 @@
     "description": "Le café te donne des super pouvoirs pendant 5 minutes ! Tu te sens invincible… ou presque.",
     "options": {
       "Tester tes pouvoirs": "test_powers",
-      "Aller à l’extérieur": "outside_street"
+      "Aller à l'extérieur": "outside_street"
     }
   },
   "cat_advice": {
     "description": "Le chat te conseille d’aller chercher un objet magique au grenier.",
     "options": {
       "Monter au grenier": "attic",
-      "Aller directement à l’extérieur": "outside_street"
+      "Aller directement à l'extérieur": "outside_street"
     }
   },
   "ignore_cat": {
     "description": "Le chat soupire et se transforme en petit démon. Il te défie de résoudre une énigme.",
     "options": {
-      "Accepter l’énigme": "demon_riddle",
+      "Accepter l'énigme": "demon_riddle",
       "Fuir": "outside_street"
     }
   },
   "test_powers": {
     "description": "Tu lances des boulettes de papier dans la cuisine et tout explose. Bravo !",
     "options": {
-      "Continuer l’aventure": "outside_street",
+      "Continuer l'aventure": "outside_street",
       "Rentrer se cacher": "bedroom_hide"
     }
   },
@@ -56,14 +56,14 @@
     }
   },
   "demon_riddle": {
-    "description": "L’énigme est : 'Qu’est-ce qui tombe mais ne se brise jamais ?'",
+    "description": "L'énigme est : 'Qu'est-ce qui tombe mais ne se brise jamais ?'",
     "options": {
       "Répondre 'la nuit'": "riddle_correct",
       "Répondre 'le papier'": "riddle_wrong"
     }
   },
   "riddle_correct": {
-    "description": "Le démon disparaît, te laissant un ticket doré pour le parc d’attractions !",
+    "description": "Le démon disparaît, te laissant un ticket doré pour le parc d'attractions !",
     "options": {
       "Aller au parc": "fun_park",
       "Garder le ticket pour plus tard": "outside_street"
@@ -105,7 +105,7 @@
     }
   },
   "fun_park": {
-    "description": "Le parc est rempli de manèges étranges et d’animaux parlants.",
+    "description": "Le parc est rempli de manèges étranges et d'animaux parlants.",
     "options": {
       "Monter dans le grand huit magique": "roller_coaster",
       "Parler aux animaux": "talk_animals"
@@ -119,10 +119,10 @@
     }
   },
   "cat_sidekick": {
-    "description": "Tu deviens l’acolyte du chat démon. Ensemble, vous organisez des farces incroyables.",
+    "description": "Tu deviens l'acolyte du chat démon. Ensemble, vous organisez des farces incroyables.",
     "options": {
       "Fin hilarante": "funny_end",
-      "Continuer l’aventure": "outside_street"
+      "Continuer l'aventure": "outside_street"
     }
   },
   "sleep_end": {
@@ -130,7 +130,7 @@
     "options": {}
   },
   "cat_fight": {
-    "description": "Les chats géants te reconnaissent comme un des leurs et t’invitent à la bataille finale !",
+    "description": "Les chats géants te reconnaissent comme un des leurs et t'invitent à la bataille finale !",
     "options": {
       "Participer à la bataille": "battle_cats_final",
       "Refuser et fuir": "park_entrance"
@@ -151,7 +151,7 @@
     }
   },
   "park_entrance": {
-    "description": "Tu arrives à l’entrée d’un parc mystérieux. Une affiche dit : 'Choisis ton destin !'",
+    "description": "Tu arrives à l'entrée d'un parc mystérieux. Une affiche dit : 'Choisis ton destin !'",
     "options": {
       "Entrer dans le parc": "fun_park",
       "Faire demi-tour": "outside_street"
@@ -210,11 +210,11 @@
     "description": "La potion fonctionne, ton chat redevient normal, mais parle maintenant en rimes !",
     "options": {
       "Fin poétique": "poetic_end",
-      "Continuer l’aventure": "outside_street"
+      "Continuer l'aventure": "outside_street"
     }
   },
   "poetic_end": {
-    "description": "Ton chat parlant en rimes t’accompagne dans une fin poétique et douce.",
+    "description": "Ton chat parlant en rimes t'accompagne dans une fin poétique et douce.",
     "options": {}
   },
   "heroic_end": {
@@ -229,4 +229,9 @@
     "description": "Ton aventure se termine de façon absurde et hilarante !",
     "options": {}
   }
-  }
+}
+
+
+
+
+
