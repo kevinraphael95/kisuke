@@ -13,9 +13,7 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 from discord.ui import View, Modal, TextInput, Button
-import random
-import aiohttp
-import unicodedata
+import random, aiohttp, unicodedata
 from spellchecker import SpellChecker
 from utils.discord_utils import safe_send, safe_edit, safe_respond
 
@@ -55,7 +53,7 @@ def is_valid_word(word: str) -> bool:
 # ────────────────────────────────────────────────────────────────────────────────
 class AnagrammeModal(Modal):
     def __init__(self, parent_view):
-        super().__init__(title="Propose un mot")
+        super().__init__(title="🖊️ Propose un mot")
         self.parent_view = parent_view
         self.word_input = TextInput(
             label="Mot",
@@ -76,18 +74,13 @@ class AnagrammeModal(Modal):
 class AnagrammeView(View):
     def __init__(self, target_word: str, max_attempts: int | None = None, author_id: int | None = None):
         super().__init__(timeout=180)
-
-        # 🔤 Normalisation du mot (œ → oe) et retrait des tirets
         normalized = target_word.replace("Œ", "OE").replace("œ", "oe")
         self.target_word = normalized.upper()
-        self.display_word = ''.join(random.sample(self.target_word, len(self.target_word)))  # Mélange lettres
-        self.display_length = len([c for c in self.target_word if c.isalpha()])  # Longueur sans tirets
-
-        # 🔢 Au moins 5 essais
+        self.display_word = ''.join(random.sample(self.target_word, len(self.target_word)))
+        self.display_length = len([c for c in self.target_word if c.isalpha()])
         base_attempts = max(self.display_length, 5)
         self.max_attempts = max_attempts if max_attempts else base_attempts
-
-        self.attempts: list[dict] = []  # {'word': str, 'hint': bool}
+        self.attempts: list[dict] = []
         self.message = None
         self.finished = False
         self.author_id = author_id
@@ -109,7 +102,6 @@ class AnagrammeView(View):
     def create_feedback_line(self, entry: dict) -> str:
         word = entry['word']
         is_hint = entry.get('hint', False)
-
         colors = []
         for i, c in enumerate(word):
             if i < len(self.target_word) and self.remove_accents(c) == self.remove_accents(self.target_word[i]):
@@ -121,12 +113,13 @@ class AnagrammeView(View):
         return f"{' '.join(word)}\n{' '.join(colors)}"
 
     def build_embed(self) -> discord.Embed:
-        mode_text = "Multi" if self.author_id is None else "Solo"
+        mode_text = "Solo 🧍‍♂️" if self.author_id else "Multi 🌍"
         embed = discord.Embed(
-            title=f"🔀 Anagramme - mode {mode_text}",
+            title=f"🔀 Anagramme - {mode_text}",
             description=f"Mot mélangé : **{' '.join(self.display_word)}**",
             color=discord.Color.orange()
         )
+
         if self.attempts:
             tries_text = "\n\n".join(self.create_feedback_line(entry) for entry in self.attempts)
             embed.add_field(name=f"Essais ({len(self.attempts)}/{self.max_attempts})", value=tries_text, inline=False)
@@ -141,6 +134,8 @@ class AnagrammeView(View):
             else:
                 embed.color = discord.Color.red()
                 embed.set_footer(text=f"💀 Partie terminée. Le mot était {self.target_word}.")
+        else:
+            embed.set_footer(text=f"⏳ Temps restant : 180 secondes")
 
         return embed
 
@@ -157,8 +152,7 @@ class AnagrammeView(View):
 
         self.attempts.append({'word': guess.upper(), 'hint': False})
 
-        if self.remove_accents(filtered_guess) == self.remove_accents(self.target_word) \
-                or len(self.attempts) >= self.max_attempts:
+        if self.remove_accents(filtered_guess) == self.remove_accents(self.target_word) or len(self.attempts) >= self.max_attempts:
             self.finished = True
             for child in self.children:
                 child.disabled = True
@@ -179,7 +173,7 @@ class AnagrammeView(View):
         await safe_edit(self.message, embed=embed, view=self)
 
 # ────────────────────────────────────────────────────────────────────────────────
-# 🎛️ Bouton Proposer
+# 🎛️ Boutons
 # ────────────────────────────────────────────────────────────────────────────────
 class AnagrammeButton(Button):
     def __init__(self, parent_view: AnagrammeView):
@@ -191,9 +185,6 @@ class AnagrammeButton(Button):
             return await interaction.response.send_message("❌ Seul le lanceur peut proposer un mot.", ephemeral=True)
         await interaction.response.send_modal(AnagrammeModal(self.parent_view))
 
-# ────────────────────────────────────────────────────────────────────────────────
-# 🎛️ Bouton Indice
-# ────────────────────────────────────────────────────────────────────────────────
 class HintButtonAnagramme(Button):
     def __init__(self, parent_view: AnagrammeView):
         super().__init__(label="Indice", style=discord.ButtonStyle.secondary)
@@ -205,24 +196,19 @@ class HintButtonAnagramme(Button):
             return await interaction.response.send_message("❌ Seul le lanceur peut utiliser l'indice.", ephemeral=True)
         if pv.finished:
             return await interaction.response.send_message("⚠️ La partie est déjà terminée.", ephemeral=True)
-
         available_indices = [i for i in range(len(pv.target_word)) if i not in pv.hinted_indices]
         if not available_indices:
             return await interaction.response.send_message("ℹ️ Aucune lettre restante à révéler.", ephemeral=True)
-
         idx = random.choice(available_indices)
         hint_word = ["_" for _ in range(len(pv.target_word))]
         hint_word[idx] = pv.target_word[idx]
-
         pv.attempts.append({'word': "".join(hint_word), 'hint': True})
         pv.hinted_indices.add(idx)
         self.disabled = True
-
         if len(pv.attempts) >= pv.max_attempts:
             pv.finished = True
             for child in pv.children:
                 child.disabled = True
-
         await safe_edit(pv.message, embed=pv.build_embed(), view=pv)
         await interaction.response.send_message(f"🔎 Indice utilisé — lettre **{pv.target_word[idx]}** révélée.", ephemeral=True)
 
@@ -242,6 +228,7 @@ class Anagramme(commands.Cog):
         embed = view.build_embed()
         view.message = await safe_send(channel, embed=embed, view=view)
 
+    # 🔹 Commande SLASH
     @app_commands.command(name="anagramme", description="Lance une partie d'Anagramme (multi = tout le monde peut jouer)")
     @app_commands.describe(mode="Mode de jeu : solo ou multi")
     @app_commands.checks.cooldown(1, 5.0, key=lambda i: (i.user.id))
@@ -256,6 +243,7 @@ class Anagramme(commands.Cog):
             print(f"[ERREUR /anagramme] {e}")
             await safe_respond(interaction, "❌ Une erreur est survenue.", ephemeral=True)
 
+    # 🔹 Commande PREFIX
     @commands.command(name="anagramme", help="Lance une partie d'Anagramme. anagramme multi ou m pour jouer en multi.")
     @commands.cooldown(1, 5.0, commands.BucketType.user)
     async def prefix_anagramme(self, ctx: commands.Context, mode: str = "solo"):
@@ -276,3 +264,7 @@ async def setup(bot: commands.Bot):
         if not hasattr(command, "category"):
             command.category = "Jeux"
     await bot.add_cog(cog)
+
+
+
+
