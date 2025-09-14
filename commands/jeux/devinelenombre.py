@@ -137,7 +137,7 @@ class JustePrix(commands.Cog):
         embed = view.build_embed()
         view.message = await safe_send(channel, embed=embed, view=view)
 
-    @app_commands.command(name="devine_le_nombre", description="Jeu du Juste Prix : devine le nombre entre 0 et 100")
+    @app_commands.command(name="devinelenombre", description="Jeu du Juste Prix : devine le nombre entre 0 et 100")
     @app_commands.checks.cooldown(1, 5.0, key=lambda i: (i.user.id))
     async def slash_justeprix(self, interaction: discord.Interaction):
         try:
@@ -148,7 +148,7 @@ class JustePrix(commands.Cog):
             print(f"[ERREUR /justeprix] {e}")
             await safe_respond(interaction, "❌ Une erreur est survenue.", ephemeral=True)
 
-    @commands.command(name="devine_le_nombre", aliases="dln", help="Jeu du Juste Prix : devine le nombre entre 0 et 100")
+    @commands.command(name="devinelenombre", help="Jeu du Juste Prix : devine le nombre entre 0 et 100")
     @commands.cooldown(1, 5.0, commands.BucketType.user)
     async def prefix_justeprix(self, ctx: commands.Context):
         try:
