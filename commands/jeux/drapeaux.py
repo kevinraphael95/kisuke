@@ -112,10 +112,10 @@ class AnswerModal(discord.ui.Modal, title="🖊️ Devine le pays"):
             await interaction.response.send_message("✅ Bonne réponse !", ephemeral=True)
 
             # 💡 Si mode solo → fin immédiate du quiz
-            if not self.multi:
+            if not self.multi and not getattr(self.view, "ended", False):
+                self.view.ended = True  # ✅ On marque la partie comme terminée
                 for child in self.view.children:
                     child.disabled = True
-                # Ajout de la réponse au même embed
                 embed = self.quiz_msg.embeds[0]
                 embed.add_field(
                     name="🎉 Résultat",
@@ -137,6 +137,7 @@ class FlagQuizView(discord.ui.View):
         self.winners = winners
         self.multi = multi
         self.quiz_msg = quiz_msg
+        self.ended = False  # ✅ Flag pour savoir si le quiz est terminé
 
     @discord.ui.button(label="Répondre", style=discord.ButtonStyle.primary, emoji="✍️")
     async def answer_button(self, interaction: discord.Interaction, button: discord.ui.Button):
@@ -176,7 +177,10 @@ class Drapeaux(commands.Cog):
         except asyncio.CancelledError:
             return
 
-        # 💡 Si personne n'a trouvé (ou mode multi terminé), on ajoute le résultat
+        # ✅ Si le quiz a déjà été terminé (solo), ne rien faire
+        if view.ended:
+            return
+
         embed = quiz_msg.embeds[0]
         if winners:
             embed.add_field(
@@ -238,5 +242,3 @@ async def setup(bot: commands.Bot):
         if not hasattr(command, "category"):
             command.category = "Jeux"
     await bot.add_cog(cog)
-
-
