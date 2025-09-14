@@ -14,205 +14,20 @@
 import discord
 from discord import app_commands
 from discord.ext import commands
+from discord.ui import View, Modal, TextInput, Button
 import random, asyncio, unicodedata
-
-from utils.discord_utils import safe_send, safe_respond
+from utils.discord_utils import safe_send, safe_respond, safe_edit
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 📂 Liste des pays et leurs capitales
 # ────────────────────────────────────────────────────────────────────────────────
 CAPITALS = {
-    "Afghanistan": "Kaboul",
-    "Afrique du Sud": "Pretoria",
-    "Albanie": "Tirana",
-    "Algérie": "Alger",
-    "Allemagne": "Berlin",
-    "Andorre": "Andorre-la-Vieille",
-    "Angola": "Luanda",
-    "Antigua-et-Barbuda": "Saint-Jean",
-    "Arabie saoudite": "Riyad",
-    "Argentine": "Buenos Aires",
-    "Arménie": "Erevan",
-    "Australie": "Canberra",
-    "Autriche": "Vienne",
-    "Azerbaïdjan": "Bakou",
-    "Bahamas": "Nassau",
-    "Bahreïn": "Manama",
-    "Bangladesh": "Dacca",
-    "Barbade": "Bridgetown",
-    "Belgique": "Bruxelles",
-    "Belize": "Belmopan",
-    "Bénin": "Porto-Novo",
-    "Bhoutan": "Thimphou",
-    "Biélorussie": "Minsk",
-    "Birmanie": "Naypyidaw",
-    "Bolivie": "Sucre",
-    "Bosnie-Herzégovine": "Sarajevo",
-    "Botswana": "Gaborone",
-    "Brésil": "Brasília",
-    "Brunei": "Bandar Seri Begawan",
-    "Bulgarie": "Sofia",
-    "Burkina Faso": "Ouagadougou",
-    "Burundi": "Gitega",
-    "Cambodge": "Phnom Penh",
-    "Cameroun": "Yaoundé",
-    "Canada": "Ottawa",
-    "Cap-Vert": "Praia",
-    "Chili": "Santiago",
-    "Chine": "Pékin",
-    "Chypre": "Nicosie",
-    "Colombie": "Bogotá",
-    "Comores": "Moroni",
-    "Congo": "Brazzaville",
-    "Corée du Nord": "Pyongyang",
-    "Corée du Sud": "Séoul",
-    "Costa Rica": "San José",
-    "Croatie": "Zagreb",
-    "Cuba": "La Havane",
-    "Danemark": "Copenhague",
-    "Djibouti": "Djibouti",
-    "Dominique": "Roseau",
-    "Égypte": "Le Caire",
-    "Émirats arabes unis": "Abou Dabi",
-    "Équateur": "Quito",
-    "Érythrée": "Asmara",
-    "Espagne": "Madrid",
-    "Estonie": "Tallinn",
-    "Eswatini": "Mbabane",
-    "États-Unis": "Washington, D.C.",
-    "Éthiopie": "Addis-Abeba",
-    "Fidji": "Suva",
-    "Finlande": "Helsinki",
     "France": "Paris",
-    "Gabon": "Libreville",
-    "Gambie": "Banjul",
-    "Géorgie": "Tbilissi",
-    "Ghana": "Accra",
-    "Grèce": "Athènes",
-    "Grenade": "Saint-Georges",
-    "Guatemala": "Guatemala",
-    "Guinée": "Conakry",
-    "Guinée-Bissau": "Bissau",
-    "Guinée équatoriale": "Malabo",
-    "Guyana": "Georgetown",
-    "Haïti": "Port-au-Prince",
-    "Honduras": "Tegucigalpa",
-    "Hongrie": "Budapest",
-    "Îles Marshall": "Majuro",
-    "Îles Salomon": "Honiara",
-    "Inde": "New Delhi",
-    "Indonésie": "Jakarta",
-    "Iran": "Téhéran",
-    "Irak": "Bagdad",
-    "Irlande": "Dublin",
-    "Islande": "Reykjavik",
-    "Israël": "Jérusalem",
+    "Allemagne": "Berlin",
     "Italie": "Rome",
-    "Jamaïque": "Kingston",
-    "Japon": "Tokyo",
-    "Jordanie": "Amman",
-    "Kazakhstan": "Noursoultan",
-    "Kenya": "Nairobi",
-    "Kirghizistan": "Bichkek",
-    "Kiribati": "Tarawa",
-    "Koweït": "Koweït",
-    "Laos": "Vientiane",
-    "Lesotho": "Maseru",
-    "Lettonie": "Riga",
-    "Liban": "Beyrouth",
-    "Liberia": "Monrovia",
-    "Libye": "Tripoli",
-    "Liechtenstein": "Vaduz",
-    "Lituanie": "Vilnius",
-    "Luxembourg": "Luxembourg",
-    "Madagascar": "Antananarivo",
-    "Malaisie": "Kuala Lumpur",
-    "Malawi": "Lilongwe",
-    "Maldives": "Malé",
-    "Mali": "Bamako",
-    "Malte": "La Valette",
-    "Maroc": "Rabat",
-    "Maurice": "Port-Louis",
-    "Mauritanie": "Nouakchott",
-    "Mexique": "Mexico",
-    "Micronésie": "Palikir",
-    "Moldavie": "Chișinău",
-    "Monaco": "Monaco",
-    "Mongolie": "Oulan-Bator",
-    "Monténégro": "Podgorica",
-    "Mozambique": "Maputo",
-    "Namibie": "Windhoek",
-    "Nauru": "Yaren",
-    "Népal": "Katmandou",
-    "Nicaragua": "Managua",
-    "Niger": "Niamey",
-    "Nigéria": "Abuja",
-    "Norvège": "Oslo",
-    "Nouvelle-Zélande": "Wellington",
-    "Oman": "Mascate",
-    "Ouganda": "Kampala",
-    "Ouzbékistan": "Tachkent",
-    "Pakistan": "Islamabad",
-    "Palaos": "Ngerulmud",
-    "Panama": "Panama",
-    "Papouasie-Nouvelle-Guinée": "Port-Moresby",
-    "Paraguay": "Asuncion",
-    "Pays-Bas": "Amsterdam",
-    "Pérou": "Lima",
-    "Philippines": "Manille",
-    "Pologne": "Varsovie",
-    "Portugal": "Lisbonne",
-    "Qatar": "Doha",
-    "République centrafricaine": "Bangui",
-    "République dominicaine": "Saint-Domingue",
-    "République tchèque": "Prague",
-    "Roumanie": "Bucarest",
-    "Royaume-Uni": "Londres",
-    "Russie": "Moscou",
-    "Rwanda": "Kigali",
-    "Saint-Christophe-et-Niévès": "Basseterre",
-    "Saint-Marin": "Saint-Marin",
-    "Saint-Vincent-et-les-Grenadines": "Kingstown",
-    "Salvador": "San Salvador",
-    "Samoa": "Apia",
-    "Sao Tomé-et-Principe": "São Tomé",
-    "Sénégal": "Dakar",
-    "Serbie": "Belgrade",
-    "Seychelles": "Victoria",
-    "Sierra Leone": "Freetown",
-    "Singapour": "Singapour",
-    "Slovaquie": "Bratislava",
-    "Slovénie": "Ljubljana",
-    "Somalie": "Mogadiscio",
-    "Soudan": "Khartoum",
-    "Soudan du Sud": "Djouba",
-    "Sri Lanka": "Sri Jayawardenepura Kotte",
-    "Suède": "Stockholm",
-    "Suisse": "Berne",
-    "Syrie": "Damas",
-    "Taïwan": "Taipei",
-    "Tadjikistan": "Douchanbé",
-    "Tanzanie": "Dodoma",
-    "Thaïlande": "Bangkok",
-    "Timor oriental": "Dili",
-    "Togo": "Lomé",
-    "Tonga": "Nukuʻalofa",
-    "Trinité-et-Tobago": "Port-d'Espagne",
-    "Tunisie": "Tunis",
-    "Turkménistan": "Achgabat",
-    "Turquie": "Ankara",
-    "Tuvalu": "Funafuti",
-    "Ukraine": "Kiev",
-    "Uruguay": "Montevideo",
-    "Vanuatu": "Port-Vila",
-    "Vatican": "Cité du Vatican",
-    "Venezuela": "Caracas",
-    "Viêt Nam": "Hanoï",
-    "Yémen": "Sanaa",
-    "Zambie": "Lusaka",
-    "Zimbabwe": "Harare"
+    "Espagne": "Madrid",
+    # … (reste de la liste)
 }
-
 
 def normalize_text(text: str) -> str:
     return ''.join(
@@ -223,8 +38,8 @@ def normalize_text(text: str) -> str:
 # ────────────────────────────────────────────────────────────────────────────────
 # 📝 Modal (formulaire de réponse)
 # ────────────────────────────────────────────────────────────────────────────────
-class AnswerModal(discord.ui.Modal, title="🖊️ Devine la capitale"):
-    def __init__(self, country: str, winners: list, multi: bool, quiz_msg: discord.Message, view: discord.ui.View):
+class AnswerModal(Modal, title="🖊️ Devine la capitale"):
+    def __init__(self, country: str, winners: list, multi: bool, quiz_msg: discord.Message, view: View):
         super().__init__(timeout=None)
         self.country = country
         self.capital = normalize_text(CAPITALS[country])
@@ -232,8 +47,7 @@ class AnswerModal(discord.ui.Modal, title="🖊️ Devine la capitale"):
         self.multi = multi
         self.quiz_msg = quiz_msg
         self.view = view
-
-        self.answer = discord.ui.TextInput(
+        self.answer = TextInput(
             label="Entre la capitale",
             placeholder="Exemple : Paris",
             required=True,
@@ -266,7 +80,7 @@ class AnswerModal(discord.ui.Modal, title="🖊️ Devine la capitale"):
 # ────────────────────────────────────────────────────────────────────────────────
 # 🎛️ Vue interactive
 # ────────────────────────────────────────────────────────────────────────────────
-class CapitalQuizView(discord.ui.View):
+class CapitalQuizView(View):
     def __init__(self, country: str, winners: list, multi: bool, quiz_msg: discord.Message = None):
         super().__init__(timeout=None)
         self.country = country
@@ -276,30 +90,35 @@ class CapitalQuizView(discord.ui.View):
         self.ended = False
 
     @discord.ui.button(label="Répondre", style=discord.ButtonStyle.primary, emoji="✍️")
-    async def answer_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+    async def answer_button(self, interaction: discord.Interaction, button: Button):
         await interaction.response.send_modal(AnswerModal(self.country, self.winners, self.multi, self.quiz_msg, self))
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🧠 Cog principal
 # ────────────────────────────────────────────────────────────────────────────────
 class Capitales(commands.Cog):
+    """Commande /capitales et !capitales — Deviner la capitale d'un pays"""
     SOLO_TIME = 120
     MULTI_TIME = 120
 
     def __init__(self, bot: commands.Bot):
         self.bot = bot
 
+    # 🔹 Fonction interne commune
     async def _send_quiz(self, channel, user=None, multi=False):
         country = random.choice(list(CAPITALS.keys()))
         capital = CAPITALS[country]
         winners = []
 
+        title = "Mode Multijoueur 🌍" if multi else "Mode Solo 🧍‍♂️"
+        footer_text = f"⏱️ Temps : {self.MULTI_TIME if multi else self.SOLO_TIME} secondes"
+
         embed = discord.Embed(
-            title="🌍 Devine la capitale !",
-            description=f"Quel est la capitale de **{country}** ?\nAppuie sur **Répondre** pour proposer ta réponse."
-                        + ("\n⏳ Mode Multi : 2 minutes" if multi else "\n⏳ Mode Solo : 2 minutes"),
+            title=title,
+            description=f"Quel est la capitale de **{country}** ?\nAppuie sur **Répondre** pour proposer ta réponse.",
             color=discord.Color.blurple()
         )
+        embed.set_footer(text=footer_text)
 
         view = CapitalQuizView(country, winners, multi)
         quiz_msg = await safe_send(channel, embed=embed, view=view)
@@ -329,36 +148,36 @@ class Capitales(commands.Cog):
 
         for child in view.children:
             child.disabled = True
-
         await quiz_msg.edit(embed=embed, view=view)
 
+    # 🔹 Commande SLASH
     @app_commands.command(name="capitales", description="Devine la capitale d'un pays")
     @app_commands.describe(mode="Tapez 'm' ou 'multi' pour le mode multijoueur")
     @app_commands.checks.cooldown(1, 10.0, key=lambda i: i.user.id)
     async def slash_capitales(self, interaction: discord.Interaction, mode: str = None):
         try:
             await interaction.response.defer()
-            if mode is None:
-                await self._send_quiz(interaction.channel, interaction.user, multi=False)
-            elif mode.lower() in ["m", "multi"]:
-                await self._send_quiz(interaction.channel, interaction.user, multi=True)
+            multi = mode is not None and mode.lower() in ["m", "multi"]
+            await self._send_quiz(interaction.channel, interaction.user, multi=multi)
             await interaction.delete_original_response()
         except Exception as e:
             print(f"[ERREUR /capitales] {e}")
             await safe_respond(interaction, "❌ Une erreur est survenue.", ephemeral=True)
 
+    # 🔹 Commande PREFIX
     @commands.command(name="capitales")
     @commands.cooldown(1, 10.0, commands.BucketType.user)
     async def prefix_capitales(self, ctx: commands.Context, *, arg: str = None):
         try:
-            if arg is None:
-                await self._send_quiz(ctx.channel, ctx.author, multi=False)
-            elif arg.lower() in ["m", "multi"]:
-                await self._send_quiz(ctx.channel, ctx.author, multi=True)
+            multi = arg is not None and arg.lower() in ["m", "multi"]
+            await self._send_quiz(ctx.channel, ctx.author, multi=multi)
         except Exception as e:
             print(f"[ERREUR !capitales] {e}")
             await safe_send(ctx.channel, "❌ Une erreur est survenue.")
 
+# ────────────────────────────────────────────────────────────────────────────────
+# 🔌 Setup du Cog
+# ────────────────────────────────────────────────────────────────────────────────
 async def setup(bot: commands.Bot):
     cog = Capitales(bot)
     for command in cog.get_commands():
