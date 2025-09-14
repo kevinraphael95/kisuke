@@ -294,7 +294,7 @@ class Capitales(commands.Cog):
         capital = CAPITALS[country]
         winners = []
 
-        title = "Mode Multijoueur 🌍" if multi else "Mode Solo 🧍‍♂️"
+        title = "Devine la Capitale - Mode Multijoueur 🌍" if multi else "Devine la Capitale - Mode Solo 🧍‍♂️"
         footer_text = f"⏱️ Temps : {self.MULTI_TIME if multi else self.SOLO_TIME} secondes"
 
         embed = discord.Embed(
