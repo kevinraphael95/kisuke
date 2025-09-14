@@ -57,7 +57,7 @@ CREATE TABLE public.reiatsu_config (
     en_attente BOOLEAN NULL DEFAULT false,
     last_spawn_at TIMESTAMP WITH TIME ZONE NULL,
     spawn_message_id TEXT NULL,
-    delay_minutes INTEGER NULL DEFAULT 1800,
+    spawn_delay INTEGER NULL DEFAULT 1800,
     CONSTRAINT reiatsu_config_pkey PRIMARY KEY (guild_id)
 ) TABLESPACE pg_default;
 ```
