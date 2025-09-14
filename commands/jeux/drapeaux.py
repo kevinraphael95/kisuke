@@ -1,7 +1,7 @@
 # ────────────────────────────────────────────────────────────────────────────────
 # 📌 drapeaux.py — Commande interactive /drapeaux et !drapeaux
 # Objectif : Deviner le pays à partir d'un drapeau aléatoire (tous les pays)
-# Modes : Solo (1 joueur) et Multi (plusieurs joueurs pendant 2 min)
+# Modes : Solo (1 joueur, 3 minutes) et Multi (plusieurs joueurs, 2 minutes)
 # Réponses : via bouton "Répondre" et formulaire (Modal)
 # Catégorie : Jeux
 # Accès : Tous
@@ -20,7 +20,7 @@ import random, asyncio, unicodedata
 from utils.discord_utils import safe_send, safe_respond
 
 # ────────────────────────────────────────────────────────────────────────────────
-# 📂 Liste complète des pays et codes ISO
+# 📂 Liste complète des pays et codes ISO (inchangée)
 # ────────────────────────────────────────────────────────────────────────────────
 COUNTRIES = {
     "Afghanistan": "af", "Afrique du Sud": "za", "Albanie": "al", "Algérie": "dz",
@@ -77,9 +77,6 @@ COUNTRIES = {
 def get_flag_url(iso_code: str) -> str:
     return f"https://flagcdn.com/w320/{iso_code}.png"
 
-# ────────────────────────────────────────────────────────────────────────────────
-# 🔧 Utilitaire pour normaliser les réponses (sans accents / casse)
-# ────────────────────────────────────────────────────────────────────────────────
 def normalize_text(text: str) -> str:
     return ''.join(
         c for c in unicodedata.normalize('NFD', text.lower())
@@ -145,7 +142,7 @@ class Drapeaux(commands.Cog):
         embed = discord.Embed(
             title="🌍 Devine le pays !",
             description="Appuie sur **Répondre** pour envoyer ta proposition."
-                        + ("\n⏳ **Mode Multi :** vous avez 2 minutes pour répondre." if multi else ""),
+                        + ("\n⏳ **Mode Multi :** vous avez 2 minutes pour répondre." if multi else "\n⏳ **Mode Solo :** tu as 3 minutes pour répondre."),
             color=discord.Color.blurple()
         )
         embed.set_image(url=flag_url)
@@ -153,7 +150,7 @@ class Drapeaux(commands.Cog):
         quiz_msg = await safe_send(channel, embed=embed, view=view)
 
         try:
-            await asyncio.sleep(120 if multi else 30)
+            await asyncio.sleep(120 if multi else 180)  # ⏱ 2 min en multi, 3 min en solo
         except asyncio.CancelledError:
             return
 
@@ -174,12 +171,18 @@ class Drapeaux(commands.Cog):
     # 🔹 Commande SLASH
     # ────────────────────────────────────────────────────────────────────────
     @app_commands.command(name="drapeaux", description="Devine le pays à partir d'un drapeau")
-    @app_commands.describe(multi="Active le mode multijoueur (2 minutes)")
+    @app_commands.describe(mode="Tapez 'm' ou 'multi' pour le mode multijoueur")
     @app_commands.checks.cooldown(1, 10.0, key=lambda i: i.user.id)
-    async def slash_drapeaux(self, interaction: discord.Interaction, multi: bool = False):
+    async def slash_drapeaux(self, interaction: discord.Interaction, mode: str = None):
         try:
             await interaction.response.defer()
-            await self._send_quiz(interaction.channel, interaction.user, multi=multi)
+            if mode is None:
+                await self._send_quiz(interaction.channel, interaction.user, multi=False)
+            elif mode.lower() in ["m", "multi"]:
+                await self._send_quiz(interaction.channel, interaction.user, multi=True)
+            else:
+                await interaction.delete_original_response()  # 👌 ne rien afficher si argument incorrect
+                return
             await interaction.delete_original_response()
         except Exception as e:
             print(f"[ERREUR /drapeaux] {e}")
@@ -190,9 +193,14 @@ class Drapeaux(commands.Cog):
     # ────────────────────────────────────────────────────────────────────────
     @commands.command(name="drapeaux")
     @commands.cooldown(1, 10.0, commands.BucketType.user)
-    async def prefix_drapeaux(self, ctx: commands.Context, *, multi: str = None):
+    async def prefix_drapeaux(self, ctx: commands.Context, *, arg: str = None):
         try:
-            await self._send_quiz(ctx.channel, ctx.author, multi=(multi == "multi"))
+            if arg is None:
+                await self._send_quiz(ctx.channel, ctx.author, multi=False)
+            elif arg.lower() in ["m", "multi"]:
+                await self._send_quiz(ctx.channel, ctx.author, multi=True)
+            else:
+                return  # 👌 ne rien envoyer si argument incorrect
         except Exception as e:
             print(f"[ERREUR !drapeaux] {e}")
             await safe_send(ctx.channel, "❌ Une erreur est survenue.")
