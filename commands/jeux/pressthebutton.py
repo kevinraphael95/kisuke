@@ -21,14 +21,12 @@ import string
 # Utils sécurisés
 from utils.discord_utils import safe_send, safe_edit, safe_respond
 
-
 # ────────────────────────────────────────────────────────────────────────────────
 # 🔧 Générateur d'ID unique
 # ────────────────────────────────────────────────────────────────────────────────
 def get_random_string(length: int = 20) -> str:
     chars = string.ascii_uppercase + string.digits
     return ''.join(random.choice(chars) for _ in range(length))
-
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🎛️ Vue interactive — boutons Yes/No
@@ -60,23 +58,16 @@ class PTNView(View):
         self.add_item(self.btn_no)
 
     async def disable_buttons(self):
+        """Désactive les boutons après un vote."""
         for child in self.children:
             child.disabled = True
 
-    async def update_message(self, interaction: discord.Interaction, choice: str):
-        if choice == "yes":
-            self.btn_yes.label = f"Yes ({self.yes})"
-            self.btn_no.label = f"No ({self.no})"
-        else:
-            self.btn_yes.label = f"Yes ({self.yes})"
-            self.btn_no.label = f"No ({self.no})"
-
+    async def update_message(self, interaction: discord.Interaction):
+        """Met à jour le message avec les résultats et désactive les boutons."""
+        self.btn_yes.label = f"Yes ({self.yes})"
+        self.btn_no.label = f"No ({self.no})"
         await self.disable_buttons()
-        await safe_edit(
-            interaction.message,
-            embed=self.build_embed(),
-            view=self
-        )
+        await safe_edit(interaction.message, embed=self.build_embed(), view=self)
 
     def build_embed(self) -> discord.Embed:
         embed = discord.Embed(
@@ -90,14 +81,13 @@ class PTNView(View):
         if interaction.user.id != self.user.id:
             return await interaction.response.send_message("❌ Ce bouton n'est pas pour toi !", ephemeral=True)
         await interaction.response.defer()
-        await self.update_message(interaction, "yes")
+        await self.update_message(interaction)
 
     async def vote_no(self, interaction: discord.Interaction):
         if interaction.user.id != self.user.id:
             return await interaction.response.send_message("❌ Ce bouton n'est pas pour toi !", ephemeral=True)
         await interaction.response.defer()
-        await self.update_message(interaction, "no")
-
+        await self.update_message(interaction)
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🧠 Cog principal
@@ -109,21 +99,37 @@ class PressTheButton(commands.Cog):
         self.bot = bot
 
     async def fetch_dilemma(self):
+        """Récupère un dilemme depuis l'API publique."""
         url = "https://api2.willyoupressthebutton.com/api/v2/dilemma"
-        async with aiohttp.ClientSession() as session:
-            async with session.post(url) as resp:
-                if resp.status == 200:
+        try:
+            async with aiohttp.ClientSession() as session:
+                async with session.get(url, headers={"User-Agent": "Mozilla/5.0"}) as resp:
+                    if resp.status != 200:
+                        print(f"[PTN] Erreur API: statut {resp.status}")
+                        return None, None, 0, 0
+
                     data = await resp.json()
+                    if "dilemma" not in data:
+                        print(f"[PTN] Réponse inattendue: {data}")
+                        return None, None, 0, 0
+
                     d = data["dilemma"]
-                    q1 = unescape(d["txt1"].capitalize())
-                    q2 = unescape(d["txt2"].capitalize())
-                    return q1, q2, d["yes"], d["no"]
+                    q1 = unescape(d.get("txt1", "").capitalize())
+                    q2 = unescape(d.get("txt2", "").capitalize())
+                    yes = d.get("yes", 0)
+                    no = d.get("no", 0)
+                    return q1, q2, yes, no
+
+        except Exception as e:
+            print(f"[PTN] Exception fetch_dilemma: {e}")
+
         return None, None, 0, 0
 
     async def _send_game(self, channel: discord.abc.Messageable, user: discord.User):
+        """Envoie le dilemme sous forme d'embed avec boutons interactifs."""
         q1, q2, yes, no = await self.fetch_dilemma()
         if not q1 or not q2:
-            await safe_send(channel, "❌ Impossible de récupérer un dilemme.")
+            await safe_send(channel, "❌ Impossible de récupérer un dilemme (API hors service).")
             return
 
         view = PTNView(q1, q2, yes, no, user)
@@ -157,7 +163,6 @@ class PressTheButton(commands.Cog):
         except Exception as e:
             print(f"[ERREUR !ptn] {e}")
             await safe_send(ctx.channel, "❌ Une erreur est survenue.")
-
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🔌 Setup du Cog
