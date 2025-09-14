@@ -1,7 +1,7 @@
 # ────────────────────────────────────────────────────────────────────────────────
 # 📌 drapeaux.py — Commande interactive /drapeaux et !drapeaux
 # Objectif : Deviner le pays à partir d'un drapeau aléatoire (tous les pays)
-# Modes : Solo (1 joueur, 3 minutes) et Multi (plusieurs joueurs, 2 minutes)
+# Modes : Solo (1 joueur, 2 minutes) et Multi (plusieurs joueurs, 2 minutes)
 # Réponses : via bouton "Répondre" et formulaire (Modal)
 # Catégorie : Jeux
 # Accès : Tous
@@ -16,7 +16,6 @@ from discord import app_commands
 from discord.ext import commands
 import random, asyncio, unicodedata
 
-# Utils sécurisés
 from utils.discord_utils import safe_send, safe_respond
 
 # ────────────────────────────────────────────────────────────────────────────────
@@ -74,6 +73,7 @@ COUNTRIES = {
     "Zimbabwe": "zw"
 }
 
+
 def get_flag_url(iso_code: str) -> str:
     return f"https://flagcdn.com/w320/{iso_code}.png"
 
@@ -87,12 +87,14 @@ def normalize_text(text: str) -> str:
 # 📝 Modal (formulaire de réponse)
 # ────────────────────────────────────────────────────────────────────────────────
 class AnswerModal(discord.ui.Modal, title="🖊️ Devine le pays"):
-    def __init__(self, country: str, winners: list, multi: bool):
+    def __init__(self, country: str, winners: list, multi: bool, quiz_msg: discord.Message, view: discord.ui.View):
         super().__init__(timeout=None)
         self.country = country
         self.normalized_country = normalize_text(country)
         self.winners = winners
         self.multi = multi
+        self.quiz_msg = quiz_msg
+        self.view = view
 
         self.answer = discord.ui.TextInput(
             label="Entre le nom du pays",
@@ -108,6 +110,20 @@ class AnswerModal(discord.ui.Modal, title="🖊️ Devine le pays"):
             if interaction.user not in self.winners:
                 self.winners.append(interaction.user)
             await interaction.response.send_message("✅ Bonne réponse !", ephemeral=True)
+
+            # 💡 Si mode solo → fin immédiate du quiz
+            if not self.multi:
+                for child in self.view.children:
+                    child.disabled = True
+                # Ajout de la réponse au même embed
+                embed = self.quiz_msg.embeds[0]
+                embed.add_field(
+                    name="🎉 Résultat",
+                    value=f"✅ Réponse : **{self.country}**\n🏆 Gagnant : {interaction.user.mention}",
+                    inline=False
+                )
+                await self.quiz_msg.edit(embed=embed, view=self.view)
+                self.view.stop()
         else:
             await interaction.response.send_message("❌ Mauvaise réponse !", ephemeral=True)
 
@@ -115,21 +131,25 @@ class AnswerModal(discord.ui.Modal, title="🖊️ Devine le pays"):
 # 🎛️ Vue interactive — bouton "Répondre"
 # ────────────────────────────────────────────────────────────────────────────────
 class FlagQuizView(discord.ui.View):
-    def __init__(self, country: str, winners: list, multi: bool):
+    def __init__(self, country: str, winners: list, multi: bool, quiz_msg: discord.Message = None):
         super().__init__(timeout=None)
         self.country = country
         self.winners = winners
         self.multi = multi
+        self.quiz_msg = quiz_msg
 
     @discord.ui.button(label="Répondre", style=discord.ButtonStyle.primary, emoji="✍️")
     async def answer_button(self, interaction: discord.Interaction, button: discord.ui.Button):
-        await interaction.response.send_modal(AnswerModal(self.country, self.winners, self.multi))
+        await interaction.response.send_modal(AnswerModal(self.country, self.winners, self.multi, self.quiz_msg, self))
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🧠 Cog principal
 # ────────────────────────────────────────────────────────────────────────────────
 class Drapeaux(commands.Cog):
     """Commande /drapeaux et !drapeaux — Deviner le pays à partir d'un drapeau"""
+
+    SOLO_TIME = 120  # ⏱ facilement modifiable (en secondes)
+    MULTI_TIME = 120
 
     def __init__(self, bot: commands.Bot):
         self.bot = bot
@@ -142,30 +162,39 @@ class Drapeaux(commands.Cog):
         embed = discord.Embed(
             title="🌍 Devine le pays !",
             description="Appuie sur **Répondre** pour envoyer ta proposition."
-                        + ("\n⏳ **Mode Multi :** vous avez 2 minutes pour répondre." if multi else "\n⏳ **Mode Solo :** tu as 3 minutes pour répondre."),
+                        + ("\n⏳ **Mode Multi :** vous avez 2 minutes pour répondre." if multi else "\n⏳ **Mode Solo :** tu as 2 minutes pour répondre."),
             color=discord.Color.blurple()
         )
         embed.set_image(url=flag_url)
+
         view = FlagQuizView(country, winners, multi)
         quiz_msg = await safe_send(channel, embed=embed, view=view)
+        view.quiz_msg = quiz_msg  # injection du message dans la vue
 
         try:
-            await asyncio.sleep(120 if multi else 180)  # ⏱ 2 min en multi, 3 min en solo
+            await asyncio.sleep(self.MULTI_TIME if multi else self.SOLO_TIME)
         except asyncio.CancelledError:
             return
 
-        result_embed = discord.Embed(
-            title="⏱️ Fin du quiz !" if multi else "⏱️ Temps écoulé !",
-            color=discord.Color.green() if winners else discord.Color.red()
-        )
+        # 💡 Si personne n'a trouvé (ou mode multi terminé), on ajoute le résultat
+        embed = quiz_msg.embeds[0]
         if winners:
-            result_embed.description = (
-                f"✅ Réponse : **{country}**\n"
-                f"🏆 Gagnants : {', '.join(w.mention for w in set(winners))}"
+            embed.add_field(
+                name="🎉 Résultat",
+                value=f"✅ Réponse : **{country}**\n🏆 Gagnants : {', '.join(w.mention for w in set(winners))}",
+                inline=False
             )
         else:
-            result_embed.description = f"❌ Personne n'a trouvé. C'était **{country}**."
-        await quiz_msg.edit(embed=result_embed, view=None)
+            embed.add_field(
+                name="🎉 Résultat",
+                value=f"❌ Personne n'a trouvé. C'était **{country}**.",
+                inline=False
+            )
+
+        for child in view.children:
+            child.disabled = True
+
+        await quiz_msg.edit(embed=embed, view=view)
 
     # ────────────────────────────────────────────────────────────────────────
     # 🔹 Commande SLASH
@@ -180,9 +209,6 @@ class Drapeaux(commands.Cog):
                 await self._send_quiz(interaction.channel, interaction.user, multi=False)
             elif mode.lower() in ["m", "multi"]:
                 await self._send_quiz(interaction.channel, interaction.user, multi=True)
-            else:
-                await interaction.delete_original_response()  # 👌 ne rien afficher si argument incorrect
-                return
             await interaction.delete_original_response()
         except Exception as e:
             print(f"[ERREUR /drapeaux] {e}")
@@ -199,8 +225,6 @@ class Drapeaux(commands.Cog):
                 await self._send_quiz(ctx.channel, ctx.author, multi=False)
             elif arg.lower() in ["m", "multi"]:
                 await self._send_quiz(ctx.channel, ctx.author, multi=True)
-            else:
-                return  # 👌 ne rien envoyer si argument incorrect
         except Exception as e:
             print(f"[ERREUR !drapeaux] {e}")
             await safe_send(ctx.channel, "❌ Une erreur est survenue.")
@@ -214,4 +238,5 @@ async def setup(bot: commands.Bot):
         if not hasattr(command, "category"):
             command.category = "Jeux"
     await bot.add_cog(cog)
+
 
