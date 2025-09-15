@@ -197,14 +197,14 @@ class SteamKey(commands.Cog):
             jeux += "…"
 
         embed = discord.Embed(
-            title="🎮 Jeu Steam Key",
-            description="Clique sur **Miser** pour tenter de gagner une clé Steam !",
+            title="🎮 Loto - Gagner une clé Steam ?",
+            description="Miser du Reiatsu pour tenter de gagner une clé Steam !",
             color=discord.Color.blurple()
         )
-        embed.add_field(name="💠 Reiatsu possédés", value=str(reiatsu_points), inline=True)
-        embed.add_field(name="💸 Prix d'une mise", value=str(REIATSU_COST), inline=True)
-        embed.add_field(name="🎯 Chance de gagner", value=f"{int(WIN_CHANCE * 100)}%", inline=True)
-        embed.add_field(name="🔑 Clés disponibles", value=str(len(keys_dispo)), inline=True)
+        embed.add_field(name="💠 Reiatsu possédés", value=str(reiatsu_points), inline=False)
+        embed.add_field(name="💸 Prix d'une mise", value=str(REIATSU_COST), inline=False)
+        embed.add_field(name="🎯 Chance de gagner", value=f"{int(WIN_CHANCE * 100)}%", inline=False)
+        embed.add_field(name="🔑 Nombre de clés disponibles", value=str(len(keys_dispo)), inline=False)
         embed.add_field(name="🎲 Jeux proposés", value=jeux, inline=False)
 
         view = SteamKeyView(user_id)
