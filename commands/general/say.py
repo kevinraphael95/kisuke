@@ -44,7 +44,7 @@ class SteamKeyView(View):
         self.stop()
 
 # ────────────────────────────────────────────────────────────────────────────────
-# 🎛️ UI — View de confirmation et bouton “Autre jeu”
+# 🎛️ UI — View de confirmation (uniquement en cas de gain)
 # ────────────────────────────────────────────────────────────────────────────────
 class ConfirmKeyView(View):
     def __init__(self, author_id: int):
@@ -62,15 +62,15 @@ class ConfirmKeyView(View):
         await interaction.response.defer()
         self.stop()
 
-    @discord.ui.button(label="❌ Non, laisse la clé", style=discord.ButtonStyle.red)
-    async def cancel(self, interaction: discord.Interaction, button: Button):
-        self.confirmed = False
-        await interaction.response.defer()
-        self.stop()
-
     @discord.ui.button(label="🔄 Autre jeu", style=discord.ButtonStyle.blurple)
     async def refresh_button(self, interaction: discord.Interaction, button: Button):
         self.refresh = True
+        await interaction.response.defer()
+        self.stop()
+
+    @discord.ui.button(label="❌ Non, laisse la clé", style=discord.ButtonStyle.red)
+    async def cancel(self, interaction: discord.Interaction, button: Button):
+        self.confirmed = False
         await interaction.response.defer()
         self.stop()
 
@@ -122,19 +122,20 @@ class SteamKey(commands.Cog):
                 await self._send(interaction_or_ctx, embed)
                 return
 
+            # Embed avec options (clé, refresh, refus)
             embed = discord.Embed(title="🎉 Félicitations !", description="Tu as gagné une clé Steam !", color=discord.Color.green())
             embed.add_field(name="Jeu", value=key["game_name"], inline=True)
             embed.add_field(name="Lien Steam", value=f"[Voir sur Steam]({key['steam_url']})", inline=True)
-            embed.set_footer(text="Confirme si tu veux recevoir la clé en DM")
+            embed.set_footer(text="Choisis si tu veux la clé ou tirer un autre jeu.")
 
             view = ConfirmKeyView(interaction_or_ctx.user.id)
             msg = await self._send(interaction_or_ctx, embed, view)
             await view.wait()
 
             if view.refresh:
-                # Relance le menu principal
-                await safe_edit(msg, embed=discord.Embed(title="🔄 Nouveau tirage...", color=discord.Color.blurple()), view=None)
-                await self._send_menu(interaction_or_ctx.channel, interaction_or_ctx.user.id)
+                # Relance un nouveau jeu sans consommer de Reiatsu
+                await safe_edit(msg, embed=discord.Embed(title="🔄 Nouveau jeu en cours...", color=discord.Color.blurple()), view=None)
+                await self._try_win_key(interaction_or_ctx)
                 return
 
             if view.confirmed:
@@ -148,13 +149,12 @@ class SteamKey(commands.Cog):
                 await safe_edit(msg, embed=discord.Embed(title="🔄 Clé laissée dispo pour les autres joueurs.", color=discord.Color.blurple()), view=None)
 
         else:
-            embed = discord.Embed(
+            # Si perdu → pas de bouton, juste un embed rouge
+            await self._send(interaction_or_ctx, discord.Embed(
                 title="Dommage !",
                 description="❌ Tu n'as pas gagné cette fois, retente ta chance !",
                 color=discord.Color.red()
-            )
-            view = ConfirmKeyView(interaction_or_ctx.user.id)
-            await self._send(interaction_or_ctx, embed, view)
+            ))
 
     async def _send(self, interaction_or_ctx, embed, view=None):
         if isinstance(interaction_or_ctx, discord.Interaction):
@@ -203,7 +203,7 @@ class SteamKey(commands.Cog):
         if nb_keys == 0:
             embed = discord.Embed(title="🎮 Jeu Steam Key", description="❌ Aucun jeu disponible pour le moment.", color=discord.Color.red())
             await safe_send(channel, embed=embed)
-            return SteamKeyView(user_id)  # Retourne une view vide pour éviter les erreurs
+            return SteamKeyView(user_id)
 
         embed = discord.Embed(title="🎮 Jeu Steam Key", description=f"Miser {REIATSU_COST} Reiatsu pour une chance de gagner une clé Steam.", color=discord.Color.blurple())
         embed.add_field(name="Probabilité de gagner", value="50%", inline=False)
