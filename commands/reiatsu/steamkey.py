@@ -53,7 +53,6 @@ class SteamKeyView(View):
 
     @discord.ui.button(label="🎲 Autre jeu", style=discord.ButtonStyle.gray)
     async def other_game_button(self, interaction: discord.Interaction, button: Button):
-        """Propose un autre jeu sans relancer la mise."""
         if not self.keys_dispo:
             await safe_respond(interaction, "⚠️ Aucun autre jeu disponible.", ephemeral=True)
             return
@@ -95,26 +94,49 @@ class SteamKeyView(View):
         await interaction.response.edit_message(embed=embed, view=self)
 
 # ────────────────────────────────────────────────────────────────────────────────
-# 🎛️ UI — Confirmation en cas de gain
+# 🎛️ UI — Confirmation avec option "Autre jeu"
 # ────────────────────────────────────────────────────────────────────────────────
 class ConfirmKeyView(View):
-    def __init__(self, author_id: int):
+    def __init__(self, author_id: int, keys_dispo: list, current_key: dict):
         super().__init__(timeout=30)
         self.author_id = author_id
-        self.confirmed = None
+        self.keys_dispo = keys_dispo
+        self.current_key = current_key
+        self.choice = None  # "accept", "reject"
 
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
         return interaction.user.id == self.author_id
 
     @discord.ui.button(label="✅ Oui, je veux la clé", style=discord.ButtonStyle.green)
     async def confirm(self, interaction: discord.Interaction, button: Button):
-        self.confirmed = True
+        self.choice = "accept"
         await interaction.response.defer()
         self.stop()
 
+    @discord.ui.button(label="🎲 Autre jeu", style=discord.ButtonStyle.blurple)
+    async def other(self, interaction: discord.Interaction, button: Button):
+        if len(self.keys_dispo) <= 1:
+            await safe_respond(interaction, "⚠️ Aucun autre jeu disponible.", ephemeral=True)
+            return
+
+        current_index = next((i for i, k in enumerate(self.keys_dispo) if k["id"] == self.current_key["id"]), 0)
+        next_index = (current_index + 1) % len(self.keys_dispo)
+        self.current_key = self.keys_dispo[next_index]
+
+        embed = discord.Embed(
+            title="🎲 Jeu changé !",
+            description="Voici le nouveau jeu que tu peux remporter :",
+            color=discord.Color.blurple()
+        )
+        embed.add_field(name="Jeu", value=self.current_key["game_name"], inline=True)
+        embed.add_field(name="Lien Steam", value=f"[Voir sur Steam]({self.current_key['steam_url']})", inline=True)
+        embed.set_footer(text="Confirme si tu veux recevoir la clé en DM ou change encore de jeu.")
+
+        await interaction.response.edit_message(embed=embed, view=self)
+
     @discord.ui.button(label="❌ Non, laisse la clé", style=discord.ButtonStyle.red)
     async def cancel(self, interaction: discord.Interaction, button: Button):
-        self.confirmed = False
+        self.choice = "reject"
         await interaction.response.defer()
         self.stop()
 
@@ -169,7 +191,10 @@ class SteamKey(commands.Cog):
         await self._update_reiatsu(user_id, reiatsu_points - REIATSU_COST)
 
         if random.random() <= WIN_CHANCE:
+            keys_resp = supabase.table("steam_keys").select("*").eq("won", False).execute()
+            keys_dispo = keys_resp.data if keys_resp.data else []
             key = key_check
+
             embed = discord.Embed(
                 title="🎉 Félicitations !",
                 description="Tu as gagné une clé Steam !",
@@ -177,21 +202,22 @@ class SteamKey(commands.Cog):
             )
             embed.add_field(name="Jeu", value=key["game_name"], inline=True)
             embed.add_field(name="Lien Steam", value=f"[Voir sur Steam]({key['steam_url']})", inline=True)
-            embed.set_footer(text="Confirme si tu veux recevoir la clé en DM")
+            embed.set_footer(text="Choisis si tu veux ce jeu ou un autre.")
 
-            view = ConfirmKeyView(interaction_or_ctx.user.id)
+            view = ConfirmKeyView(interaction_or_ctx.user.id, keys_dispo, key)
             msg = await self._send(interaction_or_ctx, embed, view)
             await view.wait()
 
-            if view.confirmed:
-                await self._mark_steam_key_won(key["id"], interaction_or_ctx.user.name)
+            if view.choice == "accept":
+                await self._mark_steam_key_won(view.current_key["id"], interaction_or_ctx.user.name)
                 try:
-                    await interaction_or_ctx.user.send(f"🎁 **Clé Steam pour {key['game_name']}**\n`{key['steam_key']}`")
+                    await interaction_or_ctx.user.send(f"🎁 **Clé Steam pour {view.current_key['game_name']}**\n`{view.current_key['steam_key']}`")
                     await safe_edit(msg, embed=discord.Embed(title="✅ Clé envoyée en DM !", color=discord.Color.green()), view=None)
                 except discord.Forbidden:
                     await safe_edit(msg, embed=discord.Embed(title="⚠️ Impossible d'envoyer un DM.", color=discord.Color.orange()), view=None)
-            else:
+            elif view.choice == "reject":
                 await safe_edit(msg, embed=discord.Embed(title="🔄 Clé laissée dispo pour les autres joueurs.", color=discord.Color.blurple()), view=None)
+
         else:
             await self._send(interaction_or_ctx, discord.Embed(
                 title="Dommage !",
