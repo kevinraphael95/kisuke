@@ -1,114 +1,225 @@
 # ────────────────────────────────────────────────────────────────────────────────
-# 📌 say.py — Commande interactive /say et !say
-# Objectif : Faire répéter un message par le bot (texte ou embed)
+# 📌 steamkey.py — Commande interactive /steamkey et !steamkey
+# Objectif : Miser des points Reiatsu pour tenter de gagner une clé Steam
 # Catégorie : Général
 # Accès : Public
-# Cooldown : 1 utilisation / 5 sec / utilisateur
 # ────────────────────────────────────────────────────────────────────────────────
 
-# ────────────────────────────────────────────────────────────────────────────────
-# 📦 Imports nécessaires
-# ────────────────────────────────────────────────────────────────────────────────
 import discord
-import re
 from discord import app_commands
 from discord.ext import commands
-from utils.discord_utils import safe_send, safe_delete, safe_respond  
+from discord.ui import View, Button
+import random
+from utils.supabase_client import supabase
+from utils.discord_utils import safe_send, safe_edit, safe_respond
+
+# ────────────────────────────────────────────────────────────────────────────────
+# 📂 Constantes
+# ────────────────────────────────────────────────────────────────────────────────
+REIATSU_COST = 1
+WIN_CHANCE = 0.5  # 0.5 = 50% de chance de gagner
+
+# ────────────────────────────────────────────────────────────────────────────────
+# 🎛️ UI — View avec bouton miser
+# ────────────────────────────────────────────────────────────────────────────────
+class SteamKeyView(View):
+    def __init__(self, author_id: int):
+        super().__init__(timeout=120)
+        self.author_id = author_id
+        self.value = None
+        self.last_interaction = None
+
+    async def interaction_check(self, interaction: discord.Interaction) -> bool:
+        if interaction.user.id != self.author_id:
+            await safe_respond(interaction, "❌ Ce bouton n'est pas pour toi.", ephemeral=True)
+            return False
+        return True
+
+    @discord.ui.button(label=f"Miser {REIATSU_COST} Reiatsu", style=discord.ButtonStyle.green)
+    async def bet_button(self, interaction: discord.Interaction, button: Button):
+        button.disabled = True
+        await interaction.response.edit_message(view=self)
+        self.value = True
+        self.last_interaction = interaction
+        self.stop()
+
+# ────────────────────────────────────────────────────────────────────────────────
+# 🎛️ UI — View de confirmation et bouton “Autre jeu”
+# ────────────────────────────────────────────────────────────────────────────────
+class ConfirmKeyView(View):
+    def __init__(self, author_id: int):
+        super().__init__(timeout=30)
+        self.author_id = author_id
+        self.confirmed = None
+        self.refresh = False
+
+    async def interaction_check(self, interaction: discord.Interaction) -> bool:
+        return interaction.user.id == self.author_id
+
+    @discord.ui.button(label="✅ Oui, je veux la clé", style=discord.ButtonStyle.green)
+    async def confirm(self, interaction: discord.Interaction, button: Button):
+        self.confirmed = True
+        await interaction.response.defer()
+        self.stop()
+
+    @discord.ui.button(label="❌ Non, laisse la clé", style=discord.ButtonStyle.red)
+    async def cancel(self, interaction: discord.Interaction, button: Button):
+        self.confirmed = False
+        await interaction.response.defer()
+        self.stop()
+
+    @discord.ui.button(label="🔄 Autre jeu", style=discord.ButtonStyle.blurple)
+    async def refresh_button(self, interaction: discord.Interaction, button: Button):
+        self.refresh = True
+        await interaction.response.defer()
+        self.stop()
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🧠 Cog principal
 # ────────────────────────────────────────────────────────────────────────────────
-class Say(commands.Cog):
-    """Commande interactive /say et !say — Faire répéter un message par le bot"""
+class SteamKey(commands.Cog):
+    """Commande /steamkey et !steamkey — Miser des Reiatsu pour tenter de gagner une clé Steam"""
 
     def __init__(self, bot: commands.Bot):
         self.bot = bot
 
-    # ────────────────────────────────────────────────────────────────────────────
-    # 🔹 Fonction interne
-    # ────────────────────────────────────────────────────────────────────────────
-    async def _say_message(self, channel: discord.abc.Messageable, message: str, embed: bool = False):
-        """Envoie un message formaté avec tous les emojis custom remplacés efficacement (case-insensible)."""
-        message = (message or "").strip()
-        if not message:
-            return await safe_send(channel, "⚠️ Message vide.")
+    # ─────────── Fonctions internes accès Supabase ───────────
+    async def _get_reiatsu(self, user_id: str) -> int:
+        resp = supabase.table("reiatsu").select("points").eq("user_id", user_id).single().execute()
+        return resp.data["points"] if resp.data else 0
 
-        pattern = r":([a-zA-Z0-9_]+):"
+    async def _update_reiatsu(self, user_id: str, new_points: int):
+        supabase.table("reiatsu").update({"points": new_points}).eq("user_id", user_id).execute()
 
-        if hasattr(channel, "guild"):  # On est dans un serveur
-            # dictionnaire en lowercase pour éviter les soucis de majuscules
-            guild_emojis = {e.name.lower(): str(e) for e in channel.guild.emojis}
+    async def _get_one_steam_key(self):
+        resp = supabase.table("steam_keys").select("*").eq("won", False).limit(1).execute()
+        if resp.data and len(resp.data) > 0:
+            return resp.data[0]
+        return None
 
-            def replace_emoji(match):
-                name = match.group(1).lower()
-                return guild_emojis.get(name, match.group(0))  # garde le texte si emoji non trouvé
+    async def _mark_steam_key_won(self, key_id: int, winner: str):
+        supabase.table("steam_keys").update({"won": True, "winner": winner}).eq("id", key_id).execute()
 
-            message = re.sub(pattern, replace_emoji, message, flags=re.IGNORECASE)
+    # ─────────── Logique du jeu ───────────
+    async def _try_win_key(self, interaction_or_ctx):
+        user_id = str(interaction_or_ctx.user.id)
+        reiatsu_points = await self._get_reiatsu(user_id)
 
-        # ✂️ Limite de caractères Discord
-        if len(message) > 2000:
-            message = message[:1997] + "..."
+        if reiatsu_points < REIATSU_COST:
+            msg = f"❌ Tu n'as pas assez de Reiatsu (il te faut {REIATSU_COST})."
+            if isinstance(interaction_or_ctx, discord.Interaction):
+                await interaction_or_ctx.followup.send(msg, ephemeral=True)
+            else:
+                await safe_send(interaction_or_ctx.channel, msg)
+            return
 
-        # 📤 Envoi final
-        if embed:
-            embed_obj = discord.Embed(
-                description=message,
-                color=discord.Color.blurple()
-            )
-            await safe_send(channel, embed=embed_obj, allowed_mentions=discord.AllowedMentions.none())
+        await self._update_reiatsu(user_id, reiatsu_points - REIATSU_COST)
+
+        if random.random() <= WIN_CHANCE:
+            key = await self._get_one_steam_key()
+            if not key:
+                embed = discord.Embed(title="🎮 Jeu Steam Key", description="🎉 Gagné ! Mais plus de clés 😢", color=discord.Color.gold())
+                await self._send(interaction_or_ctx, embed)
+                return
+
+            embed = discord.Embed(title="🎉 Félicitations !", description="Tu as gagné une clé Steam !", color=discord.Color.green())
+            embed.add_field(name="Jeu", value=key["game_name"], inline=True)
+            embed.add_field(name="Lien Steam", value=f"[Voir sur Steam]({key['steam_url']})", inline=True)
+            embed.set_footer(text="Confirme si tu veux recevoir la clé en DM")
+
+            view = ConfirmKeyView(interaction_or_ctx.user.id)
+            msg = await self._send(interaction_or_ctx, embed, view)
+            await view.wait()
+
+            if view.refresh:
+                # Relance le menu principal
+                await safe_edit(msg, embed=discord.Embed(title="🔄 Nouveau tirage...", color=discord.Color.blurple()), view=None)
+                await self._send_menu(interaction_or_ctx.channel, interaction_or_ctx.user.id)
+                return
+
+            if view.confirmed:
+                await self._mark_steam_key_won(key["id"], interaction_or_ctx.user.name)
+                try:
+                    await interaction_or_ctx.user.send(f"🎁 **Clé Steam pour {key['game_name']}**\n`{key['steam_key']}`")
+                    await safe_edit(msg, embed=discord.Embed(title="✅ Clé envoyée en DM !", color=discord.Color.green()), view=None)
+                except discord.Forbidden:
+                    await safe_edit(msg, embed=discord.Embed(title="⚠️ Impossible d'envoyer un DM. Active-les et réessaie.", color=discord.Color.orange()), view=None)
+            else:
+                await safe_edit(msg, embed=discord.Embed(title="🔄 Clé laissée dispo pour les autres joueurs.", color=discord.Color.blurple()), view=None)
+
         else:
-            await safe_send(channel, message, allowed_mentions=discord.AllowedMentions.none())
+            embed = discord.Embed(
+                title="Dommage !",
+                description="❌ Tu n'as pas gagné cette fois, retente ta chance !",
+                color=discord.Color.red()
+            )
+            view = ConfirmKeyView(interaction_or_ctx.user.id)
+            await self._send(interaction_or_ctx, embed, view)
 
+    async def _send(self, interaction_or_ctx, embed, view=None):
+        if isinstance(interaction_or_ctx, discord.Interaction):
+            return await interaction_or_ctx.followup.send(embed=embed, view=view)
+        return await safe_send(interaction_or_ctx.channel, embed=embed, view=view)
 
-
-    # ────────────────────────────────────────────────────────────────────────────
-    # 🔹 Commande SLASH
-    # ────────────────────────────────────────────────────────────────────────────
-    @app_commands.command(
-        name="say",
-        description="Fait répéter un message par le bot."
-    )
-    @app_commands.describe(
-        message="Message à répéter",
-        embed="Envoyer le message dans un embed"
-    )
-    @app_commands.checks.cooldown(1, 5.0, key=lambda i: (i.user.id))
-    async def slash_say(self, interaction: discord.Interaction, message: str, embed: bool = False):
+    # ─────────── Commande SLASH ───────────
+    @app_commands.command(name="steamkey", description="Miser des Reiatsu pour tenter de gagner une clé Steam")
+    async def slash_steamkey(self, interaction: discord.Interaction):
         try:
-            await self._say_message(interaction.channel, message, embed)
-            await safe_respond(interaction, "✅ Message envoyé !", ephemeral=True)
+            view = await self._send_menu(interaction.channel, interaction.user.id)
+            await view.wait()
+            if view.value:
+                await self._try_win_key(view.last_interaction)
+            else:
+                for child in view.children:
+                    child.disabled = True
+                msg = await interaction.original_response()
+                await safe_edit(msg, view=view)
+                await safe_respond(interaction, "⏰ Temps écoulé.", ephemeral=True)
         except Exception as e:
-            print(f"[ERREUR /say] {e}")
-            await safe_respond(interaction, "❌ Impossible d’envoyer le message.", ephemeral=True)
+            print(f"[ERREUR /steamkey] {e}")
+            await safe_respond(interaction, "❌ Une erreur est survenue.", ephemeral=True)
 
-    # ────────────────────────────────────────────────────────────────────────────
-    # 🔹 Commande PREFIX
-    # ────────────────────────────────────────────────────────────────────────────
-    @commands.command(
-        name="say",
-        help="Fait répéter un message par le bot. Utilise `embed` au début pour forcer un embed."
-    )
-    @commands.cooldown(1, 5.0, commands.BucketType.user)
-    async def prefix_say(self, ctx: commands.Context, *, message: str):
-        embed = False
-        if message.lower().startswith("embed "):
-            embed = True
-            message = message[6:]  # enlever le mot "embed"
-
+    # ─────────── Commande PREFIX ───────────
+    @commands.command(name="steamkey", aliases=["sk"])
+    async def prefix_steamkey(self, ctx: commands.Context):
         try:
-            await self._say_message(ctx.channel, message, embed)
+            view = await self._send_menu(ctx.channel, ctx.author.id)
+            await view.wait()
+            if view.value:
+                class DummyInteraction:
+                    def __init__(self, user, channel): self.user, self.channel = user, channel
+                await self._try_win_key(DummyInteraction(ctx.author, ctx.channel))
+            else:
+                await safe_send(ctx.channel, "⏰ Temps écoulé.")
         except Exception as e:
-            print(f"[ERREUR !say] {e}")
-            await safe_send(ctx.channel, "❌ Impossible d’envoyer le message.")
-        finally:
-            await safe_delete(ctx.message)
+            print(f"[ERREUR !steamkey] {e}")
+            await safe_send(ctx.channel, "❌ Une erreur est survenue.")
+
+    async def _send_menu(self, channel, user_id: int):
+        keys_resp = supabase.table("steam_keys").select("game_name").eq("won", False).execute()
+        nb_keys = len(keys_resp.data) if keys_resp.data else 0
+        games = set(k["game_name"] for k in keys_resp.data) if keys_resp.data else set()
+
+        if nb_keys == 0:
+            embed = discord.Embed(title="🎮 Jeu Steam Key", description="❌ Aucun jeu disponible pour le moment.", color=discord.Color.red())
+            await safe_send(channel, embed=embed)
+            return SteamKeyView(user_id)  # Retourne une view vide pour éviter les erreurs
+
+        embed = discord.Embed(title="🎮 Jeu Steam Key", description=f"Miser {REIATSU_COST} Reiatsu pour une chance de gagner une clé Steam.", color=discord.Color.blurple())
+        embed.add_field(name="Probabilité de gagner", value="50%", inline=False)
+        embed.add_field(name="Clés restantes", value=str(nb_keys), inline=False)
+        embed.add_field(name="Jeux dispo", value=", ".join(games) if games else "Aucun", inline=True)
+        embed.set_footer(text="Vous avez 2 minutes pour miser.")
+        view = SteamKeyView(user_id)
+        await safe_send(channel, embed=embed, view=view)
+        return view
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🔌 Setup du Cog
 # ────────────────────────────────────────────────────────────────────────────────
 async def setup(bot: commands.Bot):
-    cog = Say(bot)
+    cog = SteamKey(bot)
     for command in cog.get_commands():
         if not hasattr(command, "category"):
-            command.category = "Général"
+            command.category = "Reiatsu"
     await bot.add_cog(cog)
