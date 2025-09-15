@@ -31,6 +31,7 @@
       "Faire semblant d’être un Hollow": "pretendre_hollow"
     }
   },
+
   "spectacle_aide": {
     "description": "Vous aidez Don Kanonji. Le public est ravi, mais Kon glisse sur une peau de banane. Tout le monde rit.",
     "options": {
@@ -55,6 +56,7 @@
       "Laisser Kon se débrouiller": "laisser_kon"
     }
   },
+
   "danse_hollow": {
     "description": "Vous dansez avec le Hollow. Les passants vous prennent pour une performance de rue.",
     "options": {
@@ -79,6 +81,7 @@
       "Laisser Kon gérer": "laisser_kon2"
     }
   },
+
   "interroger_mascottes": {
     "description": "Les mascottes révèlent qu'elles cherchent un trésor caché par Don Kanonji.",
     "options": {
@@ -103,112 +106,120 @@
       "Sortir du groupe": "sortir_hollows"
     }
   },
+
   "applaudir_kon": {
-    "description": "Kon est ravi et te fait un câlin. Fin heureuse !",
+    "description": "Kon est ravi et te fait un câlin. Vous célébrez cette victoire ridicule en mangeant des takoyakis. **Fin heureuse !**",
     "options": {}
   },
   "se_moquer_kon": {
-    "description": "Kon est vexé mais finit par rire. Fin comique !",
+    "description": "Kon boude, mais au final tout le monde éclate de rire et le spectacle devient viral sur TikTok. **Fin comique !**",
     "options": {}
   },
   "ignore_show": {
-    "description": "Le show continue sans toi. Fin neutre.",
+    "description": "Le show continue sans toi, mais tu sens que tu as manqué quelque chose d’épique. **Fin neutre mais frustrante.**",
     "options": {}
   },
   "continuer_sabotage": {
-    "description": "Le public devient rose de la tête aux pieds. Fin chaotique !",
+    "description": "La foule devient toute rose et envahit la scène en riant. Karakura Town te surnomme désormais *le Saboteur Légendaire*. **Fin chaotique !**",
     "options": {}
   },
   "revenir_normal": {
-    "description": "Le show reprend normalement. Fin prudente.",
+    "description": "Le show se termine bien, tout le monde applaudit Don Kanonji et tu reçois un autographe. **Fin paisible.**",
     "options": {}
   },
   "fuir_spectacle": {
-    "description": "Tu disparais dans la foule. Fin discrète.",
+    "description": "Tu disparais dans la foule et personne ne saura jamais que tu étais là. **Fin mystérieuse.**",
     "options": {}
   },
+
   "aider_kon": {
-    "description": "Kon se relève et vous continuez votre aventure. Fin comique !",
+    "description": "Kon te remercie en pleurant (un peu trop). Vous devenez les meilleurs amis du monde. **Fin amicale.**",
     "options": {}
   },
   "rire_kon": {
-    "description": "Kon boude mais te lance un coup de coussin. Fin drôle !",
+    "description": "Kon se venge en te faisant trébucher à ton tour. Vous finissez tous les deux dans la boue. **Fin burlesque !**",
     "options": {}
   },
   "laisser_kon": {
-    "description": "Kon se relève tout seul, te lance un clin d’œil. Fin héroïque !",
+    "description": "Kon se relève seul et fait semblant d’être un héros dramatique. **Fin héroïque !**",
     "options": {}
   },
+
   "bisou_hollow": {
-    "description": "Le Hollow rougit. Fin absurde !",
+    "description": "Le Hollow devient ton ami de toujours et t’offre un masque de carnaval. **Fin absurde mais mignonne.**",
     "options": {}
   },
   "choré_hollow": {
-    "description": "Vous devenez la sensation de Karakura Town. Fin amusante !",
+    "description": "La chorégraphie devient virale et Karakura Town organise un festival en ton honneur. **Fin légendaire !**",
     "options": {}
   },
   "fontaine_hollow": {
-    "description": "Tout le monde éclaboussé ! Fin hilarante !",
+    "description": "Tout le monde finit trempé, mais heureux. Kon jure de ne plus sortir sans parapluie. **Fin hilarante !**",
     "options": {}
   },
+
   "manger_friandise": {
-    "description": "La friandise était maudite ! Fin catastrophique !",
+    "description": "La friandise était maudite et tu te retrouves avec des oreilles de chat pour une semaine. **Fin catastrophique !**",
     "options": {}
   },
   "jeter_friandise": {
-    "description": "Tu gagnes la gratitude d’un Hollow. Fin neutre.",
+    "description": "Le Hollow te remercie et disparaît en paix. **Fin tranquille.**",
     "options": {}
   },
   "donner_friandise": {
-    "description": "Don Kanonji est ravi ! Fin comique !",
+    "description": "Don Kanonji la goûte, devient tout rose et se met à danser. **Fin comique !**",
     "options": {}
   },
+
   "exorciser_hollow": {
-    "description": "Le Hollow est purifié. Fin héroïque !",
+    "description": "Le Hollow disparaît en riant, te laissant un mot de remerciement. **Fin héroïque et touchante.**",
     "options": {}
   },
   "rire_hollow2": {
-    "description": "Le Hollow devient ton ami. Fin drôle !",
+    "description": "Vous riez tous ensemble et le Hollow devient la nouvelle mascotte de Karakura. **Fin joyeuse !**",
     "options": {}
   },
   "laisser_kon2": {
-    "description": "Kon gère la situation à sa façon. Fin neutre !",
+    "description": "Kon règle l’affaire en criant *Banzai!* puis s’endort d’épuisement. **Fin neutre.**",
     "options": {}
   },
+
   "chercher_tresor": {
-    "description": "Tu trouves un trésor de friandises et gadgets. Fin joyeuse !",
+    "description": "Tu découvres une caisse remplie de bonbons et d’objets stupides. **Fin gourmande !**",
     "options": {}
   },
   "ignorer_tresor": {
-    "description": "Tu laisses le trésor derrière. Fin neutre !",
+    "description": "Tu tournes les talons et rates une montagne de bonbons. **Fin amère.**",
     "options": {}
   },
   "deguiser_mascotte": {
-    "description": "Tu trompes les Hollows et récupères le trésor. Fin comique !",
+    "description": "Ton déguisement est si réussi que tu es engagé comme mascotte officielle de Karakura. **Fin improbable !**",
     "options": {}
   },
+
   "nager_pudding": {
-    "description": "Tu deviens le roi du pudding. Fin absurde !",
+    "description": "Tu déclares le pudding ton nouveau royaume et nommes Kon ministre. **Fin absurde !**",
     "options": {}
   },
   "appel_kon": {
-    "description": "Kon arrive et glisse dans le pudding. Fin hilarante !",
+    "description": "Kon tombe dans le pudding et tout le monde éclate de rire. **Fin hilarante et collante !**",
     "options": {}
   },
   "terre_ferme": {
-    "description": "Tu es sain et sauf. Fin neutre !",
+    "description": "Tu te sèches et décides de ne plus courir dans les festivals. **Fin morale.**",
     "options": {}
   },
+
   "diriger_hollows": {
-    "description": "Tu mènes les Hollows en farce. Fin drôle !",
+    "description": "Tu les mènes dans une parade improvisée. Karakura Town en fait un festival annuel. **Fin festive !**",
     "options": {}
   },
   "danser_hollows": {
-    "description": "Tout le quartier danse avec vous ! Fin absurde !",
+    "description": "Toute la ville danse avec toi, même les shinigamis. **Fin grandiose !**",
     "options": {}
   },
   "sortir_hollows": {
-    "description": "Tu échappes aux Hollows. Fin héroïque !",
+    "description": "Tu quittes le groupe sans être découvert et rentres sain et sauf. **Fin discrète.**",
     "options": {}
   }
 }
