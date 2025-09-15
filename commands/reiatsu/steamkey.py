@@ -25,17 +25,27 @@ WIN_CHANCE = 0.5  # 50% de chance de gagner
 # ────────────────────────────────────────────────────────────────────────────────
 
 class SteamKeyView(View):
-    def __init__(self, author_id: int):
+    def __init__(self, author_id: int, message: discord.Message = None):
         super().__init__(timeout=120)
         self.author_id = author_id
         self.value = None
         self.last_interaction = None
+        self.message = message  # message original pour edit en timeout
 
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
         if interaction.user.id != self.author_id:
             await safe_respond(interaction, "❌ Ce bouton n'est pas pour toi.", ephemeral=True)
             return False
         return True
+
+    async def on_timeout(self):
+        """Grise le bouton quand le temps est écoulé et prévient l'utilisateur."""
+        for child in self.children:
+            child.disabled = True
+        if self.message:
+            embed = self.message.embeds[0]
+            embed.set_footer(text="⏳ Temps écoulé. Relance /steamkey pour retenter.")
+            await safe_edit(self.message, embed=embed, view=self)
 
     @discord.ui.button(label=f"Miser {REIATSU_COST} Reiatsu", style=discord.ButtonStyle.green)
     async def bet_button(self, interaction: discord.Interaction, button: Button):
@@ -90,7 +100,6 @@ class ConfirmKeyView(View):
 
     @discord.ui.button(label="🎲 Autre jeu", style=discord.ButtonStyle.blurple)
     async def other_game(self, interaction: discord.Interaction, button: Button):
-        # Passe au jeu suivant (boucle infinie si on continue de cliquer)
         self.index = (self.index + 1) % len(self.keys_dispo)
         await self.refresh_embed(interaction)
 
@@ -179,11 +188,34 @@ class SteamKey(commands.Cog):
             return await interaction_or_ctx.followup.send(embed=embed, view=view)
         return await safe_send(interaction_or_ctx.channel, embed=embed, view=view)
 
+    async def _send_menu(self, channel, user, user_id: int):
+        reiatsu_points = await self._get_reiatsu(user_id)
+        keys_dispo = await self._get_all_steam_keys()
+
+        jeux = ", ".join([k["game_name"] for k in keys_dispo[:5]]) or "Aucun"
+        if len(keys_dispo) > 5:
+            jeux += "…"
+
+        embed = discord.Embed(
+            title="🎮 Jeu Steam Key",
+            description="Clique sur **Miser** pour tenter de gagner une clé Steam !",
+            color=discord.Color.blurple()
+        )
+        embed.add_field(name="💠 Reiatsu possédés", value=str(reiatsu_points), inline=True)
+        embed.add_field(name="💸 Prix d'une mise", value=str(REIATSU_COST), inline=True)
+        embed.add_field(name="🎯 Chance de gagner", value=f"{int(WIN_CHANCE * 100)}%", inline=True)
+        embed.add_field(name="🔑 Clés disponibles", value=str(len(keys_dispo)), inline=True)
+        embed.add_field(name="🎲 Jeux proposés", value=jeux, inline=False)
+
+        view = SteamKeyView(user_id)
+        message = await safe_send(channel, embed=embed, view=view)
+        view.message = message  # pour le timeout
+        return view
+
     @app_commands.command(name="steamkey", description="Miser des Reiatsu pour tenter de gagner une clé Steam")
     async def slash_steamkey(self, interaction: discord.Interaction):
         try:
-            view = SteamKeyView(interaction.user.id)
-            await safe_send(interaction.channel, "Clique sur miser pour tenter ta chance !", view=view)
+            view = await self._send_menu(interaction.channel, interaction.user, interaction.user.id)
             await view.wait()
             if view.value:
                 await self._try_win_key(view.last_interaction)
@@ -194,8 +226,7 @@ class SteamKey(commands.Cog):
     @commands.command(name="steamkey", aliases=["sk"])
     async def prefix_steamkey(self, ctx: commands.Context):
         try:
-            view = SteamKeyView(ctx.author.id)
-            await safe_send(ctx.channel, "Clique sur miser pour tenter ta chance !", view=view)
+            view = await self._send_menu(ctx.channel, ctx.author, ctx.author.id)
             await view.wait()
             if view.value:
                 class DummyInteraction:
