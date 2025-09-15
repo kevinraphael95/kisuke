@@ -1,263 +1,214 @@
 {
   "intro": {
-    "description": "Tu te réveilles dans ton appartement, mais tout est étrange : ton chat parle et ton café t’a lancé un défi.",
+    "description": "Bienvenue à Karakura Town ! Kon et l'équipe de super-héros sont prêts pour une nouvelle aventure hors canon. Soudain, Don Kanonji surgit avec un plan mystérieux ! Que fais-tu ?",
     "options": {
-      "Parler au chat": "talk_cat",
-      "Boire le café défiant": "drink_coffee"
+      "Suivre Don Kanonji": "kanonji_plan",
+      "Ignorer et patrouiller avec Kon": "patrouille_kon",
+      "Chercher Karakura Red": "chercher_red"
     }
   },
-  "talk_cat": {
-    "description": "Le chat te regarde avec ses grands yeux et dit : 'Si tu veux survivre aujourd’hui, choisis bien tes actions !'",
+  "kanonji_plan": {
+    "description": "Don Kanonji veut organiser un spectacle de purification dans le parc. Tout le monde est invité. Kon insiste pour t'accompagner.",
     "options": {
-      "Demander conseil": "cat_advice",
-      "Ignorer le chat": "ignore_cat"
+      "Aider au spectacle": "spectacle_aide",
+      "Saboter le spectacle": "spectacle_saboter",
+      "Partir discrètement": "partir_discret"
     }
   },
-  "drink_coffee": {
-    "description": "Le café te donne des super pouvoirs pendant 5 minutes ! Tu te sens invincible… ou presque.",
+  "patrouille_kon": {
+    "description": "Tu pars patrouiller avec Kon. Vous trouvez un Hollow étrange qui danse plutôt que d'attaquer.",
     "options": {
-      "Tester tes pouvoirs": "test_powers",
-      "Aller à l’extérieur": "outside_street"
+      "Danser avec le Hollow": "danse_hollow",
+      "Ignorer et continuer la patrouille": "ignorer_hollow",
+      "Alerter Don Kanonji": "alerte_kanonji"
     }
   },
-  "cat_advice": {
-    "description": "Le chat te conseille d’aller chercher un objet magique au grenier.",
+  "chercher_red": {
+    "description": "Karakura Red est introuvable, mais tu tombes sur un groupe de Hollows déguisés en mascottes de festival.",
     "options": {
-      "Monter au grenier": "attic",
-      "Aller directement à l’extérieur": "outside_street"
+      "Interroger les mascottes": "interroger_mascottes",
+      "Fuir en courant": "fuir_mascottes",
+      "Faire semblant d’être un Hollow": "pretendre_hollow"
     }
   },
-  "ignore_cat": {
-    "description": "Le chat soupire et se transforme en petit démon. Il te défie de résoudre une énigme.",
+  "spectacle_aide": {
+    "description": "Vous aidez Don Kanonji. Le public est ravi, mais Kon glisse sur une peau de banane. Tout le monde rit.",
     "options": {
-      "Accepter l’énigme": "demon_riddle",
-      "Fuir": "outside_street"
+      "Applaudir Kon": "applaudir_kon",
+      "Se moquer doucement": "se_moquer_kon",
+      "Ignorer et continuer le show": "ignore_show"
     }
   },
-  "test_powers": {
-    "description": "Tu lances des boulettes de papier dans la cuisine et tout explose. Bravo !",
+  "spectacle_saboter": {
+    "description": "Tu remplaces le spray de purification par de la peinture rose. Le public est confus, mais amusé.",
     "options": {
-      "Continuer l’aventure": "outside_street",
-      "Rentrer se cacher": "bedroom_hide"
+      "Continuer le sabotage": "continuer_sabotage",
+      "Revenir à la normale": "revenir_normal",
+      "Fuir avant que Kanonji remarque": "fuir_spectacle"
     }
   },
-  "outside_street": {
-    "description": "Dans la rue, tu rencontres un facteur qui prétend être un ninja secret.",
+  "partir_discret": {
+    "description": "Tu t'éloignes discrètement, mais Kon te suit et trébuche sur un kappa invisible.",
     "options": {
-      "Suivre le ninja": "follow_ninja",
-      "Continuer à marcher normalement": "walk_normal"
+      "Aider Kon": "aider_kon",
+      "Rire de Kon": "rire_kon",
+      "Laisser Kon se débrouiller": "laisser_kon"
     }
   },
-  "attic": {
-    "description": "Au grenier, tu trouves un vieux chapeau magique qui parle !",
+  "danse_hollow": {
+    "description": "Vous dansez avec le Hollow. Les passants vous prennent pour une performance de rue.",
     "options": {
-      "Mettre le chapeau": "hat_powers",
-      "Ignorer le chapeau": "outside_street"
+      "Faire un bisou au Hollow": "bisou_hollow",
+      "Inventer une chorégraphie": "choré_hollow",
+      "Sauter dans une fontaine": "fontaine_hollow"
     }
   },
-  "demon_riddle": {
-    "description": "L’énigme est : 'Qu’est-ce qui tombe mais ne se brise jamais ?'",
+  "ignorer_hollow": {
+    "description": "Vous ignorez le Hollow et continuez la patrouille. Kon trouve une friandise suspecte sur le sol.",
     "options": {
-      "Répondre 'la nuit'": "riddle_correct",
-      "Répondre 'le papier'": "riddle_wrong"
+      "Manger la friandise": "manger_friandise",
+      "Jeter la friandise": "jeter_friandise",
+      "Donner à Don Kanonji": "donner_friandise"
     }
   },
-  "riddle_correct": {
-    "description": "Le démon disparaît, te laissant un ticket doré pour le parc d’attractions !",
+  "alerte_kanonji": {
+    "description": "Don Kanonji arrive en courant, criant que le Hollow est possédé par un esprit farceur.",
     "options": {
-      "Aller au parc": "fun_park",
-      "Garder le ticket pour plus tard": "outside_street"
+      "Exorciser le Hollow": "exorciser_hollow",
+      "Rire avec le Hollow": "rire_hollow2",
+      "Laisser Kon gérer": "laisser_kon2"
     }
   },
-  "riddle_wrong": {
-    "description": "Le démon te transforme en grenouille pendant 2 minutes… puis rit et te remet à la normale.",
+  "interroger_mascottes": {
+    "description": "Les mascottes révèlent qu'elles cherchent un trésor caché par Don Kanonji.",
     "options": {
-      "Aller dehors": "outside_street",
-      "Rester chez toi": "bedroom_hide"
+      "Chercher le trésor": "chercher_tresor",
+      "Ignorer et partir": "ignorer_tresor",
+      "Se déguiser en mascotte": "deguiser_mascotte"
     }
   },
-  "hat_powers": {
-    "description": "Le chapeau te permet de parler aux objets inanimés ! Ton grille-pain te félicite pour ton courage.",
+  "fuir_mascottes": {
+    "description": "En courant, tu tombes dans une mare de pudding géant laissé par un Hollow farceur.",
     "options": {
-      "Aller dehors avec le chapeau": "outside_street",
-      "Faire la cuisine avec le chapeau": "kitchen_adventure"
+      "Nager dans le pudding": "nager_pudding",
+      "Appeler Kon à l'aide": "appel_kon",
+      "Revenir à terre ferme": "terre_ferme"
     }
   },
-  "bedroom_hide": {
-    "description": "Tu te caches sous la couette. Le chat démon te trouve et te propose de devenir son acolyte.",
+  "pretendre_hollow": {
+    "description": "Tu fais semblant d’être un Hollow, les vrais Hollows te suivent sans se méfier.",
     "options": {
-      "Accepter": "cat_sidekick",
-      "Refuser et dormir": "sleep_end"
+      "Diriger les Hollows vers Kon": "diriger_hollows",
+      "Danser avec les Hollows": "danser_hollows",
+      "Sortir du groupe": "sortir_hollows"
     }
   },
-  "follow_ninja": {
-    "description": "Le ninja te mène à une ruelle où un combat de chat géants a lieu !",
-    "options": {
-      "Participer au combat": "cat_fight",
-      "Observer de loin": "cat_fight_spectate"
-    }
-  },
-  "walk_normal": {
-    "description": "Tu rencontres un vendeur de glaces qui prétend connaître ton futur.",
-    "options": {
-      "Écouter son futur": "ice_cream_future",
-      "Ignorer et continuer": "park_entrance"
-    }
-  },
-  "fun_park": {
-    "description": "Le parc est rempli de manèges étranges et d’animaux parlants.",
-    "options": {
-      "Monter dans le grand huit magique": "roller_coaster",
-      "Parler aux animaux": "talk_animals"
-    }
-  },
-  "kitchen_adventure": {
-    "description": "Ton grille-pain te guide dans une recette magique. Ça explose partout !",
-    "options": {
-      "Continuer à cuisiner": "magic_recipe_success",
-      "Abandonner": "outside_street"
-    }
-  },
-  "cat_sidekick": {
-    "description": "Tu deviens l’acolyte du chat démon. Ensemble, vous organisez des farces incroyables.",
-    "options": {
-      "Fin hilarante": "funny_end",
-      "Continuer l’aventure": "outside_street"
-    }
-  },
-  "sleep_end": {
-    "description": "Tu dors paisiblement. Fin tranquille mais triste…",
+  "applaudir_kon": {
+    "description": "Kon est ravi et te fait un câlin. Fin heureuse !",
     "options": {}
   },
-  "cat_fight": {
-    "description": "Les chats géants te reconnaissent comme un des leurs et t’invitent à la bataille finale !",
-    "options": {
-      "Participer à la bataille": "battle_cats_final",
-      "Refuser et fuir": "park_entrance"
-    }
-  },
-  "cat_fight_spectate": {
-    "description": "Tu observes les chats se battre, rigolant de leurs mouvements absurdes.",
-    "options": {
-      "Fin amusante": "funny_end",
-      "Intervenir malgré tout": "battle_cats_final"
-    }
-  },
-  "ice_cream_future": {
-    "description": "Le vendeur te dit : 'Demain tu trouveras un objet magique.' Il te donne une glace gratuite.",
-    "options": {
-      "Manger la glace": "magic_glass",
-      "Garder la glace pour plus tard": "park_entrance"
-    }
-  },
-  "park_entrance": {
-    "description": "Tu arrives à l’entrée d’un parc mystérieux. Une affiche dit : 'Choisis ton destin !'",
-    "options": {
-      "Entrer dans le parc": "fun_park",
-      "Faire demi-tour": "outside_street"
-    }
-  },
-  "roller_coaster": {
-    "description": "Le grand huit te propulse dans le ciel et tu croises un dragon de barbe à papa !",
-    "options": {
-      "Combattre le dragon": "dragon_fight",
-      "Monter sur le dos du dragon": "dragon_ride"
-    }
-  },
-  "talk_animals": {
-    "description": "Les animaux te racontent des blagues incroyables et te donnent un indice pour trouver un trésor.",
-    "options": {
-      "Chercher le trésor": "treasure_hunt",
-      "Rester avec les animaux": "funny_end"
-    }
-  },
-  "magic_recipe_success": {
-    "description": "La recette fonctionne ! Tu crées une potion qui transforme les gens en animaux rigolos.",
-    "options": {
-      "Tester la potion": "potion_test",
-      "Garder la potion": "outside_street"
-    }
-  },
-  "magic_glass": {
-    "description": "La glace te transforme temporairement en super-héros capable de voler !",
-    "options": {
-      "Voler vers le parc": "fun_park",
-      "Faire un tour en ville": "city_fly"
-    }
-  },
-  "city_fly": {
-    "description": "En volant, tu rencontres un pigeon géant qui te propose de rejoindre sa guilde.",
-    "options": {
-      "Accepter": "pigeon_guild",
-      "Refuser et atterrir": "outside_street"
-    }
-  },
-  "treasure_hunt": {
-    "description": "Tu trouves un coffre contenant un tutu magique et une baguette en réglisse.",
-    "options": {
-      "Mettre le tutu": "tutu_magic",
-      "Garder la baguette": "candy_wand"
-    }
-  },
-  "potion_test": {
-    "description": "Tu transformes accidentellement ton chat en licorne. Rigolo mais chaotique !",
-    "options": {
-      "Fin hilarante": "funny_end",
-      "Essayer de le transformer en humain": "reverse_potion"
-    }
-  },
-  "reverse_potion": {
-    "description": "La potion fonctionne, ton chat redevient normal, mais parle maintenant en rimes !",
-    "options": {
-      "Fin poétique": "poetic_end",
-      "Continuer l’aventure": "outside_street"
-    }
-  },
-  "dragon_fight": {
-    "description": "Le dragon crache des bonbons ! Tu gagnes le combat grâce à ton tutu magique.",
-    "options": {
-      "Fin héroïque": "heroic_end"
-    }
-  },
-  "dragon_ride": {
-    "description": "Tu chevauches le dragon et survoles tout le parc en riant.",
-    "options": {
-      "Fin épique": "epic_end"
-    }
-  },
-  "pigeon_guild": {
-    "description": "Tu deviens membre de la guilde des pigeons géants et accomplis des missions absurdes.",
-    "options": {
-      "Fin hilarante": "funny_end"
-    }
-  },
-  "tutu_magic": {
-    "description": "Le tutu te donne la capacité de danser parfaitement partout.",
-    "options": {
-      "Danser au parc": "roller_coaster",
-      "Danser en ville": "city_fly"
-    }
-  },
-  "candy_wand": {
-    "description": "La baguette lance des bonbons explosifs. Très utile contre les Hollow en colère.",
-    "options": {
-      "Continuer l’aventure": "outside_street"
-    }
-  },
-  "funny_end": {
-    "description": "Tu as vécu une aventure totalement absurde et hilarante. Fin comique !",
+  "se_moquer_kon": {
+    "description": "Kon est vexé mais finit par rire. Fin comique !",
     "options": {}
   },
-  "poetic_end": {
-    "description": "Ton chat parlant en rimes t’accompagne dans une fin poétique et douce.",
+  "ignore_show": {
+    "description": "Le show continue sans toi. Fin neutre.",
     "options": {}
   },
-  "heroic_end": {
-    "description": "Grâce à ton courage et ton tutu magique, tu deviens un héros reconnu par tous. Fin héroïque !",
+  "continuer_sabotage": {
+    "description": "Le public devient rose de la tête aux pieds. Fin chaotique !",
     "options": {}
   },
-  "epic_end": {
-    "description": "Ton aventure devient légendaire. Tout le monde raconte tes exploits ! Fin épique !",
+  "revenir_normal": {
+    "description": "Le show reprend normalement. Fin prudente.",
+    "options": {}
+  },
+  "fuir_spectacle": {
+    "description": "Tu disparais dans la foule. Fin discrète.",
+    "options": {}
+  },
+  "aider_kon": {
+    "description": "Kon se relève et vous continuez votre aventure. Fin comique !",
+    "options": {}
+  },
+  "rire_kon": {
+    "description": "Kon boude mais te lance un coup de coussin. Fin drôle !",
+    "options": {}
+  },
+  "laisser_kon": {
+    "description": "Kon se relève tout seul, te lance un clin d’œil. Fin héroïque !",
+    "options": {}
+  },
+  "bisou_hollow": {
+    "description": "Le Hollow rougit. Fin absurde !",
+    "options": {}
+  },
+  "choré_hollow": {
+    "description": "Vous devenez la sensation de Karakura Town. Fin amusante !",
+    "options": {}
+  },
+  "fontaine_hollow": {
+    "description": "Tout le monde éclaboussé ! Fin hilarante !",
+    "options": {}
+  },
+  "manger_friandise": {
+    "description": "La friandise était maudite ! Fin catastrophique !",
+    "options": {}
+  },
+  "jeter_friandise": {
+    "description": "Tu gagnes la gratitude d’un Hollow. Fin neutre.",
+    "options": {}
+  },
+  "donner_friandise": {
+    "description": "Don Kanonji est ravi ! Fin comique !",
+    "options": {}
+  },
+  "exorciser_hollow": {
+    "description": "Le Hollow est purifié. Fin héroïque !",
+    "options": {}
+  },
+  "rire_hollow2": {
+    "description": "Le Hollow devient ton ami. Fin drôle !",
+    "options": {}
+  },
+  "laisser_kon2": {
+    "description": "Kon gère la situation à sa façon. Fin neutre !",
+    "options": {}
+  },
+  "chercher_tresor": {
+    "description": "Tu trouves un trésor de friandises et gadgets. Fin joyeuse !",
+    "options": {}
+  },
+  "ignorer_tresor": {
+    "description": "Tu laisses le trésor derrière. Fin neutre !",
+    "options": {}
+  },
+  "deguiser_mascotte": {
+    "description": "Tu trompes les Hollows et récupères le trésor. Fin comique !",
+    "options": {}
+  },
+  "nager_pudding": {
+    "description": "Tu deviens le roi du pudding. Fin absurde !",
+    "options": {}
+  },
+  "appel_kon": {
+    "description": "Kon arrive et glisse dans le pudding. Fin hilarante !",
+    "options": {}
+  },
+  "terre_ferme": {
+    "description": "Tu es sain et sauf. Fin neutre !",
+    "options": {}
+  },
+  "diriger_hollows": {
+    "description": "Tu mènes les Hollows en farce. Fin drôle !",
+    "options": {}
+  },
+  "danser_hollows": {
+    "description": "Tout le quartier danse avec vous ! Fin absurde !",
+    "options": {}
+  },
+  "sortir_hollows": {
+    "description": "Tu échappes aux Hollows. Fin héroïque !",
     "options": {}
   }
 }
