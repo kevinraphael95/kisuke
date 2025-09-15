@@ -1,222 +1,241 @@
 # ────────────────────────────────────────────────────────────────────────────────
-# 📌 rpg_bleach.py — Mini RPG interactif /rpg_bleach et !rpg_bleach
-# Objectif : Jeu interactif style "livre dont vous êtes le héros" dans l'univers Bleach
-# Catégorie : Fun
-# Accès : Tous
-# Cooldown : 1 utilisation / 5 secondes / utilisateur
+# 📌 steamkey.py — Commande interactive /steamkey et !steamkey
+# Objectif : Miser des points Reiatsu pour tenter de gagner une clé Steam
+# Catégorie : Général
+# Accès : Public
 # ────────────────────────────────────────────────────────────────────────────────
 
-# ────────────────────────────────────────────────────────────────────────────────
-# 📦 Imports nécessaires
-# ────────────────────────────────────────────────────────────────────────────────
 import discord
 from discord import app_commands
 from discord.ext import commands
 from discord.ui import View, Button
-import json
-import os
-from utils.discord_utils import safe_send, safe_edit, safe_respond, safe_delete
+import random
 from utils.supabase_client import supabase
+from utils.discord_utils import safe_send, safe_edit, safe_respond
 
 # ────────────────────────────────────────────────────────────────────────────────
-# 📂 Chargement du scénario RPG depuis JSON
+# 📂 Constantes
 # ────────────────────────────────────────────────────────────────────────────────
-DATA_JSON_PATH = os.path.join("data", "rpg_story.json")
-
-def load_story():
-    """Charge le scénario RPG depuis un fichier JSON."""
-    try:
-        with open(DATA_JSON_PATH, "r", encoding="utf-8") as f:
-            return json.load(f)
-    except Exception as e:
-        print(f"[ERREUR RPG] Impossible de charger {DATA_JSON_PATH} : {e}")
-        return {}
+REIATSU_COST = 1
+WIN_CHANCE = 0.5  # 0.5 = 50% de chance de gagner
 
 # ────────────────────────────────────────────────────────────────────────────────
-# 📂 Connexion à Supabase pour les sauvegardes
+# 🎛️ UI — View avec bouton miser + rafraîchir
 # ────────────────────────────────────────────────────────────────────────────────
-TABLE_NAME = "rpg"
-
-def load_save(user_id: int):
-    """Charge la sauvegarde d'un joueur depuis Supabase."""
-    try:
-        res = supabase.table(TABLE_NAME).select("*").eq("user_id", user_id).execute()
-        if res.data:
-            return res.data[0]
-        else:
-            return {"user_id": user_id, "username": None, "position": "intro", "inventory": []}
-    except Exception as e:
-        print(f"[ERREUR LOAD SAVE] {e}")
-        return {"user_id": user_id, "username": None, "position": "intro", "inventory": []}
-
-def save_player(data: dict):
-    """Sauvegarde ou met à jour un joueur dans Supabase."""
-    try:
-        user_id = data["user_id"]
-        existing = supabase.table(TABLE_NAME).select("*").eq("user_id", user_id).execute()
-        if existing.data:
-            supabase.table(TABLE_NAME).update(data).eq("user_id", user_id).execute()
-        else:
-            supabase.table(TABLE_NAME).insert(data).execute()
-    except Exception as e:
-        print(f"[ERREUR SAVE PLAYER] {e}")
-
-# ────────────────────────────────────────────────────────────────────────────────
-# 🎛️ Vue et Boutons pour le RPG
-# ────────────────────────────────────────────────────────────────────────────────
-class RPGView(View):
-    """Vue principale pour le RPG avec boutons de choix et inventaire."""
-    def __init__(self, bot, save_data, data, user_id, current_key):
+class SteamKeyView(View):
+    def __init__(self, author_id: int, keys_dispo: list):
         super().__init__(timeout=120)
-        self.bot = bot
-        self.data = data
-        self.saves = save_data
-        self.user_id = str(user_id)
-        self.current_key = current_key
-        self.message = None
-        # Création des boutons pour les choix
-        options = data[current_key].get("options", {})
-        for label, next_key in options.items():
-            self.add_item(RPGButton(self, label, next_key))
-        # Bouton pour inventaire
-        self.add_item(InventoryButton(self))
+        self.author_id = author_id
+        self.value = None
+        self.last_interaction = None
+        self.keys_dispo = keys_dispo
 
-    async def on_timeout(self):
-        """Désactive les boutons quand la vue expire."""
+        if len(keys_dispo) == 0:
+            self.bet_button.disabled = True
+
+    async def interaction_check(self, interaction: discord.Interaction) -> bool:
+        if interaction.user.id != self.author_id:
+            await safe_respond(interaction, "❌ Ce bouton n'est pas pour toi.", ephemeral=True)
+            return False
+        return True
+
+    @discord.ui.button(label=f"Miser {REIATSU_COST} Reiatsu", style=discord.ButtonStyle.green)
+    async def bet_button(self, interaction: discord.Interaction, button: Button):
+        button.disabled = True
         for child in self.children:
             child.disabled = True
-        if self.message:
-            await safe_edit(self.message, view=self)
+        await interaction.response.edit_message(view=self)
+        self.value = True
+        self.last_interaction = interaction
+        self.stop()
 
-class RPGButton(Button):
-    """Bouton pour choisir une option dans le RPG."""
-    def __init__(self, parent_view: RPGView, label: str, next_key: str):
-        super().__init__(label=label, style=discord.ButtonStyle.primary)
-        self.parent_view = parent_view
-        self.next_key = next_key
+    @discord.ui.button(label="🔄 Rafraîchir", style=discord.ButtonStyle.blurple)
+    async def refresh_button(self, interaction: discord.Interaction, button: Button):
+        keys_resp = supabase.table("steam_keys").select("game_name").eq("won", False).execute()
+        keys_dispo = keys_resp.data if keys_resp.data else []
 
-    async def callback(self, interaction: discord.Interaction):
-        if str(interaction.user.id) != self.parent_view.user_id:
-            await interaction.response.send_message(
-                "❌ Ce n'est pas ton aventure !", ephemeral=True
-            )
-            return
-        user_id = int(self.parent_view.user_id)
-        self.parent_view.saves["position"] = self.next_key
-        save_player({
-            "user_id": user_id,
-            "username": self.parent_view.saves.get("username", str(interaction.user)),
-            "position": self.next_key,
-            "inventory": self.parent_view.saves.get("inventory", [])
-        })
-        embed = build_rpg_embed(
-            self.parent_view.data,
-            self.next_key,
-            self.parent_view.saves
-        )
-        new_view = RPGView(
-            self.parent_view.bot,
-            self.parent_view.saves,
-            self.parent_view.data,
-            user_id,
-            self.next_key
-        )
-        new_view.message = interaction.message
-        await safe_edit(interaction.message, embed=embed, view=new_view)
-
-class InventoryButton(Button):
-    """Bouton pour afficher l'inventaire du joueur."""
-    def __init__(self, parent_view: RPGView):
-        super().__init__(label="📦 Inventaire", style=discord.ButtonStyle.secondary)
-        self.parent_view = parent_view
-
-    async def callback(self, interaction: discord.Interaction):
-        if str(interaction.user.id) != self.parent_view.user_id:
-            await interaction.response.send_message(
-                "❌ Tu ne peux pas voir l'inventaire de ce joueur.", ephemeral=True
-            )
-            return
-        inventory = self.parent_view.saves.get("inventory", [])
-        inv_text = "*(Inventaire vide)*" if not inventory else "\n".join(f"• {item}" for item in inventory)
         embed = discord.Embed(
-            title="📦 Inventaire",
-            description=inv_text,
+            title="🎮 Jeu Steam Key",
+            description=f"Miser {REIATSU_COST} Reiatsu pour une chance de gagner une clé Steam.",
             color=discord.Color.blurple()
         )
-        await interaction.response.send_message(embed=embed, ephemeral=True)
+        embed.add_field(name="Probabilité de gagner", value=f"{int(WIN_CHANCE*100)}%", inline=False)
+        embed.add_field(name="Clés restantes", value=str(len(keys_dispo)), inline=False)
+        embed.add_field(name="Jeux dispo", value=", ".join({k['game_name'] for k in keys_dispo}) if keys_dispo else "Aucun", inline=True)
+        embed.set_footer(text="Vous avez 2 minutes pour miser.")
+
+        self.keys_dispo = keys_dispo
+        self.bet_button.disabled = len(keys_dispo) == 0
+
+        await interaction.response.edit_message(embed=embed, view=self)
 
 # ────────────────────────────────────────────────────────────────────────────────
-# 🔧 Génération de l'embed du RPG
+# 🎛️ UI — View de confirmation avant d'envoyer la clé
 # ────────────────────────────────────────────────────────────────────────────────
-def build_rpg_embed(data, key, player_data):
-    """Construit l'embed pour le paragraphe RPG courant."""
-    description = data[key]["description"]
-    embed = discord.Embed(
-        title=f"📖 RPG Bleach — Étape : {key}",
-        description=description,
-        color=discord.Color.orange()
-    )
-    embed.add_field(name="Progression", value=key, inline=True)
-    return embed
+class ConfirmKeyView(View):
+    def __init__(self, author_id: int):
+        super().__init__(timeout=30)
+        self.author_id = author_id
+        self.confirmed = None
+
+    async def interaction_check(self, interaction: discord.Interaction) -> bool:
+        return interaction.user.id == self.author_id
+
+    @discord.ui.button(label="✅ Oui, je veux la clé", style=discord.ButtonStyle.green)
+    async def confirm(self, interaction: discord.Interaction, button: Button):
+        self.confirmed = True
+        await interaction.response.defer()
+        self.stop()
+
+    @discord.ui.button(label="❌ Non, laisse la clé", style=discord.ButtonStyle.red)
+    async def cancel(self, interaction: discord.Interaction, button: Button):
+        self.confirmed = False
+        await interaction.response.defer()
+        self.stop()
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🧠 Cog principal
 # ────────────────────────────────────────────────────────────────────────────────
-class RPGBleach(commands.Cog):
-    """Mini RPG interactif /rpg_bleach et !rpg_bleach"""
+class SteamKey(commands.Cog):
+    """Commande /steamkey et !steamkey — Miser des Reiatsu pour tenter de gagner une clé Steam"""
+
     def __init__(self, bot: commands.Bot):
         self.bot = bot
 
-    # 🔹 Fonction interne pour démarrer le RPG
-    async def _start_rpg(self, channel: discord.abc.Messageable, user: discord.User):
-        data = load_story()
-        if not data:
-            await safe_send(channel, "❌ Impossible de charger le scénario RPG.")
-            return
-        # Charge la sauvegarde depuis Supabase
-        save = load_save(user.id)
-        if save["username"] is None:
-            save["username"] = str(user)
-        current_key = save["position"]
-        embed = build_rpg_embed(data, current_key, save)
-        view = RPGView(self.bot, save, data, user.id, current_key)
-        view.message = await safe_send(channel, embed=embed, view=view)
+    # ─────────── Fonctions internes accès Supabase ───────────
+    async def _get_reiatsu(self, user_id: str) -> int:
+        resp = supabase.table("reiatsu").select("points").eq("user_id", user_id).single().execute()
+        return resp.data["points"] if resp.data else 0
 
-    # 🔹 Commande SLASH
-    @app_commands.command(
-        name="rpg",
-        description="Commence ou reprends ton RPG textuel dans l'univers de Bleach."
-    )
-    @app_commands.checks.cooldown(1, 5.0, key=lambda i: (i.user.id))
-    async def slash_rpg_bleach(self, interaction: discord.Interaction):
+    async def _update_reiatsu(self, user_id: str, new_points: int):
+        supabase.table("reiatsu").update({"points": new_points}).eq("user_id", user_id).execute()
+
+    async def _get_one_steam_key(self):
+        resp = supabase.table("steam_keys").select("*").eq("won", False).limit(1).execute()
+        if resp.data and len(resp.data) > 0:
+            return resp.data[0]
+        return None
+
+    async def _mark_steam_key_won(self, key_id: int, winner: str):
+        supabase.table("steam_keys").update({"won": True, "winner": winner}).eq("id", key_id).execute()
+
+    # ─────────── Logique du jeu ───────────
+    async def _try_win_key(self, interaction_or_ctx):
+        # 🚫 Protection supplémentaire côté logique
+        key_check = await self._get_one_steam_key()
+        if not key_check:
+            await self._send(interaction_or_ctx, discord.Embed(
+                title="⛔ Impossible de miser",
+                description="Aucune clé disponible pour le moment.",
+                color=discord.Color.orange()
+            ))
+            return
+
+        user_id = str(interaction_or_ctx.user.id)
+        reiatsu_points = await self._get_reiatsu(user_id)
+
+        if reiatsu_points < REIATSU_COST:
+            msg = f"❌ Tu n'as pas assez de Reiatsu (il te faut {REIATSU_COST})."
+            if isinstance(interaction_or_ctx, discord.Interaction):
+                await interaction_or_ctx.followup.send(msg, ephemeral=True)
+            else:
+                await safe_send(interaction_or_ctx.channel, msg)
+            return
+
+        await self._update_reiatsu(user_id, reiatsu_points - REIATSU_COST)
+
+        if random.random() <= WIN_CHANCE:
+            key = key_check
+            embed = discord.Embed(title="🎉 Félicitations !", description="Tu as gagné une clé Steam !", color=discord.Color.green())
+            embed.add_field(name="Jeu", value=key["game_name"], inline=True)
+            embed.add_field(name="Lien Steam", value=f"[Voir sur Steam]({key['steam_url']})", inline=True)
+            embed.set_footer(text="Confirme si tu veux recevoir la clé en DM")
+
+            view = ConfirmKeyView(interaction_or_ctx.user.id)
+            msg = await self._send(interaction_or_ctx, embed, view)
+            await view.wait()
+
+            if view.confirmed:
+                await self._mark_steam_key_won(key["id"], interaction_or_ctx.user.name)
+                try:
+                    await interaction_or_ctx.user.send(f"🎁 **Clé Steam pour {key['game_name']}**\n`{key['steam_key']}`")
+                    await safe_edit(msg, embed=discord.Embed(title="✅ Clé envoyée en DM !", color=discord.Color.green()), view=None)
+                except discord.Forbidden:
+                    await safe_edit(msg, embed=discord.Embed(title="⚠️ Impossible d'envoyer un DM. Active-les et réessaie.", color=discord.Color.orange()), view=None)
+            else:
+                await safe_edit(msg, embed=discord.Embed(title="🔄 Clé laissée dispo pour les autres joueurs.", color=discord.Color.blurple()), view=None)
+
+        else:
+            await self._send(interaction_or_ctx, discord.Embed(
+                title="Dommage !",
+                description="❌ Tu n'as pas gagné cette fois, retente ta chance !",
+                color=discord.Color.red()
+            ))
+
+    async def _send(self, interaction_or_ctx, embed, view=None):
+        if isinstance(interaction_or_ctx, discord.Interaction):
+            return await interaction_or_ctx.followup.send(embed=embed, view=view)
+        return await safe_send(interaction_or_ctx.channel, embed=embed, view=view)
+
+    # ─────────── Commande SLASH ───────────
+    @app_commands.command(name="steamkey", description="Miser des Reiatsu pour tenter de gagner une clé Steam")
+    async def slash_steamkey(self, interaction: discord.Interaction):
         try:
-            await interaction.response.defer()
-            await self._start_rpg(interaction.channel, interaction.user)
-            await interaction.delete_original_response()
-        except app_commands.CommandOnCooldown as e:
-            await safe_respond(interaction, f"⏳ Attends encore {e.retry_after:.1f}s.", ephemeral=True)
+            view = await self._send_menu(interaction.channel, interaction.user.id)
+            await view.wait()
+            if view.value:
+                await self._try_win_key(view.last_interaction)
+            else:
+                for child in view.children:
+                    child.disabled = True
+                msg = await interaction.original_response()
+                await safe_edit(msg, view=view)
+                await safe_respond(interaction, "⏰ Temps écoulé.", ephemeral=True)
         except Exception as e:
-            print(f"[ERREUR /rpg_bleach] {e}")
+            print(f"[ERREUR /steamkey] {e}")
             await safe_respond(interaction, "❌ Une erreur est survenue.", ephemeral=True)
 
-    # 🔹 Commande PREFIX
-    @commands.command(name="rpg")
-    @commands.cooldown(1, 5.0, commands.BucketType.user)
-    async def prefix_rpg_bleach(self, ctx: commands.Context):
+    # ─────────── Commande PREFIX ───────────
+    @commands.command(name="steamkey", aliases=["sk"])
+    async def prefix_steamkey(self, ctx: commands.Context):
         try:
-            await self._start_rpg(ctx.channel, ctx.author)
-        except commands.CommandOnCooldown as e:
-            await safe_send(ctx.channel, f"⏳ Attends encore {e.retry_after:.1f}s.")
+            view = await self._send_menu(ctx.channel, ctx.author.id)
+            await view.wait()
+            if view.value:
+                class DummyInteraction:
+                    def __init__(self, user, channel): self.user, self.channel = user, channel
+                await self._try_win_key(DummyInteraction(ctx.author, ctx.channel))
+            else:
+                await safe_send(ctx.channel, "⏰ Temps écoulé.")
         except Exception as e:
-            print(f"[ERREUR !rpg_bleach] {e}")
+            print(f"[ERREUR !steamkey] {e}")
             await safe_send(ctx.channel, "❌ Une erreur est survenue.")
+
+    async def _send_menu(self, channel, user_id: int):
+        keys_resp = supabase.table("steam_keys").select("game_name").eq("won", False).execute()
+        keys_dispo = keys_resp.data if keys_resp.data else []
+        nb_keys = len(keys_dispo)
+        games = {k["game_name"] for k in keys_dispo}
+
+        embed = discord.Embed(
+            title="🎮 Jeu Steam Key",
+            description=f"Miser {REIATSU_COST} Reiatsu pour une chance de gagner une clé Steam.",
+            color=discord.Color.blurple()
+        )
+        embed.add_field(name="Probabilité de gagner", value=f"{int(WIN_CHANCE*100)}%", inline=False)
+        embed.add_field(name="Clés restantes", value=str(nb_keys), inline=False)
+        embed.add_field(name="Jeux dispo", value=", ".join(games) if games else "Aucun", inline=True)
+        embed.set_footer(text="Vous avez 2 minutes pour miser.")
+        view = SteamKeyView(user_id, keys_dispo)
+        await safe_send(channel, embed=embed, view=view)
+        return view
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🔌 Setup du Cog
 # ────────────────────────────────────────────────────────────────────────────────
 async def setup(bot: commands.Bot):
-    cog = RPGBleach(bot)
+    cog = SteamKey(bot)
     for command in cog.get_commands():
         if not hasattr(command, "category"):
-            command.category = "Bleach"
+            command.category = "Reiatsu"
     await bot.add_cog(cog)
