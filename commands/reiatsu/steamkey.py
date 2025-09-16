@@ -19,8 +19,8 @@ from utils.discord_utils import safe_send, safe_edit, safe_respond
 # ────────────────────────────────────────────────────────────────────────────────
 # 📂 Constantes
 # ────────────────────────────────────────────────────────────────────────────────
-REIATSU_COST = 1
-WIN_CHANCE = 0.5  # 50% de chance de gagner
+REIATSU_COST = 500
+WIN_CHANCE = 0.1  # 10% de chance de gagner
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🎛️ UI — View avec bouton miser
@@ -82,7 +82,7 @@ class ConfirmKeyView(View):
     def build_embed(self):
         embed = discord.Embed(
             title="🎉 Félicitations !",
-            description="Tu as gagné une clé Steam ! Choisis ta clé :\n(Tu ne peux demander que trois fois une nouvelle clé steam en appuyant sur le bouton Autre Jeux)",
+            description="Tu as gagné une clé Steam ! Choisis ta clé :\n(Tu ne peux demander que trois fois une nouvelle clé steam en appuyant sur le bouton Autre Jeu)",
             color=discord.Color.green()
         )
         embed.add_field(name="🎮 Jeu", value=self.current_key["game_name"], inline=True)
