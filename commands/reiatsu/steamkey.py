@@ -69,6 +69,8 @@ class ConfirmKeyView(View):
         self.index = current_index
         self.message = message
         self.choice = None  # "accept" ou "reject"
+        self.switch_count = 0  # Compteur de clics sur "Autre jeu"
+        self.max_switches = 3  # Limite
 
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
         return interaction.user.id == self.author_id
@@ -85,7 +87,9 @@ class ConfirmKeyView(View):
         )
         embed.add_field(name="🎮 Jeu", value=self.current_key["game_name"], inline=True)
         embed.add_field(name="🔗 Lien Steam", value=f"[Voir sur Steam]({self.current_key['steam_url']})", inline=True)
-        embed.set_footer(text="✅ : Recevoir cette clé en DM | 🎲 : Voir un autre jeu | ❌ : Refuser")
+        embed.set_footer(
+            text=f"✅ : Recevoir cette clé en DM | 🎲 : Voir un autre jeu ({self.switch_count}/{self.max_switches}) | ❌ : Refuser"
+        )
         return embed
 
     async def refresh_embed(self, interaction: discord.Interaction):
@@ -100,6 +104,10 @@ class ConfirmKeyView(View):
 
     @discord.ui.button(label="🎲 Autre jeu", style=discord.ButtonStyle.blurple)
     async def other_game(self, interaction: discord.Interaction, button: Button):
+        self.switch_count += 1
+        if self.switch_count >= self.max_switches:
+            button.disabled = True  # Désactive le bouton après la 3ᵉ utilisation
+
         self.index = (self.index + 1) % len(self.keys_dispo)
         await self.refresh_embed(interaction)
 
@@ -108,6 +116,7 @@ class ConfirmKeyView(View):
         self.choice = "reject"
         await interaction.response.defer()
         self.stop()
+
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🧠 Cog principal
