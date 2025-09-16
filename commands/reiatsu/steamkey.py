@@ -223,7 +223,7 @@ class SteamKey(commands.Cog):
         view.message = message
         return view
 
-    @app_commands.command(name="steamkey", description="Miser des Reiatsu pour tenter de gagner une clé Steam")
+    @app_commands.command(name="skey", description="Miser des Reiatsu pour tenter de gagner une clé Steam")
     async def slash_steamkey(self, interaction: discord.Interaction):
         try:
             await interaction.response.defer()
@@ -235,7 +235,7 @@ class SteamKey(commands.Cog):
             print(f"[ERREUR /steamkey] {e}")
             await safe_respond(interaction, "❌ Une erreur est survenue.", ephemeral=True)
 
-    @commands.command(name="steamkey", aliases=["sk"])
+    @commands.command(name="skey", aliases=["sk"])
     async def prefix_steamkey(self, ctx: commands.Context):
         try:
             view = await self._send_menu(ctx.channel, ctx.author, ctx.author.id)
