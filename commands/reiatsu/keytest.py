@@ -1,5 +1,5 @@
 # ────────────────────────────────────────────────────────────────────────────────
-# 📌 steamkey.py — Commande interactive /steamkey et !steamkey
+# 📌 skey.py — Commande interactive /skey et !skey
 # Objectif : Miser des points Reiatsu pour tenter de gagner une clé Steam
 # Catégorie : Reiatsu
 # Accès : Public
@@ -26,7 +26,7 @@ WIN_CHANCE = 0.1  # 10% de chance de gagner
 # ────────────────────────────────────────────────────────────────────────────────
 # 🎛️ UI — View avec bouton Miser
 # ────────────────────────────────────────────────────────────────────────────────
-class SteamKeyView(View):
+class skeyView(View):
     def __init__(self, author_id: int, message: discord.Message = None):
         super().__init__(timeout=120)
         self.author_id = author_id
@@ -45,7 +45,7 @@ class SteamKeyView(View):
             child.disabled = True
         if self.message:
             embed = self.message.embeds[0]
-            embed.set_footer(text="⏳ Temps écoulé. Relance /steamkey pour retenter ta chance.")
+            embed.set_footer(text="⏳ Temps écoulé. Relance /skey pour retenter ta chance.")
             await safe_edit(self.message, embed=embed, view=self)
 
     @discord.ui.button(label=f"Miser {REIATSU_COST} Reiatsu", style=discord.ButtonStyle.green)
@@ -116,8 +116,8 @@ class ConfirmKeyView(View):
 # ────────────────────────────────────────────────────────────────────────────────
 # 🧠 Cog principal
 # ────────────────────────────────────────────────────────────────────────────────
-class SteamKey(commands.Cog):
-    """Commande /steamkey et !steamkey — Miser des Reiatsu pour tenter de gagner une clé Steam"""
+class skey(commands.Cog):
+    """Commande /skey et !skey — Miser des Reiatsu pour tenter de gagner une clé Steam"""
     def __init__(self, bot: commands.Bot):
         self.bot = bot
 
@@ -222,7 +222,7 @@ class SteamKey(commands.Cog):
         embed.add_field(name="🔑 Nombre de clés à gagner", value=f"**{len(keys_dispo)}**", inline=False)
         embed.add_field(name="🎮 Jeux gagnables", value=jeux, inline=False)
 
-        view = SteamKeyView(user_id)
+        view = skeyView(user_id)
         message = await safe_send(channel, embed=embed, view=view)
         view.message = message
         return view
@@ -230,9 +230,9 @@ class SteamKey(commands.Cog):
     # ────────────────────────────────────────────────────────────────────────────
     # 🔹 Commande SLASH
     # ────────────────────────────────────────────────────────────────────────────
-    @app_commands.command(name="steamkey", description="Miser des Reiatsu pour tenter de gagner une clé Steam")
+    @app_commands.command(name="key", description="Miser des Reiatsu pour tenter de gagner une clé Steam")
     @app_commands.checks.cooldown(1, 10.0, key=lambda i: (i.user.id))
-    async def slash_steamkey(self, interaction: discord.Interaction):
+    async def slash_skey(self, interaction: discord.Interaction):
         try:
             await interaction.response.defer()
             view = await self._send_menu(interaction.channel, interaction.user, interaction.user.id)
@@ -240,15 +240,15 @@ class SteamKey(commands.Cog):
             if view.value:
                 await self._try_win_key(view.last_interaction)
         except Exception as e:
-            print(f"[ERREUR /steamkey] {e}")
+            print(f"[ERREUR /skey] {e}")
             await safe_respond(interaction, "❌ Une erreur est survenue.", ephemeral=True)
 
     # ────────────────────────────────────────────────────────────────────────────
     # 🔹 Commande PREFIX
     # ────────────────────────────────────────────────────────────────────────────
-    @commands.command(name="steamkey", aliases=["skey"])
+    @commands.command(name="key", aliases=["testkey"])
     @commands.cooldown(1, 10.0, commands.BucketType.user)
-    async def prefix_steamkey(self, ctx: commands.Context):
+    async def prefix_skey(self, ctx: commands.Context):
         try:
             view = await self._send_menu(ctx.channel, ctx.author, ctx.author.id)
             await view.wait()
@@ -258,14 +258,14 @@ class SteamKey(commands.Cog):
                         self.user, self.channel = user, channel
                 await self._try_win_key(DummyInteraction(ctx.author, ctx.channel))
         except Exception as e:
-            print(f"[ERREUR !steamkey] {e}")
+            print(f"[ERREUR !skey] {e}")
             await safe_send(ctx.channel, "❌ Une erreur est survenue.")
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🔌 Setup du Cog
 # ────────────────────────────────────────────────────────────────────────────────
 async def setup(bot: commands.Bot):
-    cog = SteamKey(bot)
+    cog = skey(bot)
     for command in cog.get_commands():
         if not hasattr(command, "category"):
             command.category = "Reiatsu"
