@@ -231,7 +231,7 @@ class SteamKey(commands.Cog):
     # ────────────────────────────────────────────────────────────────────────────
     # 🔹 Commande SLASH
     # ────────────────────────────────────────────────────────────────────────────
-    @app_commands.command(name="steamkeytest", description="Miser des Reiatsu pour tenter de gagner une clé Steam")
+    @app_commands.command(name="steamkey", description="Miser des Reiatsu pour tenter de gagner une clé Steam")
     @app_commands.checks.cooldown(1, 10.0, key=lambda i: (i.user.id))
     async def slash_steamkey(self, interaction: discord.Interaction):
         try:
@@ -247,7 +247,7 @@ class SteamKey(commands.Cog):
     # ────────────────────────────────────────────────────────────────────────────
     # 🔹 Commande PREFIX
     # ────────────────────────────────────────────────────────────────────────────
-    @commands.command(name="steamkeytest", aliases=["skey"])
+    @commands.command(name="steamkey", aliases=["sk"])
     @commands.cooldown(1, 10.0, commands.BucketType.user)
     async def prefix_steamkey(self, ctx: commands.Context):
         try:
