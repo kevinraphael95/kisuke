@@ -4,7 +4,7 @@
 # Objectif : Miser des points Reiatsu pour tenter de gagner une clé Steam
 # Catégorie : Reiatsu
 # Accès : Public
-# Cooldown : 1 utilisation / 10 secondes / utilisateur
+# Cooldown : 1 utilisation / 10 secondes / utilisateur #
 # ────────────────────────────────────────────────────────────────────────────────
 
 # ────────────────────────────────────────────────────────────────────────────────
