@@ -5,7 +5,6 @@
 # Accès : Public
 # Cooldown : 1 utilisation / 10 secondes / utilisateur
 # ────────────────────────────────────────────────────────────────────────────────
-
 # ────────────────────────────────────────────────────────────────────────────────
 # 📦 Imports nécessaires
 # ────────────────────────────────────────────────────────────────────────────────
@@ -20,7 +19,7 @@ from utils.discord_utils import safe_send, safe_edit, safe_respond
 # ────────────────────────────────────────────────────────────────────────────────
 # 📂 Constantes
 # ────────────────────────────────────────────────────────────────────────────────
-SCRATCH_COST = 1
+SCRATCH_COST = 300
 NB_BUTTONS = 10
 WIN_CHANCE = 0.1  # 10% de chance de gagner
 
@@ -38,6 +37,10 @@ class ScratchTicketView(View):
         self.double_button = random.randint(0, NB_BUTTONS - 1)
         while self.double_button == self.winning_button:
             self.double_button = random.randint(0, NB_BUTTONS - 1)
+
+        # ⚠️ Ajouter les boutons du ticket
+        for i in range(NB_BUTTONS):
+            self.add_item(ScratchButton(i, self))
 
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
         if interaction.user.id != self.author_id:
@@ -190,7 +193,6 @@ class ScratchKey(commands.Cog):
         jeux = ", ".join([k["game_name"] for k in keys_dispo[:5]]) or "Aucun"
         if len(keys_dispo) > 5:
             jeux += "…"
-
         embed = discord.Embed(
             title="🎟️ Ticket à gratter",
             description=(
@@ -218,7 +220,6 @@ class ScratchKey(commands.Cog):
         elif result == "double":
             await self._update_reiatsu(user_id, reiatsu_points + SCRATCH_COST * 2)
 
-        # Si gagné, proposer les clés Steam
         if result in ["win", "double"]:
             keys_dispo = await self._get_all_steam_keys()
             if not keys_dispo:
@@ -255,10 +256,8 @@ class ScratchKey(commands.Cog):
                 if reiatsu_points < SCRATCH_COST:
                     return await safe_respond(interaction, f"❌ Pas assez de Reiatsu ! Il te faut {SCRATCH_COST}.", ephemeral=True)
                 await self._update_reiatsu(str(interaction.user.id), reiatsu_points - SCRATCH_COST)
-                button_view = ScratchTicketView(interaction.user.id)
-                await button_view.wait()
-                if button_view.value:
-                    await self._handle_result(view.last_interaction, button_view.value, str(interaction.user.id))
+                if view.value:
+                    await self._handle_result(view.last_interaction, view.value, str(interaction.user.id))
         except Exception as e:
             print(f"[ERREUR /scratchkey] {e}")
             await safe_respond(interaction, "❌ Une erreur est survenue.", ephemeral=True)
@@ -277,13 +276,11 @@ class ScratchKey(commands.Cog):
                 if reiatsu_points < SCRATCH_COST:
                     return await safe_send(ctx.channel, f"❌ Pas assez de Reiatsu ! Il te faut {SCRATCH_COST}.")
                 await self._update_reiatsu(str(ctx.author.id), reiatsu_points - SCRATCH_COST)
-                button_view = ScratchTicketView(ctx.author.id)
-                await button_view.wait()
-                if button_view.value:
+                if view.value:
                     class DummyInteraction:
                         def __init__(self, user, channel):
                             self.user, self.channel = user, channel
-                    await self._handle_result(DummyInteraction(ctx.author, ctx.channel), button_view.value, str(ctx.author.id))
+                    await self._handle_result(DummyInteraction(ctx.author, ctx.channel), view.value, str(ctx.author.id))
         except Exception as e:
             print(f"[ERREUR !scratchkey] {e}")
             await safe_send(ctx.channel, "❌ Une erreur est survenue.")
