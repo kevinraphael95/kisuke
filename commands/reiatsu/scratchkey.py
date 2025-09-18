@@ -114,16 +114,24 @@ class ScratchKey(commands.Cog):
 
     async def _send_ticket(self, channel, user, user_id: int):
         reiatsu_points = await self._get_reiatsu(user_id)
+    
         embed = discord.Embed(
-            title="🎟️ Ticket à gratter",
-            description=f"Prix du ticket : {SCRATCH_COST} Reiatsu.\nAppuie sur **Miser et jouer** pour tenter ta chance !",
+            title="🎟️ Ticket à gratter",  # Titre fixe
+            description=(
+                "Appuie sur le bouton pour tenter ta chance !\n\n"
+                f"**💠 Reiatsu possédé** : {reiatsu_points}\n"
+                f"**Prix du ticket** : {SCRATCH_COST}\n"
+                "**Gains potentiels** : Clé Steam (1/10), Doubler sa mise (1/10), Rien (8/10)"
+            ),
             color=discord.Color.blurple()
         )
-        embed.add_field(name="💠 Reiatsu possédé", value=f"**{reiatsu_points}**", inline=False)
+        embed.set_footer(text="Utilise le bouton ci-dessous pour interagir.")  # Footer fixe
+
         view = ScratchTicketView(user_id)
         message = await safe_send(channel, embed=embed, view=view)
         view.message = message
         return view
+
 
     async def _handle_result(self, interaction_or_ctx, result: str, user_id: str):
         reiatsu_points = await self._get_reiatsu(user_id)
