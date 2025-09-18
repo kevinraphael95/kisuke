@@ -42,7 +42,7 @@ class ReiatsuView(View):
     - Bouton pour voir le classement
     """
     def __init__(self, author: discord.Member, spawn_link: str = None):
-        super().__init__(timeout=120)  # Timeout global de 2 minutes
+        super().__init__(timeout=None)  # Pas de timeout pour que le bouton reste
         self.author = author  # Auteur autorisé à interagir avec les boutons
         # Si un lien de spawn est fourni, ajout d’un bouton de redirection
         if spawn_link:
@@ -60,12 +60,12 @@ class ReiatsuView(View):
         if interaction.user != self.author:
             return await interaction.response.send_message("❌ Tu ne peux pas utiliser ce bouton.", ephemeral=True)
 
-        # 🔹 Récupération du top 10 dans la DB
+        # Récupération du top 10 dans la DB
         classement_data = supabase.table("reiatsu").select("user_id, points").order("points", desc=True).limit(10).execute()
         if not classement_data.data:
             return await interaction.response.send_message("Aucun classement disponible pour le moment.", ephemeral=True)
 
-        # 🔹 Construction de la description de l'embed
+        # Construction de la description de l'embed
         description = ""
         for i, entry in enumerate(classement_data.data, start=1):
             user_id = int(entry["user_id"])
@@ -75,27 +75,9 @@ class ReiatsuView(View):
             name = user.display_name if user else f"Utilisateur ({user_id})"
             description += f"**{i}. {name}** — {points} points\n"
 
-        # 🔹 Création et envoi de l'embed
+        # Création et envoi de l'embed
         embed = discord.Embed(title="📊 Classement Reiatsu", description=description, color=discord.Color.purple())
-        await interaction.response.send_message(embed=embed, ephemeral=True)
-
-        # 🔹 Désactivation du bouton après clic
-        button.disabled = True
-        await interaction.message.edit(view=self)
-
-    async def on_timeout(self):
-        """Désactive tous les boutons lorsque la vue expire (après 2 minutes)."""
-        for child in self.children:
-            if isinstance(child, Button):
-                child.disabled = True
-        # Tente de mettre à jour le message si la vue est attachée
-        try:
-            message = self.message  # self.message est défini automatiquement quand la vue est envoyée
-            if message:
-                await message.edit(view=self)
-        except Exception:
-            pass
-
+        await interaction.response.send_message(embed=embed)
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🧠 Cog principal
