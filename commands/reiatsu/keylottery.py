@@ -79,10 +79,8 @@ class BetButton(Button):
 
     async def callback(self, interaction: discord.Interaction):
         """Déclenchement du ticket après avoir misé"""
-        # Récupération des points du joueur
         reiatsu_points = await self.parent_view.parent._get_reiatsu(str(interaction.user.id))
         if reiatsu_points < SCRATCH_COST:
-            # Si pas assez de points, on renvoie un message et on bloque l’action
             return await safe_respond(interaction, f"❌ Pas assez de Reiatsu ! Il te faut {SCRATCH_COST}.", ephemeral=True)
 
         # Déduction des points
@@ -93,7 +91,6 @@ class BetButton(Button):
         for i in range(NB_BUTTONS):
             self.parent_view.add_item(ScratchButton(i, self.parent_view))
 
-        # Mettre à jour le message avec les nouveaux boutons
         await interaction.response.edit_message(view=self.parent_view)
 
 # ────────────────────────────────────────────────────────────────────────────────
@@ -109,38 +106,38 @@ class ScratchButton(Button):
         self.parent_view = parent
 
     async def callback(self, interaction: discord.Interaction):
-        """Détermine le résultat du ticket et crée un nouvel embed"""
+        """Détermine le résultat du ticket et crée un seul embed final"""
         # Désactivation de tous les boutons
         for child in self.parent_view.children:
             child.disabled = True
 
-        # Résultat selon le bouton cliqué
+        # Déterminer le type de résultat
         if self.index == self.parent_view.winning_button:
-            result = "win"
+            result_type = "key"       # Clé Steam
             color = discord.Color.green()
-            msg = "🎉 Tu as gagné une clé Steam !"
+            msg = "🎉 Tu as trouvé une clé Steam !"
         elif self.index == self.parent_view.double_button:
-            result = "double"
+            result_type = "jackpot"   # Double Reiatsu
             color = discord.Color.gold()
-            msg = "💎 Jackpot ! Tu gagnes **le double** de ta mise !"
+            msg = "💎 Jackpot ! Tu gagnes le double de ta mise !"
         else:
-            result = "lose"
+            result_type = "lose"      # Perdu
             color = discord.Color.red()
-            msg = "😢 Perdu ! Pas de chance cette fois."
+            msg = "😢 Pas de chance cette fois !"
 
-        # Créer un **nouvel embed résultat**
-        result_embed = discord.Embed(
+        # Créer un embed unique pour le résultat
+        embed = discord.Embed(
             title="🎰 Résultat du Ticket à Gratter",
             description=msg,
             color=color
         )
-        result_embed.set_footer(text="Relance /scratchkey pour tenter à nouveau.")
+        embed.set_footer(text="Relance /scratchkey pour tenter à nouveau.")
 
         # Envoyer le nouvel embed
-        await interaction.response.send_message(embed=result_embed, ephemeral=False)
+        await interaction.response.send_message(embed=embed, ephemeral=False)
 
         # Enregistrer le résultat et stopper la View
-        self.parent_view.value = result
+        self.parent_view.value = result_type
         self.parent_view.last_interaction = interaction
         self.parent_view.stop()
 
@@ -163,16 +160,13 @@ class ConfirmKeyView(View):
         self.max_switches = 3
 
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
-        """Empêche les autres utilisateurs de cliquer"""
         return interaction.user.id == self.author_id
 
     @property
     def current_key(self):
-        """Retourne la clé actuellement affichée"""
         return self.keys_dispo[self.index]
 
     def build_embed(self):
-        """Construit l'embed pour la clé Steam"""
         embed = discord.Embed(
             title="🎉 Tu as gagné une clé Steam !",
             description="Choisis la clé qui te convient le mieux.\n⚠️ Tu peux cliquer sur **Autre jeu** jusqu’à 3 fois.",
@@ -184,20 +178,17 @@ class ConfirmKeyView(View):
         return embed
 
     async def refresh_embed(self, interaction: discord.Interaction):
-        """Actualise l'embed lors du changement de clé"""
         await safe_edit(self.message, embed=self.build_embed(), view=self)
         await interaction.response.defer()
 
     @discord.ui.button(label="✅ Prendre cette clé", style=discord.ButtonStyle.green)
     async def confirm(self, interaction: discord.Interaction, button: Button):
-        """Le joueur accepte la clé et on lui envoie en DM"""
         self.choice = "accept"
         await interaction.response.defer()
         self.stop()
 
     @discord.ui.button(label="🎲 Autre jeu", style=discord.ButtonStyle.blurple)
     async def other_game(self, interaction: discord.Interaction, button: Button):
-        """Changer la clé affichée"""
         self.switch_count += 1
         if self.switch_count >= self.max_switches:
             button.disabled = True
@@ -206,7 +197,6 @@ class ConfirmKeyView(View):
 
     @discord.ui.button(label="❌ Refuser", style=discord.ButtonStyle.red)
     async def cancel(self, interaction: discord.Interaction, button: Button):
-        """Le joueur refuse la clé"""
         self.choice = "reject"
         await interaction.response.defer()
         self.stop()
@@ -221,7 +211,6 @@ class ScratchKey(commands.Cog):
 
     # ───────────── Gestion Reiatsu ─────────────
     async def _get_reiatsu(self, user_id: str) -> int:
-        """Récupère les points Reiatsu de l'utilisateur"""
         try:
             resp = supabase.table("reiatsu").select("points").eq("user_id", user_id).single().execute()
             return resp.data["points"] if resp.data else 0
@@ -230,7 +219,6 @@ class ScratchKey(commands.Cog):
             return 0
 
     async def _update_reiatsu(self, user_id: str, new_points: int):
-        """Met à jour les points Reiatsu de l'utilisateur"""
         try:
             supabase.table("reiatsu").update({"points": new_points}).eq("user_id", user_id).execute()
         except Exception as e:
@@ -238,7 +226,6 @@ class ScratchKey(commands.Cog):
 
     # ───────────── Gestion Steam Keys ─────────────
     async def _get_all_steam_keys(self):
-        """Récupère toutes les clés Steam non gagnées"""
         try:
             resp = supabase.table("steam_keys").select("*").eq("won", False).execute()
             return resp.data or []
@@ -247,7 +234,6 @@ class ScratchKey(commands.Cog):
             return []
 
     async def _mark_steam_key_won(self, key_id: int, winner: str):
-        """Marque une clé comme gagnée"""
         try:
             supabase.table("steam_keys").update({"won": True, "winner": winner}).eq("id", key_id).execute()
         except Exception as e:
@@ -255,7 +241,6 @@ class ScratchKey(commands.Cog):
 
     # ───────────── Envoi du ticket ─────────────
     async def _send_ticket(self, channel, user, user_id: int):
-        """Envoie le ticket à gratter avec le bouton Miser"""
         reiatsu_points = await self._get_reiatsu(user_id)
         keys_dispo = await self._get_all_steam_keys()
         jeux = ", ".join([k["game_name"] for k in keys_dispo[:5]]) or "Aucun"
@@ -276,30 +261,27 @@ class ScratchKey(commands.Cog):
             ),
             color=discord.Color.blurple()
         )
-        # Créer la View avec référence au Cog pour accéder aux méthodes
         view = ScratchTicketView(user_id, parent=self)
         message = await safe_send(channel, embed=embed, view=view)
         view.message = message
         return view
 
     # ───────────── Gestion du résultat ─────────────
-    async def _handle_result(self, interaction_or_ctx, result: str, user_id: str):
-        """Gère le résultat du ticket et l’envoi des clés"""
+    async def _handle_result(self, interaction_or_ctx, result_type: str, user_id: str):
         reiatsu_points = await self._get_reiatsu(user_id)
-        if result == "win":
-            await self._update_reiatsu(user_id, reiatsu_points + SCRATCH_COST)
-        elif result == "double":
-            await self._update_reiatsu(user_id, reiatsu_points + SCRATCH_COST * 2)
 
-        if result in ["win", "double"]:
+        if result_type == "jackpot":
+            await self._update_reiatsu(user_id, reiatsu_points + SCRATCH_COST * 2)
+            return  # Pas de clé Steam ici
+
+        elif result_type == "key":
+            await self._update_reiatsu(user_id, reiatsu_points + SCRATCH_COST)
+
             keys_dispo = await self._get_all_steam_keys()
             if not keys_dispo:
                 return await safe_send(interaction_or_ctx.channel, "⛔ Aucune clé Steam disponible.")
 
-            # Envoyer embed de recherche de clé
-            msg = await safe_send(interaction_or_ctx.channel, "🎁 Recherche d'une clé Steam en cours...")
-
-            # View pour choix de clé
+            msg = await safe_send(interaction_or_ctx.channel, "🎁 Choisis ta clé Steam !")
             view = ConfirmKeyView(interaction_or_ctx.user.id, keys_dispo, msg)
             await safe_edit(msg, embed=view.build_embed(), view=view)
             await view.wait()
@@ -314,6 +296,7 @@ class ScratchKey(commands.Cog):
                     await safe_edit(msg, embed=discord.Embed(title="✅ Clé envoyée en DM !", color=discord.Color.green()), view=None)
                 except discord.Forbidden:
                     await safe_edit(msg, embed=discord.Embed(title="⚠️ Impossible d'envoyer un DM.", color=discord.Color.orange()), view=None)
+
             elif view.choice == "reject":
                 await safe_edit(msg, embed=discord.Embed(title="🔄 Clé remise en jeu pour les autres joueurs.", color=discord.Color.blurple()), view=None)
 
