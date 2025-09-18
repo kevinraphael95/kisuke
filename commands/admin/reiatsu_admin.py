@@ -12,7 +12,6 @@
 import discord
 import asyncio
 import random
-import json
 from datetime import datetime
 from discord.ext import commands
 from discord import ui
@@ -20,13 +19,15 @@ from utils.supabase_client import supabase
 from utils.discord_utils import safe_send, safe_reply, safe_edit, safe_delete
 
 # ──────────────────────────────────────────────────────────────
-# 🔧 Chargement config globale Reiatsu (JSON)
+# 🔧 Constantes pour la vitesse de spawn
 # ──────────────────────────────────────────────────────────────
-with open("data/reiatsu_config.json", "r", encoding="utf-8") as f:
-    CONFIG = json.load(f)
-
-SPAWN_SPEED_RANGES = CONFIG.get("SPAWN_SPEED_RANGES", {})
-DEFAULT_SPAWN_SPEED = CONFIG.get("DEFAULT_SPAWN_SPEED", "Normal")
+SPAWN_SPEED_RANGES = {
+    "Ultra Rapide": (1, 5),    # minutes
+    "Rapide": (5, 20),
+    "Normal": (30, 60),
+    "Lent": (300, 600)         # 5-10 h
+}
+DEFAULT_SPAWN_SPEED = "Normal"
 
 # ──────────────────────────────────────────────────────────────
 # 🧠 Cog principal
@@ -75,10 +76,8 @@ class ReiatsuAdmin(commands.Cog):
             guild_id = str(ctx.guild.id)
             channel_id = str(ctx.channel.id)
             now_iso = datetime.utcnow().isoformat()
-
-            # Choix delay par rapport à la vitesse par défaut
-            min_delay, max_delay = SPAWN_SPEED_RANGES.get(DEFAULT_SPAWN_SPEED, [1800, 3600])
-            delay = random.randint(min_delay, max_delay)
+            delay = random.randint(30, 60)  # Valeur aléatoire initiale
+            default_speed = DEFAULT_SPAWN_SPEED  # "Normal" par défaut
 
             data = supabase.table("reiatsu_config").select("*").eq("guild_id", guild_id).execute()
             if data.data:
@@ -87,7 +86,7 @@ class ReiatsuAdmin(commands.Cog):
                     "channel_id": channel_id,
                     "last_spawn_at": now_iso,
                     "spawn_delay": delay,
-                    "spawn_speed": DEFAULT_SPAWN_SPEED,
+                    "spawn_speed": default_speed,  # Ajout de la colonne spawn_speed
                     "en_attente": False,
                     "spawn_message_id": None
                 }).eq("guild_id", guild_id).execute()
@@ -98,16 +97,105 @@ class ReiatsuAdmin(commands.Cog):
                     "channel_id": channel_id,
                     "last_spawn_at": now_iso,
                     "spawn_delay": delay,
-                    "spawn_speed": DEFAULT_SPAWN_SPEED,
+                    "spawn_speed": default_speed,  # Ajout de la colonne spawn_speed
                     "en_attente": False,
                     "spawn_message_id": None
                 }).execute()
 
-            await safe_send(ctx, f"✅ Le salon {ctx.channel.mention} est désormais configuré pour le spawn de Reiatsu avec vitesse par défaut **{DEFAULT_SPAWN_SPEED}**.")
+            await safe_send(ctx, f"✅ Le salon {ctx.channel.mention} est désormais configuré pour le spawn de Reiatsu avec vitesse par défaut **{default_speed}**.")
         except Exception as e:
             await safe_send(ctx, f"❌ Une erreur est survenue lors de la configuration : `{e}`")
 
-    # (UNSET, CHANGE, SPAWN identiques à ton code d’origine → je n’y touche pas)
+    # ──────────────────────────────────────────────────────────
+    # 🔹 Sous-commande : UNSET
+    # ──────────────────────────────────────────────────────────
+    @reiatsuadmin.command(name="unset")
+    @commands.has_permissions(administrator=True)
+    async def unset_reiatsu(self, ctx: commands.Context):
+        try:
+            guild_id = str(ctx.guild.id)
+            res = supabase.table("reiatsu_config").select("*").eq("guild_id", guild_id).execute()
+            if res.data:
+                supabase.table("reiatsu_config").delete().eq("guild_id", guild_id).execute()
+                await safe_send(ctx, "🗑️ Le salon Reiatsu a été **supprimé** de la configuration.")
+            else:
+                await safe_send(ctx, "❌ Aucun salon Reiatsu n’était configuré sur ce serveur.")
+        except Exception as e:
+            await safe_send(ctx, f"❌ Une erreur est survenue lors de la suppression : `{e}`")
+
+    # ──────────────────────────────────────────────────────────
+    # 🔹 Sous-commande : CHANGE
+    # ──────────────────────────────────────────────────────────
+    @reiatsuadmin.command(name="change")
+    @commands.has_permissions(administrator=True)
+    async def change_reiatsu(self, ctx: commands.Context, member: discord.Member, points: int):
+        if points < 0:
+            await safe_send(ctx, "❌ Le score Reiatsu doit être un nombre **positif**.")
+            return
+        user_id = str(member.id)
+        username = member.display_name
+        try:
+            data = supabase.table("reiatsu").select("user_id").eq("user_id", user_id).execute()
+            if data.data:
+                supabase.table("reiatsu").update({"points": points}).eq("user_id", user_id).execute()
+                status = "🔄 Score mis à jour"
+            else:
+                supabase.table("reiatsu").insert({
+                    "user_id": user_id,
+                    "username": username,
+                    "points": points
+                }).execute()
+                status = "🆕 Nouveau score enregistré"
+
+            embed = discord.Embed(
+                title="🌟 Mise à jour du Reiatsu",
+                description=(
+                    f"👤 Membre : {member.mention}\n"
+                    f"✨ Nouveau score : `{points}` points\n\n"
+                    f"{status}"
+                ),
+                color=discord.Color.blurple()
+            )
+            embed.set_thumbnail(url=member.display_avatar.url)
+            embed.set_footer(
+                text=f"Modifié par {ctx.author.display_name}",
+                icon_url=ctx.author.display_avatar.url
+            )
+            await safe_send(ctx, embed=embed)
+        except Exception as e:
+            await safe_send(ctx, f"⚠️ Une erreur est survenue : `{e}`")
+
+    # ──────────────────────────────────────────────────────────
+    # 🔹 Sous-commande : SPAWN
+    # ──────────────────────────────────────────────────────────
+    @reiatsuadmin.command(name="spawn")
+    @commands.has_permissions(administrator=True)
+    @commands.cooldown(rate=1, per=3, type=commands.BucketType.user)
+    async def spawn_reiatsu(self, ctx: commands.Context):
+        channel = ctx.channel
+        embed = discord.Embed(
+            title="💠 Un Reiatsu sauvage apparaît !",
+            description="Cliquez sur la réaction 💠 pour l'absorber.",
+            color=discord.Color.purple()
+        )
+        message = await safe_send(channel, embed=embed)
+        if message is None:
+            return
+        try:
+            await message.add_reaction("💠")
+        except discord.HTTPException:
+            pass
+
+        def check(reaction, user):
+            return reaction.message.id == message.id and str(reaction.emoji) == "💠" and not user.bot
+
+        try:
+            reaction, user = await self.bot.wait_for("reaction_add", timeout=40.0, check=check)
+            await safe_send(channel, f"💠 {user.mention} a absorbé le Reiatsu !")
+        except asyncio.TimeoutError:
+            await safe_send(channel, "⏳ Le Reiatsu s’est dissipé dans l’air... personne ne l’a absorbé.")
+        except Exception as e:
+            await safe_send(channel, f"⚠️ Une erreur est survenue lors de l'attente de réaction : `{e}`")
 
     # ──────────────────────────────────────────────────────────
     # 🔹 Sous-commande : SPEED
@@ -135,12 +223,12 @@ class ReiatsuAdmin(commands.Cog):
         # Création de l'embed
         embed = discord.Embed(
             title="⚡ Vitesse du spawn de Reiatsu",
-            description=f"**Vitesse actuelle :** {current_speed_name} ({current_delay} sec)",
+            description=f"**Vitesse actuelle :** {current_speed_name} ({current_delay} min)",
             color=discord.Color.blurple()
         )
         embed.add_field(
             name="Vitesses possibles",
-            value="\n".join([f"{name} → {min_delay}-{max_delay} sec" for name, (min_delay, max_delay) in SPAWN_SPEED_RANGES.items()]),
+            value="\n".join([f"{name} → {min_delay}-{max_delay} min" for name, (min_delay, max_delay) in SPAWN_SPEED_RANGES.items()]),
             inline=False
         )
 
@@ -169,12 +257,12 @@ class ReiatsuAdmin(commands.Cog):
             new_delay = random.randint(min_delay, max_delay)
             supabase.table("reiatsu_config").update({
                 "spawn_delay": new_delay,
-                "spawn_speed": new_speed_name
+                "spawn_speed": new_speed_name  # Mise à jour du spawn_speed
             }).eq("guild_id", guild_id).execute()
             await interaction.response.edit_message(
                 embed=discord.Embed(
                     title="✅ Vitesse du spawn modifiée",
-                    description=f"Nouvelle vitesse : **{new_speed_name}** ({new_delay} sec)",
+                    description=f"Nouvelle vitesse : **{new_speed_name}** ({new_delay} min)",
                     color=discord.Color.green()
                 ),
                 view=None
