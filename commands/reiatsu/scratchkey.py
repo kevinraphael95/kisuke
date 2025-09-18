@@ -83,6 +83,7 @@ class ScratchButton(Button):
             result = "lose"
             color = discord.Color.red()
             msg = f"😢 Perdu ! Pas de chance cette fois."
+
         embed = discord.Embed(title="🎰 Ticket à Gratter", description=msg, color=color)
         embed.set_footer(text="Relance /scratchkey pour tenter à nouveau.")
         await interaction.response.edit_message(embed=embed, view=self.parent_view)
@@ -114,24 +115,24 @@ class ScratchKey(commands.Cog):
 
     async def _send_ticket(self, channel, user, user_id: int):
         reiatsu_points = await self._get_reiatsu(user_id)
-    
         embed = discord.Embed(
-            title="🎟️ Ticket à gratter",  # Titre fixe
+            title="🎟️ Ticket à gratter",
             description=(
-                "Appuie sur le bouton pour tenter ta chance !\n\n"
-                f"**💠 Reiatsu possédé** : {reiatsu_points}\n"
-                f"**Prix du ticket** : {SCRATCH_COST}\n"
-                "**Gains potentiels** : Clé Steam (1/10), Doubler sa mise (1/10), Rien (8/10)"
+                f"**Reiatsu possédé** : **{reiatsu_points}**\n"
+                f"**Prix du ticket** : **{SCRATCH_COST}**\n"
+                f"**Gains potentiels** : Clé Steam (1/10), Doubler sa mise (1/10), Rien (8/10)\n\n"
+                f"**Comment jouer ?** : Appuie sur **Miser et jouer** pour acheter un ticket et révéler les boutons.\n"
+                f"Clique sur l’un des 10 boutons 🎟️ pour découvrir ton gain.\n"
+                f"Si tu trouves la clé 🔑 tu gagnes une **clé Steam**.\n"
+                f"Si tu trouves le jackpot 💎 tu gagnes **le double de ta mise**.\n"
+                f"Sinon... tu repars les mains vides 😢 !"
             ),
             color=discord.Color.blurple()
         )
-        embed.set_footer(text="Utilise le bouton ci-dessous pour interagir.")  # Footer fixe
-
         view = ScratchTicketView(user_id)
         message = await safe_send(channel, embed=embed, view=view)
         view.message = message
         return view
-
 
     async def _handle_result(self, interaction_or_ctx, result: str, user_id: str):
         reiatsu_points = await self._get_reiatsu(user_id)
@@ -150,7 +151,6 @@ class ScratchKey(commands.Cog):
             await interaction.response.defer()
             view = await self._send_ticket(interaction.channel, interaction.user, interaction.user.id)
             await view.wait()
-
             if view.value:
                 reiatsu_points = await self._get_reiatsu(str(interaction.user.id))
                 if reiatsu_points < SCRATCH_COST:
@@ -175,7 +175,6 @@ class ScratchKey(commands.Cog):
         try:
             view = await self._send_ticket(ctx.channel, ctx.author, ctx.author.id)
             await view.wait()
-
             if view.value:
                 reiatsu_points = await self._get_reiatsu(str(ctx.author.id))
                 if reiatsu_points < SCRATCH_COST:
