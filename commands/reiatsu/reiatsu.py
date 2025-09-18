@@ -9,16 +9,30 @@
 # ────────────────────────────────────────────────────────────────────────────────
 # 📦 Imports nécessaires
 # ────────────────────────────────────────────────────────────────────────────────
-import discord  # Librairie principale pour interagir avec Discord
-from discord import app_commands  # Pour les commandes slash
-from discord.ext import commands  # Pour les cogs et commandes classiques
-from discord.ui import View, Button  # Pour les boutons interactifs
-from dateutil import parser  # Pour parser les dates ISO depuis la DB
-from datetime import datetime, timedelta  # Pour calculer les cooldowns et timers
-import time  # Pour timestamp actuel
-import json  # Pour charger les données JSON des classes
-from utils.supabase_client import supabase  # Client Supabase pour DB
-from utils.discord_utils import safe_send, safe_respond  # Envoi sécurisé anti-429
+import discord
+from discord import app_commands
+from discord.ext import commands
+from discord.ui import View, Button
+from dateutil import parser
+from datetime import datetime, timedelta
+import time
+import json
+import os
+from utils.supabase_client import supabase
+from utils.discord_utils import safe_send, safe_respond, safe_edit
+
+# ────────────────────────────────────────────────────────────────────────────────
+# 📂 Chargement des données JSON
+# ────────────────────────────────────────────────────────────────────────────────
+CLASSES_JSON_PATH = os.path.join("data", "classes.json")
+def load_classes():
+    """Charge le fichier des classes depuis data/classes.json"""
+    try:
+        with open(CLASSES_JSON_PATH, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except Exception as e:
+        print(f"[ERREUR JSON] Impossible de charger {CLASSES_JSON_PATH} : {e}")
+        return {}
 
 # ────────────────────────────────────────────────────────────────────────────────
 # Infos intervalles de vitesse de spawn
@@ -34,39 +48,35 @@ SPAWN_SPEED_INTERVALS = {
 # 🎛️ UI — Boutons interactifs Reiatsu
 # ────────────────────────────────────────────────────────────────────────────────
 class ReiatsuView(View):
-    """
-    Vue pour les boutons interactifs de Reiatsu :
-    - Bouton pour aller au spawn
-    - Bouton pour voir le classement
-    """
+    """Vue interactive avec boutons pour Reiatsu"""
     def __init__(self, author: discord.Member = None, spawn_link: str = None):
-        super().__init__(timeout=None)  # Pas de timeout pour que le bouton reste
-        self.author = author  # Auteur autorisé à interagir avec les boutons
-        # Si un lien de spawn est fourni, ajout d’un bouton de redirection
+        super().__init__(timeout=None)
+        self.author = author
         if spawn_link:
             self.add_item(Button(label="💠 Aller au spawn", style=discord.ButtonStyle.link, url=spawn_link))
 
-    # ────────────────────────────────────────────────────────────────────────────
-    # Bouton classement
-    # ────────────────────────────────────────────────────────────────────────────
+    # Bouton Classement
     @discord.ui.button(label="📊 Classement", style=discord.ButtonStyle.primary, custom_id="reiatsu:classement")
     async def classement_button(self, interaction: discord.Interaction, button: discord.ui.Button):
-        """
-        Affiche le top 10 des joueurs par points de Reiatsu.
-        Vérifie que l’utilisateur qui clique est bien l’auteur de la vue.
-        """
         if self.author and interaction.user != self.author:
             return await interaction.response.send_message("❌ Tu ne peux pas utiliser ce bouton.", ephemeral=True)
-        classement_data = supabase.table("reiatsu").select("user_id, points").order("points", desc=True).limit(10).execute()
+        try:
+            classement_data = supabase.table("reiatsu").select("user_id, points").order("points", desc=True).limit(10).execute()
+        except Exception as e:
+            print(f"[ERREUR DB] Impossible de récupérer le classement : {e}")
+            return await interaction.response.send_message("❌ Erreur lors du chargement du classement.", ephemeral=True)
+
         if not classement_data.data:
-            return await interaction.response.send_message("Aucun classement disponible pour le moment.", ephemeral=True)
+            return await interaction.response.send_message("⚠️ Aucun classement disponible pour le moment.", ephemeral=True)
+
         description = ""
-        for i, entry in enumerate(classe_data := classement_data.data, start=1):
+        for i, entry in enumerate(classement_data.data, start=1):
             user_id = int(entry["user_id"])
             points = entry["points"]
             user = interaction.guild.get_member(user_id) if interaction.guild else None
             name = user.display_name if user else f"Utilisateur ({user_id})"
             description += f"**{i}. {name}** — {points} points\n"
+
         embed = discord.Embed(title="📊 Classement Reiatsu", description=description, color=discord.Color.purple())
         await interaction.response.send_message(embed=embed)
 
@@ -77,72 +87,78 @@ class ReiatsuCommand(commands.Cog):
     """Commande /reiatsu et !reiatsu — Affiche le profil complet d’un joueur"""
     def __init__(self, bot: commands.Bot):
         self.bot = bot
-        # 🔹 Enregistrer la vue persistante pour que les boutons Slash fonctionnent
         self.bot.add_view(ReiatsuView())
 
     # ────────────────────────────────────────────────────────────────────────────
-    # Fonction interne pour afficher le profil
+    # Fonction interne : envoi du profil
     # ────────────────────────────────────────────────────────────────────────────
-    async def _send_profile(self, ctx_or_interaction, author, guild, target_user):
+    async def _send_profile(self, channel_or_interaction, author, guild, target_user):
         user = target_user or author
-        user_id = str(user.id)
-        guild_id = str(guild.id) if guild else None
-        user_data = supabase.table("reiatsu").select(
-            "points, classe, last_steal_attempt, steal_cd"
-        ).eq("user_id", user_id).execute()
+        user_id, guild_id = str(user.id), str(guild.id) if guild else None
+
+        # ── Récupération des données utilisateur
+        try:
+            user_data = supabase.table("reiatsu").select(
+                "points, classe, last_steal_attempt, steal_cd"
+            ).eq("user_id", user_id).execute()
+        except Exception as e:
+            print(f"[ERREUR DB] Lecture utilisateur échouée : {e}")
+            return await safe_send(channel_or_interaction, "❌ Erreur lors de la récupération de tes données.")
+
         data = user_data.data[0] if user_data.data else {}
         points = data.get("points", 0)
         classe_nom = data.get("classe")
         last_steal_str = data.get("last_steal_attempt")
         steal_cd = data.get("steal_cd")
 
-        with open("data/classes.json", "r", encoding="utf-8") as f:
-            CLASSES = json.load(f)
+        # ── Chargement classes.json
+        CLASSES = load_classes()
         if classe_nom and classe_nom in CLASSES:
             classe_text = (
                 f"• Classe : **{classe_nom}**\n"
                 f"• Compétence passive : {CLASSES[classe_nom]['Passive']}\n"
                 f"• Compétence active : {CLASSES[classe_nom]['Active']}\n"
-                "(les compétences actives ne sont pas ajoutées)"
+                "(les compétences actives ne sont pas encore implémentées)"
             )
         else:
-            classe_text = "Aucune classe sélectionnée.\nUtilise la commande `!classe` pour en choisir une."
+            classe_text = "Aucune classe sélectionnée. Utilise `!classe` pour en choisir une."
 
+        # ── Cooldown de vol
         cooldown_text = "Disponible ✅"
         if classe_nom and steal_cd is None:
             steal_cd = 19 if classe_nom == "Voleur" else 24
             supabase.table("reiatsu").update({"steal_cd": steal_cd}).eq("user_id", user_id).execute()
+
         if last_steal_str and steal_cd:
             last_steal = parser.parse(last_steal_str)
             next_steal = last_steal + timedelta(hours=steal_cd)
             now = datetime.utcnow()
             if now < next_steal:
                 restant = next_steal - now
-                minutes_total = int(restant.total_seconds() // 60)
-                h, m = divmod(minutes_total, 60)
+                h, m = divmod(int(restant.total_seconds() // 60), 60)
                 cooldown_text = f"{restant.days}j {h}h{m}m" if restant.days else f"{h}h{m}m"
 
-        salon_text, temps_text, spawn_link = "❌", "❌", None
+        # ── Récupération config serveur
+        salon_text, spawn_speed_text, temps_text, spawn_link = "❌", "⚠️ Inconnu", "⚠️ Inconnu", None
         if guild:
-            config_data = supabase.table("reiatsu_config").select("*").eq("guild_id", guild_id).execute()
-            config = config_data.data[0] if config_data.data else None
-            salon_text = "❌ Aucun salon configuré"
-            temps_text = "⚠️ Inconnu"
-            spawn_speed_text = "⚠️ Inconnu"
+            try:
+                config_data = supabase.table("reiatsu_config").select("*").eq("guild_id", guild_id).execute()
+            except Exception as e:
+                print(f"[ERREUR DB] Lecture config échouée : {e}")
+                config_data = None
+
+            config = config_data.data[0] if config_data and config_data.data else None
             if config:
                 salon = guild.get_channel(int(config["channel_id"])) if config.get("channel_id") else None
                 salon_text = salon.mention if salon else "⚠️ Salon introuvable"
                 if config.get("spawn_speed"):
                     speed_key = config["spawn_speed"]
                     spawn_speed_text = f"{SPAWN_SPEED_INTERVALS.get(speed_key, '⚠️ Inconnu')} ({speed_key})"
+
                 if config.get("en_attente"):
-                    channel_id = config.get("channel_id")
-                    msg_id = config.get("spawn_message_id")
-                    if msg_id and channel_id:
-                        spawn_link = f"https://discord.com/channels/{guild_id}/{channel_id}/{msg_id}"
-                        temps_text = f"Un Reiatsu 💠 est **déjà apparu** !"
-                    else:
-                        temps_text = "Un Reiatsu 💠 est **déjà apparu** ! (Lien indisponible)"
+                    if config.get("spawn_message_id") and config.get("channel_id"):
+                        spawn_link = f"https://discord.com/channels/{guild_id}/{config['channel_id']}/{config['spawn_message_id']}"
+                    temps_text = "💠 Un Reiatsu est **déjà apparu** !"
                 else:
                     last_spawn = config.get("last_spawn_at")
                     delay = config.get("spawn_delay", 1800)
@@ -154,32 +170,31 @@ class ReiatsuCommand(commands.Cog):
                             minutes, seconds = divmod(remaining, 60)
                             temps_text = f"**{minutes}m {seconds}s**"
                     else:
-                        temps_text = "Un Reiatsu 💠 peut apparaître **à tout moment** !"
+                        temps_text = "💠 Un Reiatsu peut apparaître **à tout moment** !"
 
+        # ── Création de l'embed
         embed = discord.Embed(
-            title=f"__**Profil de {user.display_name}**__",
+            title=f"__Profil de {user.display_name}__",
             description=(
-                f"• 💠 Reiatsu : **{points}**\n"
-                f"• Cooldown vol : {cooldown_text}\n"
-                f"(reiatsuvol pour voler du reiatsu à quelqu'un)\n"
-                f"• Classe : {classe_nom or 'Aucune'}\n"
-                f"(classe pour changer de classe)\n\n"
-                f"• ℹ️ __**Infos Reiatsu**__\n"
-                f"• 📍 Le reiatsu apparaît sur la salon : {salon_text}\n"
-                f"• ⏱️ Intervalle entre deux apparitions : {spawn_speed_text}\n"
-                f"• ⏳ Le prochain reiatsu va apparaître dans : {temps_text}"
+                f"💠 **Reiatsu** : {points}\n"
+                f"🔄 **Cooldown vol** : {cooldown_text}\n"
+                f"🏷️ **Classe** : {classe_nom or 'Aucune'}\n\n"
+                f"📍 Salon : {salon_text}\n"
+                f"⏱️ Vitesse : {spawn_speed_text}\n"
+                f"⏳ Prochain spawn : {temps_text}"
             ),
             color=discord.Color.purple()
         )
         embed.set_footer(text="Utilise les boutons ci-dessous pour interagir.")
         view = ReiatsuView(author, spawn_link=spawn_link)
-        if isinstance(ctx_or_interaction, discord.Interaction):
-            await ctx_or_interaction.response.send_message(embed=embed, view=view)
+
+        if isinstance(channel_or_interaction, discord.Interaction):
+            await channel_or_interaction.response.send_message(embed=embed, view=view)
         else:
-            await safe_send(ctx_or_interaction, embed=embed, view=view)
+            await safe_send(channel_or_interaction, embed=embed, view=view)
 
     # ────────────────────────────────────────────────────────────────────────────
-    # Commande SLASH /reiatsu
+    # Commande SLASH
     # ────────────────────────────────────────────────────────────────────────────
     @app_commands.command(name="reiatsu", description="💠 Affiche le score de Reiatsu d’un membre (ou soi-même).")
     @app_commands.describe(member="Membre dont vous voulez voir le Reiatsu")
@@ -194,7 +209,7 @@ class ReiatsuCommand(commands.Cog):
             await safe_respond(interaction, "❌ Une erreur est survenue.", ephemeral=True)
 
     # ────────────────────────────────────────────────────────────────────────────
-    # Commande PREFIX !reiatsu ou !rts
+    # Commande PREFIX
     # ────────────────────────────────────────────────────────────────────────────
     @commands.command(name="reiatsu", aliases=["rts"])
     @commands.cooldown(1, 3.0, commands.BucketType.user)
@@ -206,9 +221,6 @@ class ReiatsuCommand(commands.Cog):
 # ────────────────────────────────────────────────────────────────────────────────
 async def setup(bot: commands.Bot):
     cog = ReiatsuCommand(bot)
-    # Ajout de la catégorie "Reiatsu" si non définie pour chaque commande
-    for command in cog.get_commands():
-        if not hasattr(command, "category"):
-            command.category = "Reiatsu"
     await bot.add_cog(cog)
-        
+    for command in cog.get_commands():
+        command.category = "Reiatsu"
