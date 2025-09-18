@@ -1,5 +1,5 @@
 # ────────────────────────────────────────────────────────────────────────────────
-# 📌 keylottery.py — Commande interactive /scratchkey et !scratchkey
+# 📌 keylottery.py — Commande interactive /keylottery et !keylottery
 # Objectif : Ticket à gratter avec 10 boutons, mise uniquement après clic
 # Catégorie : Reiatsu
 # Accès : Public
@@ -27,7 +27,7 @@ NB_BUTTONS = 10
 # 🎛️ UI — Ticket à gratter
 # ────────────────────────────────────────────────────────────────────────────────
 class ScratchTicketView(View):
-    def __init__(self, author_id: int, message: discord.Message = None):
+    def __init__(self, author_id: int, message: discord.Message = None, keys_available: bool = True):
         super().__init__(timeout=120)
         self.author_id = author_id
         self.message = message
@@ -37,6 +37,12 @@ class ScratchTicketView(View):
         self.double_button = random.randint(0, NB_BUTTONS - 1)
         while self.double_button == self.winning_button:
             self.double_button = random.randint(0, NB_BUTTONS - 1)
+
+        # Si pas de clé dispo, désactiver le bouton directement
+        if not keys_available:
+            for child in self.children:
+                if isinstance(child, Button):
+                    child.disabled = True
 
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
         if interaction.user.id != self.author_id:
@@ -49,12 +55,11 @@ class ScratchTicketView(View):
             child.disabled = True
         if self.message:
             embed = self.message.embeds[0]
-            embed.set_footer(text="⏳ Temps écoulé. Relance /scratchkey pour retenter ta chance.")
+            embed.set_footer(text="⏳ Temps écoulé. Relance /keylottery pour retenter ta chance.")
             await safe_edit(self.message, embed=embed, view=self)
 
     @discord.ui.button(label=f"Miser {SCRATCH_COST} Reiatsu et jouer", style=discord.ButtonStyle.green)
     async def bet_button(self, interaction: discord.Interaction, button: Button):
-        # Désactive le bouton après clic
         for child in self.children:
             child.disabled = True
         await interaction.response.edit_message(view=self)
@@ -85,7 +90,7 @@ class ScratchButton(Button):
             msg = f"😢 Perdu ! Pas de chance cette fois."
 
         embed = discord.Embed(title="🎰 Ticket à Gratter", description=msg, color=color)
-        embed.set_footer(text="Relance /scratchkey pour tenter à nouveau.")
+        embed.set_footer(text="Relance /keylottery pour tenter à nouveau.")
         await interaction.response.edit_message(embed=embed, view=self.parent_view)
         self.parent_view.value = result
         self.parent_view.last_interaction = interaction
@@ -95,7 +100,7 @@ class ScratchButton(Button):
 # 🧠 Cog principal
 # ────────────────────────────────────────────────────────────────────────────────
 class ScratchKey(commands.Cog):
-    """Commande /scratchkey et !scratchkey — Ticket à gratter interactif"""
+    """Commande /keylottery et !keylottery — Ticket à gratter interactif"""
     def __init__(self, bot: commands.Bot):
         self.bot = bot
 
@@ -115,12 +120,28 @@ class ScratchKey(commands.Cog):
 
     async def _send_ticket(self, channel, user, user_id: int):
         reiatsu_points = await self._get_reiatsu(user_id)
+
+        # Récupérer les clés Steam disponibles
+        try:
+            resp = supabase.table("steamkeys").select("game").eq("used", False).execute()
+            available_keys = resp.data if resp.data else []
+        except Exception as e:
+            print(f"[ERREUR Supabase _send_ticket] {e}")
+            available_keys = []
+
+        keys_count = len(available_keys)
+        games_preview = ", ".join([k["game"] for k in available_keys[:5]])
+        if len(available_keys) > 5:
+            games_preview += ", ..."
+
         embed = discord.Embed(
             title="🎟️ Ticket à gratter",
             description=(
                 f"**Reiatsu possédé** : **{reiatsu_points}**\n"
                 f"**Prix du ticket** : **{SCRATCH_COST}**\n"
-                f"**Gains potentiels** : Clé Steam (1/10), Doubler sa mise (1/10), Rien (8/10)\n\n"
+                f"**Gains potentiels** : Clé Steam (1/10), Doubler sa mise (1/10), Rien (8/10)\n"
+                f"**Clés restantes** : **{keys_count}**\n"
+                f"**Jeux en loterie** : {games_preview if games_preview else 'Aucun 😢'}\n\n"
                 f"**Comment jouer ?** : Appuie sur **Miser et jouer** pour acheter un ticket et révéler 10 boutons.\n"
                 f"Clique sur l’un des 10 boutons 🎟️ pour découvrir ton gain.\n"
                 f" • Si tu trouves la clé 🔑 tu gagnes une **clé Steam**.\n"
@@ -129,7 +150,10 @@ class ScratchKey(commands.Cog):
             ),
             color=discord.Color.blurple()
         )
-        view = ScratchTicketView(user_id)
+        if keys_count == 0:
+            embed.set_footer(text="🚫 Plus de clés disponibles pour le moment.")
+
+        view = ScratchTicketView(user_id, keys_available=keys_count > 0)
         message = await safe_send(channel, embed=embed, view=view)
         view.message = message
         return view
@@ -155,15 +179,13 @@ class ScratchKey(commands.Cog):
                 reiatsu_points = await self._get_reiatsu(str(interaction.user.id))
                 if reiatsu_points < SCRATCH_COST:
                     return await safe_respond(interaction, f"❌ Pas assez de Reiatsu ! Il te faut {SCRATCH_COST}.", ephemeral=True)
-                # Déduire seulement après clic
                 await self._update_reiatsu(str(interaction.user.id), reiatsu_points - SCRATCH_COST)
-                # Ensuite tirer le résultat
                 button_view = ScratchTicketView(interaction.user.id)
                 await button_view.wait()
                 if button_view.value:
                     await self._handle_result(view.last_interaction, button_view.value, str(interaction.user.id))
         except Exception as e:
-            print(f"[ERREUR /scratchkey] {e}")
+            print(f"[ERREUR /keylottery] {e}")
             await safe_respond(interaction, "❌ Une erreur est survenue.", ephemeral=True)
 
     # ────────────────────────────────────────────────────────────────────────────
@@ -188,7 +210,7 @@ class ScratchKey(commands.Cog):
                             self.user, self.channel = user, channel
                     await self._handle_result(DummyInteraction(ctx.author, ctx.channel), button_view.value, str(ctx.author.id))
         except Exception as e:
-            print(f"[ERREUR !scratchkey] {e}")
+            print(f"[ERREUR !keylottery] {e}")
             await safe_send(ctx.channel, "❌ Une erreur est survenue.")
 
 # ────────────────────────────────────────────────────────────────────────────────
