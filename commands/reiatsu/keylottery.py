@@ -1,5 +1,5 @@
 # ────────────────────────────────────────────────────────────────────────────────
-# 📌 scratchkey.py — Commande interactive /scratchkey et !scratchkey
+# 📌 keylottery.py — Commande interactive /scratchkey et !scratchkey
 # Objectif : Ticket à gratter avec 10 boutons, mise uniquement après clic
 # Catégorie : Reiatsu
 # Accès : Public
@@ -20,7 +20,7 @@ from utils.discord_utils import safe_send, safe_edit, safe_respond
 # ────────────────────────────────────────────────────────────────────────────────
 # 📂 Constantes
 # ────────────────────────────────────────────────────────────────────────────────
-SCRATCH_COST = 300
+SCRATCH_COST = 1
 NB_BUTTONS = 10
 
 # ────────────────────────────────────────────────────────────────────────────────
@@ -121,11 +121,11 @@ class ScratchKey(commands.Cog):
                 f"**Reiatsu possédé** : **{reiatsu_points}**\n"
                 f"**Prix du ticket** : **{SCRATCH_COST}**\n"
                 f"**Gains potentiels** : Clé Steam (1/10), Doubler sa mise (1/10), Rien (8/10)\n\n"
-                f"**Comment jouer ?** : Appuie sur **Miser et jouer** pour acheter un ticket et révéler les boutons.\n"
+                f"**Comment jouer ?** : Appuie sur **Miser et jouer** pour acheter un ticket et révéler 10 boutons.\n"
                 f"Clique sur l’un des 10 boutons 🎟️ pour découvrir ton gain.\n"
-                f"Si tu trouves la clé 🔑 tu gagnes une **clé Steam**.\n"
-                f"Si tu trouves le jackpot 💎 tu gagnes **le double de ta mise**.\n"
-                f"Sinon... tu repars les mains vides 😢 !"
+                f" • Si tu trouves la clé 🔑 tu gagnes une **clé Steam**.\n"
+                f" • Si tu trouves le jackpot 💎 tu gagnes **le double de ta mise**.\n"
+                f" • Sinon... tu repars les mains vides 😢 !"
             ),
             color=discord.Color.blurple()
         )
@@ -144,7 +144,7 @@ class ScratchKey(commands.Cog):
     # ────────────────────────────────────────────────────────────────────────────
     # 🔹 Commande SLASH
     # ────────────────────────────────────────────────────────────────────────────
-    @app_commands.command(name="scratchkey", description="Ticket à gratter : tente ta chance pour gagner des clés ou du Reiatsu")
+    @app_commands.command(name="keylottery", description="Ticket à gratter : tente ta chance pour gagner des clés ou du Reiatsu")
     @app_commands.checks.cooldown(1, 10.0, key=lambda i: (i.user.id))
     async def slash_scratchkey(self, interaction: discord.Interaction):
         try:
@@ -169,7 +169,7 @@ class ScratchKey(commands.Cog):
     # ────────────────────────────────────────────────────────────────────────────
     # 🔹 Commande PREFIX
     # ────────────────────────────────────────────────────────────────────────────
-    @commands.command(name="scratchkey", aliases=["scratch"])
+    @commands.command(name="keylottery", aliases=["kl"])
     @commands.cooldown(1, 10.0, commands.BucketType.user)
     async def prefix_scratchkey(self, ctx: commands.Context):
         try:
