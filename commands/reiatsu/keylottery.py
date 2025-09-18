@@ -5,7 +5,6 @@
 # Accès : Public
 # Cooldown : 1 utilisation / 10 secondes / utilisateur
 # ────────────────────────────────────────────────────────────────────────────────
-# ────────────────────────────────────────────────────────────────────────────────
 # 📦 Imports nécessaires
 # ────────────────────────────────────────────────────────────────────────────────
 import discord
@@ -19,78 +18,116 @@ from utils.discord_utils import safe_send, safe_edit, safe_respond
 # ────────────────────────────────────────────────────────────────────────────────
 # 📂 Constantes
 # ────────────────────────────────────────────────────────────────────────────────
-SCRATCH_COST = 300
-NB_BUTTONS = 10
-WIN_CHANCE = 0.1  # 10% de chance de gagner
+SCRATCH_COST = 300  # Coût d’un ticket
+NB_BUTTONS = 10     # Nombre de boutons dans le ticket
+WIN_CHANCE = 0.1    # 10% de chance de gagner (utilisé pour tirage aléatoire)
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🎛️ UI — Ticket à gratter
 # ────────────────────────────────────────────────────────────────────────────────
 class ScratchTicketView(View):
-    def __init__(self, author_id: int, message: discord.Message = None):
+    """
+    View Discord contenant le ticket à gratter.
+    Au départ, seul le bouton 'Miser et jouer' est affiché.
+    Les 10 boutons apparaissent après avoir misé.
+    """
+    def __init__(self, author_id: int, message: discord.Message = None, parent=None):
         super().__init__(timeout=120)
         self.author_id = author_id
         self.message = message
         self.value = None
         self.last_interaction = None
+        self.parent = parent  # Référence au Cog pour accéder aux méthodes
+
+        # Tirage aléatoire des boutons gagnants
         self.winning_button = random.randint(0, NB_BUTTONS - 1)
         self.double_button = random.randint(0, NB_BUTTONS - 1)
         while self.double_button == self.winning_button:
             self.double_button = random.randint(0, NB_BUTTONS - 1)
 
-        # ⚠️ Ajouter les boutons du ticket
-        for i in range(NB_BUTTONS):
-            self.add_item(ScratchButton(i, self))
+        # Au départ, seul le bouton Miser est visible
+        self.add_item(BetButton(self))
 
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
+        """Empêche les autres utilisateurs de cliquer sur le ticket"""
         if interaction.user.id != self.author_id:
             await safe_respond(interaction, "❌ Ce ticket n'est pas pour toi.", ephemeral=True)
             return False
         return True
 
     async def on_timeout(self):
+        """Désactive les boutons si le temps est écoulé"""
         for child in self.children:
             child.disabled = True
-        if self.message:
+        if self.message and self.message.embeds:
             embed = self.message.embeds[0]
             embed.set_footer(text="⏳ Temps écoulé. Relance /scratchkey pour retenter ta chance.")
             await safe_edit(self.message, embed=embed, view=self)
 
-    @discord.ui.button(label=f"Miser {SCRATCH_COST} Reiatsu et jouer", style=discord.ButtonStyle.green)
-    async def bet_button(self, interaction: discord.Interaction, button: Button):
-        for child in self.children:
-            child.disabled = True
-        await interaction.response.edit_message(view=self)
-        self.value = True
-        self.last_interaction = interaction
-        self.stop()
+# ────────────────────────────────────────────────────────────────────────────────
+# 🔹 Bouton Miser
+# ────────────────────────────────────────────────────────────────────────────────
+class BetButton(Button):
+    """Bouton permettant de miser les points et révéler les 10 boutons du ticket"""
+    def __init__(self, parent_view: ScratchTicketView):
+        super().__init__(label=f"Miser {SCRATCH_COST} Reiatsu et jouer", style=discord.ButtonStyle.green)
+        self.parent_view = parent_view
 
+    async def callback(self, interaction: discord.Interaction):
+        """Déclenchement du ticket après avoir misé"""
+        # Récupération des points du joueur
+        reiatsu_points = await self.parent_view.parent._get_reiatsu(str(interaction.user.id))
+        if reiatsu_points < SCRATCH_COST:
+            # Si pas assez de points, on renvoie un message et on bloque l’action
+            return await safe_respond(interaction, f"❌ Pas assez de Reiatsu ! Il te faut {SCRATCH_COST}.", ephemeral=True)
+
+        # Déduction des points
+        await self.parent_view.parent._update_reiatsu(str(interaction.user.id), reiatsu_points - SCRATCH_COST)
+
+        # Supprimer le bouton Miser et ajouter les 10 boutons
+        self.parent_view.clear_items()
+        for i in range(NB_BUTTONS):
+            self.parent_view.add_item(ScratchButton(i, self.parent_view))
+
+        # Mettre à jour le message avec les nouveaux boutons
+        await interaction.response.edit_message(view=self.parent_view)
+
+# ────────────────────────────────────────────────────────────────────────────────
+# 🔹 Boutons de ticket
+# ────────────────────────────────────────────────────────────────────────────────
 class ScratchButton(Button):
+    """Boutons représentant chaque case du ticket à gratter"""
     def __init__(self, index: int, parent: ScratchTicketView):
         super().__init__(label=f"🎟️ {index+1}", style=discord.ButtonStyle.blurple)
         self.index = index
         self.parent_view = parent
 
     async def callback(self, interaction: discord.Interaction):
+        """Détermine le résultat du ticket"""
+        # Désactivation de tous les boutons
         for child in self.parent_view.children:
             child.disabled = True
 
+        # Résultat selon le bouton cliqué
         if self.index == self.parent_view.winning_button:
             result = "win"
             color = discord.Color.green()
-            msg = f"🎉 Tu as gagné une clé Steam !"
+            msg = "🎉 Tu as gagné une clé Steam !"
         elif self.index == self.parent_view.double_button:
             result = "double"
             color = discord.Color.gold()
-            msg = f"💎 Jackpot ! Tu gagnes **le double** de ta mise !"
+            msg = "💎 Jackpot ! Tu gagnes **le double** de ta mise !"
         else:
             result = "lose"
             color = discord.Color.red()
-            msg = f"😢 Perdu ! Pas de chance cette fois."
+            msg = "😢 Perdu ! Pas de chance cette fois."
 
+        # Mettre à jour le message avec le résultat
         embed = discord.Embed(title="🎰 Ticket à Gratter", description=msg, color=color)
         embed.set_footer(text="Relance /scratchkey pour tenter à nouveau.")
         await interaction.response.edit_message(embed=embed, view=self.parent_view)
+
+        # Enregistrer le résultat et stopper la View
         self.parent_view.value = result
         self.parent_view.last_interaction = interaction
         self.parent_view.stop()
@@ -99,6 +136,10 @@ class ScratchButton(Button):
 # 🎛️ UI — Confirmation + choix de clé
 # ────────────────────────────────────────────────────────────────────────────────
 class ConfirmKeyView(View):
+    """
+    View pour permettre au joueur de choisir la clé Steam gagnée
+    Affiche la clé, permet de changer 3 fois ou de refuser
+    """
     def __init__(self, author_id: int, keys_dispo: list, message: discord.Message, current_index: int = 0):
         super().__init__(timeout=120)
         self.author_id = author_id
@@ -110,13 +151,16 @@ class ConfirmKeyView(View):
         self.max_switches = 3
 
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
+        """Empêche les autres utilisateurs de cliquer"""
         return interaction.user.id == self.author_id
 
     @property
     def current_key(self):
+        """Retourne la clé actuellement affichée"""
         return self.keys_dispo[self.index]
 
     def build_embed(self):
+        """Construit l'embed pour la clé Steam"""
         embed = discord.Embed(
             title="🎉 Tu as gagné une clé Steam !",
             description="Choisis la clé qui te convient le mieux.\n⚠️ Tu peux cliquer sur **Autre jeu** jusqu’à 3 fois.",
@@ -128,6 +172,7 @@ class ConfirmKeyView(View):
         return embed
 
     async def refresh_embed(self, interaction: discord.Interaction):
+        """Actualise l'embed lors du changement de clé"""
         await safe_edit(self.message, embed=self.build_embed(), view=self)
         await interaction.response.defer()
 
@@ -159,7 +204,9 @@ class ScratchKey(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
 
+    # ───────────── Gestion Reiatsu ─────────────
     async def _get_reiatsu(self, user_id: str) -> int:
+        """Récupère les points Reiatsu de l'utilisateur"""
         try:
             resp = supabase.table("reiatsu").select("points").eq("user_id", user_id).single().execute()
             return resp.data["points"] if resp.data else 0
@@ -168,12 +215,15 @@ class ScratchKey(commands.Cog):
             return 0
 
     async def _update_reiatsu(self, user_id: str, new_points: int):
+        """Met à jour les points Reiatsu de l'utilisateur"""
         try:
             supabase.table("reiatsu").update({"points": new_points}).eq("user_id", user_id).execute()
         except Exception as e:
             print(f"[ERREUR Supabase _update_reiatsu] {e}")
 
+    # ───────────── Gestion Steam Keys ─────────────
     async def _get_all_steam_keys(self):
+        """Récupère toutes les clés Steam non gagnées"""
         try:
             resp = supabase.table("steam_keys").select("*").eq("won", False).execute()
             return resp.data or []
@@ -182,17 +232,21 @@ class ScratchKey(commands.Cog):
             return []
 
     async def _mark_steam_key_won(self, key_id: int, winner: str):
+        """Marque une clé comme gagnée"""
         try:
             supabase.table("steam_keys").update({"won": True, "winner": winner}).eq("id", key_id).execute()
         except Exception as e:
             print(f"[ERREUR Supabase _mark_steam_key_won] {e}")
 
+    # ───────────── Envoi du ticket ─────────────
     async def _send_ticket(self, channel, user, user_id: int):
+        """Envoie le ticket à gratter avec le bouton Miser"""
         reiatsu_points = await self._get_reiatsu(user_id)
         keys_dispo = await self._get_all_steam_keys()
         jeux = ", ".join([k["game_name"] for k in keys_dispo[:5]]) or "Aucun"
         if len(keys_dispo) > 5:
             jeux += "…"
+
         embed = discord.Embed(
             title="🎟️ Ticket à gratter",
             description=(
@@ -208,12 +262,16 @@ class ScratchKey(commands.Cog):
             ),
             color=discord.Color.blurple()
         )
-        view = ScratchTicketView(user_id)
+
+        # Créer la View avec référence au Cog pour accéder aux méthodes
+        view = ScratchTicketView(user_id, parent=self)
         message = await safe_send(channel, embed=embed, view=view)
         view.message = message
         return view
 
+    # ───────────── Gestion du résultat ─────────────
     async def _handle_result(self, interaction_or_ctx, result: str, user_id: str):
+        """Gère le résultat du ticket et l’envoi des clés"""
         reiatsu_points = await self._get_reiatsu(user_id)
         if result == "win":
             await self._update_reiatsu(user_id, reiatsu_points + SCRATCH_COST)
@@ -252,12 +310,7 @@ class ScratchKey(commands.Cog):
             view = await self._send_ticket(interaction.channel, interaction.user, interaction.user.id)
             await view.wait()
             if view.value:
-                reiatsu_points = await self._get_reiatsu(str(interaction.user.id))
-                if reiatsu_points < SCRATCH_COST:
-                    return await safe_respond(interaction, f"❌ Pas assez de Reiatsu ! Il te faut {SCRATCH_COST}.", ephemeral=True)
-                await self._update_reiatsu(str(interaction.user.id), reiatsu_points - SCRATCH_COST)
-                if view.value:
-                    await self._handle_result(view.last_interaction, view.value, str(interaction.user.id))
+                await self._handle_result(view.last_interaction, view.value, str(interaction.user.id))
         except Exception as e:
             print(f"[ERREUR /scratchkey] {e}")
             await safe_respond(interaction, "❌ Une erreur est survenue.", ephemeral=True)
@@ -272,15 +325,10 @@ class ScratchKey(commands.Cog):
             view = await self._send_ticket(ctx.channel, ctx.author, ctx.author.id)
             await view.wait()
             if view.value:
-                reiatsu_points = await self._get_reiatsu(str(ctx.author.id))
-                if reiatsu_points < SCRATCH_COST:
-                    return await safe_send(ctx.channel, f"❌ Pas assez de Reiatsu ! Il te faut {SCRATCH_COST}.")
-                await self._update_reiatsu(str(ctx.author.id), reiatsu_points - SCRATCH_COST)
-                if view.value:
-                    class DummyInteraction:
-                        def __init__(self, user, channel):
-                            self.user, self.channel = user, channel
-                    await self._handle_result(DummyInteraction(ctx.author, ctx.channel), view.value, str(ctx.author.id))
+                class DummyInteraction:
+                    def __init__(self, user, channel):
+                        self.user, self.channel = user, channel
+                await self._handle_result(DummyInteraction(ctx.author, ctx.channel), view.value, str(ctx.author.id))
         except Exception as e:
             print(f"[ERREUR !scratchkey] {e}")
             await safe_send(ctx.channel, "❌ Une erreur est survenue.")
