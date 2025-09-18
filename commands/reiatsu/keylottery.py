@@ -21,8 +21,8 @@ from utils.discord_utils import safe_send, safe_edit, safe_respond
 # 📂 Constantes
 # ────────────────────────────────────────────────────────────────────────────────
 SCRATCH_COST = 1  # Coût d’un ticket
-NB_BUTTONS = 10     # Nombre de boutons dans le ticket
-WIN_CHANCE = 0.1    # 10% de chance de gagner (utilisé pour tirage aléatoire)
+NB_BUTTONS = 10   # Nombre de boutons dans le ticket
+WIN_CHANCE = 0.1  # 10% de chance de gagner (utilisé pour tirage aléatoire)
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🎛️ UI — Ticket à gratter
@@ -70,7 +70,9 @@ class ScratchTicketView(View):
 # 🔹 Bouton Miser
 # ────────────────────────────────────────────────────────────────────────────────
 class BetButton(Button):
-    """Bouton permettant de miser les points et révéler les 10 boutons du ticket"""
+    """
+    Bouton permettant de miser les points et révéler les 10 boutons du ticket
+    """
     def __init__(self, parent_view: ScratchTicketView):
         super().__init__(label=f"Miser {SCRATCH_COST} Reiatsu et jouer", style=discord.ButtonStyle.green)
         self.parent_view = parent_view
@@ -98,14 +100,16 @@ class BetButton(Button):
 # 🔹 Boutons de ticket
 # ────────────────────────────────────────────────────────────────────────────────
 class ScratchButton(Button):
-    """Boutons représentant chaque case du ticket à gratter"""
+    """
+    Boutons représentant chaque case du ticket à gratter
+    """
     def __init__(self, index: int, parent: ScratchTicketView):
         super().__init__(label=f"🎟️ {index+1}", style=discord.ButtonStyle.blurple)
         self.index = index
         self.parent_view = parent
 
     async def callback(self, interaction: discord.Interaction):
-        """Détermine le résultat du ticket"""
+        """Détermine le résultat du ticket et crée un nouvel embed"""
         # Désactivation de tous les boutons
         for child in self.parent_view.children:
             child.disabled = True
@@ -124,10 +128,16 @@ class ScratchButton(Button):
             color = discord.Color.red()
             msg = "😢 Perdu ! Pas de chance cette fois."
 
-        # Mettre à jour le message avec le résultat
-        embed = discord.Embed(title="🎰 Ticket à Gratter", description=msg, color=color)
-        embed.set_footer(text="Relance /scratchkey pour tenter à nouveau.")
-        await interaction.response.edit_message(embed=embed, view=self.parent_view)
+        # Créer un **nouvel embed résultat**
+        result_embed = discord.Embed(
+            title="🎰 Résultat du Ticket à Gratter",
+            description=msg,
+            color=color
+        )
+        result_embed.set_footer(text="Relance /scratchkey pour tenter à nouveau.")
+
+        # Envoyer le nouvel embed
+        await interaction.response.send_message(embed=result_embed, ephemeral=False)
 
         # Enregistrer le résultat et stopper la View
         self.parent_view.value = result
@@ -180,12 +190,14 @@ class ConfirmKeyView(View):
 
     @discord.ui.button(label="✅ Prendre cette clé", style=discord.ButtonStyle.green)
     async def confirm(self, interaction: discord.Interaction, button: Button):
+        """Le joueur accepte la clé et on lui envoie en DM"""
         self.choice = "accept"
         await interaction.response.defer()
         self.stop()
 
     @discord.ui.button(label="🎲 Autre jeu", style=discord.ButtonStyle.blurple)
     async def other_game(self, interaction: discord.Interaction, button: Button):
+        """Changer la clé affichée"""
         self.switch_count += 1
         if self.switch_count >= self.max_switches:
             button.disabled = True
@@ -194,6 +206,7 @@ class ConfirmKeyView(View):
 
     @discord.ui.button(label="❌ Refuser", style=discord.ButtonStyle.red)
     async def cancel(self, interaction: discord.Interaction, button: Button):
+        """Le joueur refuse la clé"""
         self.choice = "reject"
         await interaction.response.defer()
         self.stop()
@@ -248,7 +261,6 @@ class ScratchKey(commands.Cog):
         jeux = ", ".join([k["game_name"] for k in keys_dispo[:5]]) or "Aucun"
         if len(keys_dispo) > 5:
             jeux += "…"
-
         embed = discord.Embed(
             title="🎟️ Ticket à gratter",
             description=(
@@ -264,7 +276,6 @@ class ScratchKey(commands.Cog):
             ),
             color=discord.Color.blurple()
         )
-
         # Créer la View avec référence au Cog pour accéder aux méthodes
         view = ScratchTicketView(user_id, parent=self)
         message = await safe_send(channel, embed=embed, view=view)
@@ -284,10 +295,15 @@ class ScratchKey(commands.Cog):
             keys_dispo = await self._get_all_steam_keys()
             if not keys_dispo:
                 return await safe_send(interaction_or_ctx.channel, "⛔ Aucune clé Steam disponible.")
+
+            # Envoyer embed de recherche de clé
             msg = await safe_send(interaction_or_ctx.channel, "🎁 Recherche d'une clé Steam en cours...")
+
+            # View pour choix de clé
             view = ConfirmKeyView(interaction_or_ctx.user.id, keys_dispo, msg)
             await safe_edit(msg, embed=view.build_embed(), view=view)
             await view.wait()
+
             if view.choice == "accept":
                 chosen = view.current_key
                 await self._mark_steam_key_won(chosen["id"], interaction_or_ctx.user.name)
