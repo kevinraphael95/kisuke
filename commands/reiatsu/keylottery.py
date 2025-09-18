@@ -1,6 +1,6 @@
 # ────────────────────────────────────────────────────────────────────────────────
 # 📌 keylottery.py — Commande interactive /scratchkey et !scratchkey
-# Objectif : Ticket à gratter avec 10 boutons, mise uniquement après clic
+# Objectif : Ticket à gratter avec 10 boutons et remise en jeu d'une clé Steam
 # Catégorie : Reiatsu
 # Accès : Public
 # Cooldown : 1 utilisation / 10 secondes / utilisateur
@@ -20,8 +20,9 @@ from utils.discord_utils import safe_send, safe_edit, safe_respond
 # ────────────────────────────────────────────────────────────────────────────────
 # 📂 Constantes
 # ────────────────────────────────────────────────────────────────────────────────
-SCRATCH_COST = 300
+SCRATCH_COST = 1
 NB_BUTTONS = 10
+WIN_CHANCE = 0.1  # 10% de chance de gagner
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🎛️ UI — Ticket à gratter
@@ -54,7 +55,6 @@ class ScratchTicketView(View):
 
     @discord.ui.button(label=f"Miser {SCRATCH_COST} Reiatsu et jouer", style=discord.ButtonStyle.green)
     async def bet_button(self, interaction: discord.Interaction, button: Button):
-        # Désactive le bouton après clic
         for child in self.children:
             child.disabled = True
         await interaction.response.edit_message(view=self)
@@ -71,10 +71,11 @@ class ScratchButton(Button):
     async def callback(self, interaction: discord.Interaction):
         for child in self.parent_view.children:
             child.disabled = True
+
         if self.index == self.parent_view.winning_button:
             result = "win"
             color = discord.Color.green()
-            msg = f"🎉 Tu as gagné une clé Steam ! (Mise x1)"
+            msg = f"🎉 Tu as gagné une clé Steam !"
         elif self.index == self.parent_view.double_button:
             result = "double"
             color = discord.Color.gold()
@@ -92,10 +93,66 @@ class ScratchButton(Button):
         self.parent_view.stop()
 
 # ────────────────────────────────────────────────────────────────────────────────
+# 🎛️ UI — Confirmation + choix de clé
+# ────────────────────────────────────────────────────────────────────────────────
+class ConfirmKeyView(View):
+    def __init__(self, author_id: int, keys_dispo: list, message: discord.Message, current_index: int = 0):
+        super().__init__(timeout=120)
+        self.author_id = author_id
+        self.keys_dispo = keys_dispo
+        self.index = current_index
+        self.message = message
+        self.choice = None
+        self.switch_count = 0
+        self.max_switches = 3
+
+    async def interaction_check(self, interaction: discord.Interaction) -> bool:
+        return interaction.user.id == self.author_id
+
+    @property
+    def current_key(self):
+        return self.keys_dispo[self.index]
+
+    def build_embed(self):
+        embed = discord.Embed(
+            title="🎉 Tu as gagné une clé Steam !",
+            description="Choisis la clé qui te convient le mieux.\n⚠️ Tu peux cliquer sur **Autre jeu** jusqu’à 3 fois.",
+            color=discord.Color.green()
+        )
+        embed.add_field(name="🎮 Jeu", value=self.current_key["game_name"], inline=False)
+        embed.add_field(name="🔗 Lien Steam", value=f"[Voir sur Steam]({self.current_key['steam_url']})", inline=False)
+        embed.set_footer(text=f"✅ : Prendre | 🎲 : Autre jeu ({self.switch_count}/{self.max_switches}) | ❌ : Refuser")
+        return embed
+
+    async def refresh_embed(self, interaction: discord.Interaction):
+        await safe_edit(self.message, embed=self.build_embed(), view=self)
+        await interaction.response.defer()
+
+    @discord.ui.button(label="✅ Prendre cette clé", style=discord.ButtonStyle.green)
+    async def confirm(self, interaction: discord.Interaction, button: Button):
+        self.choice = "accept"
+        await interaction.response.defer()
+        self.stop()
+
+    @discord.ui.button(label="🎲 Autre jeu", style=discord.ButtonStyle.blurple)
+    async def other_game(self, interaction: discord.Interaction, button: Button):
+        self.switch_count += 1
+        if self.switch_count >= self.max_switches:
+            button.disabled = True
+        self.index = (self.index + 1) % len(self.keys_dispo)
+        await self.refresh_embed(interaction)
+
+    @discord.ui.button(label="❌ Refuser", style=discord.ButtonStyle.red)
+    async def cancel(self, interaction: discord.Interaction, button: Button):
+        self.choice = "reject"
+        await interaction.response.defer()
+        self.stop()
+
+# ────────────────────────────────────────────────────────────────────────────────
 # 🧠 Cog principal
 # ────────────────────────────────────────────────────────────────────────────────
 class ScratchKey(commands.Cog):
-    """Commande /scratchkey et !scratchkey — Ticket à gratter interactif"""
+    """Commande /scratchkey et !scratchkey — Ticket à gratter interactif avec clés Steam"""
     def __init__(self, bot: commands.Bot):
         self.bot = bot
 
@@ -121,10 +178,15 @@ class ScratchKey(commands.Cog):
             print(f"[ERREUR Supabase _get_all_steam_keys] {e}")
             return []
 
+    async def _mark_steam_key_won(self, key_id: int, winner: str):
+        try:
+            supabase.table("steam_keys").update({"won": True, "winner": winner}).eq("id", key_id).execute()
+        except Exception as e:
+            print(f"[ERREUR Supabase _mark_steam_key_won] {e}")
+
     async def _send_ticket(self, channel, user, user_id: int):
         reiatsu_points = await self._get_reiatsu(user_id)
         keys_dispo = await self._get_all_steam_keys()
-
         jeux = ", ".join([k["game_name"] for k in keys_dispo[:5]]) or "Aucun"
         if len(keys_dispo) > 5:
             jeux += "…"
@@ -155,6 +217,28 @@ class ScratchKey(commands.Cog):
             await self._update_reiatsu(user_id, reiatsu_points + SCRATCH_COST)
         elif result == "double":
             await self._update_reiatsu(user_id, reiatsu_points + SCRATCH_COST * 2)
+
+        # Si gagné, proposer les clés Steam
+        if result in ["win", "double"]:
+            keys_dispo = await self._get_all_steam_keys()
+            if not keys_dispo:
+                return await safe_send(interaction_or_ctx.channel, "⛔ Aucune clé Steam disponible.")
+            msg = await safe_send(interaction_or_ctx.channel, "🎁 Recherche d'une clé Steam en cours...")
+            view = ConfirmKeyView(interaction_or_ctx.user.id, keys_dispo, msg)
+            await safe_edit(msg, embed=view.build_embed(), view=view)
+            await view.wait()
+            if view.choice == "accept":
+                chosen = view.current_key
+                await self._mark_steam_key_won(chosen["id"], interaction_or_ctx.user.name)
+                try:
+                    await interaction_or_ctx.user.send(
+                        f"🎁 **Clé Steam pour {chosen['game_name']}**\n`{chosen['steam_key']}`"
+                    )
+                    await safe_edit(msg, embed=discord.Embed(title="✅ Clé envoyée en DM !", color=discord.Color.green()), view=None)
+                except discord.Forbidden:
+                    await safe_edit(msg, embed=discord.Embed(title="⚠️ Impossible d'envoyer un DM.", color=discord.Color.orange()), view=None)
+            elif view.choice == "reject":
+                await safe_edit(msg, embed=discord.Embed(title="🔄 Clé remise en jeu pour les autres joueurs.", color=discord.Color.blurple()), view=None)
 
     # ────────────────────────────────────────────────────────────────────────────
     # 🔹 Commande SLASH
