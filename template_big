@@ -3,7 +3,7 @@
 # Objectif : Description courte de la commande avec interaction slash et préfixe
 # Catégorie : Autre
 # Accès : Tous
-# Cooldown : 1 utilisation / 5 secondes / utilisateur
+# Cooldown : Paramétrable par commande
 # ────────────────────────────────────────────────────────────────────────────────
 
 # ────────────────────────────────────────────────────────────────────────────────
@@ -41,7 +41,7 @@ class FirstSelectView(View):
         super().__init__(timeout=120)
         self.bot = bot
         self.data = data
-        self.message = None  # le message envoyé sera stocké ici
+        self.message = None
         self.add_item(FirstSelect(self))
 
     async def on_timeout(self):
@@ -60,7 +60,7 @@ class FirstSelect(Select):
     async def callback(self, interaction: discord.Interaction):
         selected_key = self.values[0]
         new_view = SecondSelectView(self.parent_view.bot, self.parent_view.data, selected_key)
-        new_view.message = interaction.message  # garde la référence pour le timeout
+        new_view.message = interaction.message
         await safe_edit(
             interaction.message,
             content=f"Option sélectionnée : **{selected_key}**\nChoisis maintenant une sous-option :",
@@ -115,7 +115,7 @@ class SecondSelect(Select):
         )
 
 # ────────────────────────────────────────────────────────────────────────────────
-# 🧠 Cog principal
+# 🧠 Cog principal avec cooldowns personnalisables
 # ────────────────────────────────────────────────────────────────────────────────
 class NomDeLaCommande(commands.Cog):
     """
@@ -137,13 +137,13 @@ class NomDeLaCommande(commands.Cog):
         view.message = await safe_send(channel, "Choisis une option :", view=view)
 
     # ────────────────────────────────────────────────────────────────────────────
-    # 🔹 Commande SLASH
+    # 🔹 Commande SLASH avec cooldown personnalisable
     # ────────────────────────────────────────────────────────────────────────────
     @app_commands.command(
         name="nom_de_la_commande",
         description="Description détaillée de la commande."
     )
-    @app_commands.checks.cooldown(1, 5.0, key=lambda i: (i.user.id))  # ⏳ Cooldown 5s par utilisateur
+    @app_commands.checks.cooldown(rate=1, per=5.0, key=lambda i: i.user.id)  # ⏳ Cooldown 5s
     async def slash_nom_de_la_commande(self, interaction: discord.Interaction):
         """Commande slash principale qui affiche le menu interactif."""
         try:
@@ -151,25 +151,25 @@ class NomDeLaCommande(commands.Cog):
             await self._send_menu(interaction.channel)
             await interaction.delete_original_response()
         except app_commands.CommandOnCooldown as e:
-            await safe_respond(interaction, f"⏳ Attends encore {e.retry_after:.1f}s avant de réutiliser cette commande.", ephemeral=True)
+            await safe_respond(interaction, f"⏳ Patiente {e.retry_after:.1f}s avant de réutiliser cette commande.", ephemeral=True)
         except Exception as e:
             print(f"[ERREUR /nom_de_la_commande] {e}")
-            await safe_respond(interaction, "❌ Une erreur est survenue lors du chargement des données.", ephemeral=True)
+            await safe_respond(interaction, "❌ Une erreur est survenue.", ephemeral=True)
 
     # ────────────────────────────────────────────────────────────────────────────
-    # 🔹 Commande PREFIX
+    # 🔹 Commande PREFIX avec cooldown personnalisable
     # ────────────────────────────────────────────────────────────────────────────
     @commands.command(name="nom_de_la_commande")
-    @commands.cooldown(1, 5.0, commands.BucketType.user)  # ⏳ Cooldown 5s par utilisateur
+    @commands.cooldown(1, 5.0, commands.BucketType.user)  # ⏳ Cooldown 5s
     async def prefix_nom_de_la_commande(self, ctx: commands.Context):
         """Commande préfixe qui affiche le menu interactif."""
         try:
             await self._send_menu(ctx.channel)
         except commands.CommandOnCooldown as e:
-            await safe_send(ctx.channel, f"⏳ Attends encore {e.retry_after:.1f}s avant de réutiliser cette commande.")
+            await safe_send(ctx.channel, f"⏳ Patiente {e.retry_after:.1f}s avant de réutiliser cette commande.")
         except Exception as e:
             print(f"[ERREUR !nom_de_la_commande] {e}")
-            await safe_send(ctx.channel, "❌ Une erreur est survenue lors du chargement des données.")
+            await safe_send(ctx.channel, "❌ Une erreur est survenue.")
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🔌 Setup du Cog
