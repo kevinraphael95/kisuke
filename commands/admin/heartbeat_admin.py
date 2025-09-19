@@ -37,56 +37,50 @@ class HeartbeatAdmin(commands.Cog):
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)  # ⏳ Cooldown 5s/utilisateur
     async def heartbeat(self, ctx: commands.Context, action: str = None, channel: discord.TextChannel = None):
         """Commande préfixe pour gérer le heartbeat."""
-        try:
-            if not action:
-                await safe_send(ctx, "❓ Utilisation : `!heartbeat pause|resume|status|set <#salon>|unset`")
+
+        if not action:
+            await safe_send(ctx, "❓ Utilisation : `!heartbeat pause|resume|status|set <#salon>|unset`")
+            return
+
+        action = action.lower()
+
+        # ───────────── Pause / Resume ─────────────
+        if action in ["pause", "p"]:
+            self.supabase.table("bot_settings").upsert({"key": "heartbeat_paused", "value": "true"}).execute()
+            await safe_send(ctx, "⏸️ Heartbeat mis en pause.")
+
+        elif action in ["resume", "r"]:
+            self.supabase.table("bot_settings").upsert({"key": "heartbeat_paused", "value": "false"}).execute()
+            await safe_send(ctx, "▶️ Heartbeat relancé.")
+
+        # ───────────── Status ─────────────
+        elif action in ["status", "stat", "s"]:
+            res = self.supabase.table("bot_settings").select("value").eq("key", "heartbeat_paused").execute()
+            paused = res.data and res.data[0]["value"].lower() == "true"
+            status_msg = "🔴 Le heartbeat est **en pause**." if paused else "🟢 Le heartbeat est **actif**."
+            await safe_send(ctx, status_msg)
+
+        # ───────────── Set / Unset salon ─────────────
+        elif action == "set":
+            if not channel:
+                await safe_send(ctx, "❌ Tu dois mentionner un salon. Exemple : `!heartbeat set #général`")
                 return
+            self.supabase.table("bot_settings").upsert({"key": "heartbeat_channel_id", "value": str(channel.id)}).execute()
+            heartbeat_cog = self.bot.get_cog("HeartbeatTask")
+            if heartbeat_cog:
+                heartbeat_cog.heartbeat_channel_id = channel.id
+            await safe_send(ctx, f"✅ Salon heartbeat défini : {channel.mention}")
 
-            action = action.lower()
+        elif action == "unset":
+            self.supabase.table("bot_settings").upsert({"key": "heartbeat_channel_id", "value": ""}).execute()
+            heartbeat_cog = self.bot.get_cog("HeartbeatTask")
+            if heartbeat_cog:
+                heartbeat_cog.heartbeat_channel_id = None
+            await safe_send(ctx, "🗑️ Salon heartbeat supprimé.")
 
-            # ───────────── Pause / Resume ─────────────
-            if action in ["pause", "p"]:
-                self.supabase.table("bot_settings").upsert({"key": "heartbeat_paused", "value": "true"}).execute()
-                await safe_send(ctx, "⏸️ Heartbeat mis en pause.")
-
-            elif action in ["resume", "r"]:
-                self.supabase.table("bot_settings").upsert({"key": "heartbeat_paused", "value": "false"}).execute()
-                await safe_send(ctx, "▶️ Heartbeat relancé.")
-
-            # ───────────── Status ─────────────
-            elif action in ["status", "stat", "s"]:
-                res = self.supabase.table("bot_settings").select("value").eq("key", "heartbeat_paused").execute()
-                paused = res.data and res.data[0]["value"].lower() == "true"
-                status_msg = "🔴 Le heartbeat est **en pause**." if paused else "🟢 Le heartbeat est **actif**."
-                await safe_send(ctx, status_msg)
-
-            # ───────────── Set / Unset salon ─────────────
-            elif action == "set":
-                if not channel:
-                    await safe_send(ctx, "❌ Tu dois mentionner un salon. Exemple : `!heartbeat set #général`")
-                    return
-                self.supabase.table("bot_settings").upsert({"key": "heartbeat_channel_id", "value": str(channel.id)}).execute()
-                heartbeat_cog = self.bot.get_cog("HeartbeatTask")
-                if heartbeat_cog:
-                    heartbeat_cog.heartbeat_channel_id = channel.id
-                await safe_send(ctx, f"✅ Salon heartbeat défini : {channel.mention}")
-
-            elif action == "unset":
-                self.supabase.table("bot_settings").upsert({"key": "heartbeat_channel_id", "value": ""}).execute()
-                heartbeat_cog = self.bot.get_cog("HeartbeatTask")
-                if heartbeat_cog:
-                    heartbeat_cog.heartbeat_channel_id = None
-                await safe_send(ctx, "🗑️ Salon heartbeat supprimé.")
-
-            # ───────────── Action inconnue ─────────────
-            else:
-                await safe_send(ctx, "❌ Action inconnue. Utilise `pause`, `resume`, `status`, `set`, ou `unset`.")
-
-        except commands.CommandOnCooldown as e:
-            await safe_send(ctx, f"⏳ Attends encore {e.retry_after:.1f}s avant de réutiliser cette commande.")
-        except Exception as e:
-            print(f"[heartbeat:{action}] Erreur : {e}")
-            await safe_send(ctx, "❌ Une erreur est survenue lors de l'action heartbeat.")
+        # ───────────── Action inconnue ─────────────
+        else:
+            await safe_send(ctx, "❌ Action inconnue. Utilise `pause`, `resume`, `status`, `set`, ou `unset`.")
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🔌 Setup du Cog
