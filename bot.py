@@ -17,7 +17,6 @@ import os
 import json
 import uuid
 import asyncio
-import traceback
 from datetime import datetime, timezone
 
 # ──────────────────────────────────────────────────────────────
@@ -25,7 +24,6 @@ from datetime import datetime, timezone
 # ──────────────────────────────────────────────────────────────
 import discord
 from discord.ext import commands
-from discord import app_commands
 from dotenv import load_dotenv
 
 # ──────────────────────────────────────────────────────────────
@@ -39,11 +37,9 @@ from utils.discord_utils import safe_send, safe_edit, safe_respond  # <-- foncti
 # ──────────────────────────────────────────────────────────────
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
 load_dotenv()
-
 TOKEN = os.getenv("DISCORD_TOKEN")
 COMMAND_PREFIX = os.getenv("COMMAND_PREFIX", "!")
 INSTANCE_ID = str(uuid.uuid4())
-
 with open("instance_id.txt", "w") as f:
     f.write(INSTANCE_ID)
 
@@ -80,7 +76,6 @@ async def load_commands():
                     print(f"✅ Loaded {module_path}")
                 except Exception as e:
                     print(f"❌ Failed to load {module_path}: {e}")
-
     try:
         await bot.load_extension("tasks.heartbeat")
         print("✅ Loaded tasks.heartbeat")
@@ -94,27 +89,23 @@ async def load_commands():
 async def on_ready():
     print(f"✅ Connecté en tant que {bot.user.name}")
     await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name="Bleach"))
-
     now = datetime.now(timezone.utc).isoformat()
-
     try:
         print("💣 Suppression de tout verrou précédent...")
         supabase.table("bot_lock").delete().eq("id", "reiatsu_lock").execute()
-
         print(f"🔐 Prise de verrou par cette instance : {INSTANCE_ID}")
         supabase.table("bot_lock").insert({
             "id": "reiatsu_lock",
             "instance_id": INSTANCE_ID,
             "updated_at": now
         }).execute()
-
         bot.is_main_instance = True
         print(f"✅ Instance principale active : {INSTANCE_ID}")
 
         # Chargement du spawner Reiatsu
         await bot.load_extension("tasks.reiatsu_spawner")
         print("✅ Spawner Reiatsu chargé.")
-        
+
         # synchronisation des commandes slash
         await bot.tree.sync()
         print("✅ Slash commands synchronisées")
@@ -151,42 +142,19 @@ async def on_message(message):
     await bot.process_commands(message)
 
 # ──────────────────────────────────────────────────────────────
-# ⚠️ Gestion globale des erreurs (préfixe, slash & interactions)
+# ⚠️ Gestion globale des erreurs et cooldowns
 # ──────────────────────────────────────────────────────────────
 @bot.event
 async def on_command_error(ctx, error):
-    """Gestion centralisée des erreurs pour commandes préfixées."""
     if isinstance(error, commands.CommandOnCooldown):
-        await safe_send(ctx.channel, f"⏳ Attends encore {error.retry_after:.1f}s avant de réutiliser cette commande.")
+        await ctx.send(f"⏳ Patiente {round(error.retry_after, 1)} secondes avant de réutiliser cette commande.")
+    elif isinstance(error, commands.MissingPermissions):
+        await ctx.send("❌ Tu n'as pas la permission d'utiliser cette commande.")
     elif isinstance(error, commands.CommandNotFound):
-        return  # ignore les mauvaises commandes
+        pass  # Ignore les commandes inconnues
     else:
-        traceback.print_exc()
-        await safe_send(ctx.channel, "❌ Une erreur est survenue.")
-
-@bot.tree.error
-async def on_app_command_error(interaction: discord.Interaction, error: app_commands.AppCommandError):
-    """Gestion centralisée des erreurs pour commandes slash."""
-    if isinstance(error, app_commands.CommandOnCooldown):
-        await safe_respond(interaction, f"⏳ Attends encore {error.retry_after:.1f}s avant de réutiliser cette commande.", ephemeral=True)
-    else:
-        traceback.print_exc()
-        await safe_respond(interaction, "❌ Une erreur est survenue.", ephemeral=True)
-
-@bot.event
-async def on_interaction(interaction: discord.Interaction):
-    """Wrap toutes les interactions (boutons, menus, modals) avec une gestion d'erreurs globale."""
-    try:
-        await bot.process_application_commands(interaction)
-    except Exception as e:
-        traceback.print_exc()
-        try:
-            if interaction.response.is_done():
-                await interaction.followup.send("❌ Une erreur est survenue avec cette interaction.", ephemeral=True)
-            else:
-                await interaction.response.send_message("❌ Une erreur est survenue avec cette interaction.", ephemeral=True)
-        except Exception:
-            pass  # Évite les crashs si Discord refuse la réponse
+        await ctx.send(f"⚠️ Une erreur est survenue : {error}")
+        print(f"Erreur sur la commande {ctx.command}: {error}")
 
 # ──────────────────────────────────────────────────────────────
 # 🚀 Lancement du bot
