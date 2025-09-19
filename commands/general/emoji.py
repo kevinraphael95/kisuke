@@ -3,7 +3,7 @@
 # Objectif : Afficher un ou plusieurs emojis du serveur via une commande
 # Catégorie : 🎉 Fun
 # Accès : Public
-# Cooldown : Paramétrable par commande
+# Cooldown : 1 utilisation / 3 sec / utilisateur
 # ────────────────────────────────────────────────────────────────────────────────
 
 # ────────────────────────────────────────────────────────────────────────────────
@@ -21,26 +21,31 @@ from utils.discord_utils import safe_send, safe_respond
 # 🎮 View pour la pagination
 # ────────────────────────────────────────────────────────────────────────────────
 class EmojiPaginator(View):
+    """View interactive pour naviguer entre plusieurs pages d'emojis animés."""
+
     def __init__(self, pages: list[discord.Embed], timeout: int = 90):
         super().__init__(timeout=timeout)
         self.pages = pages
-        self.index = 0
+        self.index = 0  # page actuelle
 
     async def update(self, interaction: discord.Interaction):
+        """Met à jour l’embed affiché avec la page courante."""
         await interaction.response.edit_message(embed=self.pages[self.index], view=self)
 
     @discord.ui.button(label="⬅️", style=discord.ButtonStyle.secondary)
     async def previous(self, interaction: discord.Interaction, button: Button):
+        """Bouton pour aller à la page précédente."""
         self.index = (self.index - 1) % len(self.pages)
         await self.update(interaction)
 
     @discord.ui.button(label="➡️", style=discord.ButtonStyle.secondary)
     async def next(self, interaction: discord.Interaction, button: Button):
+        """Bouton pour aller à la page suivante."""
         self.index = (self.index + 1) % len(self.pages)
         await self.update(interaction)
 
 # ────────────────────────────────────────────────────────────────────────────────
-# 🧠 Cog principal avec centralisation erreurs et cooldowns
+# 🧠 Cog principal avec centralisation des erreurs et cooldowns
 # ────────────────────────────────────────────────────────────────────────────────
 class EmojiCommand(commands.Cog):
     """Commande !emoji / !e et /emoji — Affiche un ou plusieurs emojis du serveur."""
@@ -52,20 +57,31 @@ class EmojiCommand(commands.Cog):
     # 🔹 Fonctions internes
     # ────────────────────────────────────────────────────────────────────────────
     def _parse_emoji_input(self, raw_input: tuple[str]) -> list[str]:
+        """Transforme un texte comme ':woah::woah:' en ['woah','woah']."""
         joined = "".join(raw_input)
         return re.findall(r":([a-zA-Z0-9_]+):", joined)
 
     def _find_emojis(self, emoji_inputs: list[str], current_guild: discord.Guild):
+        """
+        Cherche les emojis demandés :
+        - Priorité au serveur actuel
+        - Sinon recherche sur les autres serveurs
+        """
         found, not_found = [], []
         for name in emoji_inputs:
             name_lower = name.lower()
+
+            # Cherche dans le serveur actuel
             match = discord.utils.find(lambda e: e.name.lower() == name_lower and e.available, current_guild.emojis)
+
+            # Cherche dans les autres serveurs si non trouvé
             if not match:
                 other_guilds = [g for g in self.bot.guilds if g.id != current_guild.id]
                 for g in random.sample(other_guilds, len(other_guilds)):
                     match = discord.utils.find(lambda e: e.name.lower() == name_lower and e.available, g.emojis)
                     if match:
                         break
+
             if match:
                 found.append(str(match))
             else:
@@ -73,11 +89,18 @@ class EmojiCommand(commands.Cog):
         return found, not_found
 
     def _build_pages(self, guilds: list[discord.Guild]) -> list[discord.Embed]:
+        """
+        Construit les pages d'emojis animés :
+        - 40 emojis par page
+        - Une page par serveur, ou plusieurs si nécessaire
+        """
         pages = []
         for g in guilds:
             animated = [str(e) for e in g.emojis if e.animated and e.available]
             if not animated:
                 continue
+
+            # Découpe en chunks de 40 emojis max
             chunks = [animated[i:i+40] for i in range(0, len(animated), 40)]
             for i, chunk in enumerate(chunks, start=1):
                 embed = discord.Embed(
@@ -90,23 +113,31 @@ class EmojiCommand(commands.Cog):
                 pages.append(embed)
         return pages
 
-    async def _send_emojis_safe(self, channel: discord.abc.Messageable, guild: discord.Guild, emoji_names: tuple[str]):
-        """Envoie les emojis de manière centralisée."""
-        if emoji_names:
-            emoji_inputs = self._parse_emoji_input(emoji_names)
-            found, not_found = self._find_emojis(emoji_inputs, guild)
-            if found:
-                await safe_send(channel, " ".join(found))
-            if not_found:
-                await safe_send(channel, f"❌ Emojis introuvables : {', '.join(not_found)}")
-        else:
-            guilds = [guild] + [g for g in self.bot.guilds if g.id != guild.id]
-            pages = self._build_pages(guilds)
-            if not pages:
-                await safe_send(channel, "❌ Aucun emoji animé trouvé sur les serveurs.")
-                return
-            view = EmojiPaginator(pages)
-            await safe_send(channel, embed=pages[0], view=view)
+    async def _send_emojis_safe(self, channel, guild, emoji_names: tuple[str]):
+        """
+        Fonction interne centralisée :
+        - Envoie les emojis demandés ou tous les animés paginés
+        - Gère les erreurs
+        """
+        try:
+            if emoji_names:
+                emoji_inputs = self._parse_emoji_input(emoji_names)
+                found, not_found = self._find_emojis(emoji_inputs, guild)
+                if found:
+                    await safe_send(channel, " ".join(found))
+                if not_found:
+                    await safe_send(channel, f"❌ Emojis introuvables : {', '.join(not_found)}")
+            else:
+                guilds = [guild] + [g for g in self.bot.guilds if g.id != guild.id]
+                pages = self._build_pages(guilds)
+                if not pages:
+                    await safe_send(channel, "❌ Aucun emoji animé trouvé sur les serveurs.")
+                    return
+                view = EmojiPaginator(pages)
+                await safe_send(channel, embed=pages[0], view=view)
+        except Exception as e:
+            print(f"[ERREUR affichage emojis] {e}")
+            await safe_send(channel, "❌ Une erreur est survenue lors de l'affichage des emojis.")
 
     # ────────────────────────────────────────────────────────────────────────────
     # 🔹 Commande PREFIX
@@ -114,10 +145,12 @@ class EmojiCommand(commands.Cog):
     @commands.command(
         name="emoji",
         aliases=["e"],
-        help="😄 Affiche un ou plusieurs emojis du serveur."
+        help="😄 Affiche un ou plusieurs emojis du serveur.",
+        description="Affiche les emojis demandés ou tous les emojis animés de tous les serveurs si aucun argument."
     )
-    @commands.cooldown(1, 3, commands.BucketType.user)
+    @commands.cooldown(rate=1, per=3, type=commands.BucketType.user)
     async def prefix_emoji(self, ctx: commands.Context, *emoji_names):
+        """Commande préfixe qui affiche les emojis du serveur."""
         if ctx.message:
             try:
                 await ctx.message.delete()
@@ -135,6 +168,7 @@ class EmojiCommand(commands.Cog):
     @app_commands.describe(emojis="Noms des emojis à afficher, séparés par des espaces ou répétés (ex: :woah::woah:)")
     @app_commands.checks.cooldown(1, 3.0, key=lambda i: i.user.id)
     async def slash_emoji(self, interaction: discord.Interaction, *, emojis: str = ""):
+        """Commande slash qui affiche les emojis du serveur ou de tous les serveurs."""
         await interaction.response.defer()
         emoji_inputs = self._parse_emoji_input((emojis,))
         await self._send_emojis_safe(interaction.channel, interaction.guild, emoji_inputs)
@@ -145,6 +179,7 @@ class EmojiCommand(commands.Cog):
 
     @slash_emoji.autocomplete("emojis")
     async def autocomplete_emojis(self, interaction: discord.Interaction, current: str):
+        """Propose les noms d'emojis disponibles pour l'autocomplétion."""
         suggestions = [e.name for e in interaction.guild.emojis if e.available]
         return [app_commands.Choice(name=s, value=s) for s in suggestions if current.lower() in s.lower()][:25]
 
