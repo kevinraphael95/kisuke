@@ -17,6 +17,7 @@ import os
 import json
 import uuid
 import asyncio
+import traceback
 from datetime import datetime, timezone
 
 # ──────────────────────────────────────────────────────────────
@@ -24,6 +25,7 @@ from datetime import datetime, timezone
 # ──────────────────────────────────────────────────────────────
 import discord
 from discord.ext import commands
+from discord import app_commands
 from dotenv import load_dotenv
 
 # ──────────────────────────────────────────────────────────────
@@ -35,7 +37,6 @@ from utils.discord_utils import safe_send, safe_edit, safe_respond  # <-- foncti
 # ──────────────────────────────────────────────────────────────
 # 🔧 Initialisation de l’environnement
 # ──────────────────────────────────────────────────────────────
-
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
 load_dotenv()
 
@@ -52,7 +53,6 @@ def get_prefix(bot, message):
 # ──────────────────────────────────────────────────────────────
 # ⚙️ Intents & Création du bot
 # ──────────────────────────────────────────────────────────────
-
 intents = discord.Intents.default()
 intents.message_content = True
 intents.guilds = True
@@ -67,7 +67,6 @@ bot.supabase = supabase
 # ──────────────────────────────────────────────────────────────
 # 🔌 Chargement dynamique des commandes
 # ──────────────────────────────────────────────────────────────
-
 async def load_commands():
     for root, dirs, files in os.walk("commands"):
         for file in files:
@@ -91,7 +90,6 @@ async def load_commands():
 # ──────────────────────────────────────────────────────────────
 # 🔔 Événement on_ready : présence + verrouillage
 # ──────────────────────────────────────────────────────────────
-
 @bot.event
 async def on_ready():
     print(f"✅ Connecté en tant que {bot.user.name}")
@@ -127,7 +125,6 @@ async def on_ready():
 # ──────────────────────────────────────────────────────────────
 # 📩 Événement on_message : gestion du verrou + commandes
 # ──────────────────────────────────────────────────────────────
-
 @bot.event
 async def on_message(message):
     try:
@@ -148,16 +145,52 @@ async def on_message(message):
         await safe_send(message.channel, f"👋 Salut {message.author.mention} ! Utilise `{prefix}help` pour voir mes commandes.")
         return
 
-
     if not message.content.startswith(prefix):
         return
 
     await bot.process_commands(message)
 
 # ──────────────────────────────────────────────────────────────
+# ⚠️ Gestion globale des erreurs (préfixe, slash & interactions)
+# ──────────────────────────────────────────────────────────────
+@bot.event
+async def on_command_error(ctx, error):
+    """Gestion centralisée des erreurs pour commandes préfixées."""
+    if isinstance(error, commands.CommandOnCooldown):
+        await safe_send(ctx.channel, f"⏳ Attends encore {error.retry_after:.1f}s avant de réutiliser cette commande.")
+    elif isinstance(error, commands.CommandNotFound):
+        return  # ignore les mauvaises commandes
+    else:
+        traceback.print_exc()
+        await safe_send(ctx.channel, "❌ Une erreur est survenue.")
+
+@bot.tree.error
+async def on_app_command_error(interaction: discord.Interaction, error: app_commands.AppCommandError):
+    """Gestion centralisée des erreurs pour commandes slash."""
+    if isinstance(error, app_commands.CommandOnCooldown):
+        await safe_respond(interaction, f"⏳ Attends encore {error.retry_after:.1f}s avant de réutiliser cette commande.", ephemeral=True)
+    else:
+        traceback.print_exc()
+        await safe_respond(interaction, "❌ Une erreur est survenue.", ephemeral=True)
+
+@bot.event
+async def on_interaction(interaction: discord.Interaction):
+    """Wrap toutes les interactions (boutons, menus, modals) avec une gestion d'erreurs globale."""
+    try:
+        await bot.process_application_commands(interaction)
+    except Exception as e:
+        traceback.print_exc()
+        try:
+            if interaction.response.is_done():
+                await interaction.followup.send("❌ Une erreur est survenue avec cette interaction.", ephemeral=True)
+            else:
+                await interaction.response.send_message("❌ Une erreur est survenue avec cette interaction.", ephemeral=True)
+        except Exception:
+            pass  # Évite les crashs si Discord refuse la réponse
+
+# ──────────────────────────────────────────────────────────────
 # 🚀 Lancement du bot
 # ──────────────────────────────────────────────────────────────
-
 async def main():
     await load_commands()
     await bot.start(TOKEN)
@@ -165,6 +198,3 @@ async def main():
 if __name__ == "__main__":
     keep_alive()
     asyncio.run(main())
-
-
-
