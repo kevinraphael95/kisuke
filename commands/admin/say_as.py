@@ -1,9 +1,9 @@
 # ────────────────────────────────────────────────────────────────────────────────
-# 📌 say_as.py — Commande /say_as et !say_as
-# Objectif : Faire répéter un message par le bot comme si c'était un autre membre
+# 📌 say_as.py — Commande interactive /say_as et !say_as
+# Objectif : Faire répéter un message par le bot comme si c'était un autre membre (mention, ID ou pseudo)
 # Catégorie : Administration
 # Accès : Admin uniquement
-# Cooldown : 1 utilisation / 5 secondes / utilisateur
+# Cooldown : 1 utilisation / 5 sec / utilisateur
 # ────────────────────────────────────────────────────────────────────────────────
 
 # ────────────────────────────────────────────────────────────────────────────────
@@ -13,24 +13,22 @@ import discord
 import re
 from discord import app_commands
 from discord.ext import commands
-from utils.discord_utils import safe_send, safe_respond, safe_delete
+from utils.discord_utils import safe_send, safe_delete, safe_respond  
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🧠 Cog principal
 # ────────────────────────────────────────────────────────────────────────────────
 class SayAs(commands.Cog):
-    """
-    Commande /say_as et !say_as — Fait répéter un message par le bot comme si c'était un autre membre
-    """
+    """Commande interactive /say_as et !say_as — Fait répéter un message par le bot comme si c'était un autre membre"""
 
     def __init__(self, bot: commands.Bot):
         self.bot = bot
 
     # ────────────────────────────────────────────────────────────────────────────
-    # 🔹 Résolution d’un utilisateur à partir de mention, ID ou pseudo
+    # 🔹 Fonction utilitaire : résolution d’utilisateur
     # ────────────────────────────────────────────────────────────────────────────
     async def resolve_user(self, guild: discord.Guild, query: str):
-        """Renvoie un membre ou un utilisateur Discord à partir d’une mention, ID ou pseudo"""
+        """Résout un membre ou utilisateur à partir d’une mention, d’un ID ou d’un pseudo"""
         member = None
 
         # Mention <@123456789>
@@ -60,26 +58,28 @@ class SayAs(commands.Cog):
         return member
 
     # ────────────────────────────────────────────────────────────────────────────
-    # 🔹 Envoi du message via webhook
+    # 🔹 Fonction interne
     # ────────────────────────────────────────────────────────────────────────────
     async def _send_as(self, channel: discord.TextChannel, target: discord.abc.User, message: str):
-        """Envoie un message via webhook avec pseudo et avatar du membre cible"""
+        """Envoie un message via webhook en utilisant le pseudo (serveur ou global) et avatar du membre cible"""
         message = (message or "").strip()
         if not message:
             return await safe_send(channel, "⚠️ Message vide.")
 
-        # Remplacer les emojis personnalisés du serveur
+        # Remplacement des emojis custom du serveur 
         if hasattr(channel, "guild"):
             guild_emojis = {e.name.lower(): str(e) for e in channel.guild.emojis}
-            message = re.sub(r":([a-zA-Z0-9_]+):",
-                             lambda m: guild_emojis.get(m.group(1).lower(), m.group(0)),
-                             message)
+
+            def replace_emoji(match):
+                return guild_emojis.get(match.group(1).lower(), match.group(0))
+
+            message = re.sub(r":([a-zA-Z0-9_]+):", replace_emoji, message, flags=re.IGNORECASE)
 
         # Limite Discord
         if len(message) > 2000:
             message = message[:1997] + "..."
 
-        # Webhook temporaire
+        # Création d'un webhook temporaire
         webhook = await channel.create_webhook(name=f"tmp-{target.name}")
         try:
             await webhook.send(
@@ -99,7 +99,7 @@ class SayAs(commands.Cog):
     )
     @app_commands.describe(user="Membre ciblé (mention, ID ou pseudo)", message="Message à répéter")
     @app_commands.checks.has_permissions(administrator=True)
-    @app_commands.checks.cooldown(1, 5.0, key=lambda i: i.user.id)
+    @app_commands.checks.cooldown(1, 5.0, key=lambda i: (i.user.id))
     async def slash_say_as(self, interaction: discord.Interaction, user: str, *, message: str):
         try:
             await interaction.response.defer(ephemeral=True)
