@@ -1,7 +1,7 @@
 # ────────────────────────────────────────────────────────────────────────────────
 # 📌 emoji_command.py — Commande interactive !emoji / !e et /emoji
 # Objectif : Afficher un ou plusieurs emojis du serveur via une commande
-# Catégorie : 🎉 Fun
+# Catégorie : Général
 # Accès : Public
 # Cooldown : 1 utilisation / 3 sec / utilisateur
 # ────────────────────────────────────────────────────────────────────────────────
@@ -190,5 +190,5 @@ async def setup(bot: commands.Bot):
     cog = EmojiCommand(bot)
     for command in cog.get_commands():
         if not hasattr(command, "category"):
-            command.category = "Fun"
+            command.category = "Géneral"
     await bot.add_cog(cog)
