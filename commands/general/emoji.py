@@ -3,7 +3,7 @@
 # Objectif : Afficher un ou plusieurs emojis du serveur via une commande
 # Catégorie : 🎉 Fun
 # Accès : Public
-# Cooldown : 1 utilisation / 3 sec / utilisateur
+# Cooldown : Paramétrable par commande
 # ────────────────────────────────────────────────────────────────────────────────
 
 # ────────────────────────────────────────────────────────────────────────────────
@@ -40,7 +40,7 @@ class EmojiPaginator(View):
         await self.update(interaction)
 
 # ────────────────────────────────────────────────────────────────────────────────
-# 🧠 Cog principal
+# 🧠 Cog principal avec centralisation erreurs et cooldowns
 # ────────────────────────────────────────────────────────────────────────────────
 class EmojiCommand(commands.Cog):
     """Commande !emoji / !e et /emoji — Affiche un ou plusieurs emojis du serveur."""
@@ -52,19 +52,14 @@ class EmojiCommand(commands.Cog):
     # 🔹 Fonctions internes
     # ────────────────────────────────────────────────────────────────────────────
     def _parse_emoji_input(self, raw_input: tuple[str]) -> list[str]:
-        """Transforme un texte comme :woah::woah: en ['woah','woah']"""
         joined = "".join(raw_input)
         return re.findall(r":([a-zA-Z0-9_]+):", joined)
 
     def _find_emojis(self, emoji_inputs: list[str], current_guild: discord.Guild):
-        """Retourne les emojis à afficher, priorise le serveur actuel, sinon autres serveurs."""
         found, not_found = [], []
-
         for name in emoji_inputs:
             name_lower = name.lower()
-            # 1️⃣ Serveur actuel
             match = discord.utils.find(lambda e: e.name.lower() == name_lower and e.available, current_guild.emojis)
-            # 2️⃣ Autres serveurs
             if not match:
                 other_guilds = [g for g in self.bot.guilds if g.id != current_guild.id]
                 for g in random.sample(other_guilds, len(other_guilds)):
@@ -75,11 +70,9 @@ class EmojiCommand(commands.Cog):
                 found.append(str(match))
             else:
                 not_found.append(f":{name}:")
-
         return found, not_found
 
     def _build_pages(self, guilds: list[discord.Guild]) -> list[discord.Embed]:
-        """Construit les pages d'emojis animés, une page par serveur (ou plusieurs si nécessaire)."""
         pages = []
         for g in guilds:
             animated = [str(e) for e in g.emojis if e.animated and e.available]
@@ -97,27 +90,23 @@ class EmojiCommand(commands.Cog):
                 pages.append(embed)
         return pages
 
-    async def _display_emojis(self, channel, guild, emoji_names: tuple[str]):
-        """Affiche soit des emojis précis, soit tous les animés paginés de tous les serveurs."""
-        try:
-            if emoji_names:
-                emoji_inputs = self._parse_emoji_input(emoji_names)
-                found, not_found = self._find_emojis(emoji_inputs, guild)
-                if found:
-                    await safe_send(channel, " ".join(found))
-                if not_found:
-                    await safe_send(channel, f"❌ Emojis introuvables : {', '.join(not_found)}")
-            else:
-                guilds = [guild] + [g for g in self.bot.guilds if g.id != guild.id]
-                pages = self._build_pages(guilds)
-                if not pages:
-                    await safe_send(channel, "❌ Aucun emoji animé trouvé sur les serveurs.")
-                    return
-                view = EmojiPaginator(pages)
-                await safe_send(channel, embed=pages[0], view=view)
-        except Exception as e:
-            print(f"[ERREUR affichage emojis] {e}")
-            await safe_send(channel, "❌ Une erreur est survenue lors de l'affichage des emojis.")
+    async def _send_emojis_safe(self, channel: discord.abc.Messageable, guild: discord.Guild, emoji_names: tuple[str]):
+        """Envoie les emojis de manière centralisée."""
+        if emoji_names:
+            emoji_inputs = self._parse_emoji_input(emoji_names)
+            found, not_found = self._find_emojis(emoji_inputs, guild)
+            if found:
+                await safe_send(channel, " ".join(found))
+            if not_found:
+                await safe_send(channel, f"❌ Emojis introuvables : {', '.join(not_found)}")
+        else:
+            guilds = [guild] + [g for g in self.bot.guilds if g.id != guild.id]
+            pages = self._build_pages(guilds)
+            if not pages:
+                await safe_send(channel, "❌ Aucun emoji animé trouvé sur les serveurs.")
+                return
+            view = EmojiPaginator(pages)
+            await safe_send(channel, embed=pages[0], view=view)
 
     # ────────────────────────────────────────────────────────────────────────────
     # 🔹 Commande PREFIX
@@ -125,17 +114,16 @@ class EmojiCommand(commands.Cog):
     @commands.command(
         name="emoji",
         aliases=["e"],
-        help="😄 Affiche un ou plusieurs emojis du serveur.",
-        description="Affiche les emojis demandés ou tous les emojis animés de tous les serveurs si aucun argument."
+        help="😄 Affiche un ou plusieurs emojis du serveur."
     )
-    @commands.cooldown(rate=1, per=3, type=commands.BucketType.user)
+    @commands.cooldown(1, 3, commands.BucketType.user)
     async def prefix_emoji(self, ctx: commands.Context, *emoji_names):
-        """Affiche les emojis du serveur en fonction des arguments fournis."""
-        try:
-            await ctx.message.delete()
-        except (discord.Forbidden, discord.HTTPException):
-            pass
-        await self._display_emojis(ctx.channel, ctx.guild, emoji_names)
+        if ctx.message:
+            try:
+                await ctx.message.delete()
+            except (discord.Forbidden, discord.HTTPException):
+                pass
+        await self._send_emojis_safe(ctx.channel, ctx.guild, emoji_names)
 
     # ────────────────────────────────────────────────────────────────────────────
     # 🔹 Commande SLASH
@@ -145,32 +133,18 @@ class EmojiCommand(commands.Cog):
         description="Affiche un ou plusieurs emojis du serveur ou tous les animés des serveurs."
     )
     @app_commands.describe(emojis="Noms des emojis à afficher, séparés par des espaces ou répétés (ex: :woah::woah:)")
-    @app_commands.checks.cooldown(1, 3.0, key=lambda i: i.user.id)  # ⏳ Cooldown 3s par utilisateur
+    @app_commands.checks.cooldown(1, 3.0, key=lambda i: i.user.id)
     async def slash_emoji(self, interaction: discord.Interaction, *, emojis: str = ""):
-        """Commande slash qui affiche des emojis du serveur ou de tous les serveurs."""
+        await interaction.response.defer()
+        emoji_inputs = self._parse_emoji_input((emojis,))
+        await self._send_emojis_safe(interaction.channel, interaction.guild, emoji_inputs)
         try:
-            await interaction.response.defer()
-            emoji_inputs = self._parse_emoji_input((emojis,))
-            found, not_found = self._find_emojis(emoji_inputs, interaction.guild)
-
-            if found:
-                await safe_send(interaction.channel, " ".join(found))
-            if not_found:
-                await safe_send(interaction.channel, f"❌ Emojis introuvables : {', '.join(not_found)}")
-
-            try:
-                await interaction.delete_original_response()
-            except Exception:
-                pass
-        except app_commands.CommandOnCooldown as e:
-            await safe_respond(interaction, f"⏳ Attends encore {e.retry_after:.1f}s.", ephemeral=True)
-        except Exception as e:
-            print(f"[ERREUR /emoji] {e}")
-            await safe_respond(interaction, "❌ Une erreur est survenue.", ephemeral=True)
+            await interaction.delete_original_response()
+        except Exception:
+            pass
 
     @slash_emoji.autocomplete("emojis")
     async def autocomplete_emojis(self, interaction: discord.Interaction, current: str):
-        """Auto-complétion qui propose les noms d'emojis du serveur."""
         suggestions = [e.name for e in interaction.guild.emojis if e.available]
         return [app_commands.Choice(name=s, value=s) for s in suggestions if current.lower() in s.lower()][:25]
 
@@ -181,5 +155,5 @@ async def setup(bot: commands.Bot):
     cog = EmojiCommand(bot)
     for command in cog.get_commands():
         if not hasattr(command, "category"):
-            command.category = "Général"
+            command.category = "Fun"
     await bot.add_cog(cog)
