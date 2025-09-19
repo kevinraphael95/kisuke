@@ -34,13 +34,7 @@ class NomDeLaCommande(commands.Cog):
     @app_commands.checks.cooldown(1, 5.0, key=lambda i: (i.user.id))  # ⏳ Cooldown 5s par utilisateur
     async def slash_nom_de_la_commande(self, interaction: discord.Interaction):
         """Commande slash simple qui répond avec un message."""
-        try:
-            await safe_respond(interaction, "✅ Réponse de la commande **slash** !")
-        except app_commands.CommandOnCooldown as e:
-            await safe_respond(interaction, f"⏳ Attends encore {e.retry_after:.1f}s.", ephemeral=True)
-        except Exception as e:
-            print(f"[ERREUR /nom_de_la_commande] {e}")
-            await safe_respond(interaction, "❌ Une erreur est survenue.", ephemeral=True)
+        await safe_respond(interaction, "✅ Réponse de la commande **slash** !")
 
     # ────────────────────────────────────────────────────────────────────────────
     # 🔹 Commande PREFIX
@@ -49,13 +43,7 @@ class NomDeLaCommande(commands.Cog):
     @commands.cooldown(1, 5.0, commands.BucketType.user)  # ⏳ Cooldown 5s par utilisateur
     async def prefix_nom_de_la_commande(self, ctx: commands.Context):
         """Commande préfixe simple qui répond avec un message."""
-        try:
-            await safe_send(ctx.channel, "✅ Réponse de la commande **préfixe** !")
-        except commands.CommandOnCooldown as e:
-            await safe_send(ctx.channel, f"⏳ Attends encore {e.retry_after:.1f}s.")
-        except Exception as e:
-            print(f"[ERREUR !nom_de_la_commande] {e}")
-            await safe_send(ctx.channel, "❌ Une erreur est survenue.")
+        await safe_send(ctx.channel, "✅ Réponse de la commande **préfixe** !")
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🔌 Setup du Cog
