@@ -19,19 +19,12 @@ from utils.discord_utils import safe_send, safe_edit, safe_respond
 # 🎛️ Vue interactive avec bouton "Nouvelle couleur"
 # ────────────────────────────────────────────────────────────────────────────────
 class CouleurView(discord.ui.View):
-    """
-    Vue interactive contenant un bouton permettant de régénérer une nouvelle couleur.
-    """
-
-    def __init__(self, author: discord.User | discord.Member):
+    def __init__(self, author):
         super().__init__(timeout=60)
         self.author = author
-        self.message: discord.Message | None = None
+        self.message = None
 
-    # ────────────────────────────────────────────────────────────────────────────
-    # 🔹 Génération d'embed couleur
-    # ────────────────────────────────────────────────────────────────────────────
-    def generer_embed(self) -> discord.Embed:
+    def generer_embed(self):
         """Génère un embed avec une couleur aléatoire et son aperçu visuel."""
         code_hex = random.randint(0, 0xFFFFFF)
         hex_str = f"#{code_hex:06X}"
@@ -39,6 +32,7 @@ class CouleurView(discord.ui.View):
         g = (code_hex >> 8) & 0xFF
         b = code_hex & 0xFF
         rgb_str = f"({r}, {g}, {b})"
+
         image_url = f"https://dummyimage.com/700x200/{code_hex:06x}/{code_hex:06x}.png&text=+"
 
         embed = discord.Embed(
@@ -50,9 +44,6 @@ class CouleurView(discord.ui.View):
         embed.set_footer(text="🔁 Appuie sur le bouton pour générer une nouvelle couleur.")
         return embed
 
-    # ────────────────────────────────────────────────────────────────────────────
-    # 🔹 Bouton : Nouvelle couleur
-    # ────────────────────────────────────────────────────────────────────────────
     @discord.ui.button(label="🔁 Nouvelle couleur", style=discord.ButtonStyle.primary)
     async def regenerate(self, interaction: discord.Interaction, button: discord.ui.Button):
         """Régénère la couleur si c'est l'auteur qui clique sur le bouton."""
@@ -62,27 +53,31 @@ class CouleurView(discord.ui.View):
             )
 
         try:
-            # ✅ Toujours acquitter avant d'éditer le message
-            await interaction.response.defer()
+            # ✅ Toujours acquitter avant d'éditer
+            if not interaction.response.is_done():
+                await interaction.response.defer()
+
             new_embed = self.generer_embed()
-            await safe_edit(interaction.message, embed=new_embed, view=self)
+
+            # ✅ Modification directe du message (pas safe_edit)
+            if self.message:
+                await self.message.edit(embed=new_embed, view=self)
+            else:
+                await interaction.message.edit(embed=new_embed, view=self)
 
         except Exception as e:
-            try:
+            if interaction.response.is_done():
                 await interaction.followup.send(f"❌ Erreur : {e}", ephemeral=True)
-            except Exception:
-                pass
+            else:
+                await interaction.response.send_message(f"❌ Erreur : {e}", ephemeral=True)
 
-    # ────────────────────────────────────────────────────────────────────────────
-    # 🔹 Gestion du timeout
-    # ────────────────────────────────────────────────────────────────────────────
     async def on_timeout(self):
-        """Désactive les boutons lorsque le délai est écoulé."""
+        """Désactive le bouton quand le délai est écoulé."""
         for child in self.children:
             child.disabled = True
         if self.message:
             try:
-                await safe_edit(self.message, view=self)
+                await self.message.edit(view=self)
             except Exception:
                 pass
 
@@ -90,10 +85,7 @@ class CouleurView(discord.ui.View):
 # 🧠 Cog principal
 # ────────────────────────────────────────────────────────────────────────────────
 class CouleurCommand(commands.Cog):
-    """
-    Commande !couleur et /couleur — Génère et affiche une couleur aléatoire avec codes HEX et RGB.
-    """
-
+    """Commande !couleur et /couleur — Génère et affiche une couleur aléatoire avec codes HEX et RGB."""
     def __init__(self, bot: commands.Bot):
         self.bot = bot
 
@@ -104,7 +96,7 @@ class CouleurCommand(commands.Cog):
         name="couleur",
         description="Affiche une couleur aléatoire avec un aperçu visuel et ses codes HEX & RGB."
     )
-    @app_commands.checks.cooldown(1, 3.0, key=lambda i: i.user.id)
+    @app_commands.checks.cooldown(1, 3.0, key=lambda i: (i.user.id))  # cooldown : 1 fois / 3s / utilisateur
     async def slash_couleur(self, interaction: discord.Interaction):
         try:
             view = CouleurView(interaction.user)
@@ -112,7 +104,6 @@ class CouleurCommand(commands.Cog):
 
             await interaction.response.send_message(embed=embed, view=view)
             view.message = await interaction.original_response()
-
         except Exception as e:
             print(f"[ERREUR /couleur] {e}")
             await safe_respond(interaction, "❌ Une erreur est survenue lors de la génération de la couleur.", ephemeral=True)
@@ -130,9 +121,7 @@ class CouleurCommand(commands.Cog):
         try:
             view = CouleurView(ctx.author)
             embed = view.generer_embed()
-
             view.message = await safe_send(ctx, embed=embed, view=view)
-
         except Exception as e:
             print(f"[ERREUR !couleur] {e}")
             await safe_send(ctx, "❌ Une erreur est survenue lors de la génération de la couleur.")
