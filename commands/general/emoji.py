@@ -190,5 +190,5 @@ async def setup(bot: commands.Bot):
     cog = EmojiCommand(bot)
     for command in cog.get_commands():
         if not hasattr(command, "category"):
-            command.category = "Géneral"
+            command.category = "Général"
     await bot.add_cog(cog)
