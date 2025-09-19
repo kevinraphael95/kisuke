@@ -1,6 +1,6 @@
 # ────────────────────────────────────────────────────────────────────────────────
 # 📌 redemarrage_command.py — Commande /re et !re via webhook Render
-# Objectif : Prévenir les membres et déclencher un redeploy Render via webhook.
+# Objectif : Prévenir les membres et déclencher un redeploy Render
 # Catégorie : ⚙️ Admin
 # Accès : Administrateur
 # Cooldown : 1 utilisation / 5 secondes / utilisateur
@@ -15,7 +15,6 @@ from discord.ext import commands
 from utils.discord_utils import safe_send, safe_respond
 import aiohttp
 import os
-import asyncio
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🧠 Cog principal
@@ -35,8 +34,10 @@ class RedemarrageCommand(commands.Cog):
         name="re",
         description="(Admin) Préviens les membres et redémarre le bot via Render."
     )
+    @app_commands.checks.has_permissions(administrator=True)
     @app_commands.checks.cooldown(1, 5.0, key=lambda i: i.user.id)
     async def slash_re(self, interaction: discord.Interaction):
+        """Commande slash pour annoncer et déclencher le redeploy Render."""
         try:
             await interaction.response.defer(ephemeral=True)
             await self._trigger_restart(interaction.channel)
@@ -57,6 +58,7 @@ class RedemarrageCommand(commands.Cog):
     @commands.has_permissions(administrator=True)
     @commands.cooldown(1, 5, commands.BucketType.user)
     async def prefix_re(self, ctx: commands.Context):
+        """Commande préfixe pour annoncer et déclencher le redeploy Render."""
         await self._trigger_restart(ctx.channel)
 
     # ────────────────────────────────────────────────────────────────────────────
