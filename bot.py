@@ -37,11 +37,9 @@ from utils.discord_utils import safe_send, safe_edit, safe_respond  # <-- foncti
 # ──────────────────────────────────────────────────────────────
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
 load_dotenv()
-
 TOKEN = os.getenv("DISCORD_TOKEN")
 COMMAND_PREFIX = os.getenv("COMMAND_PREFIX", "!")
 INSTANCE_ID = str(uuid.uuid4())
-
 with open("instance_id.txt", "w") as f:
     f.write(INSTANCE_ID)
 
@@ -51,7 +49,6 @@ def get_prefix(bot, message):
 # ──────────────────────────────────────────────────────────────
 # ⚙️ Intents & Création du bot
 # ──────────────────────────────────────────────────────────────
-
 intents = discord.Intents.default()
 intents.message_content = True
 intents.guilds = True
@@ -79,7 +76,6 @@ async def load_commands():
                     print(f"✅ Loaded {module_path}")
                 except Exception as e:
                     print(f"❌ Failed to load {module_path}: {e}")
-
     try:
         await bot.load_extension("tasks.heartbeat")
         print("✅ Loaded tasks.heartbeat")
@@ -93,27 +89,23 @@ async def load_commands():
 async def on_ready():
     print(f"✅ Connecté en tant que {bot.user.name}")
     await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name="Bleach"))
-
     now = datetime.now(timezone.utc).isoformat()
-
     try:
         print("💣 Suppression de tout verrou précédent...")
         supabase.table("bot_lock").delete().eq("id", "reiatsu_lock").execute()
-
         print(f"🔐 Prise de verrou par cette instance : {INSTANCE_ID}")
         supabase.table("bot_lock").insert({
             "id": "reiatsu_lock",
             "instance_id": INSTANCE_ID,
             "updated_at": now
         }).execute()
-
         bot.is_main_instance = True
         print(f"✅ Instance principale active : {INSTANCE_ID}")
 
         # Chargement du spawner Reiatsu
         await bot.load_extension("tasks.reiatsu_spawner")
         print("✅ Spawner Reiatsu chargé.")
-        
+
         # synchronisation des commandes slash
         await bot.tree.sync()
         print("✅ Slash commands synchronisées")
@@ -144,11 +136,25 @@ async def on_message(message):
         await safe_send(message.channel, f"👋 Salut {message.author.mention} ! Utilise `{prefix}help` pour voir mes commandes.")
         return
 
-
     if not message.content.startswith(prefix):
         return
 
     await bot.process_commands(message)
+
+# ──────────────────────────────────────────────────────────────
+# ⚠️ Gestion globale des erreurs et cooldowns
+# ──────────────────────────────────────────────────────────────
+@bot.event
+async def on_command_error(ctx, error):
+    if isinstance(error, commands.CommandOnCooldown):
+        await ctx.send(f"⏳ Patiente {round(error.retry_after, 1)} secondes avant de réutiliser cette commande.")
+    elif isinstance(error, commands.MissingPermissions):
+        await ctx.send("❌ Tu n'as pas la permission d'utiliser cette commande.")
+    elif isinstance(error, commands.CommandNotFound):
+        pass  # Ignore les commandes inconnues
+    else:
+        await ctx.send(f"⚠️ Une erreur est survenue : {error}")
+        print(f"Erreur sur la commande {ctx.command}: {error}")
 
 # ──────────────────────────────────────────────────────────────
 # 🚀 Lancement du bot
@@ -160,5 +166,3 @@ async def main():
 if __name__ == "__main__":
     keep_alive()
     asyncio.run(main())
-
-
