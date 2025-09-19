@@ -1,6 +1,6 @@
 # ────────────────────────────────────────────────────────────────────────────────
-# 📌 discord_utils.py — Fonctions utilitaires optimisées avec gestion du rate-limit
-# Objectif : Fournir des fonctions sécurisées pour send/edit/respond Discord
+# 📌 discord_utils.py — Fonctions utilitaires sécurisées pour Discord
+# Objectif : Fournir des fonctions send/edit/respond optimisées avec gestion du rate-limit
 # Version : ✅ Optimisée et robuste, backoff exponentiel, logs clairs
 # ────────────────────────────────────────────────────────────────────────────────
 
@@ -66,7 +66,3 @@ async def safe_delete(message: discord.Message, delay: float = 0):
 
 async def safe_clear_reactions(message: discord.Message):
     return await _discord_action(message.clear_reactions)
-
-
-
-
