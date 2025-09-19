@@ -1,6 +1,6 @@
 # ────────────────────────────────────────────────────────────────────────────────
-# 📌 readme_creator.py — Commande /commandes qui crée un README.md
-# Objectif : Génère un fichier README.md avec toutes les commandes triées et formatées
+# 📌 readme_creator.py — Commande /readme et !readme
+# Objectif : Génère un README.md avec toutes les commandes triées et formatées
 # Catégorie : Admin
 # Accès : Administrateurs seulement
 # Cooldown : 1 utilisation / 5 secondes / utilisateur
@@ -15,7 +15,10 @@ from discord.ext import commands
 import io
 from utils.discord_utils import safe_send, safe_respond  
 
-class Commandes(commands.Cog):
+# ────────────────────────────────────────────────────────────────────────────────
+# 🧠 Cog principal
+# ────────────────────────────────────────────────────────────────────────────────
+class ReadmeCreator(commands.Cog):
     """
     Commande /readme et !readme — Génère un README.md complet avec toutes les commandes.
     Accessible uniquement aux administrateurs.
@@ -26,10 +29,12 @@ class Commandes(commands.Cog):
     # ────────────────────────────────────────────────────────────────────────────
     # 🔹 Fonction interne pour générer le contenu Markdown
     # ────────────────────────────────────────────────────────────────────────────
-    def build_markdown_content(self):
+    def build_markdown_content(self) -> str:
         """Renvoie le contenu Markdown complet pour README.md avec format compact et lisible"""
         content = "# Kisuke Urahara - Bot Discord\n\n"
-        content += "👍 Kisuke Urahara est un bot discord à la con et inutile en python. Il propose quelques commandes simples, peu de commandes amusantes et parfois inspirées du manga bleach, et un petit jeu de collecte de 'reiatsu' qui ne sert à rien. Les commandes fonctionnent avec le préfixe et certaines aussi en mode slash.\n\n---\n\n# Commandes\n\n"
+        content += ("👍 Kisuke Urahara est un bot discord à la con et inutile en python. "
+                    "Il propose quelques commandes simples, amusantes et parfois inspirées du manga Bleach, "
+                    "et un petit jeu de collecte de 'reiatsu'.\n\n---\n\n# Commandes\n\n")
 
         # Regrouper les commandes par catégorie
         categories = {}
@@ -43,7 +48,6 @@ class Commandes(commands.Cog):
         # Trier les catégories par ordre alphabétique
         for cat in sorted(categories.keys(), key=lambda c: c.lower()):
             content += f"### 📂 {cat}\n"
-            # Trier les commandes par ordre alphabétique
             for name, desc in sorted(categories[cat], key=lambda x: x[0].lower()):
                 content += f"- **{name} :** {desc}\n"
             content += "\n"
@@ -59,7 +63,7 @@ class Commandes(commands.Cog):
         description="Génère un README.md avec toutes les commandes et les envoie en fichier."
     )
     @app_commands.checks.cooldown(1, 5.0, key=lambda i: i.user.id)
-    async def slash_commandes(self, interaction: discord.Interaction):
+    async def slash_readme(self, interaction: discord.Interaction):
         try:
             markdown_content = self.build_markdown_content()
             file = discord.File(io.StringIO(markdown_content), filename="README.md")
@@ -79,7 +83,7 @@ class Commandes(commands.Cog):
         help="Génère un README.md avec toutes les commandes et les envoie en fichier."
     )
     @commands.cooldown(1, 5.0, commands.BucketType.user)
-    async def prefix_commandes(self, ctx: commands.Context):
+    async def prefix_readme(self, ctx: commands.Context):
         try:
             markdown_content = self.build_markdown_content()
             file = discord.File(io.StringIO(markdown_content), filename="README.md")
@@ -94,7 +98,7 @@ class Commandes(commands.Cog):
 # 🔌 Setup du Cog
 # ────────────────────────────────────────────────────────────────────────────────
 async def setup(bot: commands.Bot):
-    cog = Commandes(bot)
+    cog = ReadmeCreator(bot)
     for command in cog.get_commands():
         if not hasattr(command, "category"):
             command.category = "Admin"
