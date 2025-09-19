@@ -25,6 +25,7 @@ from utils.discord_utils import safe_send, safe_respond, safe_edit
 # 📂 Chargement des données JSON
 # ────────────────────────────────────────────────────────────────────────────────
 CLASSES_JSON_PATH = os.path.join("data", "classes.json")
+
 def load_classes():
     """Charge le fichier des classes depuis data/classes.json"""
     try:
@@ -45,7 +46,7 @@ SPAWN_SPEED_INTERVALS = {
 }
 
 # ────────────────────────────────────────────────────────────────────────────────
-# 🎛️ UI — Boutons interactifs Reiatsu
+# 🎛️ UI — Vue interactive Reiatsu
 # ────────────────────────────────────────────────────────────────────────────────
 class ReiatsuView(View):
     """Vue interactive avec boutons pour Reiatsu"""
@@ -55,7 +56,6 @@ class ReiatsuView(View):
         if spawn_link:
             self.add_item(Button(label="💠 Aller au spawn", style=discord.ButtonStyle.link, url=spawn_link))
 
-    # Bouton Classement
     @discord.ui.button(label="📊 Classement", style=discord.ButtonStyle.primary, custom_id="reiatsu:classement")
     async def classement_button(self, interaction: discord.Interaction, button: discord.ui.Button):
         if self.author and interaction.user != self.author:
@@ -90,7 +90,7 @@ class ReiatsuCommand(commands.Cog):
         self.bot.add_view(ReiatsuView())
 
     # ────────────────────────────────────────────────────────────────────────────
-    # Fonction interne : envoi du profil
+    # 🔹 Fonction interne : envoi du profil
     # ────────────────────────────────────────────────────────────────────────────
     async def _send_profile(self, channel_or_interaction, author, guild, target_user):
         user = target_user or author
@@ -194,7 +194,7 @@ class ReiatsuCommand(commands.Cog):
             await safe_send(channel_or_interaction, embed=embed, view=view)
 
     # ────────────────────────────────────────────────────────────────────────────
-    # Commande SLASH
+    # 🔹 Commande SLASH
     # ────────────────────────────────────────────────────────────────────────────
     @app_commands.command(name="reiatsu", description="💠 Affiche le score de Reiatsu d’un membre (ou soi-même).")
     @app_commands.describe(member="Membre dont vous voulez voir le Reiatsu")
@@ -209,7 +209,7 @@ class ReiatsuCommand(commands.Cog):
             await safe_respond(interaction, "❌ Une erreur est survenue.", ephemeral=True)
 
     # ────────────────────────────────────────────────────────────────────────────
-    # Commande PREFIX
+    # 🔹 Commande PREFIX
     # ────────────────────────────────────────────────────────────────────────────
     @commands.command(name="reiatsu", aliases=["rts"])
     @commands.cooldown(1, 3.0, commands.BucketType.user)
