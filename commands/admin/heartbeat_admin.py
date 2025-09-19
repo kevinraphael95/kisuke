@@ -45,17 +45,11 @@ class HeartbeatAdmin(commands.Cog):
             action = action.lower()
 
             if action in ["pause", "p"]:
-                self.supabase.table("bot_settings").upsert({
-                    "key": "heartbeat_paused",
-                    "value": "true"
-                }).execute()
+                self.supabase.table("bot_settings").upsert({"key": "heartbeat_paused", "value": "true"}).execute()
                 await safe_send(ctx, "⏸️ Heartbeat mis en pause.")
 
             elif action in ["resume", "r"]:
-                self.supabase.table("bot_settings").upsert({
-                    "key": "heartbeat_paused",
-                    "value": "false"
-                }).execute()
+                self.supabase.table("bot_settings").upsert({"key": "heartbeat_paused", "value": "false"}).execute()
                 await safe_send(ctx, "▶️ Heartbeat relancé.")
 
             elif action in ["status", "stat", "s"]:
@@ -68,20 +62,14 @@ class HeartbeatAdmin(commands.Cog):
                 if not channel:
                     await safe_send(ctx, "❌ Tu dois mentionner un salon. Exemple : `!heartbeat set #général`")
                     return
-                self.supabase.table("bot_settings").upsert({
-                    "key": "heartbeat_channel_id",
-                    "value": str(channel.id)
-                }).execute()
+                self.supabase.table("bot_settings").upsert({"key": "heartbeat_channel_id", "value": str(channel.id)}).execute()
                 heartbeat_cog = self.bot.get_cog("HeartbeatTask")
                 if heartbeat_cog:
                     heartbeat_cog.heartbeat_channel_id = channel.id
                 await safe_send(ctx, f"✅ Salon heartbeat défini : {channel.mention}")
 
             elif action == "unset":
-                self.supabase.table("bot_settings").upsert({
-                    "key": "heartbeat_channel_id",
-                    "value": ""
-                }).execute()
+                self.supabase.table("bot_settings").upsert({"key": "heartbeat_channel_id", "value": ""}).execute()
                 heartbeat_cog = self.bot.get_cog("HeartbeatTask")
                 if heartbeat_cog:
                     heartbeat_cog.heartbeat_channel_id = None
