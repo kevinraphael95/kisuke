@@ -41,7 +41,7 @@ class FirstSelectView(View):
         super().__init__(timeout=120)
         self.bot = bot
         self.data = data
-        self.message = None  # le message envoyé sera stocké ici
+        self.message = None
         self.add_item(FirstSelect(self))
 
     async def on_timeout(self):
@@ -60,7 +60,7 @@ class FirstSelect(Select):
     async def callback(self, interaction: discord.Interaction):
         selected_key = self.values[0]
         new_view = SecondSelectView(self.parent_view.bot, self.parent_view.data, selected_key)
-        new_view.message = interaction.message  # garde la référence pour le timeout
+        new_view.message = interaction.message
         await safe_edit(
             interaction.message,
             content=f"Option sélectionnée : **{selected_key}**\nChoisis maintenant une sous-option :",
@@ -146,15 +146,9 @@ class NomDeLaCommande(commands.Cog):
     @app_commands.checks.cooldown(1, 5.0, key=lambda i: (i.user.id))  # ⏳ Cooldown 5s par utilisateur
     async def slash_nom_de_la_commande(self, interaction: discord.Interaction):
         """Commande slash principale qui affiche le menu interactif."""
-        try:
-            await interaction.response.defer()
-            await self._send_menu(interaction.channel)
-            await interaction.delete_original_response()
-        except app_commands.CommandOnCooldown as e:
-            await safe_respond(interaction, f"⏳ Attends encore {e.retry_after:.1f}s avant de réutiliser cette commande.", ephemeral=True)
-        except Exception as e:
-            print(f"[ERREUR /nom_de_la_commande] {e}")
-            await safe_respond(interaction, "❌ Une erreur est survenue lors du chargement des données.", ephemeral=True)
+        await interaction.response.defer()
+        await self._send_menu(interaction.channel)
+        await interaction.delete_original_response()
 
     # ────────────────────────────────────────────────────────────────────────────
     # 🔹 Commande PREFIX
@@ -163,13 +157,7 @@ class NomDeLaCommande(commands.Cog):
     @commands.cooldown(1, 5.0, commands.BucketType.user)  # ⏳ Cooldown 5s par utilisateur
     async def prefix_nom_de_la_commande(self, ctx: commands.Context):
         """Commande préfixe qui affiche le menu interactif."""
-        try:
-            await self._send_menu(ctx.channel)
-        except commands.CommandOnCooldown as e:
-            await safe_send(ctx.channel, f"⏳ Attends encore {e.retry_after:.1f}s avant de réutiliser cette commande.")
-        except Exception as e:
-            print(f"[ERREUR !nom_de_la_commande] {e}")
-            await safe_send(ctx.channel, "❌ Une erreur est survenue lors du chargement des données.")
+        await self._send_menu(ctx.channel)
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🔌 Setup du Cog
