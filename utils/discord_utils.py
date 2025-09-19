@@ -65,4 +65,5 @@ async def safe_delete(message: discord.Message, delay: float = 0):
     return await _discord_action(message.delete, delay=delay)
 
 async def safe_clear_reactions(message: discord.Message):
-    return await _discord_action(message.clear_reactions)
+    return await _discord_action(message.clear_
+    reactions)
