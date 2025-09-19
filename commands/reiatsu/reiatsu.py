@@ -6,9 +6,6 @@
 # Cooldown : 1 utilisation / 3 secondes / utilisateur
 # ────────────────────────────────────────────────────────────────────────────────
 
-# ────────────────────────────────────────────────────────────────────────────────
-# 📦 Imports nécessaires
-# ────────────────────────────────────────────────────────────────────────────────
 import discord
 from discord import app_commands
 from discord.ext import commands
@@ -22,12 +19,11 @@ from utils.supabase_client import supabase
 from utils.discord_utils import safe_send, safe_respond
 
 # ────────────────────────────────────────────────────────────────────────────────
-# 📂 Chargement des données JSON
+# 📂 Chargement des classes depuis JSON
 # ────────────────────────────────────────────────────────────────────────────────
 CLASSES_JSON_PATH = os.path.join("data", "classes.json")
 
 def load_classes():
-    """Charge le fichier des classes depuis data/classes.json"""
     try:
         with open(CLASSES_JSON_PATH, "r", encoding="utf-8") as f:
             return json.load(f)
@@ -46,10 +42,9 @@ SPAWN_SPEED_INTERVALS = {
 }
 
 # ────────────────────────────────────────────────────────────────────────────────
-# 🎛️ UI — Vue interactive Reiatsu
+# 🎛️ Vue interactive Reiatsu
 # ────────────────────────────────────────────────────────────────────────────────
 class ReiatsuView(View):
-    """Vue interactive avec boutons pour Reiatsu"""
     def __init__(self, author: discord.Member = None, spawn_link: str = None):
         super().__init__(timeout=None)
         self.author = author
@@ -65,7 +60,6 @@ class ReiatsuView(View):
         except Exception as e:
             print(f"[ERREUR DB] Impossible de récupérer le classement : {e}")
             return await interaction.response.send_message("❌ Erreur lors du chargement du classement.", ephemeral=True)
-
         if not classement_data.data:
             return await interaction.response.send_message("⚠️ Aucun classement disponible pour le moment.", ephemeral=True)
 
@@ -85,16 +79,13 @@ class ReiatsuView(View):
 # ────────────────────────────────────────────────────────────────────────────────
 class ReiatsuCommand(commands.Cog):
     """Commande /reiatsu et !reiatsu — Affiche le profil complet d’un joueur"""
-    COOLDOWN = 3  # secondes
+    COOLDOWN = 3
 
     def __init__(self, bot: commands.Bot):
         self.bot = bot
         self.bot.add_view(ReiatsuView())
         self.user_cooldowns = {}  # user_id -> timestamp dernier usage
 
-    # ────────────────────────────────────────────────────────────────────────────
-    # 🔹 Gestion cooldown
-    # ────────────────────────────────────────────────────────────────────────────
     async def _check_cooldown(self, user_id: int):
         now = time.time()
         last = self.user_cooldowns.get(user_id, 0)
@@ -103,9 +94,6 @@ class ReiatsuCommand(commands.Cog):
         self.user_cooldowns[user_id] = now
         return 0
 
-    # ────────────────────────────────────────────────────────────────────────────
-    # 🔹 Fonction interne : envoi du profil
-    # ────────────────────────────────────────────────────────────────────────────
     async def _send_profile(self, channel_or_interaction, author, guild, target_user):
         user = target_user or author
         user_id, guild_id = str(user.id), str(guild.id) if guild else None
@@ -138,10 +126,6 @@ class ReiatsuCommand(commands.Cog):
 
         # Cooldown de vol
         cooldown_text = "Disponible ✅"
-        if classe_nom and steal_cd is None:
-            steal_cd = 19 if classe_nom == "Voleur" else 24
-            supabase.table("reiatsu").update({"steal_cd": steal_cd}).eq("user_id", user_id).execute()
-
         if last_steal_str and steal_cd:
             last_steal = parser.parse(last_steal_str)
             next_steal = last_steal + timedelta(hours=steal_cd)
@@ -159,7 +143,6 @@ class ReiatsuCommand(commands.Cog):
             except Exception as e:
                 print(f"[ERREUR DB] Lecture config échouée : {e}")
                 config_data = None
-
             config = config_data.data[0] if config_data and config_data.data else None
             if config:
                 salon = guild.get_channel(int(config.get("channel_id"))) if config.get("channel_id") else None
@@ -206,10 +189,7 @@ class ReiatsuCommand(commands.Cog):
     # ────────────────────────────────────────────────────────────────────────────
     # 🔹 Commande SLASH
     # ────────────────────────────────────────────────────────────────────────────
-    @app_commands.command(
-        name="reiatsu",
-        description="💠 Affiche le score de Reiatsu d’un membre (ou soi-même)."
-    )
+    @app_commands.command(name="reiatsu", description="💠 Affiche le score de Reiatsu d’un membre (ou soi-même).")
     @app_commands.describe(member="Membre dont vous voulez voir le Reiatsu")
     async def slash_reiatsu(self, interaction: discord.Interaction, member: discord.Member = None):
         remaining = await self._check_cooldown(interaction.user.id)
@@ -229,7 +209,7 @@ class ReiatsuCommand(commands.Cog):
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🔌 Setup du Cog
-# ────────────────────────────────────────────────────────────────
+# ────────────────────────────────────────────────────────────────────────────────
 async def setup(bot: commands.Bot):
     cog = ReiatsuCommand(bot)
     for command in cog.get_commands():
