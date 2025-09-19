@@ -62,8 +62,13 @@ async def safe_add_reaction(message: discord.Message, emoji: str, delay: float =
     return await _discord_action(message.add_reaction, emoji, delay=delay)
 
 async def safe_delete(message: discord.Message, delay: float = 0):
-    return await _discord_action(message.delete, delay=delay)
+    result = await _discord_action(message.delete)
+    if delay > 0:
+        await asyncio.sleep(delay)
+    return result
 
-async def safe_clear_reactions(message: discord.Message):
-    return await _discord_action(message.clear_
-    reactions)
+async def safe_clear_reactions(message: discord.Message, delay: float = 0.3):
+    result = await _discord_action(message.clear_reactions)
+    if delay > 0:
+        await asyncio.sleep(delay)
+    return result
