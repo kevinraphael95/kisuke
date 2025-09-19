@@ -19,7 +19,7 @@ import time
 import json
 import os
 from utils.supabase_client import supabase
-from utils.discord_utils import safe_send, safe_respond, safe_edit
+from utils.discord_utils import safe_send, safe_respond
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 📂 Chargement des données JSON
@@ -85,9 +85,23 @@ class ReiatsuView(View):
 # ────────────────────────────────────────────────────────────────────────────────
 class ReiatsuCommand(commands.Cog):
     """Commande /reiatsu et !reiatsu — Affiche le profil complet d’un joueur"""
+    COOLDOWN = 3  # secondes
+
     def __init__(self, bot: commands.Bot):
         self.bot = bot
         self.bot.add_view(ReiatsuView())
+        self.user_cooldowns = {}  # user_id -> timestamp dernier usage
+
+    # ────────────────────────────────────────────────────────────────────────────
+    # 🔹 Gestion cooldown
+    # ────────────────────────────────────────────────────────────────────────────
+    async def _check_cooldown(self, user_id: int):
+        now = time.time()
+        last = self.user_cooldowns.get(user_id, 0)
+        if now - last < self.COOLDOWN:
+            return self.COOLDOWN - (now - last)
+        self.user_cooldowns[user_id] = now
+        return 0
 
     # ────────────────────────────────────────────────────────────────────────────
     # 🔹 Fonction interne : envoi du profil
@@ -96,7 +110,7 @@ class ReiatsuCommand(commands.Cog):
         user = target_user or author
         user_id, guild_id = str(user.id), str(guild.id) if guild else None
 
-        # ── Récupération des données utilisateur
+        # Récupération des données utilisateur
         try:
             user_data = supabase.table("reiatsu").select(
                 "points, classe, last_steal_attempt, steal_cd"
@@ -111,8 +125,9 @@ class ReiatsuCommand(commands.Cog):
         last_steal_str = data.get("last_steal_attempt")
         steal_cd = data.get("steal_cd")
 
-        # ── Chargement classes.json
+        # Chargement classes.json
         CLASSES = load_classes()
+        classe_text = f"Aucune classe sélectionnée. Utilise `!classe` pour en choisir une."
         if classe_nom and classe_nom in CLASSES:
             classe_text = (
                 f"• Classe : **{classe_nom}**\n"
@@ -120,10 +135,8 @@ class ReiatsuCommand(commands.Cog):
                 f"• Compétence active : {CLASSES[classe_nom]['Active']}\n"
                 "(les compétences actives ne sont pas encore implémentées)"
             )
-        else:
-            classe_text = "Aucune classe sélectionnée. Utilise `!classe` pour en choisir une."
 
-        # ── Cooldown de vol
+        # Cooldown de vol
         cooldown_text = "Disponible ✅"
         if classe_nom and steal_cd is None:
             steal_cd = 19 if classe_nom == "Voleur" else 24
@@ -132,13 +145,13 @@ class ReiatsuCommand(commands.Cog):
         if last_steal_str and steal_cd:
             last_steal = parser.parse(last_steal_str)
             next_steal = last_steal + timedelta(hours=steal_cd)
-            now = datetime.utcnow()
-            if now < next_steal:
-                restant = next_steal - now
+            now_dt = datetime.utcnow()
+            if now_dt < next_steal:
+                restant = next_steal - now_dt
                 h, m = divmod(int(restant.total_seconds() // 60), 60)
                 cooldown_text = f"{restant.days}j {h}h{m}m" if restant.days else f"{h}h{m}m"
 
-        # ── Récupération config serveur
+        # Récupération config serveur
         salon_text, spawn_speed_text, temps_text, spawn_link = "❌", "⚠️ Inconnu", "⚠️ Inconnu", None
         if guild:
             try:
@@ -149,15 +162,12 @@ class ReiatsuCommand(commands.Cog):
 
             config = config_data.data[0] if config_data and config_data.data else None
             if config:
-                salon = guild.get_channel(int(config["channel_id"])) if config.get("channel_id") else None
+                salon = guild.get_channel(int(config.get("channel_id"))) if config.get("channel_id") else None
                 salon_text = salon.mention if salon else "⚠️ Salon introuvable"
-                if config.get("spawn_speed"):
-                    speed_key = config["spawn_speed"]
-                    spawn_speed_text = f"{SPAWN_SPEED_INTERVALS.get(speed_key, '⚠️ Inconnu')} ({speed_key})"
-
-                if config.get("en_attente"):
-                    if config.get("spawn_message_id") and config.get("channel_id"):
-                        spawn_link = f"https://discord.com/channels/{guild_id}/{config['channel_id']}/{config['spawn_message_id']}"
+                speed_key = config.get("spawn_speed")
+                spawn_speed_text = f"{SPAWN_SPEED_INTERVALS.get(speed_key, '⚠️ Inconnu')} ({speed_key})" if speed_key else spawn_speed_text
+                if config.get("en_attente") and config.get("spawn_message_id") and config.get("channel_id"):
+                    spawn_link = f"https://discord.com/channels/{guild_id}/{config['channel_id']}/{config['spawn_message_id']}"
                     temps_text = "💠 Un Reiatsu est **déjà apparu** !"
                 else:
                     last_spawn = config.get("last_spawn_at")
@@ -172,7 +182,7 @@ class ReiatsuCommand(commands.Cog):
                     else:
                         temps_text = "💠 Un Reiatsu peut apparaître **à tout moment** !"
 
-        # ── Création de l'embed
+        # Création de l'embed
         embed = discord.Embed(
             title=f"__Profil de {user.display_name}__",
             description=(
@@ -196,31 +206,33 @@ class ReiatsuCommand(commands.Cog):
     # ────────────────────────────────────────────────────────────────────────────
     # 🔹 Commande SLASH
     # ────────────────────────────────────────────────────────────────────────────
-    @app_commands.command(name="reiatsu", description="💠 Affiche le score de Reiatsu d’un membre (ou soi-même).")
+    @app_commands.command(
+        name="reiatsu",
+        description="💠 Affiche le score de Reiatsu d’un membre (ou soi-même)."
+    )
     @app_commands.describe(member="Membre dont vous voulez voir le Reiatsu")
-    @app_commands.checks.cooldown(1, 3.0, key=lambda i: i.user.id)
     async def slash_reiatsu(self, interaction: discord.Interaction, member: discord.Member = None):
-        try:
-            await self._send_profile(interaction, interaction.user, interaction.guild, member)
-        except app_commands.CommandOnCooldown as e:
-            await safe_respond(interaction, f"⏳ Attends encore {e.retry_after:.1f}s.", ephemeral=True)
-        except Exception as e:
-            print(f"[ERREUR /reiatsu] {e}")
-            await safe_respond(interaction, "❌ Une erreur est survenue.", ephemeral=True)
+        remaining = await self._check_cooldown(interaction.user.id)
+        if remaining > 0:
+            return await safe_respond(interaction, f"⏳ Attends encore {remaining:.1f}s.", ephemeral=True)
+        await self._send_profile(interaction, interaction.user, interaction.guild, member)
 
     # ────────────────────────────────────────────────────────────────────────────
     # 🔹 Commande PREFIX
     # ────────────────────────────────────────────────────────────────────────────
     @commands.command(name="reiatsu", aliases=["rts"])
-    @commands.cooldown(1, 3.0, commands.BucketType.user)
     async def prefix_reiatsu(self, ctx: commands.Context, member: discord.Member = None):
+        remaining = await self._check_cooldown(ctx.author.id)
+        if remaining > 0:
+            return await safe_send(ctx.channel, f"⏳ Attends encore {remaining:.1f}s.")
         await self._send_profile(ctx.channel, ctx.author, ctx.guild, member)
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🔌 Setup du Cog
-# ────────────────────────────────────────────────────────────────────────────────
+# ────────────────────────────────────────────────────────────────
 async def setup(bot: commands.Bot):
     cog = ReiatsuCommand(bot)
-    await bot.add_cog(cog)
     for command in cog.get_commands():
-        command.category = "Reiatsu"
+        if not hasattr(command, "category"):
+            command.category = "Reiatsu"
+    await bot.add_cog(cog)
