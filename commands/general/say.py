@@ -1,6 +1,6 @@
 # ────────────────────────────────────────────────────────────────────────────────
 # 📌 say.py — Commande interactive /say et !say
-# Objectif : Faire répéter un message par le bot, avec option "as user"
+# Objectif : Faire répéter un message par le bot, avec options combinables (embed, as_user, etc.)
 # Catégorie : Général
 # Accès : Public
 # Cooldown : 1 utilisation / 5 sec / utilisateur
@@ -19,10 +19,33 @@ from utils.discord_utils import safe_send, safe_delete, safe_respond
 # 🧠 Cog principal
 # ────────────────────────────────────────────────────────────────────────────────
 class Say(commands.Cog):
-    """Commande /say et !say — Faire répéter un message par le bot, option 'as user'."""
+    """Commande /say et !say — Faire répéter un message par le bot, avec options modulables."""
 
     def __init__(self, bot: commands.Bot):
         self.bot = bot
+
+    # ──────────────────────────────────────────────────────────────
+    # 🔧 Parsing des options
+    # ──────────────────────────────────────────────────────────────
+    def parse_options(self, raw_message: str):
+        """
+        Analyse le début du message et active les options.
+        Retourne: (options: dict, message_sans_options: str)
+        """
+        options = {"embed": False, "as_user": False}
+        words = raw_message.split()
+        remaining = []
+
+        for w in words:
+            lw = w.lower()
+            if lw in ("embed", "e"):
+                options["embed"] = True
+            elif lw in ("as", "me", "myself", "user"):
+                options["as_user"] = True
+            else:
+                remaining.append(w)
+
+        return options, " ".join(remaining)
 
     # ──────────────────────────────────────────────────────────────
     # 🔹 Fonction interne : envoi classique
@@ -36,11 +59,12 @@ class Say(commands.Cog):
         # 🔹 Remplacement des emojis custom
         if hasattr(channel, "guild"):
             guild_emojis = {e.name.lower(): str(e) for e in channel.guild.emojis}
-
-            def replace_emoji(match):
-                return guild_emojis.get(match.group(1).lower(), match.group(0))
-
-            message = re.sub(r":([a-zA-Z0-9_]+):", replace_emoji, message, flags=re.IGNORECASE)
+            message = re.sub(
+                r":([a-zA-Z0-9_]+):",
+                lambda m: guild_emojis.get(m.group(1).lower(), m.group(0)),
+                message,
+                flags=re.IGNORECASE
+            )
 
         # 🔹 Limite Discord
         if len(message) > 2000:
@@ -65,10 +89,12 @@ class Say(commands.Cog):
         # 🔹 Remplacement emojis custom
         if hasattr(channel, "guild"):
             guild_emojis = {e.name.lower(): str(e) for e in channel.guild.emojis}
-            message = re.sub(r":([a-zA-Z0-9_]+):",
-                             lambda m: guild_emojis.get(m.group(1).lower(), m.group(0)),
-                             message,
-                             flags=re.IGNORECASE)
+            message = re.sub(
+                r":([a-zA-Z0-9_]+):",
+                lambda m: guild_emojis.get(m.group(1).lower(), m.group(0)),
+                message,
+                flags=re.IGNORECASE
+            )
 
         # 🔹 Limite Discord
         if len(message) > 2000:
@@ -84,8 +110,15 @@ class Say(commands.Cog):
     # ──────────────────────────────────────────────────────────────
     # 🔹 Commande SLASH
     # ──────────────────────────────────────────────────────────────
-    @app_commands.command(name="say", description="Fait répéter un message par le bot ou comme vous.")
-    @app_commands.describe(message="Message à répéter", embed="Envoyer dans un embed", as_user="Parler comme l'utilisateur ?")
+    @app_commands.command(
+        name="say",
+        description="Fait répéter un message par le bot, avec options (embed, as_user, ...)."
+    )
+    @app_commands.describe(
+        message="Message à répéter",
+        embed="Envoyer dans un embed",
+        as_user="Parler comme vous"
+    )
     @app_commands.checks.cooldown(1, 5.0, key=lambda i: i.user.id)
     async def slash_say(self, interaction: discord.Interaction, message: str, embed: bool = False, as_user: bool = False):
         try:
@@ -102,29 +135,18 @@ class Say(commands.Cog):
     # ──────────────────────────────────────────────────────────────
     # 🔹 Commande PREFIX
     # ──────────────────────────────────────────────────────────────
-    @commands.command(name="say", help="Fait répéter un message par le bot. 'as' au début pour parler comme vous, 'embed' pour embed.")
+    @commands.command(
+        name="say",
+        help="Fait répéter un message par le bot. Options : 'embed', 'as'. Ex: !say embed as Bonjour !"
+    )
     @commands.cooldown(1, 5.0, commands.BucketType.user)
     async def prefix_say(self, ctx: commands.Context, *, message: str):
         try:
-            embed = False
-            as_user = False
-
-            # 🔹 Détecte si on veut un embed
-            if message.lower().startswith("embed "):
-                embed = True
-                message = message[6:]
-
-            # 🔹 Détecte si on veut parler "as user"
-            if message.lower().startswith(("as ", "me ", "myself ", "user ")):
-                as_user = True
-                message = message.split(" ", 1)[1] if " " in message else ""
-
-            # 🔹 Envoi
-            if as_user:
-                await self._say_as_user(ctx.channel, ctx.author, message)
+            options, clean_message = self.parse_options(message)
+            if options["as_user"]:
+                await self._say_as_user(ctx.channel, ctx.author, clean_message)
             else:
-                await self._say_message(ctx.channel, message, embed)
-
+                await self._say_message(ctx.channel, clean_message, options["embed"])
         except Exception as e:
             print(f"[ERREUR !say] {e}")
             await safe_send(ctx.channel, "❌ Impossible d’envoyer le message.")
