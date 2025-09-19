@@ -3,7 +3,7 @@
 # Objectif : Affiche un lien cliquable vers le code source du bot
 # Catégorie : Général
 # Accès : Public
-# Cooldown : 1 utilisation / 3 secondes / utilisateur
+# Cooldown : Paramétrable par commande
 # ────────────────────────────────────────────────────────────────────────────────
 
 # ────────────────────────────────────────────────────────────────────────────────
@@ -15,11 +15,12 @@ from discord.ext import commands
 from utils.discord_utils import safe_send, safe_respond  
 
 # ────────────────────────────────────────────────────────────────────────────────
-# 🧠 Cog principal
+# 🧠 Cog principal avec centralisation erreurs et cooldowns
 # ────────────────────────────────────────────────────────────────────────────────
 class CodeCommand(commands.Cog):
-    """Commande /code et !code — Affiche un lien vers le code source du bot"""
-
+    """
+    Commande /code et !code — Affiche un lien vers le code source du bot
+    """
     def __init__(self, bot: commands.Bot):
         self.bot = bot
         self.github_url = "https://github.com/kevinraphael95/kisuke"
@@ -27,7 +28,7 @@ class CodeCommand(commands.Cog):
     # ────────────────────────────────────────────────────────────────────────────
     # 🔹 Fonction interne commune
     # ────────────────────────────────────────────────────────────────────────────
-    async def _send_code_link(self, channel: discord.abc.Messageable):
+    async def _send_code_safe(self, channel: discord.abc.Messageable):
         """Envoie l’embed avec le bouton GitHub."""
         embed = discord.Embed(
             title="📂 Code source du bot",
@@ -49,14 +50,11 @@ class CodeCommand(commands.Cog):
         name="code",
         description="Affiche un lien cliquable vers le code source du bot."
     )
-    @app_commands.checks.cooldown(1, 3.0, key=lambda i: (i.user.id))
+    @app_commands.checks.cooldown(rate=1, per=3.0, key=lambda i: i.user.id)
     async def slash_code(self, interaction: discord.Interaction):
-        try:
-            await self._send_code_link(interaction.channel)
-            await safe_respond(interaction, "✅ Voici le code source :", ephemeral=True)
-        except Exception as e:
-            print(f"[ERREUR /code] {e}")
-            await safe_respond(interaction, "❌ Une erreur est survenue.", ephemeral=True)
+        """Commande slash principale."""
+        await self._send_code_safe(interaction.channel)
+        await safe_respond(interaction, "✅ Voici le code source :", ephemeral=True)
 
     # ────────────────────────────────────────────────────────────────────────────
     # 🔹 Commande PREFIX
@@ -64,11 +62,8 @@ class CodeCommand(commands.Cog):
     @commands.command(name="code", help="Affiche un lien vers le code source du bot.")
     @commands.cooldown(1, 3.0, commands.BucketType.user)
     async def prefix_code(self, ctx: commands.Context):
-        try:
-            await self._send_code_link(ctx.channel)
-        except Exception as e:
-            print(f"[ERREUR !code] {e}")
-            await safe_send(ctx.channel, "❌ Une erreur est survenue lors de l’envoi du lien.")
+        """Commande préfixe principale."""
+        await self._send_code_safe(ctx.channel)
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🔌 Setup du Cog
