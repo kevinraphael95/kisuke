@@ -16,7 +16,6 @@ from discord.ui import View, Select
 import json
 import os
 
-# Utils sécurisés pour éviter erreurs 429 ou suppression ratée
 from utils.discord_utils import safe_send, safe_edit, safe_respond, safe_delete  
 
 # ────────────────────────────────────────────────────────────────────────────────
@@ -45,7 +44,6 @@ class FirstSelectView(View):
         self.add_item(FirstSelect(self))
 
     async def on_timeout(self):
-        """Désactive le menu quand il expire."""
         for child in self.children:
             child.disabled = True
         if self.message:
@@ -81,7 +79,6 @@ class SecondSelectView(View):
         self.add_item(SecondSelect(self))
 
     async def on_timeout(self):
-        """Désactive le menu quand il expire."""
         for child in self.children:
             child.disabled = True
         if self.message:
@@ -115,7 +112,7 @@ class SecondSelect(Select):
         )
 
 # ────────────────────────────────────────────────────────────────────────────────
-# 🧠 Cog principal avec cooldowns personnalisables
+# 🧠 Cog principal avec cooldowns centralisés
 # ────────────────────────────────────────────────────────────────────────────────
 class NomDeLaCommande(commands.Cog):
     """
@@ -128,7 +125,6 @@ class NomDeLaCommande(commands.Cog):
     # 🔹 Fonction interne commune
     # ────────────────────────────────────────────────────────────────────────────
     async def _send_menu(self, channel: discord.abc.Messageable):
-        """Envoie le menu interactif de sélection."""
         data = load_data()
         if not data:
             await safe_send(channel, "❌ Impossible de charger les données.")
@@ -137,39 +133,25 @@ class NomDeLaCommande(commands.Cog):
         view.message = await safe_send(channel, "Choisis une option :", view=view)
 
     # ────────────────────────────────────────────────────────────────────────────
-    # 🔹 Commande SLASH avec cooldown personnalisable
+    # 🔹 Commande SLASH
     # ────────────────────────────────────────────────────────────────────────────
     @app_commands.command(
         name="nom_de_la_commande",
         description="Description détaillée de la commande."
     )
-    @app_commands.checks.cooldown(rate=1, per=5.0, key=lambda i: i.user.id)  # ⏳ Cooldown 5s
+    @app_commands.checks.cooldown(rate=1, per=5.0, key=lambda i: i.user.id)
     async def slash_nom_de_la_commande(self, interaction: discord.Interaction):
-        """Commande slash principale qui affiche le menu interactif."""
-        try:
-            await interaction.response.defer()
-            await self._send_menu(interaction.channel)
-            await interaction.delete_original_response()
-        except app_commands.CommandOnCooldown as e:
-            await safe_respond(interaction, f"⏳ Patiente {e.retry_after:.1f}s avant de réutiliser cette commande.", ephemeral=True)
-        except Exception as e:
-            print(f"[ERREUR /nom_de_la_commande] {e}")
-            await safe_respond(interaction, "❌ Une erreur est survenue.", ephemeral=True)
+        await interaction.response.defer()
+        await self._send_menu(interaction.channel)
+        await interaction.delete_original_response()
 
     # ────────────────────────────────────────────────────────────────────────────
-    # 🔹 Commande PREFIX avec cooldown personnalisable
+    # 🔹 Commande PREFIX
     # ────────────────────────────────────────────────────────────────────────────
     @commands.command(name="nom_de_la_commande")
-    @commands.cooldown(1, 5.0, commands.BucketType.user)  # ⏳ Cooldown 5s
+    @commands.cooldown(1, 5.0, commands.BucketType.user)
     async def prefix_nom_de_la_commande(self, ctx: commands.Context):
-        """Commande préfixe qui affiche le menu interactif."""
-        try:
-            await self._send_menu(ctx.channel)
-        except commands.CommandOnCooldown as e:
-            await safe_send(ctx.channel, f"⏳ Patiente {e.retry_after:.1f}s avant de réutiliser cette commande.")
-        except Exception as e:
-            print(f"[ERREUR !nom_de_la_commande] {e}")
-            await safe_send(ctx.channel, "❌ Une erreur est survenue.")
+        await self._send_menu(ctx.channel)
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🔌 Setup du Cog
