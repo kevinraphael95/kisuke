@@ -1,11 +1,14 @@
 # ────────────────────────────────────────────────────────────────────────────────
-# 📌 synonyme.py — Commande /synonyme et !synonyme
+# 📌 synonyme.py — Commande simple /synonyme et !synonyme
 # Objectif : Remplacer tous les mots >3 lettres par un synonyme FR aléatoire
 # Catégorie : Fun
 # Accès : Tous
 # Cooldown : 1 utilisation / 5 secondes / utilisateur
 # ────────────────────────────────────────────────────────────────────────────────
 
+# ────────────────────────────────────────────────────────────────────────────────
+# 📦 Imports nécessaires
+# ────────────────────────────────────────────────────────────────────────────────
 import discord
 from discord import app_commands
 from discord.ext import commands
@@ -14,77 +17,78 @@ import asyncio
 import random
 import re
 from urllib.parse import quote
+
 from utils.discord_utils import safe_send, safe_respond
 
 CONCEPTNET_BASE = "https://api.conceptnet.io/query"
 
+# ────────────────────────────────────────────────────────────────────────────────
+# 🧠 Cog principal
+# ────────────────────────────────────────────────────────────────────────────────
 class Synonyme(commands.Cog):
     """
     Commande /synonyme et !synonyme — Remplace les mots (>3 lettres) par des synonymes FR
-    Source : ConceptNet (Wiktionary/OMW). Pense à créditer la source si ton bot est public.
+    Source : ConceptNet (Wiktionary/OMW)
     """
-
     def __init__(self, bot: commands.Bot):
         self.bot = bot
+        self.session = aiohttp.ClientSession()
+        self.cache: dict[str, list[str]] = {}
 
+    async def cog_unload(self):
+        await self.session.close()
+
+    # ────────────────────────────────────────────────────────────────────────────
+    # 🔧 Fonction interne : récupération des synonymes
+    # ────────────────────────────────────────────────────────────────────────────
     async def get_synonymes_fr(self, mot: str) -> list[str]:
-        """
-        Récupère des synonymes FR avec ConceptNet.
-        On demande des arêtes /r/Synonym entre /c/fr/<mot> et d'autres /c/fr/*.
-        """
-        params = (
-            f"node=/c/fr/{quote(mot)}"
-            f"&rel=/r/Synonym"
-            f"&other=/c/fr"
-            f"&limit=40"
-        )
+        """Récupère les synonymes FR via ConceptNet (mise en cache incluse)."""
+        mot = mot.lower()
+        if mot in self.cache:
+            return self.cache[mot]
+
+        params = f"node=/c/fr/{quote(mot)}&rel=/r/Synonym&other=/c/fr&limit=40"
         url = f"{CONCEPTNET_BASE}?{params}"
+
         try:
-            async with aiohttp.ClientSession() as session:
-                async with session.get(url, timeout=6) as resp:
-                    if resp.status != 200:
-                        return []
-                    data = await resp.json()
+            async with self.session.get(url, timeout=6) as resp:
+                if resp.status != 200:
+                    self.cache[mot] = []
+                    return []
+                data = await resp.json()
+        except asyncio.TimeoutError:
+            self.cache[mot] = []
+            return []
         except Exception:
+            self.cache[mot] = []
             return []
 
         syns = set()
         for edge in data.get("edges", []):
             start = edge.get("start", {}).get("label")
             end = edge.get("end", {}).get("label")
-            # On collecte les deux extrémités, on exclut le mot d'origine
-            if start and start.lower() != mot.lower():
+            if start and start.lower() != mot:
                 syns.add(start)
-            if end and end.lower() != mot.lower():
+            if end and end.lower() != mot:
                 syns.add(end)
 
-        # On évite de retourner exactement le même mot (variantes de casse)
-        return [s for s in syns if s.lower() != mot.lower()]
+        result = [s for s in syns if s.lower() != mot]
+        self.cache[mot] = result
+        return result
 
+    # ────────────────────────────────────────────────────────────────────────────
+    # 🔧 Fonction interne : traitement du texte
+    # ────────────────────────────────────────────────────────────────────────────
     async def remplacer_par_synonymes(self, texte: str) -> str:
-        """
-        Remplace chaque mot >3 lettres par un synonyme aléatoire (FR) si dispo.
-        - Respecte la casse initiale
-        - Préserve ponctuation, chiffres, emojis, mentions, URLs
-        - Pas d'async dans re.sub : on tokenise puis on reconcatène
-        """
-        # \w inclut lettres/chiffres/_, on filtrera via .isalpha()
+        """Remplace les mots >3 lettres par un synonyme FR aléatoire si disponible."""
         tokens = re.findall(r"\w+|\W+", texte, flags=re.UNICODE)
-
-        cache: dict[str, list[str]] = {}
         pieces: list[str] = []
 
         for tok in tokens:
-            # On remplace uniquement les tokens "mots" alphabétiques
             if tok.isalpha() and len(tok) > 3:
-                cle = tok.lower()
-                if cle not in cache:
-                    cache[cle] = await self.get_synonymes_fr(cle)
-
-                candidats = cache[cle]
+                candidats = await self.get_synonymes_fr(tok)
                 if candidats:
                     choix = random.choice(candidats)
-                    # Respect de la majuscule initiale
                     if tok[0].isupper():
                         choix = choix[:1].upper() + choix[1:]
                     pieces.append(choix)
@@ -100,7 +104,7 @@ class Synonyme(commands.Cog):
     # ────────────────────────────────────────────────────────────────────────────
     @app_commands.command(
         name="synonyme",
-        description="Remplace les mots >3 lettres par des synonymes (FR) aléatoires"
+        description="Remplace les mots (>3 lettres) par des synonymes FR aléatoires."
     )
     @app_commands.checks.cooldown(1, 5.0, key=lambda i: i.user.id)
     async def slash_synonyme(self, interaction: discord.Interaction):
@@ -108,28 +112,22 @@ class Synonyme(commands.Cog):
             await interaction.response.defer()
             message = None
 
-            # On essaie de retrouver un message pertinent (réponse ou dernier message non-bot)
             if interaction.channel:
-                if getattr(interaction, "message", None) and interaction.message.reference:
-                    message = await interaction.channel.fetch_message(interaction.message.reference.message_id)
-                if not message:
-                    async for m in interaction.channel.history(limit=15):
-                        if not m.author.bot and m.content:
-                            message = m
-                            break
+                async for m in interaction.channel.history(limit=15):
+                    if not m.author.bot and m.content:
+                        message = m
+                        break
 
             if not message:
-                await safe_respond(interaction, "❌ Aucun message à modifier trouvé.", ephemeral=True)
+                await safe_respond(interaction, "❌ Aucun message trouvé à transformer.", ephemeral=True)
                 return
 
             texte_modifie = await self.remplacer_par_synonymes(message.content)
-            await safe_respond(
-                interaction,
-                f"**Original :** {message.content}\n**Modifié :** {texte_modifie}"
-            )
+            embed = discord.Embed(title="🔄 Synonymisation", color=discord.Color.blurple())
+            embed.add_field(name="💬 Original", value=message.content[:1024], inline=False)
+            embed.add_field(name="✨ Modifié", value=texte_modifie[:1024], inline=False)
+            await safe_respond(interaction, embed=embed)
 
-        except app_commands.CommandOnCooldown as e:
-            await safe_respond(interaction, f"⏳ Attends encore {e.retry_after:.1f}s.", ephemeral=True)
         except Exception as e:
             print(f"[ERREUR /synonyme] {e}")
             await safe_respond(interaction, "❌ Une erreur est survenue.", ephemeral=True)
@@ -151,14 +149,15 @@ class Synonyme(commands.Cog):
                         break
 
             if not message:
-                await safe_send(ctx.channel, "❌ Aucun message à modifier trouvé.")
+                await safe_send(ctx.channel, "❌ Aucun message trouvé à transformer.")
                 return
 
             texte_modifie = await self.remplacer_par_synonymes(message.content)
-            await safe_send(ctx.channel, f"**Original :** {message.content}\n**Modifié :** {texte_modifie}")
+            embed = discord.Embed(title="🔄 Synonymisation", color=discord.Color.blurple())
+            embed.add_field(name="💬 Original", value=message.content[:1024], inline=False)
+            embed.add_field(name="✨ Modifié", value=texte_modifie[:1024], inline=False)
+            await safe_send(ctx.channel, embed=embed)
 
-        except commands.CommandOnCooldown as e:
-            await safe_send(ctx.channel, f"⏳ Attends encore {e.retry_after:.1f}s.")
         except Exception as e:
             print(f"[ERREUR !synonyme] {e}")
             await safe_send(ctx.channel, "❌ Une erreur est survenue.")
