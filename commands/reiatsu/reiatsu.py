@@ -21,6 +21,7 @@ from utils.discord_utils import safe_send, safe_edit, safe_respond, safe_defer
 # 🛠 Helper : defer sécurisé
 # ────────────────────────────────────────────────────────────────────────────────
 async def safe_defer_if_needed(interaction: discord.Interaction):
+    """Défère l'interaction si nécessaire pour éviter les erreurs."""
     if not interaction.response.is_done():
         try:
             await interaction.response.defer()
@@ -33,6 +34,7 @@ async def safe_defer_if_needed(interaction: discord.Interaction):
 DATA_JSON_PATH = os.path.join("data", "reiatsu.json")
 
 def load_data():
+    """Charge le fichier JSON contenant les infos Reiatsu."""
     try:
         with open(DATA_JSON_PATH, "r", encoding="utf-8") as f:
             return json.load(f)
@@ -41,9 +43,10 @@ def load_data():
         return {}
 
 # ────────────────────────────────────────────────────────────────────────────────
-# 🎛️ UI — Premier menu interactif
+# 🎛️ UI — Menu interactif
 # ────────────────────────────────────────────────────────────────────────────────
 class FirstSelectView(View):
+    """Vue principale pour sélectionner un joueur."""
     def __init__(self, bot, data):
         super().__init__(timeout=120)
         self.bot = bot
@@ -52,12 +55,14 @@ class FirstSelectView(View):
         self.add_item(FirstSelect(self))
 
     async def on_timeout(self):
+        """Désactive les menus à l'expiration."""
         for child in self.children:
             child.disabled = True
         if self.message:
             await safe_edit(self.message, view=self)
 
 class FirstSelect(Select):
+    """Menu déroulant pour choisir un joueur."""
     def __init__(self, parent_view: FirstSelectView):
         self.parent_view = parent_view
         options = [discord.SelectOption(label=key, value=key) for key in self.parent_view.data.keys()]
@@ -87,13 +92,17 @@ class Reiatsu(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
 
+    # ────────────────────────────────────────────────────────────────────────────
+    # 🔹 Fonction interne : envoi menu
+    # ────────────────────────────────────────────────────────────────────────────
     async def _send_menu(self, channel: discord.abc.Messageable):
         data = load_data()
         if not data:
             await safe_send(channel, "❌ Impossible de charger les données.")
             return
         view = FirstSelectView(self.bot, data)
-        view.message = await safe_send(channel, "Choisis un joueur :", view=view)
+        message = await safe_send(channel, "Choisis un joueur :", view=view)
+        view.message = message
 
     # ────────────────────────────────────────────────────────────────────────────
     # 🔹 Commande SLASH
@@ -105,7 +114,8 @@ class Reiatsu(commands.Cog):
     @app_commands.checks.cooldown(rate=1, per=5.0, key=lambda i: i.user.id)
     async def slash_reiatsu(self, interaction: discord.Interaction):
         await safe_defer_if_needed(interaction)
-        await self._send_menu(interaction.channel)
+        channel = interaction.channel or interaction.user
+        await self._send_menu(channel)
         try:
             await interaction.delete_original_response()
         except Exception:
