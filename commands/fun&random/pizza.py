@@ -3,13 +3,14 @@
 # Objectif : Générer une pizza aléatoire simple (pâte, sauce, fromage, garnitures, toppings)
 # Catégorie : Fun&Random
 # Accès : Tous
-# Cooldown : 1 utilisation / 3 secondes / utilisateur
+# Cooldown : 1 utilisation / 3 secondes / utilisateur (géré globalement dans bot.py)
 # ────────────────────────────────────────────────────────────────────────────────
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 📦 Imports nécessaires
 # ────────────────────────────────────────────────────────────────────────────────
 import discord
+from discord import app_commands
 from discord.ext import commands
 from discord.ui import View, button
 import json
@@ -39,11 +40,10 @@ def generate_pizza_embed(data: dict) -> discord.Embed:
     pate = random.choice(data.get("pates", ["Classique"]))
     base = random.choice(data.get("bases", ["Tomate"]))
     fromage = random.choice(data.get("fromages", ["Mozzarella"]))
-    garnitures = random.sample(
-        data.get("garnitures", ["Champignons", "Jambon"]),
-        k=min(2, len(data.get("garnitures", [])) or 2)
-    )
-    toppings = random.sample(data.get("toppings_speciaux", ["Olives"]), k=1)
+    garnitures_list = data.get("garnitures", ["Champignons", "Jambon"])
+    garnitures = random.sample(garnitures_list, k=min(2, len(garnitures_list)))
+    toppings_list = data.get("toppings_speciaux", ["Olives"])
+    toppings = random.sample(toppings_list, k=1)
 
     embed = discord.Embed(
         title="🍕 Ta pizza aléatoire",
@@ -101,6 +101,7 @@ class PizzaAleatoire(commands.Cog):
         self.bot = bot
 
     async def _send_pizza(self, channel: discord.abc.Messageable, author: discord.Member):
+        """Envoie l'embed pizza avec la vue interactive."""
         data = load_data()
         if not data:
             await safe_send(channel, "❌ Impossible de charger les options de pizza.")
@@ -112,19 +113,17 @@ class PizzaAleatoire(commands.Cog):
 
     # 🔹 Commande PREFIX
     @commands.command(name="pizza", help="Génère une pizza aléatoire.")
-    @commands.cooldown(1, 3, commands.BucketType.user)
     async def prefix_pizza(self, ctx: commands.Context):
-        try:
-            await self._send_pizza(ctx.channel, ctx.author)
-        except commands.CommandOnCooldown as e:
-            await safe_send(ctx.channel, f"⏳ Attends encore {e.retry_after:.1f}s.")
-        except Exception as e:
-            print(f"[ERREUR !pizza] {e}")
-            await safe_send(ctx.channel, "❌ Une erreur est survenue lors de la génération de la pizza.")
+        await self._send_pizza(ctx.channel, ctx.author)
 
-# ────────────────────────────────────────────────────────────────────────────────
+    # 🔹 Commande SLASH
+    @app_commands.command(name="pizza", description="Génère une pizza aléatoire.")
+    async def slash_pizza(self, interaction: discord.Interaction):
+        await self._send_pizza(interaction.channel, interaction.user)
+
+# ────────────────────────────────────────────────────────────────
 # 🔌 Setup du Cog
-# ────────────────────────────────────────────────────────────────────────────────
+# ────────────────────────────────────────────────────────────────
 async def setup(bot: commands.Bot):
     cog = PizzaAleatoire(bot)
     for command in cog.get_commands():
