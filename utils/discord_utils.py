@@ -72,3 +72,17 @@ async def safe_clear_reactions(message: discord.Message, delay: float = 0.3):
     if delay > 0:
         await asyncio.sleep(delay)
     return result
+
+# ────────────────────────────────────────────────────────────────────────────────
+# 🛡️ Nouveau : defer sécurisé pour interactions
+# ────────────────────────────────────────────────────────────────────────────────
+async def safe_defer(interaction: discord.Interaction, ephemeral: bool = False):
+    """
+    Acquitte l'interaction uniquement si elle n'a pas déjà été traitée.
+    Permet d'éviter InteractionFailed, avec backoff et logs cohérents.
+    """
+    async def _defer():
+        if not interaction.response.is_done():
+            await interaction.response.defer(ephemeral=ephemeral)
+
+    return await _discord_action(_defer)
