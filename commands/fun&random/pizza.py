@@ -195,38 +195,7 @@ class PizzaAleatoire(commands.Cog):
         embed = generate_pizza_embed(data)
         view = PizzaView(data, author=author)
         view.message = await safe_send(channel, embed=embed, view=view)
-
-    # ────────────────────────────────────────────────────────────────────────────
-    # 🔹 Commande SLASH (cooldown géré par bot.py)
-    # ────────────────────────────────────────────────────────────────────────────
-    @app_commands.command(name="pizza", description="Génère une pizza aléatoire.")
-    @app_commands.checks.cooldown(1, 3.0, key=lambda i: i.user.id)
-    async def slash_pizza(self, interaction: discord.Interaction):
-        await interaction.response.defer()
-        await self._send_pizza(interaction.channel, interaction.user)
-        await interaction.delete_original_response()
-
-    # ────────────────────────────────────────────────────────────────────────────
-    # 🔹 Commande PREFIX (cooldown géré par bot.py)
-    # ────────────────────────────────────────────────────────────────────────────
-    @commands.command(name="pizza", help="🍕 Génère une pizza aléatoire.")
-    @commands.cooldown(1, 3, commands.BucketType.user)
-    async def prefix_pizza(self, ctx: commands.Context):
-        await self._send_pizza(ctx.channel, ctx.author)
-
-# ────────────────────────────────────────────────────────────────────────────────
-# 🔌 Setup du Cog
-# ────────────────────────────────────────────────────────────────────────────────
-async def setup(bot: commands.Bot):
-    cog = PizzaAleatoire(bot)
-    for command in cog.get_commands():
-        if not hasattr(command, "category"):
-            command.category = "Fun&Random"
-    await bot.add_cog(cog)
-
-s de la génération de la pizza.", ephemeral=True)
-
-    # ────────────────────────────────────────────────────────────────────────────
+ki────────────────────────────────────────────────────────────────────────────
     # 🔹 Commande PREFIX
     # ────────────────────────────────────────────────────────────────────────────
     @commands.command(name="pizza", help="Génère une pizza aléatoire.")
@@ -249,3 +218,4 @@ async def setup(bot: commands.Bot):
         if not hasattr(command, "category"):
             command.category = "Fun&Random"
     await bot.add_cog(cog)
+        
