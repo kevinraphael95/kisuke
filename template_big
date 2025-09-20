@@ -15,8 +15,18 @@ from discord.ext import commands
 from discord.ui import View, Select
 import json
 import os
-
 from utils.discord_utils import safe_send, safe_edit, safe_respond, safe_delete  
+
+# ────────────────────────────────────────────────────────────────────────────────
+# 🛠 Helper : defer sécurisé
+# ────────────────────────────────────────────────────────────────────────────────
+async def safe_defer(interaction: discord.Interaction):
+    """Fait un defer() seulement si ce n'est pas déjà fait."""
+    if not interaction.response.is_done():
+        try:
+            await interaction.response.defer()
+        except Exception:
+            pass
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 📂 Chargement des données JSON (exemple)
@@ -56,6 +66,7 @@ class FirstSelect(Select):
         super().__init__(placeholder="Sélectionne une option", options=options)
 
     async def callback(self, interaction: discord.Interaction):
+        await safe_defer(interaction)  # ✅ sécurisation ajoutée
         selected_key = self.values[0]
         new_view = SecondSelectView(self.parent_view.bot, self.parent_view.data, selected_key)
         new_view.message = interaction.message
@@ -92,6 +103,7 @@ class SecondSelect(Select):
         super().__init__(placeholder="Sélectionne une sous-option", options=options)
 
     async def callback(self, interaction: discord.Interaction):
+        await safe_defer(interaction)  # ✅ sécurisation ajoutée
         key = self.parent_view.key
         sub_key = self.values[0]
         infos = self.parent_view.data[key][sub_key]
@@ -118,6 +130,7 @@ class NomDeLaCommande(commands.Cog):
     """
     Commande /nom_de_la_commande et !nom_de_la_commande — Description courte
     """
+
     def __init__(self, bot: commands.Bot):
         self.bot = bot
 
