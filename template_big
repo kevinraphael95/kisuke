@@ -3,7 +3,7 @@
 # Objectif : Description courte de la commande avec interaction slash et préfixe
 # Catégorie : Autre
 # Accès : Tous
-# Cooldown : Paramétrable par commande
+# Cooldown : 1 utilisation / 5 secondes / utilisateur (géré centralement dans bot.py)
 # ────────────────────────────────────────────────────────────────────────────────
 
 # ────────────────────────────────────────────────────────────────────────────────
@@ -15,12 +15,12 @@ from discord.ext import commands
 from discord.ui import View, Select
 import json
 import os
-from utils.discord_utils import safe_send, safe_edit, safe_respond, safe_delete  
+from utils.discord_utils import safe_send, safe_edit, safe_respond, safe_delete, safe_defer  
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🛠 Helper : defer sécurisé
 # ────────────────────────────────────────────────────────────────────────────────
-async def safe_defer(interaction: discord.Interaction):
+async def safe_defer_if_needed(interaction: discord.Interaction):
     """Fait un defer() seulement si ce n'est pas déjà fait."""
     if not interaction.response.is_done():
         try:
@@ -29,7 +29,7 @@ async def safe_defer(interaction: discord.Interaction):
             pass
 
 # ────────────────────────────────────────────────────────────────────────────────
-# 📂 Chargement des données JSON (exemple)
+# 📂 Chargement des données JSON
 # ────────────────────────────────────────────────────────────────────────────────
 DATA_JSON_PATH = os.path.join("data", "data_file.json")
 
@@ -46,11 +46,12 @@ def load_data():
 # 🎛️ UI — Premier menu interactif
 # ────────────────────────────────────────────────────────────────────────────────
 class FirstSelectView(View):
+    """Vue principale du menu."""
     def __init__(self, bot, data):
         super().__init__(timeout=120)
         self.bot = bot
         self.data = data
-        self.message = None
+        self.message: discord.Message | None = None
         self.add_item(FirstSelect(self))
 
     async def on_timeout(self):
@@ -60,13 +61,14 @@ class FirstSelectView(View):
             await safe_edit(self.message, view=self)
 
 class FirstSelect(Select):
+    """Menu déroulant pour sélectionner une option principale."""
     def __init__(self, parent_view: FirstSelectView):
         self.parent_view = parent_view
         options = [discord.SelectOption(label=key, value=key) for key in self.parent_view.data.keys()]
         super().__init__(placeholder="Sélectionne une option", options=options)
 
     async def callback(self, interaction: discord.Interaction):
-        await safe_defer(interaction)  # ✅ sécurisation ajoutée
+        await safe_defer_if_needed(interaction)
         selected_key = self.values[0]
         new_view = SecondSelectView(self.parent_view.bot, self.parent_view.data, selected_key)
         new_view.message = interaction.message
@@ -81,12 +83,13 @@ class FirstSelect(Select):
 # 🎛️ UI — Deuxième menu interactif
 # ────────────────────────────────────────────────────────────────────────────────
 class SecondSelectView(View):
+    """Vue secondaire du menu pour sous-options."""
     def __init__(self, bot, data, key):
         super().__init__(timeout=120)
         self.bot = bot
         self.data = data
         self.key = key
-        self.message = None
+        self.message: discord.Message | None = None
         self.add_item(SecondSelect(self))
 
     async def on_timeout(self):
@@ -96,6 +99,7 @@ class SecondSelectView(View):
             await safe_edit(self.message, view=self)
 
 class SecondSelect(Select):
+    """Menu déroulant pour sélectionner une sous-option."""
     def __init__(self, parent_view: SecondSelectView):
         self.parent_view = parent_view
         sub_options = list(self.parent_view.data[self.parent_view.key].keys())
@@ -103,7 +107,7 @@ class SecondSelect(Select):
         super().__init__(placeholder="Sélectionne une sous-option", options=options)
 
     async def callback(self, interaction: discord.Interaction):
-        await safe_defer(interaction)  # ✅ sécurisation ajoutée
+        await safe_defer_if_needed(interaction)
         key = self.parent_view.key
         sub_key = self.values[0]
         infos = self.parent_view.data[key][sub_key]
@@ -116,20 +120,13 @@ class SecondSelect(Select):
             value = "\n".join(f"• {item}" for item in field_value) if isinstance(field_value, list) else str(field_value)
             embed.add_field(name=field_name.capitalize(), value=value, inline=False)
 
-        await safe_edit(
-            interaction.message,
-            content=None,
-            embed=embed,
-            view=None
-        )
+        await safe_edit(interaction.message, content=None, embed=embed, view=None)
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🧠 Cog principal avec cooldowns centralisés
 # ────────────────────────────────────────────────────────────────────────────────
 class NomDeLaCommande(commands.Cog):
-    """
-    Commande /nom_de_la_commande et !nom_de_la_commande — Description courte
-    """
+    """Commande /nom_de_la_commande et !nom_de_la_commande — Description courte"""
 
     def __init__(self, bot: commands.Bot):
         self.bot = bot
@@ -138,6 +135,7 @@ class NomDeLaCommande(commands.Cog):
     # 🔹 Fonction interne commune
     # ────────────────────────────────────────────────────────────────────────────
     async def _send_menu(self, channel: discord.abc.Messageable):
+        """Envoie le menu interactif principal."""
         data = load_data()
         if not data:
             await safe_send(channel, "❌ Impossible de charger les données.")
@@ -154,9 +152,12 @@ class NomDeLaCommande(commands.Cog):
     )
     @app_commands.checks.cooldown(rate=1, per=5.0, key=lambda i: i.user.id)
     async def slash_nom_de_la_commande(self, interaction: discord.Interaction):
-        await interaction.response.defer()
+        await safe_defer_if_needed(interaction)
         await self._send_menu(interaction.channel)
-        await interaction.delete_original_response()
+        try:
+            await interaction.delete_original_response()
+        except Exception:
+            pass
 
     # ────────────────────────────────────────────────────────────────────────────
     # 🔹 Commande PREFIX
@@ -168,7 +169,7 @@ class NomDeLaCommande(commands.Cog):
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🔌 Setup du Cog
-# ────────────────────────────────────────────────────────────────────────────────
+# ────────────────────────────────────────────────────────────────
 async def setup(bot: commands.Bot):
     cog = NomDeLaCommande(bot)
     for command in cog.get_commands():
