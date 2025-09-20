@@ -1,5 +1,5 @@
 # ────────────────────────────────────────────────────────────────────────────────
-# 📌 mastermind.py — Commande interactive !mastermind /mastermind
+# 📌 mastermind2.py — Commande interactive !mastermind /mastermind
 # Objectif : Jeu de logique Mastermind via boutons Discord avec mode solo/multi
 # Catégorie : Jeux
 # Accès : Public
@@ -37,8 +37,8 @@ DIFFICULTIES = [
 class MastermindView(View):
     def __init__(self, author: discord.User | None, code_length: int, corruption: bool):
         """
-        author = None → mode multi
-        author = discord.User → mode solo
+        author = None → mode multi (tout le monde)
+        author = discord.User → mode solo (seul le lanceur)
         """
         super().__init__(timeout=180)
         self.author = author
@@ -51,10 +51,9 @@ class MastermindView(View):
         self.message = None
         self.result_shown = False
 
-        # Boutons couleurs
+        # ajouter boutons couleurs + actions
         for color in COLORS:
             self.add_item(MMButton("color", color, self))
-        # Boutons d'action
         self.add_item(MMButton("validate", "✅", self))
         self.add_item(MMButton("clear", "🗑️", self))
 
@@ -94,7 +93,7 @@ class MastermindView(View):
         matched_code = [False] * self.code_length
         matched_guess = [False] * self.code_length
 
-        # 🔴 bonne position
+        # 🔴 bonnes positions
         for i in range(self.code_length):
             if guess[i] == code_copy[i]:
                 feedback.append("🔴")
@@ -102,7 +101,8 @@ class MastermindView(View):
                 matched_guess[i] = True
             else:
                 feedback.append(None)
-        # ⚪ bonne couleur mauvaise position
+
+        # ⚪ bonnes couleurs mauvaises positions
         for i in range(self.code_length):
             if feedback[i] is None:
                 for j in range(self.code_length):
@@ -111,22 +111,31 @@ class MastermindView(View):
                         matched_code[j] = True
                         matched_guess[i] = True
                         break
-        # ❌ couleur absente
+
+        # ❌ couleurs absentes
         for i in range(self.code_length):
             if feedback[i] is None:
                 feedback[i] = "❌"
-        # 💀 corruption
+
+        # corruption aléatoire (mode cauchemar)
         if self.corruption:
             feedback = [f if random.random() > 0.20 else "💀" for f in feedback]
+
         return feedback
 
     # ────────────────────────────────────────────────────────────
     async def update_message(self):
+        """Met à jour l'embed affiché via safe_edit (sûr vis-à-vis des rate-limits)."""
         if self.message and not self.result_shown:
-            await safe_edit(self.message, embed=self.build_embed(), view=self)
+            try:
+                await safe_edit(self.message, embed=self.build_embed(), view=self)
+            except Exception:
+                # silent fail — on ne veut pas lever d'exception non gérée ici
+                pass
 
     # ────────────────────────────────────────────────────────────
     async def make_attempt(self, interaction: discord.Interaction):
+        """Ajoute la tentative, calcule feedback et affiche résultat si besoin."""
         guess = self.current_guess[:]
         feedback = self.generate_feedback(guess)
         self.attempts.append((guess, feedback))
@@ -136,42 +145,59 @@ class MastermindView(View):
             self.result_shown = True
             await self.show_result(interaction, win=True)
             return
+
         if len(self.attempts) >= self.max_attempts:
             self.result_shown = True
             await self.show_result(interaction, win=False)
             return
 
+        # sinon on met à jour l'affichage et on acquitte l'interaction proprement
         await self.update_message()
-        await safe_defer(interaction)
-
-    # ────────────────────────────────────────────────────────────
-    async def show_result(self, interaction: discord.Interaction, win: bool):
-        self.stop()
-        for item in self.children:
-            item.disabled = True
-        embed = self.build_embed()
-        embed.add_field(
-            name="🏁 Résultat",
-            value=f"**{'Gagné ! 🎉' if win else 'Perdu ! 💀'}**\n"
-                  f"La combinaison était : {' '.join(self.code)}",
-            inline=False
-        )
-        embed.color = discord.Color.green() if win else discord.Color.red()
         try:
-            await safe_edit(interaction.message, embed=embed, view=self)
+            await safe_defer(interaction)
         except Exception:
             pass
 
+    # ────────────────────────────────────────────────────────────
+    async def show_result(self, interaction: discord.Interaction, win: bool):
+        """Affiche l'écran de résultat et désactive les boutons."""
+        self.stop()
+        for item in self.children:
+            item.disabled = True
+
+        embed = self.build_embed()
+        embed.add_field(
+            name="🏁 Résultat",
+            value=f"**{'Gagné ! 🎉' if win else 'Perdu ! 💀'}**\nLa combinaison était : {' '.join(self.code)}",
+            inline=False
+        )
+        embed.color = discord.Color.green() if win else discord.Color.red()
+
+        # toujours utiliser safe_edit pour l'édition
+        try:
+            # si on a le message stocké, on l'édite
+            if self.message:
+                await safe_edit(self.message, embed=embed, view=self)
+            else:
+                # fallback : éditer le message de l'interaction
+                await safe_edit(interaction.message, embed=embed, view=self)
+        except Exception:
+            # si tout casse, tenter un message ephemeral pour informer
+            try:
+                await safe_respond(interaction, "✅ Résultat affiché.", ephemeral=True)
+            except Exception:
+                pass
+
 # ────────────────────────────────────────────────────────────────────────────────
-# 🔵 Bouton générique Mastermind
-# ────────────────────────────────────────────────────────────────────────────────
+# 🔵 Bouton générique Mastermind (couleurs/actions/difficultés)
+# ────────────────────────────────────────────────────────────────
 class MMButton(Button):
-    def __init__(self, button_type: str, value: str, view_ref: MastermindView | None = None, author: discord.User | None = None):
+    def __init__(self, button_type: str, value, view_ref: MastermindView | None = None, author: discord.User | None = None):
         """
-        button_type: color / validate / clear / difficulty
-        value: emoji ou label
+        button_type: "color" / "validate" / "clear" / "difficulty"
+        value: emoji (pour color) ou label / dict (pour difficulty)
         view_ref: référence MastermindView (pour color/validate/clear)
-        author: pour DifficultyButton
+        author: utilisé pour difficulty (et pour mode solo)
         """
         style = discord.ButtonStyle.secondary
         if button_type == "validate":
@@ -181,41 +207,65 @@ class MMButton(Button):
         elif button_type == "difficulty":
             style = discord.ButtonStyle.primary
 
-        super().__init__(label=value if button_type == "difficulty" else None,
-                         emoji=value if button_type != "difficulty" else None,
-                         style=style)
+        label = value if button_type == "difficulty" else None
+        emoji = None if button_type == "difficulty" else value
+
+        super().__init__(label=label, emoji=emoji, style=style)
         self.button_type = button_type
         self.view_ref = view_ref
         self.author = author
         self.value = value
 
     async def callback(self, interaction: discord.Interaction):
-        await safe_defer(interaction)
-        # ── Vérification utilisateur mode solo
+        """Callback robuste : safe_defer, checks auteur, safe_edit / safe_respond."""
+        # acquitter si nécessaire (prévenir InteractionFailed)
+        try:
+            await safe_defer(interaction)
+        except Exception:
+            pass
+
+        # mode solo : seul l'auteur peut jouer
         if self.view_ref and self.view_ref.author and interaction.user != self.view_ref.author:
             return await safe_respond(interaction, "⛔ Ce jeu ne t'appartient pas.", ephemeral=True)
 
-        # ── Actions selon type
-        if self.button_type == "color":
-            if len(self.view_ref.current_guess) >= self.view_ref.code_length:
-                return await safe_respond(interaction, "❗ Nombre de couleurs atteint.", ephemeral=True)
-            self.view_ref.current_guess.append(self.value)
-            await self.view_ref.update_message()
+        try:
+            if self.button_type == "color":
+                if len(self.view_ref.current_guess) >= self.view_ref.code_length:
+                    return await safe_respond(interaction, "❗ Nombre de couleurs atteint.", ephemeral=True)
+                self.view_ref.current_guess.append(self.value)
+                await self.view_ref.update_message()
 
-        elif self.button_type == "clear":
-            self.view_ref.current_guess.clear()
-            await self.view_ref.update_message()
+            elif self.button_type == "clear":
+                self.view_ref.current_guess.clear()
+                await self.view_ref.update_message()
 
-        elif self.button_type == "validate":
-            if len(self.view_ref.current_guess) != self.view_ref.code_length:
-                return await safe_respond(interaction, "⚠️ Nombre de couleurs insuffisant.", ephemeral=True)
-            await self.view_ref.make_attempt(interaction)
+            elif self.button_type == "validate":
+                if len(self.view_ref.current_guess) != self.view_ref.code_length:
+                    return await safe_respond(interaction, "⚠️ Nombre de couleurs insuffisant.", ephemeral=True)
+                await self.view_ref.make_attempt(interaction)
 
-        elif self.button_type == "difficulty":
-            view = MastermindView(self.author, self.value["code_length"], self.value["corruption"])
-            embed = view.build_embed()
-            await interaction.response.edit_message(embed=embed, view=view)
-            view.message = interaction.message
+            elif self.button_type == "difficulty":
+                # value est un dict {label, code_length, corruption}
+                diff = self.value
+                view = MastermindView(self.author, diff["code_length"], diff["corruption"])
+                embed = view.build_embed()
+                # éditer le message d'origine (on a déjà defer si nécessaire)
+                try:
+                    # si interaction.message existe, safe_edit dessus
+                    await safe_edit(interaction.message, embed=embed, view=view)
+                    view.message = interaction.message
+                except Exception:
+                    # fallback : répondre avec un nouveau message
+                    msg = await safe_send(interaction.channel, embed=embed, view=view)
+                    view.message = msg
+
+        except Exception as e:
+            # log en console + message utilisateur sûr
+            print(f"[ERREUR MMButton.callback] {e}")
+            try:
+                await safe_respond(interaction, "❌ Une erreur est survenue dans le jeu.", ephemeral=True)
+            except Exception:
+                pass
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🎛️ Menu de sélection de difficulté
@@ -229,6 +279,7 @@ class DifficultyView(View):
         super().__init__(timeout=60)
         self.author = author if mode.lower() == "solo" else None
         for diff in DIFFICULTIES:
+            # ici on stocke le dict entier comme value
             self.add_item(MMButton("difficulty", diff, author=self.author))
 
 # ────────────────────────────────────────────────────────────────────────────────
@@ -252,7 +303,12 @@ class Mastermind(commands.Cog):
             description="Clique sur un bouton ci-dessous :",
             color=discord.Color.orange()
         )
-        await safe_send(ctx.channel, embed=embed, view=view)
+        # safe_send renvoie le message (géré par utils), on le stocke si besoin
+        msg = await safe_send(ctx.channel, embed=embed, view=view)
+        try:
+            view.message = msg
+        except Exception:
+            pass
 
     # ────────────────────────────────────────────────────────────
     # 🔹 Commande SLASH
@@ -270,11 +326,23 @@ class Mastermind(commands.Cog):
             description="Clique sur un bouton ci-dessous :",
             color=discord.Color.orange()
         )
-        await interaction.response.send_message(embed=embed, view=view)
+        # on répond et on stocke le message lié à l'interaction
+        try:
+            await interaction.response.send_message(embed=embed, view=view)
+            try:
+                view.message = await interaction.original_response()
+            except Exception:
+                view.message = None
+        except Exception as e:
+            print(f"[ERREUR slash_mastermind send] {e}")
+            try:
+                await safe_respond(interaction, "❌ Impossible d'ouvrir le jeu.", ephemeral=True)
+            except Exception:
+                pass
 
-# ────────────────────────────────────────────────────────────────
+# ────────────────────────────────────────────────────────────────────────────────
 # 🔌 Setup du Cog
-# ────────────────────────────────────────────────────────────────
+# ────────────────────────────────────────────────────────────────────────────────
 async def setup(bot: commands.Bot):
     cog = Mastermind(bot)
     for command in cog.get_commands():
