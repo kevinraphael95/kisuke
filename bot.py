@@ -63,9 +63,11 @@ bot.is_main_instance = False
 # 🔌 Chargement dynamique des extensions
 # ──────────────────────────────────────────────────────────────
 async def load_extensions():
+    """Charge toutes les commandes et tâches."""
+    # Chargement des commandes
     for root, dirs, files in os.walk("commands"):
         for file in files:
-            if file.endswith(".py"):
+            if file.endswith(".py") and not file.startswith("__"):
                 path = os.path.relpath(os.path.join(root, file), ".").replace(os.path.sep, ".").replace(".py", "")
                 try:
                     if path in bot.extensions:
@@ -74,12 +76,16 @@ async def load_extensions():
                     print(f"✅ Loaded {path}")
                 except Exception as e:
                     print(f"❌ Failed to load {path}: {e}")
-    # Tâches
-    try:
-        await bot.load_extension("tasks.heartbeat")
-        print("✅ Loaded tasks.heartbeat")
-    except Exception as e:
-        print(f"❌ Failed to load tasks.heartbeat: {e}")
+
+    # Chargement des tâches
+    for task in ["tasks.heartbeat", "tasks.reiatsu_spawner"]:
+        try:
+            if task in bot.extensions:
+                await bot.unload_extension(task)
+            await bot.load_extension(task)
+            print(f"✅ Loaded {task}")
+        except Exception as e:
+            print(f"❌ Failed to load {task}: {e}")
 
 # ──────────────────────────────────────────────────────────────
 # 🔔 Événement on_ready
@@ -89,24 +95,26 @@ async def on_ready():
     print(f"✅ Connecté en tant que {bot.user}")
     await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name="Bleach"))
 
+    # Gestion verrou Supabase
     now = datetime.now(timezone.utc).isoformat()
     try:
-        supabase.table("bot_lock").delete().eq("id", "reiatsu_lock").execute()
+        supabase.table("bot_lock").delete().eq("id", "main_lock").execute()
         supabase.table("bot_lock").insert({
-            "id": "reiatsu_lock",
+            "id": "main_lock",
             "instance_id": INSTANCE_ID,
             "updated_at": now
         }).execute()
         bot.is_main_instance = True
         print(f"✅ Instance principale active : {INSTANCE_ID}")
+    except Exception as e:
+        print(f"⚠️ Vérification du verrou Supabase échouée : {e}")
 
-        # Charger spawner Reiatsu
-        await bot.load_extension("tasks.reiatsu_spawner")
+    # Synchronisation slash commands **après avoir chargé toutes les extensions**
+    try:
         await bot.tree.sync()
         print("✅ Slash commands synchronisées")
     except Exception as e:
-        print(f"⚠️ Impossible de se connecter à Supabase : {e}")
-        print("🔓 Aucune gestion de verrou — le bot démarre quand même.")
+        print(f"⚠️ Impossible de synchroniser les slash commands : {e}")
 
 # ──────────────────────────────────────────────────────────────
 # 📩 Événement on_message
@@ -115,8 +123,9 @@ async def on_ready():
 async def on_message(message):
     if message.author.bot:
         return
+    # Vérification du verrou Supabase
     try:
-        lock = supabase.table("bot_lock").select("instance_id").eq("id", "reiatsu_lock").execute()
+        lock = supabase.table("bot_lock").select("instance_id").eq("id", "main_lock").execute()
         if lock.data and lock.data[0]["instance_id"] != INSTANCE_ID:
             return
     except Exception as e:
@@ -126,6 +135,7 @@ async def on_message(message):
     if message.content.strip() in [f"<@{bot.user.id}>", f"<@!{bot.user.id}>"]:
         await safe_send(message.channel, f"👋 Salut {message.author.mention} ! Utilise `{prefix}help` pour voir les commandes.")
         return
+
     if message.content.startswith(prefix):
         await bot.process_commands(message)
 
@@ -134,7 +144,6 @@ async def on_message(message):
 # ──────────────────────────────────────────────────────────────
 @bot.event
 async def on_command_error(ctx, error):
-    """Gestion des erreurs pour préfixe"""
     if isinstance(error, commands.CommandOnCooldown):
         await safe_send(ctx.channel, f"⏳ Patiente {error.retry_after:.1f}s avant de réutiliser cette commande.")
     elif isinstance(error, commands.MissingPermissions):
@@ -147,7 +156,6 @@ async def on_command_error(ctx, error):
 
 @bot.tree.error
 async def on_app_command_error(interaction: discord.Interaction, error):
-    """Gestion des erreurs pour slash"""
     if isinstance(error, app_commands.CommandOnCooldown):
         await safe_respond(interaction, f"⏳ Patiente {error.retry_after:.1f}s avant de réutiliser cette commande.", ephemeral=True)
     elif isinstance(error, app_commands.MissingPermissions):
@@ -158,7 +166,6 @@ async def on_app_command_error(interaction: discord.Interaction, error):
 
 @bot.event
 async def on_interaction(interaction: discord.Interaction):
-    """Gestion pour boutons, menus, modals"""
     try:
         await bot.tree.on_interaction(interaction)
     except Exception as e:
