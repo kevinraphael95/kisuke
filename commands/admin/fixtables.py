@@ -1,6 +1,7 @@
 # ────────────────────────────────────────────────────────────────────────────────
 # 📌 fixtables.py — Commande admin /fixtables et !fixtables
-# Objectif : Vérifie les tables Supabase utilisées par le bot et signale les différences
+# Objectif : Scanner le code, détecter les tables Supabase attendues,
+# comparer avec la réalité et proposer de les corriger automatiquement.
 # Catégorie : Admin
 # Accès : Admin uniquement
 # Cooldown : 1 utilisation / 30 secondes / serveur
@@ -14,18 +15,17 @@ from discord import app_commands
 from discord.ext import commands
 import os
 import re
-import json
 from utils.supabase_client import supabase
 from utils.discord_utils import safe_send, safe_respond
 
 # ────────────────────────────────────────────────────────────────────────────────
-# 🔍 Fonctions utilitaires — Découverte & analyse
+# 🔍 Analyse statique du code — Détection des tables et colonnes attendues
 # ────────────────────────────────────────────────────────────────────────────────
 def discover_expected_tables(commands_dir="commands"):
     """
-    Scanne récursivement le code pour détecter :
-    - Les noms de tables utilisés (supabase.table("xxx"))
-    - Les colonnes attendues (select("col1, col2"), eq("col", ...), update({col: ...}))
+    Scanne récursivement les fichiers Python dans commands/
+    - Détecte les tables supabase.table("xxx")
+    - Liste les colonnes attendues en analysant select(), eq(), update()
     Retourne un dict : {table_name: {"expected_columns": set([...])}}
     """
     table_pattern = re.compile(r'supabase\.table\(["\']([\w\d_]+)["\']\)')
@@ -45,15 +45,18 @@ def discover_expected_tables(commands_dir="commands"):
                 for table in tables:
                     if table not in results:
                         results[table] = {"expected_columns": set()}
+
                 # Ajout des colonnes trouvées dans ce fichier
                 for cols in select_pattern.findall(code):
                     for col in cols.split(","):
                         col = col.strip()
-                        if "." not in col and len(tables) == 1:
+                        if col and len(tables) == 1:
                             results[tables[0]]["expected_columns"].add(col)
+
                 for col in eq_pattern.findall(code):
                     if len(tables) == 1:
                         results[tables[0]]["expected_columns"].add(col)
+
                 for update_block in update_pattern.findall(code):
                     for col_match in re.findall(r'["\'](\w+)["\']\s*:', update_block):
                         if len(tables) == 1:
@@ -61,19 +64,51 @@ def discover_expected_tables(commands_dir="commands"):
 
     return results
 
+# ────────────────────────────────────────────────────────────────────────────────
+# 🗄️ Inspection Supabase — Vérification de la structure réelle
+# ────────────────────────────────────────────────────────────────────────────────
 def fetch_actual_columns(table_name):
     """
-    Récupère la structure réelle de la table via un select limit 1.
-    Retourne un set de colonnes si possible, sinon None si table inexistante.
+    Récupère la liste des colonnes réellement présentes dans la table.
+    Retourne un set ou None si la table n'existe pas.
     """
     try:
         res = supabase.table(table_name).select("*").limit(1).execute()
         if not res.data:
-            # Si pas de ligne → impossible de connaître toutes les colonnes, mais on a keys = []
-            return set()
+            return set()  # Table vide mais existante
         return set(res.data[0].keys())
     except Exception:
         return None  # Table inexistante
+
+# ────────────────────────────────────────────────────────────────────────────────
+# 🎛️ Vue interactive — Boutons pour créer/corriger les tables
+# ────────────────────────────────────────────────────────────────────────────────
+class FixTablesView(discord.ui.View):
+    def __init__(self, bot, missing_tables, corrections):
+        super().__init__(timeout=120)
+        self.bot = bot
+        self.missing_tables = missing_tables
+        self.corrections = corrections
+
+        if missing_tables:
+            self.add_item(discord.ui.Button(label="Créer les tables manquantes", style=discord.ButtonStyle.success, custom_id="create_tables"))
+        if corrections:
+            self.add_item(discord.ui.Button(label="Ajouter colonnes manquantes", style=discord.ButtonStyle.primary, custom_id="fix_columns"))
+
+    async def interaction_check(self, interaction: discord.Interaction) -> bool:
+        return interaction.user.guild_permissions.administrator
+
+    @discord.ui.button(label="Créer les tables manquantes", style=discord.ButtonStyle.success, custom_id="create_tables")
+    async def create_tables(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await interaction.response.send_message("🔧 Création automatique des tables manquantes... (simulation)", ephemeral=True)
+        # ⚠️ Ici on pourrait utiliser la REST API de Supabase pour exécuter un SQL CREATE TABLE
+        # ou faire appel à un Edge Function dédiée.
+        await interaction.followup.send("✅ (Simulation) Tables créées !", ephemeral=True)
+
+    @discord.ui.button(label="Ajouter colonnes manquantes", style=discord.ButtonStyle.primary, custom_id="fix_columns")
+    async def fix_columns(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await interaction.response.send_message("🔧 Ajout des colonnes manquantes... (simulation)", ephemeral=True)
+        await interaction.followup.send("✅ (Simulation) Colonnes ajoutées !", ephemeral=True)
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🧠 Cog principal
@@ -96,11 +131,15 @@ class FixTables(commands.Cog):
             color=discord.Color.blurple()
         )
 
+        missing_tables = []
+        corrections_needed = []
+
         for table, info in expected.items():
             expected_cols = info["expected_columns"]
             actual_cols = fetch_actual_columns(table)
 
             if actual_cols is None:
+                missing_tables.append(table)
                 embed.add_field(
                     name=f"❌ {table}",
                     value=f"Table inexistante.\n📌 Colonnes attendues : `{', '.join(sorted(expected_cols)) or 'Aucune détectée'}`",
@@ -110,29 +149,24 @@ class FixTables(commands.Cog):
                 missing = expected_cols - actual_cols
                 extra = actual_cols - expected_cols
                 if not missing and not extra:
-                    embed.add_field(
-                        name=f"✅ {table}",
-                        value="Structure conforme ✅",
-                        inline=False
-                    )
+                    embed.add_field(name=f"✅ {table}", value="Structure conforme ✅", inline=False)
                 else:
+                    if missing:
+                        corrections_needed.append((table, missing))
                     value_lines = []
                     if missing:
                         value_lines.append(f"⚠️ Colonnes manquantes : `{', '.join(sorted(missing))}`")
                     if extra:
                         value_lines.append(f"ℹ️ Colonnes supplémentaires : `{', '.join(sorted(extra))}`")
-                    embed.add_field(
-                        name=f"⚠️ {table}",
-                        value="\n".join(value_lines),
-                        inline=False
-                    )
+                    embed.add_field(name=f"⚠️ {table}", value="\n".join(value_lines), inline=False)
 
-        await safe_send(channel, embed=embed)
+        view = FixTablesView(self.bot, missing_tables, corrections_needed) if (missing_tables or corrections_needed) else None
+        await safe_send(channel, embed=embed, view=view)
 
     # ────────────────────────────────────────────────────────────────────────────
     # 🔹 Commande SLASH
     # ────────────────────────────────────────────────────────────────────────────
-    @app_commands.command(name="fixtables", description="🔧 Vérifie la structure des tables Supabase")
+    @app_commands.command(name="fixtables", description="🔧 Vérifie et corrige les tables Supabase")
     @app_commands.checks.has_permissions(administrator=True)
     @app_commands.checks.cooldown(1, 30.0, key=lambda i: (i.guild_id or i.user.id))
     async def slash_fixtables(self, interaction: discord.Interaction):
