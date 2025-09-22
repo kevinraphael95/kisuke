@@ -19,7 +19,7 @@ from discord.ui import View, Button
 from typing import Dict, List, Tuple, Set
 
 from utils.supabase_client import supabase
-from utils.discord_utils import safe_send, safe_edit, safe_respond
+from utils.discord_utils import safe_send, safe_edit
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🔧 Config
@@ -37,7 +37,7 @@ _update_dict_re = re.compile(r'\.(?:update|insert)\s*\(\s*\{([^}]+)\}', re.S)
 _key_in_dict_re = re.compile(r'["\']([\w\d_]+)["\']\s*:')
 
 def _infer_sql_type(c: str) -> str:
-    """Heuristique simple pour déterminer le type probable d'une colonne."""
+    """Détecte un type SQL probable pour une colonne donnée."""
     c = c.lower()
     if c.endswith("_id") or c in {"user_id", "guild_id", "channel_id"}:
         return "text"
@@ -50,6 +50,7 @@ def _infer_sql_type(c: str) -> str:
     return "text"
 
 def discover_expected_tables(dirs: List[str] = CODE_SCAN_DIRS) -> Dict[str, Dict]:
+    """Analyse le code et retourne un mapping table -> colonnes (dans l'ordre d'apparition)."""
     results: Dict[str, Dict] = {}
     for base_dir in dirs:
         for root, _, files in os.walk(base_dir):
@@ -71,8 +72,7 @@ def discover_expected_tables(dirs: List[str] = CODE_SCAN_DIRS) -> Dict[str, Dict
 
                     # select(...)
                     for s in _select_re.finditer(window):
-                        cols = [c.strip() for c in s.group(1).split(",") if c.strip() != "*"]
-                        for c in cols:
+                        for c in [col.strip() for col in s.group(1).split(",") if col.strip() != "*"]:
                             t_info["columns"].setdefault(c, []).append((path, line_no))
 
                     # eq(...)
@@ -90,9 +90,7 @@ def discover_expected_tables(dirs: List[str] = CODE_SCAN_DIRS) -> Dict[str, Dict
 # 🗄️ Récupération structure Supabase
 # ────────────────────────────────────────────────────────────────────────────────
 def fetch_actual_columns(table: str) -> Tuple[Dict[str, str], bool]:
-    """
-    Retourne (colonnes:types, existe:bool)
-    """
+    """Retourne (colonnes:types, existe:bool) depuis Supabase."""
     try:
         res = supabase.table(table).select("*").limit(1).execute()
         if not res or not getattr(res, "data", None):
@@ -157,6 +155,7 @@ class FixTables(commands.Cog):
         sql_per_table = {}
 
         for table, info in expected.items():
+            # Respecter l'ordre d'apparition des colonnes
             expected_cols = {c: _infer_sql_type(c) for c in info["columns"].keys()}
             actual_cols, exists = fetch_actual_columns(table)
 
@@ -165,36 +164,37 @@ class FixTables(commands.Cog):
                 color=discord.Color.blurple()
             )
 
-            # Table attendue
             exp_str = "\n".join(f"`{c}` → `{t}`" for c, t in expected_cols.items()) or "Aucune colonne détectée"
             embed.add_field(name="📌 Colonnes attendues (code)", value=exp_str, inline=False)
 
-            # Table existante
             if exists:
                 act_str = "\n".join(f"`{c}` → `{t}`" for c, t in actual_cols.items()) or "Table vide"
                 embed.add_field(name="🗄️ Colonnes réelles (Supabase)", value=act_str, inline=False)
             else:
                 embed.add_field(name="🗄️ Colonnes réelles (Supabase)", value="❌ Table inexistante", inline=False)
 
-            # Différences
-            missing = set(expected_cols) - set(actual_cols)
-            extra = set(actual_cols) - set(expected_cols)
+            missing = [c for c in expected_cols if c not in actual_cols]
+            extra = [c for c in actual_cols if c not in expected_cols]
+
             diff_lines = []
             if missing:
                 diff_lines.append(f"⚠️ Colonnes manquantes : {', '.join(missing)}")
             if extra:
                 diff_lines.append(f"ℹ️ Colonnes supplémentaires : {', '.join(extra)}")
+
             embed.add_field(name="🔎 Différences", value="\n".join(diff_lines) or "✅ Structure conforme", inline=False)
 
-            # Commandes qui utilisent cette table
             locations = "\n".join(f"- `{os.path.relpath(f)}`:{ln}" for f, ln in info["locations"]) or "Non trouvé"
             embed.add_field(name="📂 Fichiers utilisant cette table", value=locations, inline=False)
 
-            # SQL généré
-            create_sql = f"CREATE TABLE {table} ({', '.join(f'{c} {t}' for c, t in expected_cols.items())});"
+            # SQL généré dans le bon ordre
+            create_sql = "CREATE TABLE {t} (\n  {cols}\n);".format(
+                t=table,
+                cols=",\n  ".join(f"{c} {t}" for c, t in expected_cols.items())
+            )
             alter_sql = "\n".join(f"ALTER TABLE {table} ADD COLUMN {c} {_infer_sql_type(c)};" for c in missing)
-            sql_per_table[table] = (create_sql, alter_sql)
 
+            sql_per_table[table] = (create_sql, alter_sql)
             pages.append(embed)
 
         view = TablePaginator(pages, sql_per_table)
