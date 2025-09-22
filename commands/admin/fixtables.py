@@ -94,11 +94,11 @@ def fetch_actual_columns(table: str) -> Tuple[Dict[str, str], bool]:
     try:
         res = supabase.table(table).select("*").limit(1).execute()
         if not res or not getattr(res, "data", None):
-            return {}, True  # table existe mais peut-être vide
+            return {}, True
         row = res.data[0]
         return {k: str(type(v)) for k, v in row.items()}, True
     except Exception:
-        return {}, False  # table n'existe pas
+        return {}, False
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🎛️ UI — Pagination par table
@@ -177,9 +177,14 @@ class FixTables(commands.Cog):
             if extra: diff.append(f"ℹ️ Supplémentaires : {', '.join(extra)}")
             embed.add_field(name="🔎 Différences", value="\n".join(diff) or "✅ Structure conforme", inline=False)
 
+            # Compacter fichiers
+            files_summary = []
+            for f, ln_list in info["locations"]:
+                lines = [str(ln) for f2, ln in info["locations"] if f2 == f]
+                files_summary.append(f"- `{os.path.relpath(f)}` ({', '.join(lines)})")
             embed.add_field(
                 name="📂 Fichiers utilisant cette table",
-                value="\n".join(f"- `{os.path.relpath(f)}`:{ln}" for f, ln in info["locations"]) or "Non trouvé",
+                value="\n".join(files_summary) or "Non trouvé",
                 inline=False
             )
 
