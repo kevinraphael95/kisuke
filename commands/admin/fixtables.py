@@ -50,8 +50,9 @@ def _infer_sql_type(c: str) -> str:
     return "text"
 
 def discover_expected_tables(dirs: List[str] = CODE_SCAN_DIRS) -> Dict[str, Dict]:
-    """Analyse le code et retourne un mapping table -> colonnes (dans l'ordre d'apparition)."""
+    """Analyse le code et retourne un mapping table -> colonnes réellement utilisées (scan bloc par bloc)."""
     results: Dict[str, Dict] = {}
+
     for base_dir in dirs:
         for root, _, files in os.walk(base_dir):
             for fn in files:
@@ -63,27 +64,32 @@ def discover_expected_tables(dirs: List[str] = CODE_SCAN_DIRS) -> Dict[str, Dict
                 except Exception:
                     continue
 
-                for match in _table_re.finditer(code):
+                matches = list(_table_re.finditer(code))
+                for i, match in enumerate(matches):
                     table = match.group(1)
+                    start = match.end()
+                    end = matches[i + 1].start() if i + 1 < len(matches) else len(code)
+                    snippet = code[start:end]
+
                     line_no = code[:match.start()].count("\n") + 1
                     t_info = results.setdefault(table, {"columns": {}, "locations": []})
                     t_info["locations"].append((path, line_no))
-                    window = code[match.end():match.end() + WINDOW_CHARS]
 
                     # select(...)
-                    for s in _select_re.finditer(window):
+                    for s in _select_re.finditer(snippet):
                         for c in [col.strip() for col in s.group(1).split(",") if col.strip() != "*"]:
                             t_info["columns"].setdefault(c, []).append((path, line_no))
 
                     # eq(...)
-                    for e in _eq_re.finditer(window):
+                    for e in _eq_re.finditer(snippet):
                         c = e.group(1)
                         t_info["columns"].setdefault(c, []).append((path, line_no))
 
                     # update/insert dict
-                    for block in _update_dict_re.finditer(window):
+                    for block in _update_dict_re.finditer(snippet):
                         for k in _key_in_dict_re.findall(block.group(1)):
                             t_info["columns"].setdefault(k, []).append((path, line_no))
+
     return results
 
 # ────────────────────────────────────────────────────────────────────────────────
@@ -183,7 +189,7 @@ class FixTables(commands.Cog):
                     if extra: diff.append(f"ℹ️ Supplémentaires : {', '.join(extra)}")
                     embed.add_field(name="🔎 Différences", value="\n".join(diff) or "✅ Structure conforme", inline=False)
 
-                    # compact locations : un fichier par ligne + lignes regroupées
+                    # un fichier par ligne + lignes regroupées
                     file_lines: Dict[str, List[int]] = {}
                     for f, ln in info["locations"]:
                         file_lines.setdefault(f, []).append(ln)
