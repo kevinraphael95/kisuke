@@ -16,10 +16,10 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 from discord.ui import View, Button
-from typing import Dict, List, Tuple, Set
+from typing import Dict, List, Tuple
 
 from utils.supabase_client import supabase
-from utils.discord_utils import safe_send, safe_edit, safe_respond
+from utils.discord_utils import safe_send, safe_edit
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🔧 Config
@@ -37,7 +37,7 @@ _update_dict_re = re.compile(r'\.(?:update|insert)\s*\(\s*\{([^}]+)\}', re.S)
 _key_in_dict_re = re.compile(r'["\']([\w\d_]+)["\']\s*:')
 
 def _infer_sql_type(c: str) -> str:
-    """Heuristique simple pour déterminer le type probable d'une colonne."""
+    """Détecte un type SQL probable pour une colonne donnée."""
     c = c.lower()
     if c.endswith("_id") or c in {"user_id", "guild_id", "channel_id"}:
         return "text"
@@ -50,6 +50,7 @@ def _infer_sql_type(c: str) -> str:
     return "text"
 
 def discover_expected_tables(dirs: List[str] = CODE_SCAN_DIRS) -> Dict[str, Dict]:
+    """Analyse le code et retourne un mapping table -> colonnes (dans l'ordre d'apparition)."""
     results: Dict[str, Dict] = {}
     for base_dir in dirs:
         for root, _, files in os.walk(base_dir):
@@ -71,8 +72,7 @@ def discover_expected_tables(dirs: List[str] = CODE_SCAN_DIRS) -> Dict[str, Dict
 
                     # select(...)
                     for s in _select_re.finditer(window):
-                        cols = [c.strip() for c in s.group(1).split(",") if c.strip() != "*"]
-                        for c in cols:
+                        for c in [col.strip() for col in s.group(1).split(",") if col.strip() != "*"]:
                             t_info["columns"].setdefault(c, []).append((path, line_no))
 
                     # eq(...)
@@ -90,17 +90,15 @@ def discover_expected_tables(dirs: List[str] = CODE_SCAN_DIRS) -> Dict[str, Dict
 # 🗄️ Récupération structure Supabase
 # ────────────────────────────────────────────────────────────────────────────────
 def fetch_actual_columns(table: str) -> Tuple[Dict[str, str], bool]:
-    """
-    Retourne (colonnes:types, existe:bool)
-    """
+    """Retourne (colonnes:types, existe:bool) depuis Supabase."""
     try:
         res = supabase.table(table).select("*").limit(1).execute()
         if not res or not getattr(res, "data", None):
-            return {}, True  # table existe mais peut-être vide
+            return {}, True
         row = res.data[0]
         return {k: str(type(v)) for k, v in row.items()}, True
     except Exception:
-        return {}, False  # table n'existe pas
+        return {}, False
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🎛️ UI — Pagination par table
@@ -152,73 +150,82 @@ class FixTables(commands.Cog):
         self.bot = bot
 
     async def _scan_and_report(self, channel: discord.abc.Messageable):
-        expected = discover_expected_tables()
-        pages = []
-        sql_per_table = {}
+        try:
+            expected = discover_expected_tables()
+            if not expected:
+                await safe_send(channel, "❌ Aucune table détectée dans le code.")
+                return
 
-        for table, info in expected.items():
-            expected_cols = {c: _infer_sql_type(c) for c in info["columns"].keys()}
-            actual_cols, exists = fetch_actual_columns(table)
+            pages = []
+            sql_per_table = {}
 
-            embed = discord.Embed(
-                title=f"📄 Table `{table}`",
-                color=discord.Color.blurple()
-            )
+            for table, info in expected.items():
+                try:
+                    expected_cols = {c: _infer_sql_type(c) for c in info["columns"].keys()}
+                    actual_cols, exists = fetch_actual_columns(table)
 
-            # Table attendue
-            exp_str = "\n".join(f"`{c}` → `{t}`" for c, t in expected_cols.items()) or "Aucune colonne détectée"
-            embed.add_field(name="📌 Colonnes attendues (code)", value=exp_str, inline=False)
+                    embed = discord.Embed(title=f"📄 Table `{table}`", color=discord.Color.blurple())
+                    embed.add_field(
+                        name="📌 Colonnes attendues (code)",
+                        value="\n".join(f"`{c}` → `{t}`" for c, t in expected_cols.items()) or "Aucune colonne détectée",
+                        inline=False
+                    )
+                    embed.add_field(
+                        name="🗄️ Colonnes réelles (Supabase)",
+                        value="\n".join(f"`{c}` → `{t}`" for c, t in actual_cols.items()) if exists else "❌ Table inexistante",
+                        inline=False
+                    )
 
-            # Table existante
-            if exists:
-                act_str = "\n".join(f"`{c}` → `{t}`" for c, t in actual_cols.items()) or "Table vide"
-                embed.add_field(name="🗄️ Colonnes réelles (Supabase)", value=act_str, inline=False)
-            else:
-                embed.add_field(name="🗄️ Colonnes réelles (Supabase)", value="❌ Table inexistante", inline=False)
+                    missing = [c for c in expected_cols if c not in actual_cols]
+                    extra = [c for c in actual_cols if c not in expected_cols]
+                    diff = []
+                    if missing: diff.append(f"⚠️ Manquantes : {', '.join(missing)}")
+                    if extra: diff.append(f"ℹ️ Supplémentaires : {', '.join(extra)}")
+                    embed.add_field(name="🔎 Différences", value="\n".join(diff) or "✅ Structure conforme", inline=False)
 
-            # Différences
-            missing = set(expected_cols) - set(actual_cols)
-            extra = set(actual_cols) - set(expected_cols)
-            diff_lines = []
-            if missing:
-                diff_lines.append(f"⚠️ Colonnes manquantes : {', '.join(missing)}")
-            if extra:
-                diff_lines.append(f"ℹ️ Colonnes supplémentaires : {', '.join(extra)}")
-            embed.add_field(name="🔎 Différences", value="\n".join(diff_lines) or "✅ Structure conforme", inline=False)
+                    # compact locations : un fichier par ligne + lignes regroupées
+                    file_lines: Dict[str, List[int]] = {}
+                    for f, ln in info["locations"]:
+                        file_lines.setdefault(f, []).append(ln)
+                    loc_str = "\n".join(
+                        f"{os.path.relpath(f)}({', '.join(map(str, sorted(lines)))})"
+                        for f, lines in file_lines.items()
+                    )
+                    embed.add_field(name="📂 Fichiers utilisant cette table", value=loc_str or "Non trouvé", inline=False)
 
-            # Commandes qui utilisent cette table
-            locations = "\n".join(f"- `{os.path.relpath(f)}`:{ln}" for f, ln in info["locations"]) or "Non trouvé"
-            embed.add_field(name="📂 Fichiers utilisant cette table", value=locations, inline=False)
+                    sql_per_table[table] = (
+                        f"CREATE TABLE {table} (\n  " + ",\n  ".join(f"{c} {t}" for c, t in expected_cols.items()) + "\n);",
+                        "\n".join(f"ALTER TABLE {table} ADD COLUMN {c} {_infer_sql_type(c)};" for c in missing)
+                    )
+                    pages.append(embed)
+                except Exception as e:
+                    await safe_send(channel, f"❌ Erreur sur la table `{table}` : {e}")
 
-            # SQL généré
-            create_sql = f"CREATE TABLE {table} ({', '.join(f'{c} {t}' for c, t in expected_cols.items())});"
-            alter_sql = "\n".join(f"ALTER TABLE {table} ADD COLUMN {c} {_infer_sql_type(c)};" for c in missing)
-            sql_per_table[table] = (create_sql, alter_sql)
-
-            pages.append(embed)
-
-        view = TablePaginator(pages, sql_per_table)
-        view.message = await safe_send(channel, embed=pages[0], view=view)
+            if pages:
+                view = TablePaginator(pages, sql_per_table)
+                view.message = await safe_send(channel, embed=pages[0], view=view)
+        except Exception as e:
+            await safe_send(channel, f"❌ Une erreur est survenue : {e}")
 
     # ────────────────────────────────────────────────────────────────────────────
-    # 🔹 Commande SLASH
+    # 🔹 Commandes (Slash + Préfixe regroupées)
     # ────────────────────────────────────────────────────────────────────────────
+    async def _handle_command(self, channel):
+        await self._scan_and_report(channel)
+
     @app_commands.command(name="fixtables", description="Vérifie les tables Supabase et génère des suggestions SQL (par page).")
     @app_commands.checks.has_permissions(administrator=True)
     @app_commands.checks.cooldown(1, 30.0, key=lambda i: i.guild_id or i.user.id)
     async def slash_fixtables(self, interaction: discord.Interaction):
         await interaction.response.defer()
-        await self._scan_and_report(interaction.channel)
+        await self._handle_command(interaction.channel)
         await interaction.delete_original_response()
 
-    # ────────────────────────────────────────────────────────────────────────────
-    # 🔹 Commande PREFIX
-    # ────────────────────────────────────────────────────────────────────────────
     @commands.command(name="fixtables")
     @commands.has_permissions(administrator=True)
     @commands.cooldown(1, 30.0, commands.BucketType.guild)
     async def prefix_fixtables(self, ctx: commands.Context):
-        await self._scan_and_report(ctx.channel)
+        await self._handle_command(ctx.channel)
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🔌 Setup du Cog
