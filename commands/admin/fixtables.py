@@ -183,12 +183,14 @@ class FixTables(commands.Cog):
                     if extra: diff.append(f"ℹ️ Supplémentaires : {', '.join(extra)}")
                     embed.add_field(name="🔎 Différences", value="\n".join(diff) or "✅ Structure conforme", inline=False)
 
-                    # compact locations : un fichier une seule fois + lignes regroupées
+                    # compact locations : un fichier par ligne + lignes regroupées
                     file_lines: Dict[str, List[int]] = {}
                     for f, ln in info["locations"]:
                         file_lines.setdefault(f, []).append(ln)
-                    loc_str = ", ".join(f"{os.path.relpath(f)}({', '.join(map(str, sorted(lines)))})" 
-                                        for f, lines in file_lines.items())
+                    loc_str = "\n".join(
+                        f"{os.path.relpath(f)}({', '.join(map(str, sorted(lines)))})"
+                        for f, lines in file_lines.items()
+                    )
                     embed.add_field(name="📂 Fichiers utilisant cette table", value=loc_str or "Non trouvé", inline=False)
 
                     sql_per_table[table] = (
