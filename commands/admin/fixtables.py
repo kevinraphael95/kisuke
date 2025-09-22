@@ -16,7 +16,7 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 from discord.ui import View, Button
-from typing import Dict, List, Tuple, Set
+from typing import Dict, List, Tuple
 
 from utils.supabase_client import supabase
 from utils.discord_utils import safe_send, safe_edit
@@ -150,52 +150,56 @@ class FixTables(commands.Cog):
         self.bot = bot
 
     async def _scan_and_report(self, channel: discord.abc.Messageable):
-        expected = discover_expected_tables()
-        pages = []
-        sql_per_table = {}
+        try:
+            expected = discover_expected_tables()
+            if not expected:
+                await safe_send(channel, "❌ Aucune table détectée dans le code.")
+                return
 
-        for table, info in expected.items():
-            expected_cols = {c: _infer_sql_type(c) for c in info["columns"].keys()}
-            actual_cols, exists = fetch_actual_columns(table)
+            pages = []
+            sql_per_table = {}
 
-            embed = discord.Embed(title=f"📄 Table `{table}`", color=discord.Color.blurple())
-            embed.add_field(
-                name="📌 Colonnes attendues (code)",
-                value="\n".join(f"`{c}` → `{t}`" for c, t in expected_cols.items()) or "Aucune colonne détectée",
-                inline=False
-            )
-            embed.add_field(
-                name="🗄️ Colonnes réelles (Supabase)",
-                value="\n".join(f"`{c}` → `{t}`" for c, t in actual_cols.items()) if exists else "❌ Table inexistante",
-                inline=False
-            )
+            for table, info in expected.items():
+                try:
+                    expected_cols = {c: _infer_sql_type(c) for c in info["columns"].keys()}
+                    actual_cols, exists = fetch_actual_columns(table)
 
-            missing = [c for c in expected_cols if c not in actual_cols]
-            extra = [c for c in actual_cols if c not in expected_cols]
-            diff = []
-            if missing: diff.append(f"⚠️ Manquantes : {', '.join(missing)}")
-            if extra: diff.append(f"ℹ️ Supplémentaires : {', '.join(extra)}")
-            embed.add_field(name="🔎 Différences", value="\n".join(diff) or "✅ Structure conforme", inline=False)
+                    embed = discord.Embed(title=f"📄 Table `{table}`", color=discord.Color.blurple())
+                    embed.add_field(
+                        name="📌 Colonnes attendues (code)",
+                        value="\n".join(f"`{c}` → `{t}`" for c, t in expected_cols.items()) or "Aucune colonne détectée",
+                        inline=False
+                    )
+                    embed.add_field(
+                        name="🗄️ Colonnes réelles (Supabase)",
+                        value="\n".join(f"`{c}` → `{t}`" for c, t in actual_cols.items()) if exists else "❌ Table inexistante",
+                        inline=False
+                    )
 
-            # Compacter fichiers
-            files_summary = []
-            for f, ln_list in info["locations"]:
-                lines = [str(ln) for f2, ln in info["locations"] if f2 == f]
-                files_summary.append(f"- `{os.path.relpath(f)}` ({', '.join(lines)})")
-            embed.add_field(
-                name="📂 Fichiers utilisant cette table",
-                value="\n".join(files_summary) or "Non trouvé",
-                inline=False
-            )
+                    missing = [c for c in expected_cols if c not in actual_cols]
+                    extra = [c for c in actual_cols if c not in expected_cols]
+                    diff = []
+                    if missing: diff.append(f"⚠️ Manquantes : {', '.join(missing)}")
+                    if extra: diff.append(f"ℹ️ Supplémentaires : {', '.join(extra)}")
+                    embed.add_field(name="🔎 Différences", value="\n".join(diff) or "✅ Structure conforme", inline=False)
 
-            sql_per_table[table] = (
-                f"CREATE TABLE {table} (\n  " + ",\n  ".join(f"{c} {t}" for c, t in expected_cols.items()) + "\n);",
-                "\n".join(f"ALTER TABLE {table} ADD COLUMN {c} {_infer_sql_type(c)};" for c in missing)
-            )
-            pages.append(embed)
+                    # compact locations
+                    loc_str = ", ".join(f"{os.path.relpath(f)}({ln})" for f, ln in info["locations"])
+                    embed.add_field(name="📂 Fichiers utilisant cette table", value=loc_str or "Non trouvé", inline=False)
 
-        view = TablePaginator(pages, sql_per_table)
-        view.message = await safe_send(channel, embed=pages[0], view=view)
+                    sql_per_table[table] = (
+                        f"CREATE TABLE {table} (\n  " + ",\n  ".join(f"{c} {t}" for c, t in expected_cols.items()) + "\n);",
+                        "\n".join(f"ALTER TABLE {table} ADD COLUMN {c} {_infer_sql_type(c)};" for c in missing)
+                    )
+                    pages.append(embed)
+                except Exception as e:
+                    await safe_send(channel, f"❌ Erreur sur la table `{table}` : {e}")
+
+            if pages:
+                view = TablePaginator(pages, sql_per_table)
+                view.message = await safe_send(channel, embed=pages[0], view=view)
+        except Exception as e:
+            await safe_send(channel, f"❌ Une erreur est survenue : {e}")
 
     # ────────────────────────────────────────────────────────────────────────────
     # 🔹 Commandes (Slash + Préfixe regroupées)
