@@ -1,14 +1,9 @@
-# ────────────────────────────────────────────────────────────────────────────────
-# 📌 fixtables.py — Vérification & modifications SQL pour Supabase (admin)
-# Objectif : Scanner les commandes, détecter tables/colonnes attendues, comparer
-#           avec Supabase, proposer SQL CREATE / ALTER / ALTER TYPE et exécution.
-# Auteur  : Assistant amélioré
-# Version : 1.2
-# ────────────────────────────────────────────────────────────────────────────────
-
-# ──────────────────────────────────────────────────────────────
-# 📦 IMPORTS
-# ──────────────────────────────────────────────────────────────
+# ──────────────────────────────────────────────────────────────────────────────
+# 📌 fixtables.py — Vérification & suggestions SQL pour Supabase
+# ──────────────────────────────────────────────────────────────────────────────
+# ──────────────────────────────────────────────────────────────────────────────
+# 📦 Imports
+# ──────────────────────────────────────────────────────────────────────────────
 import os
 import re
 import traceback
@@ -19,46 +14,40 @@ from typing import Dict, Set, List, Tuple, Optional
 from utils.supabase_client import supabase
 from utils.discord_utils import safe_send, safe_respond
 
-# ──────────────────────────────────────────────────────────────
-# 🔧 CONFIG
-# ──────────────────────────────────────────────────────────────
-CODE_SCAN_DIR = "commands"
-WINDOW_CHARS = 2500
-SQL_SUGGESTION_MAX_COLS = 50
-AUTO_EXECUTION_ALLOWED = False  # ⚠️ Ne pas exécuter automatiquement si False
-ADMIN_SQL_EXEC_RPC = "sql_exec"  # RPC pour exécuter SQL côté Supabase si existant
+# ──────────────────────────────────────────────────────────────────────────────
+# 🔧 Config
+# ──────────────────────────────────────────────────────────────────────────────
+CODE_SCAN_DIR = "commands"   # dossier à scanner
+WINDOW_CHARS = 2500         # recherche locale autour du supabase.table(...) call
+SQL_SUGGESTION_MAX_COLS = 30
 
-# ──────────────────────────────────────────────────────────────
-# 🔎 REGEX PARSING
-# ──────────────────────────────────────────────────────────────
-_table_re = re.compile(r"supabase\.table\(\s*[\"']([\w\d_]+)[\"']\s*\)")
-_select_re = re.compile(r"\.select\(\s*[\"']([^\"']+)[\"']\s*\)")
-_eq_re = re.compile(r"\.eq\(\s*[\"']([\w\d_]+)[\"']\s*,")
-_update_dict_re = re.compile(r"\.(?:update|insert)\s*\(\s*\{([^}]+)\}", re.S)
-_insert_dict_re = re.compile(r"\.insert\s*\(\s*\{([^}]+)\}", re.S)
-_key_in_dict_re = re.compile(r"[\"']([\w\d_]+)[\"']\s*:")
+# ──────────────────────────────────────────────────────────────────────────────
+# 🔎 Helpers — parsing robust
+# ──────────────────────────────────────────────────────────────────────────────
+_table_re = re.compile(r'supabase\.table\(\s*["\']([\w\d_]+)["\']\s*\)')
+_select_re = re.compile(r'\.select\(\s*["\']([^"\']+)["\']\s*\)')
+_eq_re = re.compile(r'\.eq\(\s*["\']([\w\d_]+)["\']\s*,')
+_update_dict_re = re.compile(r'\.(?:update|insert)\s*\(\s*\{([^}]+)\}', re.S)
+_insert_dict_re = re.compile(r'\.insert\s*\(\s*\{([^}]+)\}', re.S)
+_key_in_dict_re = re.compile(r'["\']([\w\d_]+)["\']\s*:')
 
-# ──────────────────────────────────────────────────────────────
-# 🧠 HEURISTIQUES TYPE SQL
-# ──────────────────────────────────────────────────────────────
 def _infer_sql_type(column_name: str) -> str:
+    """Heuristique simple pour proposer un type SQL."""
     cn = column_name.lower()
-    if cn.endswith("_id") or cn in {"user_id", "guild_id", "channel_id", "message_id"}:
+    if cn.endswith("_id") or cn in {"user_id", "guild_id", "channel_id", "message_id", "id_faux_reiatsu"}:
         return "text"
     if cn in {"points", "spawn_delay", "delay_minutes", "skill_cd", "spawn_message_id"}:
         return "integer"
-    if cn.endswith("_at") or cn.startswith("last_") or cn in {"created_at", "last_spawn_at"}:
+    if cn.endswith("_at") or cn.startswith("last_") or cn in {"created_at", "last_spawn_at", "last_skill"}:
         return "timestamp with time zone"
-    if cn in {"active", "has_skill"} or cn.startswith("is_") or cn.startswith("has_"):
+    if cn.startswith("is_") or cn.startswith("has_") or cn in {"en_attente", "has_skill", "active"}:
         return "boolean"
-    if "json" in cn or "data" in cn:
+    if "json" in cn or "data" in cn or cn in {"active_skill"}:
         return "jsonb"
     return "text"
 
-# ──────────────────────────────────────────────────────────────
-# 📦 HELPER SUPABASE
-# ──────────────────────────────────────────────────────────────
-def _parse_result(res) -> Tuple[Optional[list], Optional[object]]:
+def _parse_result(res):
+    """Récupère data, error depuis l'objet supabase (dict ou res)."""
     try:
         if res is None:
             return None, None
@@ -70,9 +59,9 @@ def _parse_result(res) -> Tuple[Optional[list], Optional[object]]:
     except Exception:
         return None, None
 
-# ──────────────────────────────────────────────────────────────
-# 🔍 DISCOVER TABLES
-# ──────────────────────────────────────────────────────────────
+# ──────────────────────────────────────────────────────────────────────────────
+# 🔍 Découverte des tables attendues
+# ──────────────────────────────────────────────────────────────────────────────
 def discover_expected_tables(commands_dir: str = CODE_SCAN_DIR) -> Dict[str, Dict]:
     results: Dict[str, Dict] = {}
     for root, _, files in os.walk(commands_dir):
@@ -81,10 +70,10 @@ def discover_expected_tables(commands_dir: str = CODE_SCAN_DIR) -> Dict[str, Dic
                 continue
             path = os.path.join(root, fn)
             try:
-                code = open(path, "r", encoding="utf-8").read()
+                with open(path, "r", encoding="utf-8") as fh:
+                    code = fh.read()
             except Exception:
                 continue
-
             for match in _table_re.finditer(code):
                 table = match.group(1)
                 start_pos = match.end()
@@ -92,7 +81,6 @@ def discover_expected_tables(commands_dir: str = CODE_SCAN_DIR) -> Dict[str, Dic
                 tbl_info = results.setdefault(table, {"columns": {}, "locations": []})
                 tbl_info["locations"].append((path, line_no))
                 window = code[start_pos:start_pos + WINDOW_CHARS]
-
                 for s in _select_re.finditer(window):
                     cols_raw = s.group(1)
                     if cols_raw.strip() == "*":
@@ -112,64 +100,64 @@ def discover_expected_tables(commands_dir: str = CODE_SCAN_DIR) -> Dict[str, Dic
                         tbl_info["columns"].setdefault(k, []).append((path, line_no))
     return results
 
-# ──────────────────────────────────────────────────────────────
-# 🗄️ FETCH ACTUAL COLUMNS
-# ──────────────────────────────────────────────────────────────
-def fetch_actual_columns(table_name: str) -> Tuple[Optional[Set[str]], Optional[Dict[str,str]], Optional[str]]:
+# ──────────────────────────────────────────────────────────────────────────────
+# 🗄️ Lecture de la structure réelle (avec types)
+# ──────────────────────────────────────────────────────────────────────────────
+def fetch_actual_structure(table_name: str) -> Tuple[Optional[Dict[str, dict]], Optional[str]]:
+    """
+    Retourne {col: {"type": "...", "nullable": True/False}} ou None si erreur.
+    """
     try:
-        res = supabase.table(table_name).select("*").limit(1).execute()
+        sql = f"""
+        SELECT column_name, data_type, is_nullable
+        FROM information_schema.columns
+        WHERE table_name = '{table_name}';
+        """
+        res = supabase.rpc("execute_sql", {"query": sql}).execute()
         data, err = _parse_result(res)
         if err:
-            return None, None, str(err)
-        cols = set()
-        types = {}
-        if data and isinstance(data, list) and len(data) > 0:
-            row = data[0]
-            if isinstance(row, dict):
-                cols = set(row.keys())
-        # fallback info_schema
-        try:
-            isc = supabase.postgrest.from_("information_schema.columns").select("column_name,data_type").eq("table_name", table_name).execute()
-            isc_data, isc_err = _parse_result(isc)
-            if isc_err is None and isc_data:
-                for r in isc_data:
-                    cname = r.get("column_name")
-                    dtype = r.get("data_type")
-                    if cname:
-                        cols.add(cname)
-                        types[cname] = dtype
-        except Exception:
-            pass
-        return cols, types or None, None
+            return None, str(err)
+        if not data:
+            return {}, None
+        return {r["column_name"]: {
+            "type": r["data_type"],
+            "nullable": r["is_nullable"] == "YES"
+        } for r in data}, None
     except Exception as e:
-        return None, None, str(e)
+        return None, str(e)
 
-# ──────────────────────────────────────────────────────────────
-# 🧾 GENERATION SQL
-# ──────────────────────────────────────────────────────────────
+# ──────────────────────────────────────────────────────────────────────────────
+# 🧾 Génération SQL
+# ──────────────────────────────────────────────────────────────────────────────
 def suggest_create_table_sql(table: str, columns: Set[str]) -> str:
     if not columns:
-        return f"-- CREATE TABLE {table} (/* colonnes à définir */);"
-    lines = []
+        return f"-- CREATE TABLE {table} (...);"
+    cols_lines = []
     for c in list(columns)[:SQL_SUGGESTION_MAX_COLS]:
         t = _infer_sql_type(c)
-        default = " DEFAULT now()" if t.startswith("timestamp") else ""
-        lines.append(f"  {c} {t}{default}")
-    pk = next(iter(columns))
-    return f"CREATE TABLE IF NOT EXISTS {table} (\n{',\n'.join(lines)},\n  CONSTRAINT {table}_pkey PRIMARY KEY ({pk})\n);"
+        cols_lines.append(f"  {c} {t}")
+    body = ",\n".join(cols_lines)
+    return f"CREATE TABLE IF NOT EXISTS {table} (\n{body}\n);"
 
 def suggest_alter_table_add_columns_sql(table: str, missing: Set[str]) -> str:
-    return "\n".join([f"ALTER TABLE {table} ADD COLUMN IF NOT EXISTS {c} {_infer_sql_type(c)};" for c in missing])
+    if not missing:
+        return "-- Aucune colonne manquante."
+    return "\n".join(f"ALTER TABLE {table} ADD COLUMN IF NOT EXISTS {c} {_infer_sql_type(c)};" for c in missing)
 
-def suggest_alter_column_type_sql(table: str, col: str, to_type: str) -> str:
-    return f"ALTER TABLE {table} ALTER COLUMN {col} TYPE {to_type} USING {col}::{to_type};"
+def suggest_alter_table_types_sql(table: str, mismatches: Dict[str, Tuple[str, str]]) -> str:
+    if not mismatches:
+        return "-- Aucun type différent."
+    return "\n".join(
+        f"-- {c}: {actual} → {expected}\nALTER TABLE {table} ALTER COLUMN {c} TYPE {expected} USING {c}::{expected};"
+        for c, (expected, actual) in mismatches.items()
+    )
 
-# ──────────────────────────────────────────────────────────────
-# 🎛️ VIEW INTERACTIVE
-# ──────────────────────────────────────────────────────────────
+# ──────────────────────────────────────────────────────────────────────────────
+# 🎛️ Vue interactive
+# ──────────────────────────────────────────────────────────────────────────────
 class FixTablesView(discord.ui.View):
-    def __init__(self, missing_tables: List[str], corrections: List[Tuple[str, Set[str]]], type_mismatches: List[Tuple[str,str,str]]):
-        super().__init__(timeout=180)
+    def __init__(self, missing_tables, corrections, type_mismatches):
+        super().__init__(timeout=120)
         self.missing_tables = missing_tables
         self.corrections = corrections
         self.type_mismatches = type_mismatches
@@ -177,122 +165,116 @@ class FixTablesView(discord.ui.View):
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
         return interaction.user.guild_permissions.administrator
 
-    @discord.ui.button(label="Afficher SQL (CREATE)", style=discord.ButtonStyle.success)
-    async def create_sql(self, interaction: discord.Interaction, button: discord.ui.Button):
+    @discord.ui.button(label="Générer SQL (CREATE)", style=discord.ButtonStyle.success)
+    async def _create_sql(self, interaction: discord.Interaction, button: discord.ui.Button):
         await interaction.response.defer(ephemeral=True)
-        blocks = [f"-- CREATE TABLE {t}\n{suggest_create_table_sql(t, set())}" for t in self.missing_tables]
+        blocks = [suggest_create_table_sql(t, set()) for t in self.missing_tables]
         await interaction.followup.send(f"```sql\n{'\n\n'.join(blocks)}\n```", ephemeral=True)
 
-    @discord.ui.button(label="Afficher SQL (ALTER ADD)", style=discord.ButtonStyle.primary)
-    async def alter_sql(self, interaction: discord.Interaction, button: discord.ui.Button):
+    @discord.ui.button(label="Générer SQL (ADD COLUMNS)", style=discord.ButtonStyle.primary)
+    async def _alter_sql(self, interaction: discord.Interaction, button: discord.ui.Button):
         await interaction.response.defer(ephemeral=True)
-        parts = [f"-- ALTER TABLE {table}\n{suggest_alter_table_add_columns_sql(table, missing)}" for table, missing in self.corrections if missing]
+        parts = [suggest_alter_table_add_columns_sql(t, m) for t, m in self.corrections]
         await interaction.followup.send(f"```sql\n{'\n\n'.join(parts)}\n```", ephemeral=True)
 
-    @discord.ui.button(label="Afficher SQL (ALTER TYPE)", style=discord.ButtonStyle.secondary)
-    async def alter_type(self, interaction: discord.Interaction, button: discord.ui.Button):
+    @discord.ui.button(label="Générer SQL (ALTER TYPES)", style=discord.ButtonStyle.secondary)
+    async def _alter_types(self, interaction: discord.Interaction, button: discord.ui.Button):
         await interaction.response.defer(ephemeral=True)
-        parts = [f"-- ALTER TYPE {table}.{col}\n{suggest_alter_column_type_sql(table,col,to_type)}" for table,col,to_type in self.type_mismatches]
+        parts = [suggest_alter_table_types_sql(t, m) for t, m in self.type_mismatches]
         await interaction.followup.send(f"```sql\n{'\n\n'.join(parts)}\n```", ephemeral=True)
 
-    @discord.ui.button(label="Appliquer ALTER ADD (optionnel)", style=discord.ButtonStyle.danger)
-    async def apply_alter(self, interaction: discord.Interaction, button: discord.ui.Button):
-        await interaction.response.defer(ephemeral=True, thinking=True)
-        if not AUTO_EXECUTION_ALLOWED:
-            await interaction.followup.send("⚠️ Exécution automatique désactivée.", ephemeral=True)
-            return
-        sql = "\n".join([suggest_alter_table_add_columns_sql(table, missing) for table, missing in self.corrections])
-        if not sql:
-            await interaction.followup.send("Rien à appliquer.", ephemeral=True)
-            return
-        try:
-            res = supabase.rpc(ADMIN_SQL_EXEC_RPC, {"p_sql": sql}).execute()
-            data, err = _parse_result(res)
-            await interaction.followup.send(f"{'✅ SQL appliqué' if not err else f'❌ Erreur: {err}'}", ephemeral=True)
-        except Exception as e:
-            await interaction.followup.send(f"❌ Impossible d'exécuter automatiquement : {e}", ephemeral=True)
-
-# ──────────────────────────────────────────────────────────────
-# 🧠 COG PRINCIPAL
-# ──────────────────────────────────────────────────────────────
+# ──────────────────────────────────────────────────────────────────────────────
+# 🧠 Cog principal
+# ──────────────────────────────────────────────────────────────────────────────
 class FixTables(commands.Cog):
-    def __init__(self, bot: commands.Bot):
+    """/fixtables & !fixtables — Analyse et suggestions SQL (colonnes + types)."""
+
+    def __init__(self, bot):
         self.bot = bot
 
-    async def _scan_and_report(self, channel: discord.abc.Messageable):
+    async def _scan_and_report(self, channel, verbose=False):
         try:
-            expected = discover_expected_tables()
+            expected = discover_expected_tables(CODE_SCAN_DIR)
             if not expected:
                 await safe_send(channel, "❌ Aucune utilisation de `supabase.table(...)` détectée.")
                 return
 
-            embed = discord.Embed(title="🔎 Rapport fixtables",
-                                  description="Comparaison code ←→ Supabase", color=discord.Color.blurple())
+            embed = discord.Embed(
+                title="🔎 Rapport fixtables",
+                description="Comparaison code ↔ Supabase (colonnes et types)",
+                color=discord.Color.blurple()
+            )
 
             missing_tables = []
-            corrections: List[Tuple[str, Set[str]]] = []
-            type_mismatches: List[Tuple[str,str,str]] = []
+            corrections = []
+            type_mismatches = []
 
             for table, info in expected.items():
                 expected_cols = set(info.get("columns", {}).keys())
-                actual_cols, actual_types, error = fetch_actual_columns(table)
+                actual, error = fetch_actual_structure(table)
 
-                if actual_cols is None:
+                if actual is None:
                     missing_tables.append(table)
-                    embed.add_field(name=f"❌ {table}", value=f"Colonnes attendues: {expected_cols}\nErreur: {error}", inline=False)
+                    embed.add_field(
+                        name=f"❌ `{table}` absente",
+                        value=f"Colonnes attendues : {', '.join(expected_cols) or 'Aucune'}",
+                        inline=False
+                    )
                     continue
 
+                actual_cols = set(actual.keys())
                 missing = expected_cols - actual_cols
                 extra = actual_cols - expected_cols
+                mismatches = {}
 
-                # Type mismatch
-                if actual_types:
-                    for col in expected_cols & actual_cols:
-                        etype = _infer_sql_type(col)
-                        atype = actual_types.get(col)
-                        if atype and etype.split()[0] not in atype:
-                            type_mismatches.append((table,col,etype))
+                for col in expected_cols & actual_cols:
+                    expected_type = _infer_sql_type(col)
+                    actual_type = actual[col]["type"]
+                    if expected_type not in actual_type:  # comparaison simple
+                        mismatches[col] = (expected_type, actual_type)
 
-                if not missing and not extra and not type_mismatches:
-                    embed.add_field(name=f"✅ {table}", value="Structure conforme", inline=False)
+                if not missing and not extra and not mismatches:
+                    embed.add_field(name=f"✅ `{table}`", value="Structure conforme ✅", inline=False)
                 else:
-                    parts = []
+                    lines = []
                     if missing:
                         corrections.append((table, missing))
-                        parts.append(f"Colonnes manquantes: {missing}")
+                        lines.append(f"⚠️ Colonnes manquantes : {', '.join(sorted(missing))}")
                     if extra:
-                        parts.append(f"Colonnes supplémentaires: {extra}")
-                    if type_mismatches:
-                        parts.append(f"Incompatibilité type: {type_mismatches}")
-                    embed.add_field(name=f"⚠️ {table}", value="\n".join(map(str,parts)), inline=False)
+                        lines.append(f"ℹ️ Colonnes supplémentaires : {', '.join(sorted(extra))}")
+                    if mismatches:
+                        type_mismatches.append((table, mismatches))
+                        diff = "\n".join([f"- {c}: {a} → {e}" for c, (e, a) in mismatches.items()])
+                        lines.append(f"🔄 Types différents :\n{diff}")
+                    embed.add_field(name=f"⚠️ `{table}`", value="\n".join(lines), inline=False)
 
             view = FixTablesView(missing_tables, corrections, type_mismatches) if (missing_tables or corrections or type_mismatches) else None
             await safe_send(channel, embed=embed, view=view)
-        except Exception as e:
-            await safe_send(channel, f"❌ Erreur lors de l'analyse:\n{traceback.format_exc()}")
 
-    @app_commands.command(name="fixtables", description="🔧 Analyse & modifications SQL Supabase")
+        except Exception as e:
+            tb = traceback.format_exc()
+            print("[fixtables] ERREUR:", tb)
+            await safe_send(channel, f"❌ Erreur :\n```py\n{tb[:1900]}\n```")
+
+    @app_commands.command(name="fixtables", description="🔧 Analyse et suggestions SQL pour les tables Supabase")
     @app_commands.checks.has_permissions(administrator=True)
     async def slash_fixtables(self, interaction: discord.Interaction):
         await interaction.response.defer(ephemeral=True)
-        await self._scan_and_report(interaction.channel)
+        await self._scan_and_report(interaction.channel, verbose=False)
+        await interaction.followup.send("✅ Rapport généré.", ephemeral=True)
 
     @commands.command(name="fixtables")
     @commands.has_permissions(administrator=True)
     async def prefix_fixtables(self, ctx: commands.Context):
-        await self._scan_and_report(ctx.channel)
+        await self._scan_and_report(ctx.channel, verbose=False)
 
-# ──────────────────────────────────────────────────────────────
-# FIN
-# ──────────────────────────────────────────────────────────────
-
-# ──────────────────────────────────────────────────────────────
+# ──────────────────────────────────────────────────────────────────────────────
 # 🔌 Setup
-# ──────────────────────────────────────────────────────────────
+# ──────────────────────────────────────────────────────────────────────────────
 async def setup(bot: commands.Bot):
     cog = FixTables(bot)
     for command in cog.get_commands():
         if not hasattr(command, "category"):
             command.category = "Admin"
     await bot.add_cog(cog)
-
+        
