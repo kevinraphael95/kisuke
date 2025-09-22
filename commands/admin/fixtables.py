@@ -155,70 +155,62 @@ class FixTables(commands.Cog):
         sql_per_table = {}
 
         for table, info in expected.items():
-            # Respecter l'ordre d'apparition des colonnes
             expected_cols = {c: _infer_sql_type(c) for c in info["columns"].keys()}
             actual_cols, exists = fetch_actual_columns(table)
 
-            embed = discord.Embed(
-                title=f"📄 Table `{table}`",
-                color=discord.Color.blurple()
+            embed = discord.Embed(title=f"📄 Table `{table}`", color=discord.Color.blurple())
+            embed.add_field(
+                name="📌 Colonnes attendues (code)",
+                value="\n".join(f"`{c}` → `{t}`" for c, t in expected_cols.items()) or "Aucune colonne détectée",
+                inline=False
             )
-
-            exp_str = "\n".join(f"`{c}` → `{t}`" for c, t in expected_cols.items()) or "Aucune colonne détectée"
-            embed.add_field(name="📌 Colonnes attendues (code)", value=exp_str, inline=False)
-
-            if exists:
-                act_str = "\n".join(f"`{c}` → `{t}`" for c, t in actual_cols.items()) or "Table vide"
-                embed.add_field(name="🗄️ Colonnes réelles (Supabase)", value=act_str, inline=False)
-            else:
-                embed.add_field(name="🗄️ Colonnes réelles (Supabase)", value="❌ Table inexistante", inline=False)
+            embed.add_field(
+                name="🗄️ Colonnes réelles (Supabase)",
+                value="\n".join(f"`{c}` → `{t}`" for c, t in actual_cols.items()) if exists else "❌ Table inexistante",
+                inline=False
+            )
 
             missing = [c for c in expected_cols if c not in actual_cols]
             extra = [c for c in actual_cols if c not in expected_cols]
+            diff = []
+            if missing: diff.append(f"⚠️ Manquantes : {', '.join(missing)}")
+            if extra: diff.append(f"ℹ️ Supplémentaires : {', '.join(extra)}")
+            embed.add_field(name="🔎 Différences", value="\n".join(diff) or "✅ Structure conforme", inline=False)
 
-            diff_lines = []
-            if missing:
-                diff_lines.append(f"⚠️ Colonnes manquantes : {', '.join(missing)}")
-            if extra:
-                diff_lines.append(f"ℹ️ Colonnes supplémentaires : {', '.join(extra)}")
-
-            embed.add_field(name="🔎 Différences", value="\n".join(diff_lines) or "✅ Structure conforme", inline=False)
-
-            locations = "\n".join(f"- `{os.path.relpath(f)}`:{ln}" for f, ln in info["locations"]) or "Non trouvé"
-            embed.add_field(name="📂 Fichiers utilisant cette table", value=locations, inline=False)
-
-            # SQL généré dans le bon ordre
-            create_sql = "CREATE TABLE {t} (\n  {cols}\n);".format(
-                t=table,
-                cols=",\n  ".join(f"{c} {t}" for c, t in expected_cols.items())
+            embed.add_field(
+                name="📂 Fichiers utilisant cette table",
+                value="\n".join(f"- `{os.path.relpath(f)}`:{ln}" for f, ln in info["locations"]) or "Non trouvé",
+                inline=False
             )
-            alter_sql = "\n".join(f"ALTER TABLE {table} ADD COLUMN {c} {_infer_sql_type(c)};" for c in missing)
 
-            sql_per_table[table] = (create_sql, alter_sql)
+            sql_per_table[table] = (
+                f"CREATE TABLE {table} (\n  " + ",\n  ".join(f"{c} {t}" for c, t in expected_cols.items()) + "\n);",
+                "\n".join(f"ALTER TABLE {table} ADD COLUMN {c} {_infer_sql_type(c)};" for c in missing)
+            )
             pages.append(embed)
 
         view = TablePaginator(pages, sql_per_table)
         view.message = await safe_send(channel, embed=pages[0], view=view)
 
     # ────────────────────────────────────────────────────────────────────────────
-    # 🔹 Commande SLASH
+    # 🔹 Commandes (Slash + Préfixe regroupées)
     # ────────────────────────────────────────────────────────────────────────────
+    async def _handle_command(self, channel):
+        await self._scan_and_report(channel)
+
     @app_commands.command(name="fixtables", description="Vérifie les tables Supabase et génère des suggestions SQL (par page).")
     @app_commands.checks.has_permissions(administrator=True)
     @app_commands.checks.cooldown(1, 30.0, key=lambda i: i.guild_id or i.user.id)
     async def slash_fixtables(self, interaction: discord.Interaction):
         await interaction.response.defer()
-        await self._scan_and_report(interaction.channel)
+        await self._handle_command(interaction.channel)
         await interaction.delete_original_response()
 
-    # ────────────────────────────────────────────────────────────────────────────
-    # 🔹 Commande PREFIX
-    # ────────────────────────────────────────────────────────────────────────────
     @commands.command(name="fixtables")
     @commands.has_permissions(administrator=True)
     @commands.cooldown(1, 30.0, commands.BucketType.guild)
     async def prefix_fixtables(self, ctx: commands.Context):
-        await self._scan_and_report(ctx.channel)
+        await self._handle_command(ctx.channel)
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🔌 Setup du Cog
