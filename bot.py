@@ -16,22 +16,23 @@ from tasks.keep_alive import keep_alive
 import os
 import json
 import uuid
-import asyncio
+import random
 from datetime import datetime, timezone
+import asyncio
 
 # ──────────────────────────────────────────────────────────────
 # 📦 Modules tiers
 # ──────────────────────────────────────────────────────────────
 import discord
 from discord.ext import commands
-from discord import app_commands
 from dotenv import load_dotenv
+from dateutil import parser
 
 # ──────────────────────────────────────────────────────────────
 # 📦 Modules internes
 # ──────────────────────────────────────────────────────────────
 from utils.supabase_client import supabase
-from utils.discord_utils import safe_send, safe_edit, safe_respond  # <-- fonctions safe pour Discord
+from utils.discord_utils import safe_send  # ✅ Utilitaires anti-429
 
 # ──────────────────────────────────────────────────────────────
 # 🔧 Initialisation de l’environnement
@@ -64,140 +65,128 @@ bot.INSTANCE_ID = INSTANCE_ID
 bot.supabase = supabase
 
 # ──────────────────────────────────────────────────────────────
-# 🔌 Chargement dynamique des commandes
+# 🔌 Chargement dynamique des commandes depuis /commands/*
 # ──────────────────────────────────────────────────────────────
 async def load_commands():
-    for root, dirs, files in os.walk("commands"):
-        for file in files:
-            if file.endswith(".py"):
-                relative_path = os.path.relpath(os.path.join(root, file), ".")
-                module_path = relative_path.replace(os.path.sep, ".").replace(".py", "")
-                try:
-                    if module_path in bot.extensions:
-                        await bot.unload_extension(module_path)
-                    await bot.load_extension(module_path)
-                    print(f"✅ Loaded {module_path}")
-                except Exception as e:
-                    print(f"❌ Failed to load {module_path}: {e}")
-
-    try:
-        await bot.load_extension("tasks.heartbeat")
-        print("✅ Loaded tasks.heartbeat")
-    except Exception as e:
-        print(f"❌ Failed to load tasks.heartbeat: {e}")
+    for category in os.listdir("commands"):
+        cat_path = os.path.join("commands", category)
+        if os.path.isdir(cat_path):
+            for filename in os.listdir(cat_path):
+                if filename.endswith(".py"):
+                    path = f"commands.{category}.{filename[:-3]}"
+                    try:
+                        await bot.load_extension(path)
+                        print(f"✅ Loaded {path}")
+                    except Exception as e:
+                        print(f"❌ Failed to load {path}: {e}")
 
 # ──────────────────────────────────────────────────────────────
-# 🔔 Événement on_ready : présence + verrouillage
+# 🔁 Tâche de vérification continue du verrou
+# ──────────────────────────────────────────────────────────────
+async def verify_lock_loop():
+    while True:
+        await asyncio.sleep(10)
+        try:
+            lock = supabase.table("bot_lock").select("instance_id").eq("id", "bot_lock").execute()
+            if lock.data and lock.data[0]["instance_id"] != INSTANCE_ID:
+                print("🔴 Cette instance n'est plus maître. Déconnexion...")
+                await bot.close()
+                os._exit(0)
+        except Exception as e:
+            print(f"⚠️ Erreur dans la vérification du verrou (ignorée) : {e}")
+
+# ──────────────────────────────────────────────────────────────
+# 🔔 On Ready : présence + verrouillage + surveillance
 # ──────────────────────────────────────────────────────────────
 @bot.event
 async def on_ready():
     print(f"✅ Connecté en tant que {bot.user.name}")
-    await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name="Bleach"))
-
-    now = datetime.now(timezone.utc).isoformat()
+    await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.playing, name="Duel Monsters"))
 
     try:
-        print("💣 Suppression de tout verrou précédent...")
-        supabase.table("bot_lock").delete().eq("id", "reiatsu_lock").execute()
-
-        print(f"🔐 Prise de verrou par cette instance : {INSTANCE_ID}")
-        supabase.table("bot_lock").insert({
-            "id": "reiatsu_lock",
+        now = datetime.now(timezone.utc).isoformat()
+        supabase.table("bot_lock").upsert({
+            "id": "bot_lock",
             "instance_id": INSTANCE_ID,
             "updated_at": now
         }).execute()
 
+        print(f"🔐 Verrou mis à jour pour cette instance : {INSTANCE_ID}")
         bot.is_main_instance = True
-        print(f"✅ Instance principale active : {INSTANCE_ID}")
+        bot.loop.create_task(verify_lock_loop())
 
-        # Chargement du spawner Reiatsu
-        await bot.load_extension("tasks.reiatsu_spawner")
-        print("✅ Spawner Reiatsu chargé.")
-
-        # synchronisation des commandes slash
-        await bot.tree.sync()
-        print("✅ Slash commands synchronisées")
     except Exception as e:
         print(f"⚠️ Impossible de se connecter à Supabase : {e}")
         print("🔓 Aucune gestion de verrou — le bot démarre quand même.")
+        bot.is_main_instance = True
 
 # ──────────────────────────────────────────────────────────────
-# 📩 Événement on_message : gestion du verrou + commandes
+# 📩 Message reçu : réagir aux mots-clés et lancer les commandes
 # ──────────────────────────────────────────────────────────────
 @bot.event
 async def on_message(message):
     try:
-        lock = supabase.table("bot_lock").select("instance_id").eq("id", "reiatsu_lock").execute()
-        if lock.data and lock.data[0]["instance_id"] != INSTANCE_ID:
-            return
+        lock = supabase.table("bot_lock").select("instance_id").eq("id", "bot_lock").execute()
+        if lock.data and isinstance(lock.data, list):
+            if lock.data and lock.data[0].get("instance_id") != INSTANCE_ID:
+                return
     except Exception as e:
-        print(f"⚠️ Erreur lors de la vérification du verrou Supabase : {e}")
-        # On continue quand même
+        print(f"⚠️ Erreur lors de la vérification du lock (ignorée) : {e}")
 
     if message.author.bot:
         return
 
-    prefix = get_prefix(bot, message)
+    if message.content.strip() == f"<@!{bot.user.id}>" or message.content.strip() == f"<@{bot.user.id}>":
+    # répond uniquement si le message est exactement la mention du bot
 
-    # ✅ Répondre à la mention directe du bot
-    if message.content.strip() == f"<@{bot.user.id}>" or message.content.strip() == f"<@!{bot.user.id}>":
-        await safe_send(message.channel, f"👋 Salut {message.author.mention} ! Utilise `{prefix}help` pour voir mes commandes.")
-        return
+        prefix = get_prefix(bot, message)
 
-    if not message.content.startswith(prefix):
+        embed = discord.Embed(
+            title="Coucou ! 🃏",
+            description=(
+                f"Bonjour ! Je suis **Atem**, un bot discord inspiré du manga Yu-Gi-Oh.\n"
+                f"• Utilise la commande `{prefix}help` pour avoir la liste des commandes du bot "
+                f"ou `{prefix}help + le nom d'une commande` pour en avoir une description."
+            ),
+            color=discord.Color.red()
+        )
+        embed.set_footer(text="Tu dois croire en l'âme des cartes 🎴")
+
+        if bot.user.avatar:
+            embed.set_thumbnail(url=bot.user.avatar.url)
+        else:
+            embed.set_thumbnail(url=bot.user.default_avatar.url)
+
+        await safe_send(message.channel, embed=embed)
         return
 
     await bot.process_commands(message)
 
 # ──────────────────────────────────────────────────────────────
-# ⚠️ Gestion centralisée des erreurs et cooldowns
+# ❗ Gestion des erreurs de commandes
 # ──────────────────────────────────────────────────────────────
 @bot.event
 async def on_command_error(ctx, error):
-    """Gestion des erreurs pour commandes préfixe"""
     if isinstance(error, commands.CommandOnCooldown):
-        await safe_send(ctx.channel, f"⏳ Patiente {error.retry_after:.1f}s avant de réutiliser cette commande.")
+        retry = round(error.retry_after, 1)
+        await safe_send(ctx.channel, f"⏳ Cette commande est en cooldown. Réessaie dans `{retry}` secondes.")
     elif isinstance(error, commands.MissingPermissions):
-        await safe_send(ctx.channel, "❌ Tu n'as pas la permission d'utiliser cette commande.")
+        await safe_send(ctx.channel, "❌ Tu n'as pas les permissions pour cette commande.")
+    elif isinstance(error, commands.MissingRequiredArgument):
+        await safe_send(ctx.channel, "⚠️ Il manque un argument à cette commande.")
     elif isinstance(error, commands.CommandNotFound):
-        pass  # Ignore les commandes inconnues
+        return
     else:
-        print(f"[ERREUR COMMANDE] {ctx.command}: {error}")
-        await safe_send(ctx.channel, "❌ Une erreur est survenue.")
-
-@bot.tree.error
-async def on_app_command_error(interaction: discord.Interaction, error):
-    """Gestion des erreurs pour commandes slash"""
-    if isinstance(error, app_commands.CommandOnCooldown):
-        await safe_respond(interaction, f"⏳ Patiente {error.retry_after:.1f}s avant de réutiliser cette commande.", ephemeral=True)
-    elif isinstance(error, app_commands.MissingPermissions):
-        await safe_respond(interaction, "❌ Tu n'as pas la permission d'utiliser cette commande.", ephemeral=True)
-    else:
-        print(f"[ERREUR SLASH] {interaction.command}: {error}")
-        await safe_respond(interaction, "❌ Une erreur est survenue.", ephemeral=True)
-
-@bot.event
-async def on_interaction(interaction: discord.Interaction):
-    """Gestion pour boutons, menus, modals"""
-    try:
-        await bot.tree.on_interaction(interaction)
-    except Exception as e:
-        print(f"[ERREUR INTERACTION] {e}")
-        try:
-            if interaction.response.is_done():
-                await interaction.followup.send("❌ Une erreur est survenue.", ephemeral=True)
-            else:
-                await interaction.response.send_message("❌ Une erreur est survenue.", ephemeral=True)
-        except Exception:
-            pass
+        raise error
 
 # ──────────────────────────────────────────────────────────────
-# 🚀 Lancement du bot
+# 🚀 Lancement
 # ──────────────────────────────────────────────────────────────
-async def main():
-    await load_commands()
-    await bot.start(TOKEN)
-
 if __name__ == "__main__":
     keep_alive()
-    asyncio.run(main())
+
+    async def start():
+        await load_commands()
+        await bot.start(TOKEN)
+
+    asyncio.run(start())
