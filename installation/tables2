@@ -1,3 +1,10 @@
+reiatsu_config
+guild_id (int), channel_id (int), is_spawn (bool), message_id (int), spawn_speed (txt), last_spawn_at (timestamptz), spawn_delay (int)
+
+reiatsu
+user_id (int), username (txt), points (int), bonus5 (int), last_steal_attempt (timestamptz), steal_cd (int), classe (txt), last_skilled_at (timestamptz), active_skill (bool), fake_spawn_id (int)
+
+
 -- ──────────────────────────────────────────────────────────────
 -- Table : reiatsu_config
 -- ──────────────────────────────────────────────────────────────
