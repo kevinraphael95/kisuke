@@ -17,6 +17,7 @@ from discord.ext import commands
 from discord import ui
 import json
 import os
+
 from utils.supabase_client import supabase
 from utils.discord_utils import safe_send, safe_reply, safe_edit, safe_delete
 
@@ -181,6 +182,7 @@ class ReiatsuAdmin(commands.Cog):
         message = await safe_send(channel, embed=embed)
         if message is None:
             return
+
         try:
             await message.add_reaction("💠")
         except discord.HTTPException:
@@ -246,21 +248,38 @@ class ReiatsuAdmin(commands.Cog):
         message = await safe_send(ctx, embed=embed, view=view)
 
         async def button_listener(interaction: discord.Interaction):
-            new_speed_name = interaction.data["custom_id"].split("_", 1)[1]
-            min_delay, max_delay = SPAWN_SPEED_RANGES[new_speed_name]
-            new_delay = random.randint(min_delay, max_delay)
-            supabase.table("reiatsu_config").update({
-                "spawn_delay": new_delay,
-                "spawn_speed": new_speed_name
-            }).eq("guild_id", guild_id).execute()
-            await interaction.response.edit_message(
-                embed=discord.Embed(
-                    title="✅ Vitesse du spawn modifiée",
-                    description=f"Nouvelle vitesse : **{new_speed_name}** ({new_delay} s)",
-                    color=discord.Color.green()
-                ),
-                view=None
-            )
+            try:
+                new_speed_name = interaction.data["custom_id"].split("_", 1)[1]
+                min_delay, max_delay = SPAWN_SPEED_RANGES[new_speed_name]
+                new_delay = random.randint(min_delay, max_delay)
+
+                supabase.table("reiatsu_config").update({
+                    "spawn_delay": new_delay,
+                    "spawn_speed": new_speed_name
+                }).eq("guild_id", guild_id).execute()
+
+                try:
+                    await interaction.response.edit_message(
+                        embed=discord.Embed(
+                            title="✅ Vitesse du spawn modifiée",
+                            description=f"Nouvelle vitesse : **{new_speed_name}** ({new_delay} s)",
+                            color=discord.Color.green()
+                        ),
+                        view=None
+                    )
+                except (discord.InteractionResponded, discord.HTTPException):
+                    await interaction.followup.send(
+                        f"✅ Vitesse mise à jour : **{new_speed_name}** ({new_delay} s)",
+                        ephemeral=True
+                    )
+
+            except Exception as e:
+                print(f"[ERREUR BUTTON SPEED] {e}")
+                try:
+                    if not interaction.response.is_done():
+                        await interaction.response.send_message("❌ Une erreur est survenue.", ephemeral=True)
+                except Exception:
+                    pass
 
         for child in view.children:
             if isinstance(child, ui.Button):
