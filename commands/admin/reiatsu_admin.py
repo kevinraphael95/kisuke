@@ -17,7 +17,6 @@ from discord.ext import commands
 from discord import ui
 import json
 import os
-
 from utils.supabase_client import supabase
 from utils.discord_utils import safe_send, safe_reply, safe_edit, safe_delete
 
@@ -80,7 +79,6 @@ class ReiatsuAdmin(commands.Cog):
             now_iso = datetime.utcnow().isoformat()
             delay = random.randint(*SPAWN_SPEED_RANGES[DEFAULT_SPAWN_SPEED])
             default_speed = DEFAULT_SPAWN_SPEED
-
             data = supabase.table("reiatsu_config").select("*").eq("guild_id", guild_id).execute()
             if data.data:
                 supabase.table("reiatsu_config").update({
@@ -101,7 +99,6 @@ class ReiatsuAdmin(commands.Cog):
                     "is_spawn": False,
                     "message_id": None
                 }).execute()
-
             await safe_send(ctx, f"✅ Le salon {ctx.channel.mention} est désormais configuré pour le spawn de Reiatsu avec vitesse par défaut **{default_speed}**.")
         except Exception as e:
             await safe_send(ctx, f"❌ Une erreur est survenue lors de la configuration : `{e}`")
@@ -132,7 +129,6 @@ class ReiatsuAdmin(commands.Cog):
         if points < 0:
             await safe_send(ctx, "❌ Le score Reiatsu doit être un nombre **positif**.")
             return
-
         user_id = str(member.id)
         username = member.display_name
         try:
@@ -147,7 +143,6 @@ class ReiatsuAdmin(commands.Cog):
                     "points": points
                 }).execute()
                 status = "🆕 Nouveau score enregistré"
-
             embed = discord.Embed(
                 title="🌟 Mise à jour du Reiatsu",
                 description=(
@@ -182,7 +177,6 @@ class ReiatsuAdmin(commands.Cog):
         message = await safe_send(channel, embed=embed)
         if message is None:
             return
-
         try:
             await message.add_reaction("💠")
         except discord.HTTPException:
@@ -230,35 +224,23 @@ class ReiatsuAdmin(commands.Cog):
             inline=False
         )
 
-        class SpeedView(ui.View):
-            def __init__(self):
-                super().__init__(timeout=60)
-                for name in SPAWN_SPEED_RANGES:
-                    if name != current_speed_name:
-                        self.add_item(ui.Button(label=name, style=discord.ButtonStyle.primary, custom_id=f"speed_{name}"))
+        class SpeedButton(ui.Button):
+            def __init__(self, name):
+                super().__init__(label=name, style=discord.ButtonStyle.primary, custom_id=f"speed_{name}")
 
-            async def interaction_check(self, interaction: discord.Interaction) -> bool:
-                return interaction.user == ctx.author
-
-            async def on_timeout(self):
-                for item in self.children:
-                    item.disabled = True
-
-        view = SpeedView()
-        message = await safe_send(ctx, embed=embed, view=view)
-
-        async def button_listener(interaction: discord.Interaction):
-            try:
-                new_speed_name = interaction.data["custom_id"].split("_", 1)[1]
-                min_delay, max_delay = SPAWN_SPEED_RANGES[new_speed_name]
-                new_delay = random.randint(min_delay, max_delay)
-
-                supabase.table("reiatsu_config").update({
-                    "spawn_delay": new_delay,
-                    "spawn_speed": new_speed_name
-                }).eq("guild_id", guild_id).execute()
-
+            async def callback(self, interaction: discord.Interaction):
+                if interaction.user != ctx.author:
+                    await interaction.response.send_message("❌ Ce bouton n'est pas pour vous.", ephemeral=True)
+                    return
                 try:
+                    new_speed_name = self.custom_id.split("_", 1)[1]
+                    min_delay, max_delay = SPAWN_SPEED_RANGES[new_speed_name]
+                    new_delay = random.randint(min_delay, max_delay)
+                    supabase.table("reiatsu_config").update({
+                        "spawn_delay": new_delay,
+                        "spawn_speed": new_speed_name
+                    }).eq("guild_id", guild_id).execute()
+
                     await interaction.response.edit_message(
                         embed=discord.Embed(
                             title="✅ Vitesse du spawn modifiée",
@@ -267,24 +249,28 @@ class ReiatsuAdmin(commands.Cog):
                         ),
                         view=None
                     )
-                except (discord.InteractionResponded, discord.HTTPException):
-                    await interaction.followup.send(
-                        f"✅ Vitesse mise à jour : **{new_speed_name}** ({new_delay} s)",
-                        ephemeral=True
-                    )
-
-            except Exception as e:
-                print(f"[ERREUR BUTTON SPEED] {e}")
-                try:
+                except Exception as e:
+                    print(f"[ERREUR BUTTON SPEED] {e}")
                     if not interaction.response.is_done():
                         await interaction.response.send_message("❌ Une erreur est survenue.", ephemeral=True)
+
+        class SpeedView(ui.View):
+            def __init__(self):
+                super().__init__(timeout=60)
+                for name in SPAWN_SPEED_RANGES:
+                    if name != current_speed_name:
+                        self.add_item(SpeedButton(name))
+
+            async def on_timeout(self):
+                for item in self.children:
+                    item.disabled = True
+                try:
+                    await message.edit(view=self)
                 except Exception:
                     pass
 
-        for child in view.children:
-            if isinstance(child, ui.Button):
-                child.callback = button_listener
-
+        view = SpeedView()
+        message = await safe_send(ctx, embed=embed, view=view)
         self.bot.add_view(view)
 
 # ──────────────────────────────────────────────────────────
