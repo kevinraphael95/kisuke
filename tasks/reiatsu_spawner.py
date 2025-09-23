@@ -6,18 +6,13 @@
 # Cooldown : Spawn auto toutes les X minutes (configurable par serveur)
 # ────────────────────────────────────────────────────────────────────────────────
 
-# ────────────────────────────────────────────────────────────────────────────────
-# 📦 Imports nécessaires
-# ────────────────────────────────────────────────────────────────────────────────
 import discord
 import random
 import time
 import asyncio
 from datetime import datetime
 from dateutil import parser
-import json
 from pathlib import Path
-
 from discord.ext import commands, tasks
 from utils.supabase_client import supabase
 from utils.discord_utils import safe_send, safe_delete  # 🔒 utils protégés
@@ -35,18 +30,20 @@ SUPER_REIATSU_GAIN = CONFIG["SUPER_REIATSU_GAIN"]
 NORMAL_REIATSU_GAIN = CONFIG["NORMAL_REIATSU_GAIN"]
 SPAWN_SPEED_RANGES = CONFIG["SPAWN_SPEED_RANGES"]
 DEFAULT_SPAWN_SPEED = CONFIG["DEFAULT_SPAWN_SPEED"]
+CLASSES = CONFIG["CLASSES"]  # JSON fusionné avec classes.json
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🧠 Cog : ReiatsuSpawner
 # ────────────────────────────────────────────────────────────────────────────────
 class ReiatsuSpawner(commands.Cog):
     """
-    Gère le spawn automatique de Reiatsu et leur capture par les joueurs.
-    Supporte un seul faux Reiatsu par serveur.
+    Gère le spawn automatique de Reiatsu et le faux Reiatsu des Illusionnistes.
+    Chaque joueur Illusionniste peut avoir un faux Reiatsu actif.
     """
+
     def __init__(self, bot: commands.Bot):
         self.bot = bot
-        self.locks = {}  # 🔒 locks par serveur pour éviter les races
+        self.locks = {}  # 🔒 lock par serveur pour éviter les races
         self.spawn_loop.start()
         self.bot.loop.create_task(self._check_on_startup())
 
@@ -59,7 +56,7 @@ class ReiatsuSpawner(commands.Cog):
         await self.bot.wait_until_ready()
         configs = supabase.table("reiatsu_config").select("*").execute()
         for conf in configs.data:
-            if not conf.get("en_attente") or not conf.get("spawn_message_id"):
+            if not conf.get("is_spawn") or not conf.get("message_id"):
                 continue
             guild = self.bot.get_guild(int(conf["guild_id"]))
             if not guild:
@@ -68,12 +65,11 @@ class ReiatsuSpawner(commands.Cog):
             if not channel:
                 continue
             try:
-                await channel.fetch_message(int(conf["spawn_message_id"]))
+                await channel.fetch_message(int(conf["message_id"]))
             except Exception:
                 supabase.table("reiatsu_config").update({
-                    "en_attente": False,
-                    "spawn_message_id": None,
-                    "faux_en_attente": False
+                    "is_spawn": False,
+                    "message_id": None
                 }).eq("guild_id", conf["guild_id"]).execute()
                 print(f"[RESET] Reiatsu fantôme nettoyé pour guild {conf['guild_id']}")
 
@@ -94,24 +90,21 @@ class ReiatsuSpawner(commands.Cog):
         for conf in configs.data:
             guild_id = conf["guild_id"]
             channel_id = conf.get("channel_id")
-            en_attente = conf.get("en_attente", False)
-            faux_en_attente = conf.get("faux_en_attente", False)
-            spawn_speed = conf.get("spawn_speed") or DEFAULT_SPAWN_SPEED
-            min_delay, max_delay = SPAWN_SPEED_RANGES.get(spawn_speed, SPAWN_SPEED_RANGES[DEFAULT_SPAWN_SPEED])
-            delay = conf.get("spawn_delay") or random.randint(min_delay, max_delay)
             if not channel_id:
                 continue
             last_spawn_str = conf.get("last_spawn_at")
+            spawn_speed = conf.get("spawn_speed") or DEFAULT_SPAWN_SPEED
+            min_delay, max_delay = SPAWN_SPEED_RANGES.get(spawn_speed, SPAWN_SPEED_RANGES[DEFAULT_SPAWN_SPEED])
+            delay = conf.get("spawn_delay") or random.randint(min_delay, max_delay)
             should_spawn = not last_spawn_str or (now - int(parser.parse(last_spawn_str).timestamp()) >= delay)
-            if should_spawn and not en_attente:
+            if should_spawn and not conf.get("is_spawn", False):
                 channel = self.bot.get_channel(int(channel_id))
                 if channel:
                     await self._spawn_message(channel, guild_id)
-            # 🔹 Spawn d’un faux Reiatsu Illusionniste si aucun faux n’est actif
-            if not faux_en_attente:
-                channel = self.bot.get_channel(int(channel_id))
-                if channel:
-                    await self._spawn_faux_reiatsu(guild_id, channel)
+            # 🔹 Spawn des faux Reiatsu par joueur Illusionniste
+            channel = self.bot.get_channel(int(channel_id))
+            if channel:
+                await self._spawn_faux_reiatsu(channel)
 
     async def _spawn_message(self, channel, guild_id):
         embed = discord.Embed(
@@ -127,17 +120,16 @@ class ReiatsuSpawner(commands.Cog):
         except discord.HTTPException:
             pass
         supabase.table("reiatsu_config").update({
-            "en_attente": True,
+            "is_spawn": True,
             "last_spawn_at": datetime.utcnow().isoformat(timespec="seconds"),
-            "spawn_message_id": str(message.id)
+            "message_id": str(message.id)
         }).eq("guild_id", guild_id).execute()
 
-    async def _spawn_faux_reiatsu(self, guild_id: str, channel: discord.TextChannel):
-        """Spawn un faux Reiatsu si aucun faux n’est actif sur le serveur."""
-        players = supabase.table("reiatsu").select("*").execute()
+    async def _spawn_faux_reiatsu(self, channel: discord.TextChannel):
+        """Spawn un faux Reiatsu pour chaque Illusionniste actif sans faux actif."""
+        players = supabase.table("reiatsu").select("*").eq("classe", "Illusionniste").execute()
         for player in players.data:
-            skill = player.get("active_skill")
-            if skill and skill.get("type") == "faux" and skill.get("spawn_id") is None:
+            if player.get("active_skill") and not player.get("fake_spawn_id"):
                 embed = discord.Embed(
                     title="🎭 Un faux Reiatsu apparaît !",
                     description="Cliquez sur 💠 pour l'absorber… si vous osez !",
@@ -145,24 +137,26 @@ class ReiatsuSpawner(commands.Cog):
                 )
                 message = await safe_send(channel, embed=embed)
                 if not message:
-                    return
+                    continue
                 try:
                     await message.add_reaction("💠")
                 except discord.HTTPException:
                     pass
-                skill["spawn_id"] = str(message.id)
-                supabase.table("reiatsu").update({"active_skill": skill}).eq("user_id", player["user_id"]).execute()
-                supabase.table("reiatsu_config").update({"faux_en_attente": True}).eq("guild_id", guild_id).execute()
-                return
+                supabase.table("reiatsu").update({
+                    "fake_spawn_id": str(message.id)
+                }).eq("user_id", player["user_id"]).execute()
 
     @commands.Cog.listener()
     async def on_raw_reaction_add(self, payload: discord.RawReactionActionEvent):
         if str(payload.emoji) != "💠" or payload.user_id == self.bot.user.id:
             return
+
         guild_id = str(payload.guild_id)
         if guild_id not in self.locks:
             self.locks[guild_id] = asyncio.Lock()
+
         async with self.locks[guild_id]:
+            # ⚡ Récupération config serveur
             conf_data = supabase.table("reiatsu_config").select("*").eq("guild_id", guild_id).execute()
             if not conf_data.data:
                 return
@@ -173,52 +167,51 @@ class ReiatsuSpawner(commands.Cog):
             if not channel or not user:
                 return
 
-            # 🔹 Vérification des faux Reiatsu
-            user_list = supabase.table("reiatsu").select("*").execute()
-            for u in user_list.data:
-                skill = u.get("active_skill")
-                if skill and skill.get("type") == "faux" and str(payload.message_id) == skill.get("spawn_id"):
-                    owner_id = skill.get("owner_id")
-                    owner = guild.get_member(int(owner_id))
+            # 🔹 Vérification faux Reiatsu
+            player_list = supabase.table("reiatsu").select("*").eq("classe", "Illusionniste").execute()
+            for p in player_list.data:
+                fake_id = p.get("fake_spawn_id")
+                if fake_id and str(payload.message_id) == fake_id:
+                    owner = guild.get_member(int(p["user_id"]))
                     if owner:
-                        owner_data = supabase.table("reiatsu").select("points").eq("user_id", owner_id).single().execute()
+                        owner_data = supabase.table("reiatsu").select("points").eq("user_id", p["user_id"]).single().execute()
                         if owner_data.data:
                             new_points = owner_data.data["points"] + 10
-                            supabase.table("reiatsu").update({"points": new_points}).eq("user_id", owner_id).execute()
+                            supabase.table("reiatsu").update({"points": new_points}).eq("user_id", p["user_id"]).execute()
                         await safe_send(channel, f"🎭 Le faux Reiatsu a été absorbé par {user.mention}... {owner.mention} gagne **+10** points !")
-                    supabase.table("reiatsu").update({"active_skill": None}).eq("user_id", u["user_id"]).execute()
-                    supabase.table("reiatsu_config").update({"faux_en_attente": False}).eq("guild_id", guild_id).execute()
+                    supabase.table("reiatsu").update({"fake_spawn_id": None}).eq("user_id", p["user_id"]).execute()
                     await safe_delete(await channel.fetch_message(payload.message_id))
                     return
 
             # 🔹 Reiatsu normal
-            if not conf.get("en_attente") or str(payload.message_id) != conf.get("spawn_message_id"):
+            if not conf.get("is_spawn") or str(payload.message_id) != conf.get("message_id"):
                 return
 
+            # ⚡ Calcul du gain (même logique qu'avant)
             gain, is_super, bonus5, classe, new_total = self._calculate_gain(user.id)
             self._update_player(user, gain, bonus5, new_total, classe)
             await self._send_feedback(channel, user, gain, is_super, classe)
 
+            # ⚡ Reset spawn
             spawn_speed = conf.get("spawn_speed") or DEFAULT_SPAWN_SPEED
             min_delay, max_delay = SPAWN_SPEED_RANGES.get(spawn_speed, SPAWN_SPEED_RANGES[DEFAULT_SPAWN_SPEED])
             new_delay = random.randint(min_delay, max_delay)
             supabase.table("reiatsu_config").update({
-                "en_attente": False,
-                "spawn_message_id": None,
+                "is_spawn": False,
+                "message_id": None,
                 "spawn_delay": new_delay
             }).eq("guild_id", guild_id).execute()
+            try:
+                message = await channel.fetch_message(int(conf.get("message_id")))
+                await safe_delete(message)
+            except Exception:
+                pass
 
-            spawn_message_id = conf.get("spawn_message_id")
-            if spawn_message_id:
-                try:
-                    message = await channel.fetch_message(int(spawn_message_id))
-                    await safe_delete(message)
-                except Exception:
-                    pass
-
+    # ────────────────────────────────────────────────────────────────────────────
+    # 🔹 Fonctions auxiliaires
+    # ────────────────────────────────────────────────────────────────────────────
     def _calculate_gain(self, user_id):
         is_super = random.randint(1, 100) <= SUPER_REIATSU_CHANCE
-        gain = SUPER_REIATSU_GAIN if is_super else NORMAL_REIATSU_GAIN
         user_data = supabase.table("reiatsu").select("classe", "points", "bonus5").eq("user_id", str(user_id)).execute()
         if user_data.data:
             classe = user_data.data[0].get("classe")
@@ -229,6 +222,7 @@ class ReiatsuSpawner(commands.Cog):
             current_points = 0
             bonus5 = 0
 
+        gain = SUPER_REIATSU_GAIN if is_super else NORMAL_REIATSU_GAIN
         if not is_super:
             if classe == "Absorbeur":
                 gain += 5
@@ -241,6 +235,7 @@ class ReiatsuSpawner(commands.Cog):
                     bonus5 = 0
         else:
             bonus5 = 0
+
         return gain, is_super, bonus5, classe, current_points + gain
 
     def _update_player(self, user, gain, bonus5, new_total, classe):
@@ -266,6 +261,7 @@ class ReiatsuSpawner(commands.Cog):
             else:
                 await safe_send(channel, f"💠 {user.mention} a absorbé le Reiatsu et gagné **+{gain}** reiatsu !")
 
+
 # ────────────────────────────────────────────────────────────────────────────────
 # 🔌 Setup du Cog
 # ────────────────────────────────────────────────────────────────────────────────
@@ -275,3 +271,4 @@ async def setup(bot: commands.Bot):
         if not hasattr(command, "category"):
             command.category = "Reiatsu"
     await bot.add_cog(cog)
+                    
