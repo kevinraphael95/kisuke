@@ -15,19 +15,20 @@ import random
 from datetime import datetime
 from discord.ext import commands
 from discord import ui
+import json
+import os
 from utils.supabase_client import supabase
 from utils.discord_utils import safe_send, safe_reply, safe_edit, safe_delete
 
 # ──────────────────────────────────────────────────────────────
-# 🔧 Constantes pour la vitesse de spawn
+# 📂 Chargement du JSON global
 # ──────────────────────────────────────────────────────────────
-SPAWN_SPEED_RANGES = {
-    "Ultra Rapide": (1, 5),    # minutes
-    "Rapide": (5, 20),
-    "Normal": (30, 60),
-    "Lent": (300, 600)         # 5-10 h
-}
-DEFAULT_SPAWN_SPEED = "Normal"
+CONFIG_PATH = os.path.join("data", "reiatsu_config.json")
+with open(CONFIG_PATH, "r", encoding="utf-8") as f:
+    CONFIG = json.load(f)
+
+SPAWN_SPEED_RANGES = CONFIG["SPAWN_SPEED_RANGES"]
+DEFAULT_SPAWN_SPEED = CONFIG["DEFAULT_SPAWN_SPEED"]
 
 # ──────────────────────────────────────────────────────────────
 # 🧠 Cog principal
@@ -76,30 +77,28 @@ class ReiatsuAdmin(commands.Cog):
             guild_id = str(ctx.guild.id)
             channel_id = str(ctx.channel.id)
             now_iso = datetime.utcnow().isoformat()
-            delay = random.randint(30, 60)  # Valeur aléatoire initiale
-            default_speed = DEFAULT_SPAWN_SPEED  # "Normal" par défaut
+            delay = random.randint(*SPAWN_SPEED_RANGES[DEFAULT_SPAWN_SPEED])
+            default_speed = DEFAULT_SPAWN_SPEED
 
             data = supabase.table("reiatsu_config").select("*").eq("guild_id", guild_id).execute()
             if data.data:
-                # Mise à jour existante
                 supabase.table("reiatsu_config").update({
                     "channel_id": channel_id,
                     "last_spawn_at": now_iso,
                     "spawn_delay": delay,
-                    "spawn_speed": default_speed,  # Ajout de la colonne spawn_speed
-                    "en_attente": False,
-                    "spawn_message_id": None
+                    "spawn_speed": default_speed,
+                    "is_spawn": False,
+                    "message_id": None
                 }).eq("guild_id", guild_id).execute()
             else:
-                # Nouveau serveur
                 supabase.table("reiatsu_config").insert({
                     "guild_id": guild_id,
                     "channel_id": channel_id,
                     "last_spawn_at": now_iso,
                     "spawn_delay": delay,
-                    "spawn_speed": default_speed,  # Ajout de la colonne spawn_speed
-                    "en_attente": False,
-                    "spawn_message_id": None
+                    "spawn_speed": default_speed,
+                    "is_spawn": False,
+                    "message_id": None
                 }).execute()
 
             await safe_send(ctx, f"✅ Le salon {ctx.channel.mention} est désormais configuré pour le spawn de Reiatsu avec vitesse par défaut **{default_speed}**.")
@@ -132,6 +131,7 @@ class ReiatsuAdmin(commands.Cog):
         if points < 0:
             await safe_send(ctx, "❌ Le score Reiatsu doit être un nombre **positif**.")
             return
+
         user_id = str(member.id)
         username = member.display_name
         try:
@@ -205,34 +205,29 @@ class ReiatsuAdmin(commands.Cog):
     async def speed_reiatsu(self, ctx: commands.Context):
         guild_id = str(ctx.guild.id)
         res = supabase.table("reiatsu_config").select("*").eq("guild_id", guild_id).execute()
-
         if not res.data:
             await safe_send(ctx, "❌ Aucun salon Reiatsu configuré pour ce serveur.")
             return
 
         config = res.data[0]
         current_delay = config.get("spawn_delay", SPAWN_SPEED_RANGES[DEFAULT_SPAWN_SPEED][1])
-
-        # Déterminer la vitesse actuelle
         current_speed_name = DEFAULT_SPAWN_SPEED
         for name, (min_delay, max_delay) in SPAWN_SPEED_RANGES.items():
             if min_delay <= current_delay <= max_delay:
                 current_speed_name = name
                 break
 
-        # Création de l'embed
         embed = discord.Embed(
             title="⚡ Vitesse du spawn de Reiatsu",
-            description=f"**Vitesse actuelle :** {current_speed_name} ({current_delay} min)",
+            description=f"**Vitesse actuelle :** {current_speed_name} ({current_delay} s)",
             color=discord.Color.blurple()
         )
         embed.add_field(
             name="Vitesses possibles",
-            value="\n".join([f"{name} → {min_delay}-{max_delay} min" for name, (min_delay, max_delay) in SPAWN_SPEED_RANGES.items()]),
+            value="\n".join([f"{name} → {min_d}-{max_d} s" for name, (min_d, max_d) in SPAWN_SPEED_RANGES.items()]),
             inline=False
         )
 
-        # Création de boutons
         class SpeedView(ui.View):
             def __init__(self):
                 super().__init__(timeout=60)
@@ -250,19 +245,18 @@ class ReiatsuAdmin(commands.Cog):
         view = SpeedView()
         message = await safe_send(ctx, embed=embed, view=view)
 
-        # Callback des boutons
         async def button_listener(interaction: discord.Interaction):
             new_speed_name = interaction.data["custom_id"].split("_", 1)[1]
             min_delay, max_delay = SPAWN_SPEED_RANGES[new_speed_name]
             new_delay = random.randint(min_delay, max_delay)
             supabase.table("reiatsu_config").update({
                 "spawn_delay": new_delay,
-                "spawn_speed": new_speed_name  # Mise à jour du spawn_speed
+                "spawn_speed": new_speed_name
             }).eq("guild_id", guild_id).execute()
             await interaction.response.edit_message(
                 embed=discord.Embed(
                     title="✅ Vitesse du spawn modifiée",
-                    description=f"Nouvelle vitesse : **{new_speed_name}** ({new_delay} min)",
+                    description=f"Nouvelle vitesse : **{new_speed_name}** ({new_delay} s)",
                     color=discord.Color.green()
                 ),
                 view=None
@@ -283,5 +277,3 @@ async def setup(bot: commands.Bot):
         if not hasattr(command, "category"):
             command.category = "Admin"
     await bot.add_cog(cog)
-
-        
