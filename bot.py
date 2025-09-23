@@ -81,6 +81,20 @@ async def load_commands():
                         print(f"❌ Failed to load {path}: {e}")
 
 # ──────────────────────────────────────────────────────────────
+# 🔌 Chargement dynamique des tasks depuis /tasks/*
+# ──────────────────────────────────────────────────────────────
+async def load_tasks():
+    for filename in os.listdir("tasks"):
+        if filename.endswith(".py") and filename != "keep_alive.py":  # on garde keep_alive à part
+            path = f"tasks.{filename[:-3]}"
+            try:
+                await bot.load_extension(path)
+                print(f"✅ Task loaded: {path}")
+            except Exception as e:
+                print(f"❌ Failed to load task {path}: {e}")
+
+
+# ──────────────────────────────────────────────────────────────
 # 🔁 Tâche de vérification continue du verrou
 # ──────────────────────────────────────────────────────────────
 async def verify_lock_loop():
@@ -101,7 +115,7 @@ async def verify_lock_loop():
 @bot.event
 async def on_ready():
     print(f"✅ Connecté en tant que {bot.user.name}")
-    await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.playing, name="Duel Monsters"))
+    await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name="Bleach"))
 
     try:
         now = datetime.now(timezone.utc).isoformat()
@@ -144,13 +158,13 @@ async def on_message(message):
         embed = discord.Embed(
             title="Coucou ! 🃏",
             description=(
-                f"Bonjour ! Je suis **Atem**, un bot discord inspiré du manga Yu-Gi-Oh.\n"
+                f"Bonjour ! Je suis **Kisuke Urahara**, un bot discord inspiré du manga Bleach.\n"
                 f"• Utilise la commande `{prefix}help` pour avoir la liste des commandes du bot "
                 f"ou `{prefix}help + le nom d'une commande` pour en avoir une description."
             ),
             color=discord.Color.red()
         )
-        embed.set_footer(text="Tu dois croire en l'âme des cartes 🎴")
+        embed.set_footer(text="123")
 
         if bot.user.avatar:
             embed.set_thumbnail(url=bot.user.avatar.url)
@@ -187,6 +201,7 @@ if __name__ == "__main__":
 
     async def start():
         await load_commands()
+        await load_tasks()  
         await bot.start(TOKEN)
 
     asyncio.run(start())
