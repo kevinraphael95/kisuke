@@ -6,10 +6,8 @@
 # Cooldown : 1 utilisation / 5 secondes / utilisateur
 # ────────────────────────────────────────────────────────────────────────────────
 
-# ────────────────────────────────────────────────────────────────────────────────
-# 📦 Imports nécessaires
-# ────────────────────────────────────────────────────────────────────────────────
 import random
+import json
 from datetime import datetime, timezone, timedelta
 import discord
 from discord import app_commands
@@ -29,6 +27,7 @@ CLASS_CD = {
 # ────────────────────────────────────────────────────────────────────────────────
 # 🧠 Cog principal
 # ────────────────────────────────────────────────────────────────────────────────
+
 class Skill(commands.Cog):
     """
     Commande /skill et !skill — Active la compétence spécifique de la classe du joueur avec cooldown
@@ -76,18 +75,24 @@ class Skill(commands.Cog):
             new_cd = CLASS_CD["Voleur"]
 
         elif classe == "Absorbeur":
-            updated_fields["prochain_reiatsu"] = 100
+            # Stocker le prochain Reiatsu comme compétence active en JSON
+            updated_fields["active_skill"] = json.dumps({
+                "type": "super_reiatsu",
+                "owner_id": user_id,
+                "points": 100,
+                "created_at": now.isoformat()
+            })
             result_message = "🌀 Ton prochain Reiatsu absorbé sera un Super Reiatsu (100 points)."
             new_cd = CLASS_CD["Absorbeur"]
 
         elif classe == "Illusionniste":
             # Marquer en DB qu’un faux Reiatsu doit être créé par le spawner
-            updated_fields["active_skill"] = {
+            updated_fields["active_skill"] = json.dumps({
                 "type": "faux",
                 "owner_id": user_id,
                 "spawn_id": None,
                 "created_at": now.isoformat()
-            }
+            })
             updated_fields["faux_block_user"] = user_id
             result_message = "🎭 Ton pouvoir Illusionniste est activé ! Un faux Reiatsu apparaîtra bientôt..."
             new_cd = CLASS_CD["Illusionniste"]
@@ -166,6 +171,7 @@ class Skill(commands.Cog):
 # ────────────────────────────────────────────────────────────────────────────────
 # 🔌 Setup du Cog
 # ────────────────────────────────────────────────────────────────────────────────
+
 async def setup(bot: commands.Bot):
     cog = Skill(bot)
     for command in cog.get_commands():
