@@ -1,9 +1,9 @@
-# ────────────────────────────────────────────────────────────────────────────────
+# ──────────────────────────────────────────────────────────────
 # 📌 debugreiatsu.py — Commande admin /debugreiatsu et !debugreiatsu
 # Objectif : Vérifier l'état du spawner Reiatsu et déclencher un spawn manuel
 # Catégorie : Admin
 # Accès : Administrateurs uniquement
-# ────────────────────────────────────────────────────────────────────────────────
+# ──────────────────────────────────────────────────────────────
 
 import discord
 from discord import app_commands
@@ -15,6 +15,7 @@ from utils.supabase_client import supabase
 
 DATA_JSON_PATH = os.path.join("data", "reiatsu_config.json")
 
+
 def load_data():
     """Charge la configuration Reiatsu depuis le fichier JSON."""
     try:
@@ -23,6 +24,7 @@ def load_data():
     except Exception as e:
         print(f"[ERREUR JSON] Impossible de charger {DATA_JSON_PATH} : {e}")
         return {}
+
 
 class DebugReiatsu(commands.Cog):
     """Commande /debugreiatsu et !debugreiatsu"""
@@ -34,8 +36,10 @@ class DebugReiatsu(commands.Cog):
         self.DEFAULT_SPAWN_SPEED = self.config.get("DEFAULT_SPAWN_SPEED", "Normal")
         self.SPAWN_LOOP_INTERVAL = self.config.get("SPAWN_LOOP_INTERVAL", 60)
 
+    # ──────────────────────────────────────────────────────────
+    # Fonction interne pour envoyer l'embed
+    # ──────────────────────────────────────────────────────────
     async def _send_debug(self, channel: discord.abc.Messageable, guild: discord.Guild, force: bool = False):
-        """Fonction interne qui construit et envoie l'embed de debug"""
         try:
             conf_data = supabase.table("reiatsu_config").select("*").eq("guild_id", str(guild.id)).execute().data
             if not conf_data:
@@ -87,30 +91,29 @@ class DebugReiatsu(commands.Cog):
         except Exception as e:
             await safe_send(channel, f"❌ Une erreur est survenue : {e}")
 
-    # ──────────────────────────────────────────────────────────────
-    # Commande préfixe
-    # ──────────────────────────────────────────────────────────────
+    # ──────────────────────────────────────────────────────────
+    # Commande préfixe !debugreiatsu
+    # ──────────────────────────────────────────────────────────
     @commands.command(name="debugreiatsu")
     @commands.has_permissions(administrator=True)
     async def prefix_debugreiatsu(self, ctx: commands.Context, arg: str = None):
         force = arg == "force"
         await self._send_debug(ctx.channel, ctx.guild, force=force)
 
-    # ──────────────────────────────────────────────────────────────
-    # Commande slash
-    # ──────────────────────────────────────────────────────────────
-    @app_commands.command(name="debugreiatsu", description="Affiche l'état du spawner Reiatsu (option: force un spawn)")
-    @app_commands.checks.has_permissions(administrator=True)
+    # ──────────────────────────────────────────────────────────
+    # Commande slash /debugreiatsu
+    # ──────────────────────────────────────────────────────────
+    @app_commands.command(
+        name="debugreiatsu",
+        description="Affiche l'état du spawner Reiatsu (option: force un spawn)"
+    )
     async def slash_debugreiatsu(self, interaction: discord.Interaction, force: bool = False):
-        try:
-            await interaction.response.defer(ephemeral=True)
-            await self._send_debug(interaction.channel, interaction.guild, force=force)
-        except Exception as e:
-            await safe_respond(interaction, f"❌ Une erreur est survenue : {e}", ephemeral=True)
+        await interaction.response.defer(ephemeral=True)
+        await self._send_debug(interaction.channel, interaction.guild, force=force)
 
-# ──────────────────────────────────────────────────────────────
+# ──────────────────────────────────────────────────────────
 # Setup du Cog
-# ──────────────────────────────────────────────────────────────
+# ──────────────────────────────────────────────────────────
 async def setup(bot: commands.Bot):
     cog = DebugReiatsu(bot)
     for command in cog.get_commands():
