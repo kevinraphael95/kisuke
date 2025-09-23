@@ -41,7 +41,6 @@ class DebugReiatsu(commands.Cog):
     """
     Commande /debugreiatsu et !debugreiatsu — Vérifie l'état du spawner et force un spawn
     """
-
     def __init__(self, bot: commands.Bot):
         self.bot = bot
         self.config = load_data()
@@ -63,7 +62,6 @@ class DebugReiatsu(commands.Cog):
         spawn_speed = conf.get("spawn_speed") or self.DEFAULT_SPAWN_SPEED
         min_delay, max_delay = self.SPAWN_SPEED_RANGES.get(spawn_speed, self.SPAWN_SPEED_RANGES[self.DEFAULT_SPAWN_SPEED])
         delay = conf.get("spawn_delay") or random.randint(min_delay, max_delay)
-
         now = int(time.time())
         last_spawn_ts = int(parser.parse(last_spawn_str).timestamp()) if last_spawn_str else None
         remaining = (last_spawn_ts + delay - now) if last_spawn_ts else None
@@ -87,9 +85,13 @@ class DebugReiatsu(commands.Cog):
             try:
                 reiatsu_cog = self.bot.get_cog("ReiatsuSpawner")
                 if reiatsu_cog:
-                    await reiatsu_cog._spawn_message(guild.id)
-                    embed.add_field(name="Action forcée", value="✅ Spawn déclenché manuellement", inline=False)
-                    print(f"[DEBUG] Spawn forcé déclenché pour {guild.id}")
+                    channel_obj = self.bot.get_channel(conf.get("channel_id"))
+                    if channel_obj:
+                        await reiatsu_cog._spawn_message(channel_obj, guild.id)
+                        embed.add_field(name="Action forcée", value="✅ Spawn déclenché manuellement", inline=False)
+                        print(f"[DEBUG] Spawn forcé déclenché pour {guild.id}")
+                    else:
+                        embed.add_field(name="Action forcée", value="❌ Salon introuvable", inline=False)
                 else:
                     embed.add_field(name="Action forcée", value="❌ ReiatsuSpawner introuvable", inline=False)
             except Exception as e:
@@ -108,7 +110,6 @@ class DebugReiatsu(commands.Cog):
     async def slash_debugreiatsu(self, interaction: discord.Interaction, force: bool = False):
         await interaction.response.defer(ephemeral=True)
         await self._send_debug(interaction.channel, interaction.guild, force=force)
-        await interaction.delete_original_response()
 
     # ────────────────────────────────────────────────────────────────────────────
     # 🔹 Commande PREFIX
