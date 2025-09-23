@@ -63,6 +63,7 @@ bot.is_main_instance = False
 # 🔌 Chargement dynamique des extensions
 # ──────────────────────────────────────────────────────────────
 async def load_extensions():
+    # Commandes
     for root, dirs, files in os.walk("commands"):
         for file in files:
             if file.endswith(".py"):
@@ -74,12 +75,14 @@ async def load_extensions():
                     print(f"✅ Loaded {path}")
                 except Exception as e:
                     print(f"❌ Failed to load {path}: {e}")
+
     # Tâches
     try:
         await bot.load_extension("tasks.heartbeat")
-        print("✅ Loaded tasks.heartbeat")
+        await bot.load_extension("tasks.reiatsu_spawner")
+        print("✅ Loaded tasks.heartbeat & tasks.reiatsu_spawner")
     except Exception as e:
-        print(f"❌ Failed to load tasks.heartbeat: {e}")
+        print(f"❌ Failed to load tasks: {e}")
 
 # ──────────────────────────────────────────────────────────────
 # 🔔 Événement on_ready
@@ -88,7 +91,7 @@ async def load_extensions():
 async def on_ready():
     print(f"✅ Connecté en tant que {bot.user}")
     await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name="Bleach"))
-
+    
     now = datetime.now(timezone.utc).isoformat()
     try:
         supabase.table("bot_lock").delete().eq("id", "reiatsu_lock").execute()
@@ -100,8 +103,7 @@ async def on_ready():
         bot.is_main_instance = True
         print(f"✅ Instance principale active : {INSTANCE_ID}")
 
-        # Charger spawner Reiatsu
-        await bot.load_extension("tasks.reiatsu_spawner")
+        # Synchronisation des commandes slash
         await bot.tree.sync()
         print("✅ Slash commands synchronisées")
     except Exception as e:
@@ -121,11 +123,12 @@ async def on_message(message):
             return
     except Exception as e:
         print(f"⚠️ Vérification du verrou Supabase échouée : {e}")
-
+    
     prefix = get_prefix(bot, message)
     if message.content.strip() in [f"<@{bot.user.id}>", f"<@!{bot.user.id}>"]:
         await safe_send(message.channel, f"👋 Salut {message.author.mention} ! Utilise `{prefix}help` pour voir les commandes.")
         return
+
     if message.content.startswith(prefix):
         await bot.process_commands(message)
 
