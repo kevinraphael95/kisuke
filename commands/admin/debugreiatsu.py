@@ -81,5 +81,12 @@ class DebugReiatsu(commands.Cog):
         force = arg == "force"
         await self._send_debug(ctx.channel, ctx.guild, force=force)
 
+# ────────────────────────────────────────────────────────────────────────────────
+# 🔌 Setup du Cog
+# ────────────────────────────────────────────────────────────────────────────────
 async def setup(bot: commands.Bot):
-    await bot.add_cog(DebugReiatsu(bot))
+    cog = DebugReiatsu(bot)
+    for command in cog.get_commands():
+        if not hasattr(command, "category"):
+            command.category = "Reiatsu"
+    await bot.add_cog(cog)
