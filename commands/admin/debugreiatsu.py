@@ -52,52 +52,56 @@ class DebugReiatsu(commands.Cog):
     # 🔹 Fonction interne commune
     # ────────────────────────────────────────────────────────────────────────────
     async def _send_debug(self, channel: discord.abc.Messageable, guild: discord.Guild, force: bool = False):
-        conf = supabase.table("reiatsu_config").select("*").eq("guild_id", str(guild.id)).execute()
-        if not conf.data:
-            await safe_send(channel, "⚠️ Aucune configuration trouvée pour ce serveur.")
-            return
+        try:
+            resp = supabase.table("reiatsu_config").select("*").eq("guild_id", int(guild.id)).execute()
+            conf_data = resp.get("data", [])
+            if not conf_data:
+                await safe_send(channel, "⚠️ Aucune configuration trouvée pour ce serveur.")
+                return
+            conf = conf_data[0]
 
-        conf = conf.data[0]
-        last_spawn_str = conf.get("last_spawn_at")
-        spawn_speed = conf.get("spawn_speed") or self.DEFAULT_SPAWN_SPEED
-        min_delay, max_delay = self.SPAWN_SPEED_RANGES.get(spawn_speed, self.SPAWN_SPEED_RANGES[self.DEFAULT_SPAWN_SPEED])
-        delay = conf.get("spawn_delay") or random.randint(min_delay, max_delay)
-        now = int(time.time())
-        last_spawn_ts = int(parser.parse(last_spawn_str).timestamp()) if last_spawn_str else None
-        remaining = (last_spawn_ts + delay - now) if last_spawn_ts else None
+            last_spawn_str = conf.get("last_spawn_at")
+            spawn_speed = conf.get("spawn_speed") or self.DEFAULT_SPAWN_SPEED
+            min_delay, max_delay = self.SPAWN_SPEED_RANGES.get(spawn_speed, self.SPAWN_SPEED_RANGES.get(self.DEFAULT_SPAWN_SPEED, (30, 60)))
+            delay = conf.get("spawn_delay") or random.randint(min_delay, max_delay)
+            now = int(time.time())
+            last_spawn_ts = int(parser.parse(last_spawn_str).timestamp()) if last_spawn_str else None
+            remaining = (last_spawn_ts + delay - now) if last_spawn_ts else None
 
-        embed = discord.Embed(
-            title="🔧 Debug Reiatsu",
-            description=f"État du spawner pour **{guild.name}**",
-            color=discord.Color.purple()
-        )
-        embed.add_field(name="Instance principale", value="✅ Oui" if getattr(self.bot, "is_main_instance", True) else "❌ Non", inline=True)
-        embed.add_field(name="Task Loop", value=f"Toutes les `{self.SPAWN_LOOP_INTERVAL}` sec", inline=True)
-        embed.add_field(name="Spawn en cours", value="✅ Oui" if conf.get("is_spawn") else "❌ Non", inline=True)
-        embed.add_field(name="Dernier spawn", value=last_spawn_str or "Jamais", inline=False)
-        embed.add_field(name="Délai défini", value=f"{delay} sec (range {min_delay}-{max_delay})", inline=True)
-        embed.add_field(name="Temps restant", value=f"{remaining} sec" if remaining is not None else "N/A", inline=True)
-        embed.add_field(name="Salon configuré", value=f"<#{conf.get('channel_id')}>" if conf.get("channel_id") else "Aucun", inline=False)
-        embed.add_field(name="Message ID", value=conf.get("message_id") or "None", inline=True)
+            embed = discord.Embed(
+                title="🔧 Debug Reiatsu",
+                description=f"État du spawner pour **{guild.name}**",
+                color=discord.Color.purple()
+            )
 
-        if force:
-            # 🔥 Déclenchement du spawn manuel
-            try:
-                reiatsu_cog = self.bot.get_cog("ReiatsuSpawner")
-                if reiatsu_cog:
-                    channel_obj = self.bot.get_channel(conf.get("channel_id"))
-                    if channel_obj:
-                        await reiatsu_cog._spawn_message(channel_obj, guild.id)
-                        embed.add_field(name="Action forcée", value="✅ Spawn déclenché manuellement", inline=False)
-                        print(f"[DEBUG] Spawn forcé déclenché pour {guild.id}")
+            embed.add_field(name="Instance principale", value="✅ Oui" if getattr(self.bot, "is_main_instance", True) else "❌ Non", inline=True)
+            embed.add_field(name="Task Loop", value=f"Toutes les `{self.SPAWN_LOOP_INTERVAL}` sec", inline=True)
+            embed.add_field(name="Spawn en cours", value="✅ Oui" if conf.get("is_spawn") else "❌ Non", inline=True)
+            embed.add_field(name="Dernier spawn", value=last_spawn_str or "Jamais", inline=False)
+            embed.add_field(name="Délai défini", value=f"{delay} sec (range {min_delay}-{max_delay})", inline=True)
+            embed.add_field(name="Temps restant", value=f"{remaining} sec" if remaining is not None else "N/A", inline=True)
+            embed.add_field(name="Salon configuré", value=f"<#{conf.get('channel_id')}>" if conf.get("channel_id") else "Aucun", inline=False)
+            embed.add_field(name="Message ID", value=conf.get("message_id") or "None", inline=True)
+
+            if force:
+                try:
+                    reiatsu_cog = self.bot.get_cog("ReiatsuSpawner")
+                    if reiatsu_cog:
+                        channel_obj = self.bot.get_channel(int(conf.get("channel_id", 0)))
+                        if channel_obj:
+                            await reiatsu_cog._spawn_message(channel_obj, guild.id)
+                            embed.add_field(name="Action forcée", value="✅ Spawn déclenché manuellement", inline=False)
+                            print(f"[DEBUG] Spawn forcé déclenché pour {guild.id}")
+                        else:
+                            embed.add_field(name="Action forcée", value="❌ Salon introuvable", inline=False)
                     else:
-                        embed.add_field(name="Action forcée", value="❌ Salon introuvable", inline=False)
-                else:
-                    embed.add_field(name="Action forcée", value="❌ ReiatsuSpawner introuvable", inline=False)
-            except Exception as e:
-                embed.add_field(name="Action forcée", value=f"❌ Erreur lors du spawn : {e}", inline=False)
+                        embed.add_field(name="Action forcée", value="❌ ReiatsuSpawner introuvable", inline=False)
+                except Exception as e:
+                    embed.add_field(name="Action forcée", value=f"❌ Erreur lors du spawn : {e}", inline=False)
 
-        await safe_send(channel, embed=embed)
+            await safe_send(channel, embed=embed)
+        except Exception as e:
+            await safe_send(channel, f"❌ Une erreur est survenue : {e}")
 
     # ────────────────────────────────────────────────────────────────────────────
     # 🔹 Commande SLASH
@@ -108,8 +112,11 @@ class DebugReiatsu(commands.Cog):
     )
     @app_commands.checks.has_permissions(administrator=True)
     async def slash_debugreiatsu(self, interaction: discord.Interaction, force: bool = False):
-        await interaction.response.defer(ephemeral=True)
-        await self._send_debug(interaction.channel, interaction.guild, force=force)
+        try:
+            await interaction.response.defer(ephemeral=True)
+            await self._send_debug(interaction.channel, interaction.guild, force=force)
+        except Exception as e:
+            await safe_send(interaction.channel, f"❌ Une erreur est survenue : {e}")
 
     # ────────────────────────────────────────────────────────────────────────────
     # 🔹 Commande PREFIX
@@ -117,8 +124,11 @@ class DebugReiatsu(commands.Cog):
     @commands.command(name="debugreiatsu")
     @commands.has_permissions(administrator=True)
     async def prefix_debugreiatsu(self, ctx: commands.Context, arg: str = None):
-        force = arg == "force"
-        await self._send_debug(ctx.channel, ctx.guild, force=force)
+        try:
+            force = arg == "force"
+            await self._send_debug(ctx.channel, ctx.guild, force=force)
+        except Exception as e:
+            await safe_send(ctx.channel, f"❌ Une erreur est survenue : {e}")
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🔌 Setup du Cog
