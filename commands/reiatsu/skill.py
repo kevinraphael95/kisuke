@@ -9,9 +9,11 @@
 import random
 import json
 from datetime import datetime, timezone, timedelta
+
 import discord
 from discord import app_commands
 from discord.ext import commands
+
 from utils.supabase_client import supabase
 from utils.discord_utils import safe_send, safe_followup
 
@@ -38,6 +40,7 @@ class Skill(commands.Cog):
 
     # 🔹 Fonction interne commune
     async def _execute_skill(self, user_id: str, ctx_or_interaction=None):
+        now = datetime.now(timezone.utc)
         try:
             response = supabase.table("reiatsu").select("*").eq("user_id", user_id).single().execute()
             data = getattr(response, "data", None)
@@ -50,9 +53,8 @@ class Skill(commands.Cog):
 
         classe = data.get("classe", "Travailleur")
         reiatsu = data.get("points", 0)
-        last_skill = data.get("last_skill")
+        last_skill = data.get("last_skilled_at")
         skill_cd = data.get("skill_cd", 0)
-        now = datetime.now(timezone.utc)
 
         # ⏳ Cooldown
         if last_skill:
@@ -75,7 +77,6 @@ class Skill(commands.Cog):
             new_cd = CLASS_CD["Voleur"]
 
         elif classe == "Absorbeur":
-            # Stocker le prochain Reiatsu comme compétence active en JSON
             updated_fields["active_skill"] = json.dumps({
                 "type": "super_reiatsu",
                 "owner_id": user_id,
@@ -86,13 +87,24 @@ class Skill(commands.Cog):
             new_cd = CLASS_CD["Absorbeur"]
 
         elif classe == "Illusionniste":
-            # Marquer en DB qu’un faux Reiatsu doit être créé par le spawner
             updated_fields["active_skill"] = json.dumps({
                 "type": "faux",
                 "owner_id": user_id,
                 "spawn_id": None,
                 "created_at": now.isoformat()
             })
+            # Mise à jour de la config pour spawner le faux Reiatsu
+            if ctx_or_interaction:
+                guild_id = str(ctx_or_interaction.guild.id)
+                try:
+                    conf = supabase.table("reiatsu_config").select("*").eq("guild_id", guild_id).single().execute()
+                    if conf.data:
+                        supabase.table("reiatsu_config").update({
+                            "illusionniste_active": user_id
+                        }).eq("guild_id", guild_id).execute()
+                except Exception as e:
+                    print(f"[ERREUR Illusionniste config] {e}")
+
             updated_fields["faux_block_user"] = user_id
             result_message = "🎭 Ton pouvoir Illusionniste est activé ! Un faux Reiatsu apparaîtra bientôt..."
             new_cd = CLASS_CD["Illusionniste"]
@@ -124,14 +136,12 @@ class Skill(commands.Cog):
             new_cd = CLASS_CD["Parieur"]
 
         # Ajout cooldown
-        updated_fields["last_skill"] = now.isoformat()
+        updated_fields["last_skilled_at"] = now.isoformat()
         updated_fields["skill_cd"] = new_cd
 
         # 🔹 Update sécurisé Supabase
         try:
-            response = supabase.table("reiatsu").upsert({**data, **updated_fields}, on_conflict="user_id").execute()
-            if getattr(response, "status_code", 200) >= 400:
-                return "❌ Impossible de mettre à jour les données (Supabase a renvoyé une erreur)."
+            supabase.table("reiatsu").upsert({**data, **updated_fields}, on_conflict="user_id").execute()
         except Exception as e:
             print(f"[ERREUR SUPABASE UPDATE] {e}")
             return "❌ Impossible de mettre à jour les données."
@@ -171,11 +181,10 @@ class Skill(commands.Cog):
 # ────────────────────────────────────────────────────────────────────────────────
 # 🔌 Setup du Cog
 # ────────────────────────────────────────────────────────────────────────────────
-
 async def setup(bot: commands.Bot):
     cog = Skill(bot)
     for command in cog.get_commands():
         if not hasattr(command, "category"):
             command.category = "Reiatsu"
     await bot.add_cog(cog)
-    print("[COG SETUP] Skill cog ajouté ✅")
+    
