@@ -1,14 +1,22 @@
+# ────────────────────────────────────────────────────────────────────────────────
+# 📌 debugreiatsu.py — Commande admin /debugreiatsu et !debugreiatsu
+# Objectif : Vérifier l'état du spawner Reiatsu et déclencher un spawn manuel
+# Catégorie : Admin
+# Accès : Administrateurs uniquement
+# ────────────────────────────────────────────────────────────────────────────────
+
 import discord
-from discord.ext import commands
 from discord import app_commands
+from discord.ext import commands
 import time, random, json, os
 from dateutil import parser
-from utils.discord_utils import safe_send
+from utils.discord_utils import safe_send, safe_respond
 from utils.supabase_client import supabase
 
 DATA_JSON_PATH = os.path.join("data", "reiatsu_config.json")
 
 def load_data():
+    """Charge la configuration Reiatsu depuis le fichier JSON."""
     try:
         with open(DATA_JSON_PATH, "r", encoding="utf-8") as f:
             return json.load(f)
@@ -27,16 +35,19 @@ class DebugReiatsu(commands.Cog):
         self.SPAWN_LOOP_INTERVAL = self.config.get("SPAWN_LOOP_INTERVAL", 60)
 
     async def _send_debug(self, channel: discord.abc.Messageable, guild: discord.Guild, force: bool = False):
+        """Fonction interne qui construit et envoie l'embed de debug"""
         try:
             conf_data = supabase.table("reiatsu_config").select("*").eq("guild_id", str(guild.id)).execute().data
             if not conf_data:
                 await safe_send(channel, "⚠️ Aucune configuration trouvée pour ce serveur.")
                 return
-            conf = conf_data[0]
 
+            conf = conf_data[0]
             last_spawn_str = conf.get("last_spawn_at")
             spawn_speed = conf.get("spawn_speed") or self.DEFAULT_SPAWN_SPEED
-            min_delay, max_delay = self.SPAWN_SPEED_RANGES.get(spawn_speed, self.SPAWN_SPEED_RANGES.get(self.DEFAULT_SPAWN_SPEED, (30, 60)))
+            min_delay, max_delay = self.SPAWN_SPEED_RANGES.get(
+                spawn_speed, self.SPAWN_SPEED_RANGES.get(self.DEFAULT_SPAWN_SPEED, (30, 60))
+            )
             delay = conf.get("spawn_delay") or random.randint(min_delay, max_delay)
             now = int(time.time())
             last_spawn_ts = int(parser.parse(last_spawn_str).timestamp()) if last_spawn_str else None
@@ -72,18 +83,34 @@ class DebugReiatsu(commands.Cog):
                     embed.add_field(name="Action forcée", value=f"❌ Erreur lors du spawn : {e}", inline=False)
 
             await safe_send(channel, embed=embed)
+
         except Exception as e:
             await safe_send(channel, f"❌ Une erreur est survenue : {e}")
 
+    # ──────────────────────────────────────────────────────────────
+    # Commande préfixe
+    # ──────────────────────────────────────────────────────────────
     @commands.command(name="debugreiatsu")
     @commands.has_permissions(administrator=True)
     async def prefix_debugreiatsu(self, ctx: commands.Context, arg: str = None):
         force = arg == "force"
         await self._send_debug(ctx.channel, ctx.guild, force=force)
 
-# ────────────────────────────────────────────────────────────────────────────────
-# 🔌 Setup du Cog
-# ────────────────────────────────────────────────────────────────────────────────
+    # ──────────────────────────────────────────────────────────────
+    # Commande slash
+    # ──────────────────────────────────────────────────────────────
+    @app_commands.command(name="debugreiatsu", description="Affiche l'état du spawner Reiatsu (option: force un spawn)")
+    @app_commands.checks.has_permissions(administrator=True)
+    async def slash_debugreiatsu(self, interaction: discord.Interaction, force: bool = False):
+        try:
+            await interaction.response.defer(ephemeral=True)
+            await self._send_debug(interaction.channel, interaction.guild, force=force)
+        except Exception as e:
+            await safe_respond(interaction, f"❌ Une erreur est survenue : {e}", ephemeral=True)
+
+# ──────────────────────────────────────────────────────────────
+# Setup du Cog
+# ──────────────────────────────────────────────────────────────
 async def setup(bot: commands.Bot):
     cog = DebugReiatsu(bot)
     for command in cog.get_commands():
