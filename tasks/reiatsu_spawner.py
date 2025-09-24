@@ -19,6 +19,7 @@ from pathlib import Path
 from discord.ext import commands, tasks
 from utils.supabase_client import supabase
 from utils.discord_utils import safe_send, safe_delete  # 🔒 utils protégés
+import json
 
 # ────────────────────────────────────────────────────────────────────────────────
 # ⚙️ Paramètres globaux (facilement modifiables)
@@ -27,13 +28,13 @@ CONFIG_PATH = Path("data/reiatsu_config.json")
 with CONFIG_PATH.open("r", encoding="utf-8") as f:
     CONFIG = json.load(f)
 
-SPAWN_LOOP_INTERVAL = CONFIG["SPAWN_LOOP_INTERVAL"]
-SUPER_REIATSU_CHANCE = CONFIG["SUPER_REIATSU_CHANCE"]
-SUPER_REIATSU_GAIN = CONFIG["SUPER_REIATSU_GAIN"]
-NORMAL_REIATSU_GAIN = CONFIG["NORMAL_REIATSU_GAIN"]
-SPAWN_SPEED_RANGES = CONFIG["SPAWN_SPEED_RANGES"]
-DEFAULT_SPAWN_SPEED = CONFIG["DEFAULT_SPAWN_SPEED"]
-CLASSES = CONFIG["CLASSES"]  # JSON fusionné avec classes.json
+SPAWN_LOOP_INTERVAL = CONFIG.get("SPAWN_LOOP_INTERVAL", 10)
+SUPER_REIATSU_CHANCE = CONFIG.get("SUPER_REIATSU_CHANCE", 5)
+SUPER_REIATSU_GAIN = CONFIG.get("SUPER_REIATSU_GAIN", 50)
+NORMAL_REIATSU_GAIN = CONFIG.get("NORMAL_REIATSU_GAIN", 10)
+SPAWN_SPEED_RANGES = CONFIG.get("SPAWN_SPEED_RANGES", {"Normal": [60, 120]})
+DEFAULT_SPAWN_SPEED = CONFIG.get("DEFAULT_SPAWN_SPEED", "Normal")
+CLASSES = CONFIG.get("CLASSES", [])
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🧠 Cog : ReiatsuSpawner
@@ -47,6 +48,7 @@ class ReiatsuSpawner(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
         self.locks = {}  # 🔒 lock par serveur pour éviter les races
+        print("⚡ Initialisation du ReiatsuSpawner…")
         self.spawn_loop.start()
         self.bot.loop.create_task(self._check_on_startup())
 
@@ -80,8 +82,10 @@ class ReiatsuSpawner(commands.Cog):
     async def spawn_loop(self):
         await self.bot.wait_until_ready()
         if not getattr(self.bot, "is_main_instance", True):
+            print("[spawn_loop] Instance secondaire, spawn désactivé")
             return
         try:
+            print(f"[DEBUG] spawn_loop tick — {datetime.utcnow().isoformat()}")
             await self._spawn_tick()
         except Exception as e:
             print(f"[ERREUR spawn_loop] {e}")
@@ -95,15 +99,20 @@ class ReiatsuSpawner(commands.Cog):
             channel_id = conf.get("channel_id")
             if not channel_id:
                 continue
+
             last_spawn_str = conf.get("last_spawn_at")
             spawn_speed = conf.get("spawn_speed") or DEFAULT_SPAWN_SPEED
             min_delay, max_delay = SPAWN_SPEED_RANGES.get(spawn_speed, SPAWN_SPEED_RANGES[DEFAULT_SPAWN_SPEED])
             delay = conf.get("spawn_delay") or random.randint(min_delay, max_delay)
             should_spawn = not last_spawn_str or (now - int(parser.parse(last_spawn_str).timestamp()) >= delay)
+
+            print(f"[DEBUG] Guild {guild_id} — should_spawn={should_spawn} — is_spawn={conf.get('is_spawn')}")
+
             if should_spawn and not conf.get("is_spawn", False):
                 channel = self.bot.get_channel(int(channel_id))
                 if channel:
                     await self._spawn_message(channel, guild_id)
+
             # 🔹 Spawn des faux Reiatsu par joueur Illusionniste
             channel = self.bot.get_channel(int(channel_id))
             if channel:
@@ -127,6 +136,7 @@ class ReiatsuSpawner(commands.Cog):
             "last_spawn_at": datetime.utcnow().isoformat(timespec="seconds"),
             "message_id": str(message.id)
         }).eq("guild_id", guild_id).execute()
+        print(f"[SPAWN] Reiatsu spawné en guild {guild_id} message {message.id}")
 
     async def _spawn_faux_reiatsu(self, channel: discord.TextChannel):
         """Spawn un faux Reiatsu pour chaque Illusionniste actif sans faux actif."""
@@ -148,6 +158,7 @@ class ReiatsuSpawner(commands.Cog):
                 supabase.table("reiatsu").update({
                     "fake_spawn_id": str(message.id)
                 }).eq("user_id", player["user_id"]).execute()
+                print(f"[SPAWN] Faux Reiatsu pour Illusionniste {player['user_id']}")
 
     @commands.Cog.listener()
     async def on_raw_reaction_add(self, payload: discord.RawReactionActionEvent):
@@ -267,11 +278,11 @@ class ReiatsuSpawner(commands.Cog):
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🔌 Setup du Cog
-# ────────────────────────────────────────────────────────────────────────────────
+# ────────────────────────────────────────────────────────────────
 async def setup(bot: commands.Bot):
+    print("⚡ Chargement du ReiatsuSpawner…")
     cog = ReiatsuSpawner(bot)
     for command in cog.get_commands():
         if not hasattr(command, "category"):
             command.category = "Reiatsu"
     await bot.add_cog(cog)
-                    
