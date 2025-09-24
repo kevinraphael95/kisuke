@@ -1,182 +1,123 @@
 # ────────────────────────────────────────────────────────────────────────────────
-# 📌 skill.py — Commande simple /skill et !skill
-# Objectif : Utiliser la compétence active de la classe du joueur avec cooldown
+# 📌 skill.py — Commande interactive /skill et !skill
+# Objectif : Activer la compétence active de la classe du joueur (Illusionniste, Voleur, Absorbeur, Parieur)
 # Catégorie : Reiatsu
 # Accès : Tous
-# Cooldown : 1 utilisation / 5 secondes / utilisateur
+# Cooldown : 12h (8h pour Illusionniste)
 # ────────────────────────────────────────────────────────────────────────────────
 
-import random
-import json
-from datetime import datetime, timezone, timedelta
-
+# ────────────────────────────────────────────────────────────────────────────────
+# 📦 Imports nécessaires
+# ────────────────────────────────────────────────────────────────────────────────
 import discord
 from discord import app_commands
 from discord.ext import commands
-
+import datetime
+import os
+import json
+from utils.discord_utils import safe_send, safe_respond
 from utils.supabase_client import supabase
-from utils.discord_utils import safe_send, safe_followup
-
-# Cooldowns par classe (en secondes)
-CLASS_CD = {
-    "Travailleur": 0,
-    "Voleur": 12 * 3600,
-    "Absorbeur": 12 * 3600,
-    "Illusionniste": 8 * 3600,
-    "Parieur": 12 * 3600
-}
 
 # ────────────────────────────────────────────────────────────────────────────────
-# 🧠 Cog principal
+# 📂 Chargement de la configuration Reiatsu
 # ────────────────────────────────────────────────────────────────────────────────
+REIATSU_CONFIG_PATH = os.path.join("data", "reiatsu_config.json")
 
+def load_reiatsu_config():
+    """Charge la configuration Reiatsu depuis le fichier JSON."""
+    try:
+        with open(REIATSU_CONFIG_PATH, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except Exception as e:
+        print(f"[ERREUR JSON] Impossible de charger {REIATSU_CONFIG_PATH} : {e}")
+        return {}
+
+# ────────────────────────────────────────────────────────────────────────────────
+# 🧠 Cog principal : Skill
+# ────────────────────────────────────────────────────────────────────────────────
 class Skill(commands.Cog):
     """
-    Commande /skill et !skill — Active la compétence spécifique de la classe du joueur avec cooldown
+    Commande /skill et !skill — Active la compétence de la classe du joueur.
     """
     def __init__(self, bot: commands.Bot):
         self.bot = bot
-        print("[COG LOAD] Skill cog chargé ✅")
+        self.config = load_reiatsu_config()
 
-    # 🔹 Fonction interne commune
-    async def _execute_skill(self, user_id: str, ctx_or_interaction=None):
-        now = datetime.now(timezone.utc)
-        try:
-            response = supabase.table("reiatsu").select("*").eq("user_id", user_id).single().execute()
-            data = getattr(response, "data", None)
-        except Exception as e:
-            print(f"[ERREUR SUPABASE] {e}")
-            return "❌ Impossible de récupérer les données."
+    # ────────────────────────────────────────────────────────────────────────────
+    # 🔹 Fonction interne : activation du skill
+    # ────────────────────────────────────────────────────────────────────────────
+    async def _activate_skill(self, user: discord.User, channel: discord.abc.Messageable):
+        """Vérifie la classe, le cooldown et active la compétence si possible."""
+        # Récupération de l'utilisateur
+        res = supabase.table("reiatsu").select("*").eq("user_id", user.id).execute()
+        if not res.data:
+            await safe_send(channel, "❌ Tu n'as pas encore de profil Reiatsu. Utilise `!!reiatsu` pour en créer un.")
+            return
 
-        if not data:
-            return "❌ Tu n'as pas encore commencé l'aventure. Utilise `!start`."
+        player = res.data[0]
+        classe = player["classe"]
+        now = datetime.datetime.utcnow()
 
-        classe = data.get("classe", "Travailleur")
-        reiatsu = data.get("points", 0)
-        last_skill = data.get("last_skilled_at")
-        skill_cd = data.get("skill_cd", 0)
-
-        # ⏳ Cooldown
+        # Détermination du cooldown
+        base_cooldown = 12 if classe != "Illusionniste" else 8  # Illusionniste = 8h de CD
+        last_skill = player.get("last_skilled_at")
         if last_skill:
-            elapsed = (now - datetime.fromisoformat(last_skill)).total_seconds()
-            if elapsed < skill_cd:
-                remaining = timedelta(seconds=int(skill_cd - elapsed))
-                return f"⏳ Compétence encore en recharge ! Temps restant : **{remaining}**"
+            elapsed = (now - datetime.datetime.fromisoformat(last_skill)).total_seconds() / 3600
+            if elapsed < base_cooldown:
+                remaining = base_cooldown - elapsed
+                await safe_send(channel, f"⏳ Ton skill est encore en recharge ! Attends **{remaining:.1f}h**.")
+                return
 
-        updated_fields = {}
-        result_message = ""
+        # Gestion par classe
+        update_data = {"last_skilled_at": now.isoformat()}
+        msg = ""
 
-        # ────── Gestion des compétences par classe ──────
-        if classe == "Travailleur":
-            result_message = "💼 Tu es Travailleur : pas de compétence active."
-            new_cd = 0
-
+        if classe == "Illusionniste":
+            update_data["active_skill"] = True
+            update_data["fake_spawn_id"] = None
+            msg = "🎭 **Illusion activée !** Un faux Reiatsu apparaîtra bientôt dans le salon."
         elif classe == "Voleur":
-            updated_fields["vol_garanti"] = True
-            result_message = "🥷 Ton prochain vol sera garanti."
-            new_cd = CLASS_CD["Voleur"]
-
+            update_data["active_skill"] = True
+            msg = "🥷 **Vol garanti !** Ton prochain vol réussira à coup sûr."
         elif classe == "Absorbeur":
-            updated_fields["active_skill"] = json.dumps({
-                "type": "super_reiatsu",
-                "owner_id": user_id,
-                "points": 100,
-                "created_at": now.isoformat()
-            })
-            result_message = "🌀 Ton prochain Reiatsu absorbé sera un Super Reiatsu (100 points)."
-            new_cd = CLASS_CD["Absorbeur"]
-
-        elif classe == "Illusionniste":
-            updated_fields["active_skill"] = json.dumps({
-                "type": "faux",
-                "owner_id": user_id,
-                "spawn_id": None,
-                "created_at": now.isoformat()
-            })
-            # Mise à jour de la config pour spawner le faux Reiatsu
-            if ctx_or_interaction:
-                guild_id = str(ctx_or_interaction.guild.id)
-                try:
-                    conf = supabase.table("reiatsu_config").select("*").eq("guild_id", guild_id).single().execute()
-                    if conf.data:
-                        supabase.table("reiatsu_config").update({
-                            "illusionniste_active": user_id
-                        }).eq("guild_id", guild_id).execute()
-                except Exception as e:
-                    print(f"[ERREUR Illusionniste config] {e}")
-
-            updated_fields["faux_block_user"] = user_id
-            result_message = "🎭 Ton pouvoir Illusionniste est activé ! Un faux Reiatsu apparaîtra bientôt..."
-            new_cd = CLASS_CD["Illusionniste"]
-
-            # Supprimer le message de commande pour effacer les traces
-            if ctx_or_interaction:
-                try:
-                    if isinstance(ctx_or_interaction, commands.Context):
-                        await ctx_or_interaction.message.delete()
-                    elif isinstance(ctx_or_interaction, discord.Interaction):
-                        if ctx_or_interaction.response.is_done():
-                            await ctx_or_interaction.delete_original_response()
-                        else:
-                            await ctx_or_interaction.response.defer()
-                            await ctx_or_interaction.delete_original_response()
-                except Exception:
-                    pass
-
+            update_data["active_skill"] = True
+            msg = "🌀 **Super absorption !** Ton prochain Reiatsu sera forcément un Super Reiatsu."
         elif classe == "Parieur":
-            if reiatsu < 10:
-                return "❌ Tu n'as pas assez de Reiatsu pour parier (10 requis)."
-            new_points = reiatsu - 10
-            if random.random() < 0.5:
-                new_points += 30
-                result_message = "🎲 Tu as misé 10 Reiatsu et gagné 30 !"
+            if player["points"] < 10:
+                await safe_send(channel, "❌ Tu n'as pas assez de Reiatsu pour parier (10 requis).")
+                return
+            gain = 30
+            from random import random
+            if random() < 0.5:
+                update_data["points"] = player["points"] - 10
+                msg = "🎲 **Perdu !** Tu as misé 10 Reiatsu et n'as rien gagné."
             else:
-                result_message = "🎲 Tu as misé 10 Reiatsu et perdu."
-            updated_fields["points"] = new_points
-            new_cd = CLASS_CD["Parieur"]
+                update_data["points"] = player["points"] - 10 + gain
+                msg = f"🎲 **Gagné !** Tu as misé 10 Reiatsu et en as gagné **{gain}** !"
+        else:
+            msg = "👶 Ta classe n'a pas de compétence active à utiliser."
 
-        # Ajout cooldown
-        updated_fields["last_skilled_at"] = now.isoformat()
-        updated_fields["skill_cd"] = new_cd
+        # Mise à jour en base
+        supabase.table("reiatsu").update(update_data).eq("user_id", user.id).execute()
+        await safe_send(channel, msg)
 
-        # 🔹 Update sécurisé Supabase
-        try:
-            supabase.table("reiatsu").upsert({**data, **updated_fields}, on_conflict="user_id").execute()
-        except Exception as e:
-            print(f"[ERREUR SUPABASE UPDATE] {e}")
-            return "❌ Impossible de mettre à jour les données."
-
-        return result_message
-
+    # ────────────────────────────────────────────────────────────────────────────
     # 🔹 Commande SLASH
-    @app_commands.command(
-        name="skill",
-        description="Active la compétence spécifique de ta classe avec cooldown."
-    )
-    @app_commands.checks.cooldown(1, 5.0, key=lambda i: i.user.id)
+    # ────────────────────────────────────────────────────────────────────────────
+    @app_commands.command(name="skill", description="Active la compétence de ta classe.")
+    @app_commands.checks.cooldown(rate=1, per=5.0, key=lambda i: i.user.id)
     async def slash_skill(self, interaction: discord.Interaction):
-        try:
-            await interaction.response.defer()
-            message = await self._execute_skill(str(interaction.user.id), interaction)
-            await safe_followup(interaction, message)
-        except app_commands.CommandOnCooldown as e:
-            await safe_followup(interaction, f"⏳ Attends encore {e.retry_after:.1f}s.", ephemeral=True)
-        except Exception as e:
-            print(f"[ERREUR /skill] {e}")
-            await safe_followup(interaction, "❌ Une erreur est survenue.")
+        await interaction.response.defer()
+        await self._activate_skill(interaction.user, interaction.channel)
+        await interaction.delete_original_response()
 
+    # ────────────────────────────────────────────────────────────────────────────
     # 🔹 Commande PREFIX
+    # ────────────────────────────────────────────────────────────────────────────
     @commands.command(name="skill")
     @commands.cooldown(1, 5.0, commands.BucketType.user)
     async def prefix_skill(self, ctx: commands.Context):
-        try:
-            message = await self._execute_skill(str(ctx.author.id), ctx)
-            await safe_send(ctx.channel, message)
-        except commands.CommandOnCooldown as e:
-            await safe_send(ctx.channel, f"⏳ Attends encore {e.retry_after:.1f}s.")
-        except Exception as e:
-            print(f"[ERREUR !skill] {e}")
-            await safe_send(ctx.channel, "❌ Une erreur est survenue.")
+        await self._activate_skill(ctx.author, ctx.channel)
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🔌 Setup du Cog
@@ -187,4 +128,3 @@ async def setup(bot: commands.Bot):
         if not hasattr(command, "category"):
             command.category = "Reiatsu"
     await bot.add_cog(cog)
-    
