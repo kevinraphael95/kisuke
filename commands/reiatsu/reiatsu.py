@@ -184,10 +184,10 @@ class ReiatsuCommand(commands.Cog):
                     spawn_speed_text = f"{SPAWN_SPEED_INTERVALS.get(speed_key, '⚠️ Inconnu')} ({speed_key})"
 
                 # ────── Gestion du temps restant avant spawn ──────
-                if config.get("en_attente"):
+                if config.get("is_spawn"):
                     # Un Reiatsu est déjà présent
                     channel_id = config.get("channel_id")
-                    msg_id = config.get("spawn_message_id")
+                    msg_id = config.get("message_id")
                     if msg_id and channel_id:
                         spawn_link = f"https://discord.com/channels/{guild_id}/{channel_id}/{msg_id}"
                         temps_text = f"Un Reiatsu 💠 est **déjà apparu** !"
