@@ -199,6 +199,7 @@ class ReiatsuSpawner(commands.Cog):
 
             # 🔹 Reiatsu normal
             if not conf.get("is_spawn") or payload.message_id != int(conf.get("message_id")):
+                print(f"[DEBUG] Pas un spawn valide → is_spawn={conf.get('is_spawn')} msg_id={conf.get('message_id')}")
                 return
 
             gain, is_super, bonus5, classe, new_total = self._calculate_gain(user.id)
@@ -209,6 +210,9 @@ class ReiatsuSpawner(commands.Cog):
             min_delay, max_delay = SPAWN_SPEED_RANGES.get(spawn_speed, SPAWN_SPEED_RANGES[DEFAULT_SPAWN_SPEED])
             new_delay = random.randint(min_delay, max_delay)
 
+            # 🔹 garder l'ID avant reset
+            msg_id = conf.get("message_id")
+
             supabase.table("reiatsu_config").update({
                 "is_spawn": False,
                 "message_id": None,
@@ -216,10 +220,11 @@ class ReiatsuSpawner(commands.Cog):
             }).eq("guild_id", guild_id).execute()
 
             try:
-                message = await channel.fetch_message(int(conf.get("message_id")))
-                await safe_delete(message)
-            except Exception:
-                pass
+                if msg_id:
+                    message = await channel.fetch_message(int(msg_id))
+                    await safe_delete(message)
+            except Exception as e:
+                print(f"[WARN] Impossible de delete message spawn {msg_id}: {e}")
 
     # ────────────────────────────────────────────────────────────────────────────
     # 🔹 Fonctions auxiliaires
