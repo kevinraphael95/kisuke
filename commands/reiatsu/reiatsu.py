@@ -58,11 +58,13 @@ class ReiatsuView(View):
     async def classement_button(self, interaction: discord.Interaction, button: discord.ui.Button):
         if self.author and interaction.user != self.author:
             return await interaction.response.send_message("❌ Tu ne peux pas utiliser ce bouton.", ephemeral=True)
+
         try:
             classement_data = supabase.table("reiatsu").select("user_id, points").order("points", desc=True).limit(10).execute()
         except Exception as e:
             print(f"[ERREUR DB] Impossible de récupérer le classement : {e}")
             return await interaction.response.send_message("❌ Erreur lors du chargement du classement.", ephemeral=True)
+
         if not classement_data.data:
             return await interaction.response.send_message("⚠️ Aucun classement disponible pour le moment.", ephemeral=True)
 
@@ -99,7 +101,8 @@ class ReiatsuCommand(commands.Cog):
 
     async def _send_profile(self, channel_or_interaction, author, guild, target_user):
         user = target_user or author
-        user_id, guild_id = str(user.id), str(guild.id) if guild else None
+        user_id = int(user.id)
+        guild_id = int(guild.id) if guild else None
 
         # Récupération des données utilisateur
         try:
@@ -152,8 +155,9 @@ class ReiatsuCommand(commands.Cog):
                 salon_text = salon.mention if salon else "⚠️ Salon introuvable"
                 speed_key = config.get("spawn_speed")
                 spawn_speed_text = f"{SPAWN_SPEED_INTERVALS.get(speed_key, '⚠️ Inconnu')} ({speed_key})" if speed_key else spawn_speed_text
-                if config.get("en_attente") and config.get("spawn_message_id") and config.get("channel_id"):
-                    spawn_link = f"https://discord.com/channels/{guild_id}/{config['channel_id']}/{config['spawn_message_id']}"
+
+                if config.get("is_spawn") and config.get("message_id") and config.get("channel_id"):
+                    spawn_link = f"https://discord.com/channels/{guild_id}/{config['channel_id']}/{config['message_id']}"
                     temps_text = "💠 Un Reiatsu est **déjà apparu** !"
                 else:
                     last_spawn = config.get("last_spawn_at")
@@ -219,4 +223,3 @@ async def setup(bot: commands.Bot):
         if not hasattr(command, "category"):
             command.category = "Reiatsu"
     await bot.add_cog(cog)
-                
