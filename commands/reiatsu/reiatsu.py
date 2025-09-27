@@ -104,30 +104,34 @@ class ReiatsuCommand(commands.Cog):
         user_id = int(user.id)
         guild_id = int(guild.id) if guild else None
 
-        # Récupération des données utilisateur
+        # 📥 Récupération des données utilisateur depuis la nouvelle table reiatsu
         try:
             user_data = supabase.table("reiatsu").select(
-                "points, classe, last_steal_attempt, steal_cd"
+                "user_id, username, points, bonus5, last_steal_attempt, steal_cd, "
+                "classe, last_skilled_at, active_skill, fake_spawn_id"
             ).eq("user_id", user_id).execute()
         except Exception as e:
             print(f"[ERREUR DB] Lecture utilisateur échouée : {e}")
             return await safe_send(channel_or_interaction, "❌ Erreur lors de la récupération de tes données.")
 
         data = user_data.data[0] if user_data.data else {}
+
+        # Champs de la nouvelle table
         points = data.get("points", 0)
         classe_nom = data.get("classe")
         last_steal_str = data.get("last_steal_attempt")
         steal_cd = data.get("steal_cd")
+        last_skill_str = data.get("last_skilled_at")
+        active_skill = data.get("active_skill", False)
 
         # Chargement classes.json
         CLASSES = load_classes()
-        classe_text = f"Aucune classe sélectionnée. Utilise `!classe` pour en choisir une."
+        classe_text = "Aucune classe sélectionnée. Utilise `!classe` pour en choisir une."
         if classe_nom and classe_nom in CLASSES:
             classe_text = (
                 f"• Classe : **{classe_nom}**\n"
-                f"• Compétence passive : {CLASSES[classe_nom]['Passive']}\n"
-                f"• Compétence active : {CLASSES[classe_nom]['Active']}\n"
-                "(les compétences actives ne sont pas encore implémentées)"
+                f"• Passive : {CLASSES[classe_nom]['Passive']}\n"
+                f"• Active : {CLASSES[classe_nom]['Active']}"
             )
 
         # Cooldown de vol
@@ -141,7 +145,21 @@ class ReiatsuCommand(commands.Cog):
                 h, m = divmod(int(restant.total_seconds() // 60), 60)
                 cooldown_text = f"{restant.days}j {h}h{m}m" if restant.days else f"{h}h{m}m"
 
-        # Récupération config serveur
+        # Cooldown de skill
+        skill_text = "Disponible ✅"
+        if last_skill_str:
+            last_skill = parser.parse(last_skill_str)
+            # Cooldown générique 12h (peut être personnalisé selon la classe si besoin)
+            next_skill = last_skill + timedelta(hours=12)
+            now_dt = datetime.utcnow()
+            if now_dt < next_skill:
+                restant = next_skill - now_dt
+                h, m = divmod(int(restant.total_seconds() // 60), 60)
+                skill_text = f"{restant.days}j {h}h{m}m" if restant.days else f"{h}h{m}m"
+        if active_skill:
+            skill_text = "⏳ En cours d'utilisation"
+
+        # 📥 Récupération config serveur
         salon_text, spawn_speed_text, temps_text, spawn_link = "❌", "⚠️ Inconnu", "⚠️ Inconnu", None
         if guild:
             try:
@@ -149,10 +167,12 @@ class ReiatsuCommand(commands.Cog):
             except Exception as e:
                 print(f"[ERREUR DB] Lecture config échouée : {e}")
                 config_data = None
+
             config = config_data.data[0] if config_data and config_data.data else None
             if config:
                 salon = guild.get_channel(int(config.get("channel_id"))) if config.get("channel_id") else None
                 salon_text = salon.mention if salon else "⚠️ Salon introuvable"
+
                 speed_key = config.get("spawn_speed")
                 spawn_speed_text = f"{SPAWN_SPEED_INTERVALS.get(speed_key, '⚠️ Inconnu')} ({speed_key})" if speed_key else spawn_speed_text
 
@@ -172,12 +192,13 @@ class ReiatsuCommand(commands.Cog):
                     else:
                         temps_text = "💠 Un Reiatsu peut apparaître **à tout moment** !"
 
-        # Création de l'embed
+        # 📊 Création de l'embed
         embed = discord.Embed(
             title=f"__Profil de {user.display_name}__",
             description=(
                 f"💠 **Reiatsu** : {points}\n"
                 f"🔄 **Cooldown vol** : {cooldown_text}\n"
+                f"⚡ **Skill** : {skill_text}\n"
                 f"🏷️ **Classe** : {classe_nom or 'Aucune'}\n\n"
                 f"📍 Salon : {salon_text}\n"
                 f"⏱️ Vitesse : {spawn_speed_text}\n"
@@ -186,8 +207,8 @@ class ReiatsuCommand(commands.Cog):
             color=discord.Color.purple()
         )
         embed.set_footer(text="Utilise les boutons ci-dessous pour interagir.")
-        view = ReiatsuView(author, spawn_link=spawn_link)
 
+        view = ReiatsuView(author, spawn_link=spawn_link)
         if isinstance(channel_or_interaction, discord.Interaction):
             await channel_or_interaction.response.send_message(embed=embed, view=view)
         else:
