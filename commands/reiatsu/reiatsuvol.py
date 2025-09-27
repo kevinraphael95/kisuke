@@ -78,12 +78,10 @@ class ReiatsuVol(commands.Cog):
         montant = max(1, cible_points // 10)  # 10%
 
         # 🔹 Si voleur a activé son skill → vol garanti
-        skill_actif = voleur_data.get("vol_garanti", False)
-
-        if skill_actif:
+        if voleur_classe == "Voleur" and voleur_data.get("active_skill", False):
             succes = True
             # On désactive le skill après utilisation
-            supabase.table("reiatsu").update({"vol_garanti": False}).eq("user_id", voleur_id).execute()
+            supabase.table("reiatsu").update({"active_skill": False}).eq("user_id", voleur_id).execute()
         else:
             # Voleur normal
             if voleur_classe == "Voleur":
