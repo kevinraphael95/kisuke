@@ -43,8 +43,13 @@ class ReiatsuSpawner(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
         self.locks = {}
+
+    # ────────────────────────────────────────────────────────────────────────────
+    # 🔹 Hook async appelé au chargement du cog
+    # ────────────────────────────────────────────────────────────────────────────
+    async def cog_load(self):
+        asyncio.create_task(self._check_on_startup())
         self.spawn_loop.start()
-        self.bot.loop.create_task(self._check_on_startup())
 
     def cog_unload(self):
         self.spawn_loop.cancel()
