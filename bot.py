@@ -57,7 +57,8 @@ intents = discord.Intents.default()
 intents.message_content = True
 intents.guilds = True
 intents.members = True
-intents.reactions = True
+intents.guild_reactions = True   # ✅ pour les réactions en serveur
+intents.dm_reactions = True      # ✅ pour les réactions en DM
 
 bot = commands.Bot(command_prefix=get_prefix, intents=intents, help_command=None)
 bot.is_main_instance = False
@@ -205,3 +206,4 @@ if __name__ == "__main__":
         await bot.start(TOKEN)
 
     asyncio.run(start())
+
