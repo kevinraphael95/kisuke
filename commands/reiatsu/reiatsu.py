@@ -14,7 +14,7 @@ from discord import app_commands
 from discord.ext import commands
 from discord.ui import View, Button
 from dateutil import parser
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import time
 import json
 import os
@@ -134,28 +134,44 @@ class ReiatsuCommand(commands.Cog):
                 f"• Active : {CLASSES[classe_nom]['Active']}"
             )
 
-        # Cooldown de vol
+        # Cooldown de vol (timezone-aware)
         cooldown_text = "Disponible ✅"
         if last_steal_str and steal_cd:
-            last_steal = parser.parse(last_steal_str)
-            next_steal = last_steal + timedelta(hours=steal_cd)
-            now_dt = datetime.utcnow()
-            if now_dt < next_steal:
-                restant = next_steal - now_dt
-                h, m = divmod(int(restant.total_seconds() // 60), 60)
-                cooldown_text = f"{restant.days}j {h}h{m}m" if restant.days else f"{h}h{m}m"
+            try:
+                last_steal = parser.parse(last_steal_str)
+                if not last_steal.tzinfo:
+                    last_steal = last_steal.replace(tzinfo=timezone.utc)
+                else:
+                    last_steal = last_steal.astimezone(timezone.utc)
+                next_steal = last_steal + timedelta(hours=steal_cd)
+                now_dt = datetime.now(timezone.utc)
+                if now_dt < next_steal:
+                    restant = next_steal - now_dt
+                    h, m = divmod(int(restant.total_seconds() // 60), 60)
+                    cooldown_text = f"{restant.days}j {h}h{m}m" if restant.days else f"{h}h{m}m"
+            except Exception as e:
+                print(f"[WARN] Impossible de parser last_steal_attempt pour {user_id}: {e}")
 
-        # Cooldown de skill
+        # Cooldown de skill (timezone-aware + cooldown selon classe)
         skill_text = "Disponible ✅"
         if last_skill_str:
-            last_skill = parser.parse(last_skill_str)
-            # Cooldown générique 12h (peut être personnalisé selon la classe si besoin)
-            next_skill = last_skill + timedelta(hours=12)
-            now_dt = datetime.utcnow()
-            if now_dt < next_skill:
-                restant = next_skill - now_dt
-                h, m = divmod(int(restant.total_seconds() // 60), 60)
-                skill_text = f"{restant.days}j {h}h{m}m" if restant.days else f"{h}h{m}m"
+            try:
+                last_skill = parser.parse(last_skill_str)
+                if not last_skill.tzinfo:
+                    last_skill = last_skill.replace(tzinfo=timezone.utc)
+                else:
+                    last_skill = last_skill.astimezone(timezone.utc)
+                # cooldown spécifique : 8h pour Illusionniste, sinon 12h
+                base_skill_cd = 8 if classe_nom == "Illusionniste" else 12
+                next_skill = last_skill + timedelta(hours=base_skill_cd)
+                now_dt = datetime.now(timezone.utc)
+                if now_dt < next_skill:
+                    restant = next_skill - now_dt
+                    h, m = divmod(int(restant.total_seconds() // 60), 60)
+                    skill_text = f"{restant.days}j {h}h{m}m" if restant.days else f"{h}h{m}m"
+            except Exception as e:
+                print(f"[WARN] Impossible de parser last_skilled_at pour {user_id}: {e}")
+
         if active_skill:
             skill_text = "⏳ En cours d'utilisation"
 
@@ -183,12 +199,26 @@ class ReiatsuCommand(commands.Cog):
                     last_spawn = config.get("last_spawn_at")
                     delay = config.get("spawn_delay", 1800)
                     if last_spawn:
-                        remaining = int(parser.parse(last_spawn).timestamp() + delay - time.time())
-                        if remaining <= 0:
-                            temps_text = "💠 Un Reiatsu peut apparaître **à tout moment** !"
-                        else:
-                            minutes, seconds = divmod(remaining, 60)
-                            temps_text = f"**{minutes}m {seconds}s**"
+                        try:
+                            last_spawn_dt = parser.parse(last_spawn)
+                            if not last_spawn_dt.tzinfo:
+                                last_spawn_dt = last_spawn_dt.replace(tzinfo=timezone.utc)
+                            else:
+                                last_spawn_dt = last_spawn_dt.astimezone(timezone.utc)
+                            remaining = int((last_spawn_dt + timedelta(seconds=delay) - datetime.now(timezone.utc)).total_seconds())
+                            if remaining <= 0:
+                                temps_text = "💠 Un Reiatsu peut apparaître **à tout moment** !"
+                            else:
+                                minutes, seconds = divmod(remaining, 60)
+                                temps_text = f"**{minutes}m {seconds}s**"
+                        except Exception as e:
+                            # fallback safe computation
+                            remaining = int(parser.parse(last_spawn).timestamp() + delay - time.time())
+                            if remaining <= 0:
+                                temps_text = "💠 Un Reiatsu peut apparaître **à tout moment** !"
+                            else:
+                                minutes, seconds = divmod(remaining, 60)
+                                temps_text = f"**{minutes}m {seconds}s**"
                     else:
                         temps_text = "💠 Un Reiatsu peut apparaître **à tout moment** !"
 
