@@ -228,8 +228,10 @@ class ReiatsuCommand(commands.Cog):
             description=(
                 f"💠 **Reiatsu** : {points}\n"
                 f"🔄 **Cooldown vol** : {cooldown_text}\n"
+                f"`!!rtsv + mention` pour voler du Reiatsu à quelqu'un\n"
+                f"🏷️ **Classe** : {classe_nom or 'Aucune'}\n"
                 f"⚡ **Skill** : {skill_text}\n"
-                f"🏷️ **Classe** : {classe_nom or 'Aucune'}\n\n"
+                f"`!!skill` pour activer ton skill\n\n"
                 f"📍 Salon : {salon_text}\n"
                 f"⏱️ Vitesse : {spawn_speed_text}\n"
                 f"⏳ Prochain spawn : {temps_text}"
