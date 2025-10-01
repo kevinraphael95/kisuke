@@ -73,7 +73,6 @@ class Perso(commands.Cog):
                 f"• Kidō : {stats['kido']}\n"
                 f"• Intelligence : {stats['intelligence']}\n"
                 f"• Rapidité : {stats['rapidite']}\n"
-                f"• Endurance max : {stats['endurance_max']}\n"
                 f"• Total stats : {stats['total_stats']}"
             ),
             inline=False
