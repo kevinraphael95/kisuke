@@ -1,7 +1,7 @@
 {
   "nom": "Nom du personnage",
-  "genre": "Masculin/Féminin/Autre",
-  "sexualite": "Hétérosexuel/Homosexuel/Bisexuel/Autre",
+  "genre": "Homme/Femme/Autre",
+  "sexualite": "Hétéro/Gay/Bi/Autre",
   "personnalite": ["Trait1", "Trait2", "Trait3", "..."], 
   "race": ["Race1", "Race2", "..."], 
   "stats_base": {
