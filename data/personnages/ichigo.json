@@ -13,7 +13,6 @@
     "intelligence": 35,
     "rapidite": 80,
     "total_stats": 300,
-    "endurance_max": 100
   },
   "formes": {
     "Normal": {
@@ -30,7 +29,7 @@
       ]
     },
     "Shikai": {
-      "bonus": {"attaque": 10},
+      "bonus": {"rapidite": 10},
       "activation": "Zangetsu, lève-toi !",
       "attaques": [
         {
