@@ -87,8 +87,13 @@ class Perso(commands.Cog):
                 value=f"Activation: {forme.get('activation','N/A')}\n{attaque_list}",
                 inline=False
             )
-        if "images" in char:
+
+        # Image du personnage (par défaut si absente)
+        if "images" in char and char["images"]:
             embed.set_image(url=char["images"][0])
+        else:
+            embed.set_image(url="kisuke/data/images/image_par_défaut.jpg")
+
         await safe_send(channel, embed=embed)
 
     # ────────────────────────────────────────────────────────────────────────────
