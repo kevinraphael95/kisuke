@@ -4,7 +4,7 @@
   "genre": "Masculin",
   "sexualite": "Hétéro",
   "personnalite": ["Courageux", "Déterminé", "Protecteur", "Impulsif", "Stratège"],
-  "race": ["Shinigami", "Hollow", "Quincy", "Transcendant"],
+  "race": ["Humain", "Fullbring", "Shinigami", "Hollow", "Arrancar", "Vizard", "Quincy", "Transcendant"],
   "stats_base": {
     "attaque": 75,
     "defense": 50,
