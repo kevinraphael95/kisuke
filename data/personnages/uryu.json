@@ -1,0 +1,61 @@
+{
+  "nom": "Uryū Ishida",
+  "genre": "Masculin",
+  "sexualite": "Hétéro",
+  "personnalite": ["Intelligent", "Calme", "Déterminé", "Stratégique", "Protecteur"],
+  "race": ["Humain", "Quincy", "Transcendant"],
+  "stats_base": {
+    "attaque": 60,
+    "defense": 50,
+    "pression": 50,
+    "kido": 30,
+    "intelligence": 70,
+    "rapidite": 40,
+    "total_stats": 300
+  },
+  "formes": {
+    "Normal": {
+      "bonus": {},
+      "activation": "",
+      "attaques": [
+        {
+          "nom": "Seele Schneider",
+          "description": "Attaque rapide avec l’arc Quincy classique.",
+          "puissance": 60,
+          "cout_endurance": 15
+        },
+        {
+          "nom": "Heilig Pfeil",
+          "description": "Flèche spirituelle tirée à distance.",
+          "puissance": 50,
+          "cout_endurance": 10
+        }
+      ]
+    },
+    "Letzt Stil": {
+      "bonus": {"attaque": 10, "rapidite": 10},
+      "activation": "Letzte Stil, erstrahle!",
+      "attaques": [
+        {
+          "nom": "Licht Regen",
+          "description": "Pluie de flèches spirituelles sur l’ennemi.",
+          "puissance": 75,
+          "cout_endurance": 20
+        }
+      ]
+    },
+    "Vollständig": {
+      "bonus": {"attaque": 20, "rapidite": 20, "pression": 10},
+      "activation": "Vollständig, montrez votre puissance!",
+      "attaques": [
+        {
+          "nom": "Heilig Bogen",
+          "description": "Arc Quincy ultime, extrêmement puissant et rapide.",
+          "puissance": 90,
+          "cout_endurance": 25
+        }
+      ]
+    }
+  },
+  "images": []
+}
