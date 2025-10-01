@@ -3,7 +3,7 @@
   "genre": "Féminin",
   "sexualite": "Hétéro",
   "personnalite": ["Bienveillant", "Protecteur", "Altruiste", "Amical", "Émotif"],
-  "race": ["Humain"],
+  "race": ["Humain", "Fullbringer"],
   "stats_base": {
     "attaque": 40,
     "defense": 80,
