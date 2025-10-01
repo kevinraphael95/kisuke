@@ -1,1 +1,62 @@
 
+{
+  "nom": "Ichigo Kurosaki",
+  "genre": "Masculin",
+  "sexualite": "Hétérosexuel",
+  "personnalite": ["Courageux", "Déterminé", "Protecteur", "Impulsif", "Stratège"],
+  "race": ["Shinigami", "Hollow", "Quincy", "Transcendant"],
+  "stats_base": {
+    "attaque": 75,
+    "defense": 50,
+    "pression": 50,
+    "kido": 10,
+    "intelligence": 35,
+    "rapidite": 80,
+    "total_stats": 300,
+    "endurance_max": 100
+  },
+  "formes": {
+    "Normal": {
+      "bonus": {},
+      "activation": "",
+      "attaques": [
+        {
+          "nom": "Getsuga Tenshō",
+          "description": "Vague d'énergie spirituelle simple mais efficace.",
+          "puissance": 65,
+          "cout_endurance": 15
+        }
+        
+      ]
+    },
+    "Shikai": {
+      "bonus": {"attaque": 10},
+      "activation": "Zangetsu, lève-toi !",
+      "attaques": [
+        {
+          "nom": "Getsuga Tenshō Amélioré",
+          "description": "Version plus rapide et puissante du Getsuga Tenshō.",
+          "puissance": 75,
+          "cout_endurance": 20
+        }
+      ]
+    },
+    "Bankai": {
+      "bonus": {"attaque": 10},
+      "activation": "Tensa Zangetsu !",
+      "attaques": [
+        {
+          "nom": "Getsuga Tenshō Ultime",
+          "description": "Getsuga Tenshō ultime, extrêmement rapide et dévastatrice.",
+          "puissance": 85,
+          "cout_endurance": 25
+        }
+      ]
+    }
+  },
+  "images": [
+    "data/images/personnages/ichigo/01.png",
+    "data/images/personnages/ichigo/02.png",
+    "data/images/personnages/ichigo/03.png"
+  ]
+}
