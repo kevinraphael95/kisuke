@@ -17,7 +17,6 @@ import os
 import json
 import random
 import hashlib
-import asyncio
 
 from utils.discord_utils import safe_send, safe_edit, safe_respond
 
@@ -32,7 +31,6 @@ def load_character(name: str):
         return None
     with open(path, "r", encoding="utf-8") as f:
         char = json.load(f)
-        # Ajouter un champ image par défaut si absent
         if "images" in char and char["images"]:
             char["image"] = char["images"][0]
         else:
@@ -52,9 +50,9 @@ def calculer_score(p1, p2):
     # --- Genre & sexualité
     if p1["genre"] == p2["genre"]:
         if (p1["sexualite"] == "Hétéro" and p2["sexualite"] == "Hétéro") or p1["sexualite"] == "Inconnu" or p2["sexualite"] == "Inconnu":
-            score -= 10  # malus si même genre et hétéro
+            score -= 10
     else:
-        score += 5  # léger bonus si genres différents
+        score += 5
 
     # --- Races
     races1 = set(p1.get("race", []))
@@ -134,7 +132,6 @@ class ShipView(View):
         embed.add_field(name="👩‍❤️‍👨 Couple", value=f"**{p1['nom']}** ❤️ **{p2['nom']}**", inline=False)
         embed.add_field(name="🔢 Taux d’affinité", value=f"`{score}%`", inline=True)
         embed.add_field(name="💬 Verdict", value=f"*{reaction}*", inline=False)
-
         embed.set_thumbnail(url=p1["image"])
         embed.set_image(url=p2["image"])
 
@@ -175,9 +172,7 @@ class ShipCommand(commands.Cog):
             reaction = "aucune chance... ils sont de mondes opposés 💔"
             color = discord.Color.blue()
 
-        loading_msg = await safe_send(channel, "Analyse en cours... ⏳")
-        await asyncio.sleep(1.5)
-
+        # Envoi direct du résultat sans message "Analyse en cours"
         embed = discord.Embed(title="💘 Test de compatibilité 💘", color=color)
         embed.add_field(name="👩‍❤️‍👨 Couple", value=f"**{p1['nom']}** ❤️ **{p2['nom']}**", inline=False)
         embed.add_field(name="🔢 Taux d’affinité", value=f"`{score}%`", inline=True)
@@ -186,8 +181,7 @@ class ShipCommand(commands.Cog):
         embed.set_image(url=p2["image"])
 
         view = ShipView(persos)
-        message = await safe_edit(loading_msg, content=None, embed=embed, view=view)
-        view.message = message
+        await safe_send(channel, embed=embed, view=view)
 
     # ──────────────────────────────────────────────────────────
     # 🔹 Commande SLASH
