@@ -1,0 +1,47 @@
+{
+  "nom": "Orihime Inoue",
+  "genre": "Féminin",
+  "sexualite": "Hétéro",
+  "personnalite": ["Bienveillant", "Protecteur", "Altruiste", "Amical", "Émotif"],
+  "race": ["Humain"],
+  "stats_base": {
+    "attaque": 40,
+    "defense": 80,
+    "pression": 65,
+    "kido": 30,
+    "intelligence": 55,
+    "rapidite": 30,
+    "total_stats": 300
+  },
+  "formes": {
+    "Normal": {
+      "bonus": {},
+      "activation": "",
+      "attaques": [
+        {
+          "nom": "Santen Kesshun",
+          "description": "Bouclier défensif qui repousse les attaques et protège Orihime ou ses alliés.",
+          "puissance": 60,
+          "cout_endurance": 15
+        },
+        {
+          "nom": "Shun Shun Rikka : Sōten Kisshun",
+          "description": "Guérison d'une partie ou d'une personne, peut réparer les blessures physiques.",
+          "puissance": 50,
+          "cout_endurance": 20
+        },
+        {
+          "nom": "Hōchū",
+          "description": "Attaque offensive avec les six petites fées de Shun Shun Rikka, peut repousser ou bloquer un ennemi.",
+          "puissance": 45,
+          "cout_endurance": 15
+        }
+      ]
+    }
+  },
+  "images": [
+    "data/images/personnages/orihime/01.png",
+    "data/images/personnages/orihime/02.png",
+    "data/images/personnages/orihime/03.png"
+  ]
+}
