@@ -88,13 +88,19 @@ class Perso(commands.Cog):
                 inline=False
             )
 
-        # Image du personnage (par défaut si absente)
+        # Gestion des images (locale ou défaut)
+        image_path = None
         if "images" in char and char["images"]:
-            embed.set_image(url=char["images"][0])
+            image_path = char["images"][0]
         else:
-            embed.set_image(url="kisuke/data/images/image_par_défaut.jpg")
+            image_path = "data/images/image_par_defaut.jpg"
 
-        await safe_send(channel, embed=embed)
+        if os.path.exists(image_path):
+            file = discord.File(image_path, filename=os.path.basename(image_path))
+            embed.set_image(url=f"attachment://{os.path.basename(image_path)}")
+            await safe_send(channel, embed=embed, file=file)
+        else:
+            await safe_send(channel, embed=embed)
 
     # ────────────────────────────────────────────────────────────────────────────
     # 🔹 Commande SLASH
