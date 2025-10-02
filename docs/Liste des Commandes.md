@@ -1,6 +1,4 @@
-# Kisuke Urahara - Bot Discord
-
-Liste des commandes
+Liste des Commandes
 
 ### 📂 Admin
 - **commandslist :** Génère un .md avec toutes les commandes et les envoie en fichier.
