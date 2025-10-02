@@ -112,7 +112,7 @@ class Skill(commands.Cog):
     # ────────────────────────────────────────────────────────────────────────────
     # 🔹 Commande PREFIX
     # ────────────────────────────────────────────────────────────────────────────
-    @commands.command(name="skill")
+    @commands.command(name="skill", help="Active la compétence de ta classe.")
     @commands.cooldown(1, 5.0, commands.BucketType.user)
     async def prefix_skill(self, ctx: commands.Context):
         await self._activate_skill(ctx.author, ctx.channel)
