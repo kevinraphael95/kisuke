@@ -107,7 +107,7 @@ class Perso(commands.Cog):
     # ────────────────────────────────────────────────────────────────────────────
     @app_commands.command(
         name="perso",
-        description="Affiche la fiche d'un personnage Bleach"
+        description="Affiche la fiche d'un personnage Bleach."
     )
     @app_commands.describe(name="Nom du personnage (laisser vide pour aléatoire)")
     @app_commands.checks.cooldown(rate=1, per=5.0, key=lambda i: i.user.id)
@@ -119,7 +119,7 @@ class Perso(commands.Cog):
     # ────────────────────────────────────────────────────────────────────────────
     # 🔹 Commande PREFIX
     # ────────────────────────────────────────────────────────────────────────────
-    @commands.command(name="perso")
+    @commands.command(name="perso", help="Affiche la fiche d'un personnage Bleach.")
     @commands.cooldown(1, 5.0, commands.BucketType.user)
     async def prefix_perso(self, ctx: commands.Context, *, name: str = None):
         await self.send_character(ctx.channel, name)
