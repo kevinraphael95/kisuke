@@ -31,8 +31,7 @@ class CommandsList(commands.Cog):
     # ────────────────────────────────────────────────────────────────────────────
     def build_markdown_content(self) -> str:
         """Renvoie le contenu Markdown complet pour README.md avec format compact et lisible"""
-        content = "# Kisuke Urahara - Bot Discord\n\n"
-        content += ("Liste des commandes\n\n")
+        content = "Liste des Commandes\n\n"
 
         # Regrouper les commandes par catégorie
         categories = {}
@@ -65,7 +64,7 @@ class CommandsList(commands.Cog):
         try:
             markdown_content = self.build_markdown_content()
             file = discord.File(io.StringIO(markdown_content), filename="Liste des Commandes.md")
-            await safe_respond(interaction, "📄 Voici le README.md avec toutes les commandes :", file=file)
+            await safe_respond(interaction, "📄 Voici le Liste des Commandes.md avec toutes les commandes :", file=file)
         except app_commands.CommandOnCooldown as e:
             await safe_respond(interaction, f"⏳ Attends encore {e.retry_after:.1f}s.", ephemeral=True)
         except Exception as e:
@@ -85,7 +84,7 @@ class CommandsList(commands.Cog):
         try:
             markdown_content = self.build_markdown_content()
             file = discord.File(io.StringIO(markdown_content), filename="Liste des Commandes.md")
-            await safe_send(ctx.channel, "📄 Voici le README.md avec toutes les commandes :", file=file)
+            await safe_send(ctx.channel, "📄 Voici le Liste des Commandes.md avec toutes les commandes :", file=file)
         except commands.CommandOnCooldown as e:
             await safe_send(ctx.channel, f"⏳ Attends encore {e.retry_after:.1f}s.")
         except Exception as e:
