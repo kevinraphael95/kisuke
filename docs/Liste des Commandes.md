@@ -1,11 +1,12 @@
-Les Commandes
+# Kisuke Urahara - Bot Discord
+
+Liste des commandes
 
 ### 📂 Admin
-- **debugreiatsu :** Pas de description.
+- **commandslist :** Génère un .md avec toutes les commandes et les envoie en fichier.
 - **fixtables :** Pas de description.
 - **heartbeat :** (Admin) Gère le heartbeat : pause, resume, status, set, unset.
 - **re :** (Admin) Préviens les membres et redémarre le bot via Render.
-- **readme :** Génère un README.md avec toutes les commandes et les envoie en fichier.
 - **reiatsuadmin :** (Admin) Gère le Reiatsu : set, unset, change, spawn, speed.
 - **say_as :** (Admin) Fait répéter un message par le bot comme si c'était un autre membre.
 Usage: !say_as <mention|id|pseudo> <message>
@@ -18,6 +19,8 @@ Usage: !say_as <mention|id|pseudo> <message>
 - **division :** Détermine ta division dans le Gotei 13.
 - **kido :** 🎼 Lance un sort de Kidō ! Exemple: `!!kido bakudo 61`
 - **kluboutside :** Pas de description.
+- **perso :** Affiche la fiche d'un personnage Bleach.
+- **pilote :** 📖 Lire le pilote de Bleach.
 - **rpg :** Pas de description.
 - **ship :** Pas de description.
 
@@ -48,9 +51,9 @@ Usage: !say_as <mention|id|pseudo> <message>
 
 ### 📂 Reiatsu
 - **classe :** Choisir sa classe Reiatsu
-- **keylottery :** Pas de description.
-- **reiatsu :** Pas de description.
+- **keylottery :** Ticket à gratter : tente ta chance pour gagner des clés ou du Reiatsu
+- **reiatsu :** 💠 Affiche le score de Reiatsu d’un membre (ou soi-même) et d'autres ifnformations utiles.
 - **reiatsuvol :** 💠 Tente de voler 10% du Reiatsu d’un autre membre. 25% de réussite. Cooldown : 24h.
-- **skill :** Pas de description.
+- **skill :** Active la compétence de ta classe.
 - **steamkey :** Pas de description.
 - **tutoreiatsu :** Tutoriel complet sur le système Reiatsu
