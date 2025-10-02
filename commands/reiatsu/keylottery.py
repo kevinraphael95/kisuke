@@ -319,7 +319,7 @@ class ScratchKey(commands.Cog):
     # ────────────────────────────────────────────────────────────────────────────
     # 🔹 Commande PREFIX
     # ────────────────────────────────────────────────────────────────────────────
-    @commands.command(name="keylottery", aliases=["kl"])
+    @commands.command(name="keylottery", aliases=["kl"], help="Ticket à gratter : tente ta chance pour gagner des clés ou du Reiatsu")
     @commands.cooldown(1, 10.0, commands.BucketType.user)
     async def prefix_scratchkey(self, ctx: commands.Context):
         try:
