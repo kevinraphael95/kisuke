@@ -250,7 +250,7 @@ class ReiatsuCommand(commands.Cog):
     # ────────────────────────────────────────────────────────────────────────────
     # 🔹 Commande SLASH
     # ────────────────────────────────────────────────────────────────────────────
-    @app_commands.command(name="reiatsu", description="💠 Affiche le score de Reiatsu d’un membre (ou soi-même).")
+    @app_commands.command(name="reiatsu", description="💠 Affiche le score de Reiatsu d’un membre (ou soi-même) et d'autres ifnformations utiles.")
     @app_commands.describe(member="Membre dont vous voulez voir le Reiatsu")
     async def slash_reiatsu(self, interaction: discord.Interaction, member: discord.Member = None):
         remaining = await self._check_cooldown(interaction.user.id)
@@ -261,7 +261,7 @@ class ReiatsuCommand(commands.Cog):
     # ────────────────────────────────────────────────────────────────────────────
     # 🔹 Commande PREFIX
     # ────────────────────────────────────────────────────────────────────────────
-    @commands.command(name="reiatsu", aliases=["rts"])
+    @commands.command(name="reiatsu", aliases=["rts"], help="💠 Affiche le score de Reiatsu d’un membre (ou soi-même) et d'autres ifnformations utiles.")
     async def prefix_reiatsu(self, ctx: commands.Context, member: discord.Member = None):
         remaining = await self._check_cooldown(ctx.author.id)
         if remaining > 0:
