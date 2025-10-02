@@ -1,5 +1,5 @@
 # ────────────────────────────────────────────────────────────────────────────────
-# 📌 readme_creator.py — Commande /readme et !readme
+# 📌 commandslist.py — Commande /readme et !readme
 # Objectif : Génère un README.md avec toutes les commandes triées et formatées
 # Catégorie : Admin
 # Accès : Administrateurs seulement
@@ -18,7 +18,7 @@ from utils.discord_utils import safe_send, safe_respond
 # ────────────────────────────────────────────────────────────────────────────────
 # 🧠 Cog principal
 # ────────────────────────────────────────────────────────────────────────────────
-class ReadmeCreator(commands.Cog):
+class CommandsList(commands.Cog):
     """
     Commande /readme et !readme — Génère un README.md complet avec toutes les commandes.
     Accessible uniquement aux administrateurs.
@@ -32,9 +32,7 @@ class ReadmeCreator(commands.Cog):
     def build_markdown_content(self) -> str:
         """Renvoie le contenu Markdown complet pour README.md avec format compact et lisible"""
         content = "# Kisuke Urahara - Bot Discord\n\n"
-        content += ("👍 Kisuke Urahara est un bot discord à la con et inutile en python. "
-                    "Il propose quelques commandes simples, amusantes et parfois inspirées du manga Bleach, "
-                    "et un petit jeu de collecte de 'reiatsu'.\n\n---\n\n# Commandes\n\n")
+        content += ("Liste des commandes\n\n")
 
         # Regrouper les commandes par catégorie
         categories = {}
@@ -59,14 +57,14 @@ class ReadmeCreator(commands.Cog):
     # ────────────────────────────────────────────────────────────────────────────
     @app_commands.checks.has_permissions(administrator=True)
     @app_commands.command(
-        name="readme",
-        description="Génère un README.md avec toutes les commandes et les envoie en fichier."
+        name="commandslist",
+        description="Génère un .md avec toutes les commandes et les envoie en fichier."
     )
     @app_commands.checks.cooldown(1, 5.0, key=lambda i: i.user.id)
     async def slash_readme(self, interaction: discord.Interaction):
         try:
             markdown_content = self.build_markdown_content()
-            file = discord.File(io.StringIO(markdown_content), filename="README.md")
+            file = discord.File(io.StringIO(markdown_content), filename="Liste des Commandes.md")
             await safe_respond(interaction, "📄 Voici le README.md avec toutes les commandes :", file=file)
         except app_commands.CommandOnCooldown as e:
             await safe_respond(interaction, f"⏳ Attends encore {e.retry_after:.1f}s.", ephemeral=True)
@@ -79,14 +77,14 @@ class ReadmeCreator(commands.Cog):
     # ────────────────────────────────────────────────────────────────────────────
     @commands.has_permissions(administrator=True)
     @commands.command(
-        name="readme",
-        help="Génère un README.md avec toutes les commandes et les envoie en fichier."
+        name="commandslist",
+        help="Génère un .md avec toutes les commandes et les envoie en fichier."
     )
     @commands.cooldown(1, 5.0, commands.BucketType.user)
     async def prefix_readme(self, ctx: commands.Context):
         try:
             markdown_content = self.build_markdown_content()
-            file = discord.File(io.StringIO(markdown_content), filename="README.md")
+            file = discord.File(io.StringIO(markdown_content), filename="Liste des Commandes.md")
             await safe_send(ctx.channel, "📄 Voici le README.md avec toutes les commandes :", file=file)
         except commands.CommandOnCooldown as e:
             await safe_send(ctx.channel, f"⏳ Attends encore {e.retry_after:.1f}s.")
@@ -98,7 +96,7 @@ class ReadmeCreator(commands.Cog):
 # 🔌 Setup du Cog
 # ────────────────────────────────────────────────────────────────────────────────
 async def setup(bot: commands.Bot):
-    cog = ReadmeCreator(bot)
+    cog = CommandsList(bot)
     for command in cog.get_commands():
         if not hasattr(command, "category"):
             command.category = "Admin"
