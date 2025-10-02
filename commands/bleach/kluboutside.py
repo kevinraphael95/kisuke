@@ -181,7 +181,8 @@ class KlubOutside(commands.Cog):
     # ──────────────────────────────────────────────────────────
     @commands.command(
         name="kluboutside",
-        aliases=["ko"]
+        aliases=["ko"],
+        help="Affiche une question de la FAQ du Klub Outside."
     )
     @commands.cooldown(1, 5, commands.BucketType.user)
     async def prefix_kluboutside(self, ctx: commands.Context, *, argument: str = None):
