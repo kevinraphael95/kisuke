@@ -126,7 +126,7 @@ class PiloteBleach(commands.Cog):
     # ────────────────────────────────────────────────────────────────────────────
     @app_commands.command(
         name="pilote",
-        description="📖 Lire le pilote de Bleach avec pagination."
+        description="📖 Lire le pilote de Bleach."
     )
     @app_commands.describe(page="Numéro de page pour commencer la lecture (facultatif)")
     @app_commands.checks.cooldown(rate=1, per=5.0, key=lambda i: i.user.id)
@@ -138,7 +138,7 @@ class PiloteBleach(commands.Cog):
     # ────────────────────────────────────────────────────────────────────────────
     # 🔹 Commande PREFIX
     # ────────────────────────────────────────────────────────────────────────────
-    @commands.command(name="pilote")
+    @commands.command(name="pilote", help="📖 Lire le pilote de Bleach.")
     @commands.cooldown(1, 5.0, commands.BucketType.user)
     async def prefix_pilote(self, ctx: commands.Context, page: int = 1):
         await self._start_pilote(ctx.channel, ctx.author, start_page=page)
