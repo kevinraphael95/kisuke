@@ -29,7 +29,7 @@
 1. Se connecter à [Supabase](https://supabase.com/) (connexion GitHub possible)
 2. Créer un **nouveau projet**
 3. Créer les **tables** via les scripts SQL :
-[Tables supabase](SQL_des_tables_supabase.md)
+[Scripts SQL](SQL_des_tables_supabase.md)
 4. Récupérer et mettre de côté :
 
    * **Le lien du projet (URL)** dans **Project Settings → Data API → Project URL**
