@@ -2,15 +2,18 @@
   "divisions": {
     "1ère Division": {
       "traits": ["discipline", "leadership", "sagesse"],
-      "image": "data/images/divisions/division01.png"
+      "image": "data/images/divisions/division01.png",
+      "description": "La 1ère Division est le cœur du Gotei 13, symbole de l’autorité et de la sagesse. Dirigée par le Capitaine-Commandant, elle incarne la discipline absolue et la responsabilité de guider toutes les autres divisions. Ses membres sont choisis pour leur loyauté inébranlable et leur sens du devoir, prêts à porter le poids de décisions qui peuvent changer le destin de la Soul Society."
     },
     "2ème Division": {
       "traits": ["discrétion", "efficacité", "loyauté"],
-      "image": "data/images/divisions/division02.png"
+      "image": "data/images/divisions/division02.png",
+      "description": "La 2ème Division opère dans l’ombre : maîtres de l’espionnage, de l’assassinat et des opérations secrètes. Étroitement liée à l’Onmitsukidō (la Force Spéciale), elle incarne la précision et l’efficacité. Ses membres privilégient la rapidité et la discrétion, acceptant de tout sacrifier pour accomplir leurs missions, même au prix de leur propre vie."
     },
     "3ème Division": {
       "traits": ["fidélité", "obéissance", "manipulation"],
-      "image": "data/images/divisions/division03.png"
+      "image": "data/images/divisions/division03.png",
+      "description": "La 3ème Division est marquée par l’ambiguïté et la complexité. Elle représente à la fois la loyauté envers ses supérieurs et l’ombre de la manipulation. Ses membres excellent dans l’obéissance et l’adaptabilité, souvent dévoués, parfois troublés par le poids de la tromperie. Elle est le reflet des conflits intérieurs entre fidélité et ambition."
     },
     "4ème Division": {
       "traits": ["empathie", "altruisme", "pacifisme"],
