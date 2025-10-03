@@ -412,7 +412,7 @@ class Jardin(commands.Cog):
         await self._send_garden(target, interaction.user.id, lambda **kwargs: safe_respond(interaction, **kwargs))
 
     # ───────── Commande Préfixe ─────────
-    @commands.command(name="jardin", help=Affiche ton jardin ou celui d'un autre utilisateur 🌱")
+    @commands.command(name="jardin", help="Affiche ton jardin ou celui d'un autre utilisateur 🌱")
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def prefix_jardin(self, ctx:commands.Context, user:discord.User=None):
         target = user or ctx.author
