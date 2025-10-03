@@ -33,7 +33,7 @@ def load_division_data():
         return {}
 
 # ────────────────────────────────────────────────────────────────────────────────
-# 🧠 Vue interactive pour les questions
+# 🧠 Vue interactive pour les questions (A/B/C/D)
 # ────────────────────────────────────────────────────────────────────────────────
 class QuizView(discord.ui.View):
     def __init__(self, answers, author, timeout=60):
@@ -41,15 +41,17 @@ class QuizView(discord.ui.View):
         self.author = author
         self.selected_traits = None
 
-        for label, traits in answers:
-            self.add_item(QuizButton(label, traits))
+        emojis = ["🅰️", "🅱️", "🇨", "🇩"]
+        for idx, (_, traits) in enumerate(answers):
+            self.add_item(QuizButton(emojis[idx], traits))
 
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
         return interaction.user.id == self.author.id
 
+
 class QuizButton(discord.ui.Button):
-    def __init__(self, label, traits):
-        super().__init__(label=label, style=discord.ButtonStyle.primary)
+    def __init__(self, emoji, traits):
+        super().__init__(emoji=emoji, style=discord.ButtonStyle.primary)
         self.traits = traits
 
     async def callback(self, interaction: discord.Interaction):
@@ -67,6 +69,7 @@ class Division(commands.Cog):
     """
     Commande /division et !division — Détermine ta division dans le Gotei 13
     """
+
     def __init__(self, bot: commands.Bot):
         self.bot = bot
 
@@ -92,12 +95,16 @@ class Division(commands.Cog):
             all_answers = list(q["answers"].items())
             selected_answers = random.sample(all_answers, min(4, len(all_answers)))
 
+            emojis = ["🅰️", "🅱️", "🇨", "🇩"]
             embed = discord.Embed(
                 title=f"🧠 Test de division — Question {q_index}/10",
-                description=f"**{q['question']}**",
+                description=f"**{q['question']}**\n\n" + "\n".join(
+                    f"{emojis[idx]} {ans}" for idx, (ans, _) in enumerate(selected_answers)
+                ),
                 color=discord.Color.orange()
             )
-            view = QuizView([(answer, traits) for answer, traits in selected_answers], author)
+
+            view = QuizView(selected_answers, author)
 
             if message is None:
                 message = await safe_send(channel, embed=embed, view=view)
@@ -105,9 +112,11 @@ class Division(commands.Cog):
                 await safe_edit(message, embed=embed, view=view)
 
             await view.wait()
+
             if view.selected_traits is None:
                 await safe_edit(message, content="⏱️ Temps écoulé. Test annulé.", embed=None, view=None)
                 return
+
             personality_counter.update(view.selected_traits)
 
         # Résultat final
@@ -157,4 +166,3 @@ async def setup(bot: commands.Bot):
         if not hasattr(command, "category"):
             command.category = "Bleach"
     await bot.add_cog(cog)
-        
