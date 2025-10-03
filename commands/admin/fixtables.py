@@ -227,7 +227,7 @@ class FixTables(commands.Cog):
         await self._handle_command(interaction.channel)
         await interaction.delete_original_response()
 
-    @commands.command(name="fixtables")
+    @commands.command(name="fixtables", help="Vérifie les tables Supabase et génère des suggestions SQL (par page).")
     @commands.has_permissions(administrator=True)
     @commands.cooldown(1, 30.0, commands.BucketType.guild)
     async def prefix_fixtables(self, ctx: commands.Context):
