@@ -3,8 +3,6 @@
     "1ère Division": {
       "traits": ["discipline", "leadership", "sagesse"],
       "image": "data/images/divisions/division01.png"
-
-/division13.png
     },
     "2ème Division": {
       "traits": ["discrétion", "efficacité", "loyauté"],
