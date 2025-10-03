@@ -1,6 +1,6 @@
 # ────────────────────────────────────────────────────────────────────────────────
 # 📌 division.py — Commande interactive /division et !division
-# Objectif : Déterminer ta division dans le Gotei 13 via un QCM avec réactions
+# Objectif : Déterminer ta division dans le Gotei 13 via un QCM avec boutons
 # Catégorie : Bleach
 # Accès : Tous
 # Cooldown : 1 utilisation / 5 secondes / utilisateur
@@ -17,7 +17,6 @@ import os
 import asyncio
 import random
 from collections import Counter
-
 from utils.discord_utils import safe_send, safe_edit, safe_respond
 
 # ────────────────────────────────────────────────────────────────────────────────
@@ -34,13 +33,40 @@ def load_division_data():
         return {}
 
 # ────────────────────────────────────────────────────────────────────────────────
+# 🧠 Vue interactive pour les questions
+# ────────────────────────────────────────────────────────────────────────────────
+class QuizView(discord.ui.View):
+    def __init__(self, answers, author, timeout=60):
+        super().__init__(timeout=timeout)
+        self.author = author
+        self.selected_traits = None
+
+        for label, traits in answers:
+            self.add_item(QuizButton(label, traits))
+
+    async def interaction_check(self, interaction: discord.Interaction) -> bool:
+        return interaction.user.id == self.author.id
+
+class QuizButton(discord.ui.Button):
+    def __init__(self, label, traits):
+        super().__init__(label=label, style=discord.ButtonStyle.primary)
+        self.traits = traits
+
+    async def callback(self, interaction: discord.Interaction):
+        view: QuizView = self.view
+        view.selected_traits = self.traits
+        for child in view.children:
+            child.disabled = True
+        await interaction.response.edit_message(view=view)
+        view.stop()
+
+# ────────────────────────────────────────────────────────────────────────────────
 # 🧠 Cog principal
 # ────────────────────────────────────────────────────────────────────────────────
 class Division(commands.Cog):
     """
     Commande /division et !division — Détermine ta division dans le Gotei 13
     """
-
     def __init__(self, bot: commands.Bot):
         self.bot = bot
 
@@ -59,64 +85,30 @@ class Division(commands.Cog):
 
         # Tirer 10 questions aléatoires
         questions = random.sample(all_questions, k=10)
-
-        def get_emoji(index):
-            return ["🇦", "🇧", "🇨", "🇩"][index]
-
-        q_index = 0
         message = None
 
-        while q_index < len(questions):
-            q = questions[q_index]
-
+        for q_index, q in enumerate(questions, start=1):
             # Choisir 4 réponses max parmi celles disponibles
             all_answers = list(q["answers"].items())
             selected_answers = random.sample(all_answers, min(4, len(all_answers)))
 
-            desc = ""
-            emojis = []
-            for i, (answer, traits) in enumerate(selected_answers):
-                emoji = get_emoji(i)
-                desc += f"{emoji} {answer}\n"
-                emojis.append((emoji, answer, traits))
-
             embed = discord.Embed(
-                title=f"🧠 Test de division — Question {q_index + 1}/10",
-                description=f"**{q['question']}**\n\n{desc}",
+                title=f"🧠 Test de division — Question {q_index}/10",
+                description=f"**{q['question']}**",
                 color=discord.Color.orange()
             )
+            view = QuizView([(answer, traits) for answer, traits in selected_answers], author)
 
-            if q_index == 0:
-                message = await safe_send(channel, embed=embed)
+            if message is None:
+                message = await safe_send(channel, embed=embed, view=view)
             else:
-                await safe_edit(message, embed=embed)
+                await safe_edit(message, embed=embed, view=view)
 
-            # Ajouter les réactions pour les choix
-            for emoji, _, _ in emojis:
-                await message.add_reaction(emoji)
-
-            def check(reaction, user):
-                return (
-                    user == author
-                    and reaction.message.id == message.id
-                    and str(reaction.emoji) in [e[0] for e in emojis]
-                )
-
-            try:
-                reaction, _ = await self.bot.wait_for("reaction_add", timeout=60.0, check=check)
-                selected_emoji = str(reaction.emoji)
-                selected_traits = next(traits for emoji, _, traits in emojis if emoji == selected_emoji)
-                personality_counter.update(selected_traits)
-            except asyncio.TimeoutError:
-                await safe_send(channel, "⏱️ Temps écoulé. Test annulé.")
+            await view.wait()
+            if view.selected_traits is None:
+                await safe_edit(message, content="⏱️ Temps écoulé. Test annulé.", embed=None, view=None)
                 return
-
-            try:
-                await message.clear_reactions()
-            except discord.Forbidden:
-                pass
-
-            q_index += 1
+            personality_counter.update(view.selected_traits)
 
         # Résultat final
         division_scores = {
@@ -124,15 +116,16 @@ class Division(commands.Cog):
             for div, info in divisions.items()
         }
         best_division = max(division_scores, key=division_scores.get)
+        div_info = divisions[best_division]
 
         embed_result = discord.Embed(
             title="🧩 Résultat de ton test",
-            description=f"Tu serais dans la **{best_division}** !",
+            description=f"Tu serais dans la **{best_division}** !\n\n{div_info['description']}",
             color=discord.Color.green()
         )
-        embed_result.set_image(url=f"attachment://{os.path.basename(divisions[best_division]['image'])}")
+        embed_result.set_image(url=f"attachment://{os.path.basename(div_info['image'])}")
 
-        await safe_send(channel, embed=embed_result)
+        await safe_edit(message, embed=embed_result, view=None)
 
     # ────────────────────────────────────────────────────────────────────────────
     # 🔹 Commande SLASH
