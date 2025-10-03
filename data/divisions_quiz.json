@@ -18,23 +18,27 @@
     "4ème Division": {
       "traits": ["empathie", "altruisme", "pacifisme"],
       "image": "data/images/divisions/division04.png",
-      
+      "description": "La 4ème Division est celle des soigneurs, des protecteurs et des altruistes. Maîtres du Kidō de guérison, ses membres placent la vie au-dessus du combat. Ils incarnent la compassion et le pacifisme, mais leur rôle est vital : sans eux, aucune guerre ne pourrait être gagnée. Leur calme et leur humanité contrastent avec la brutalité des champs de bataille."
     },
     "5ème Division": {
       "traits": ["intelligence", "calme", "analyse"],
-      "image": "data/images/divisions/division05.png"
+      "image": "data/images/divisions/division05.png",
+      "description": "La 5ème Division se distingue par son sens du devoir, sa loyauté et sa recherche de l’équilibre. Ses membres sont calmes, réfléchis et intelligents, capables d’analyser les situations avec lucidité. Elle incarne la fiabilité et la stabilité au sein du Gotei 13, mais cache aussi une part de mystère qui a marqué son histoire."
     },
     "6ème Division": {
       "traits": ["fierté", "honneur", "rigueur"],
-      "image": "data/images/divisions/division06.png"
+      "image": "data/images/divisions/division06.png",
+      "description": "La 6ème Division incarne la noblesse, l’honneur et la stricte discipline. Fidèles au règlement et aux traditions de la Soul Society, ses membres considèrent l’obéissance aux lois comme une vertu suprême. Leur fierté et leur rigueur en font un modèle de droiture, mais aussi une division inflexible face à la moindre transgression."
     },
     "7ème Division": {
       "traits": ["honnêteté", "justice", "force morale"],
-      "image": "data/images/divisions/division07.png"
+      "image": "data/images/divisions/division07.png",
+      "description": "La 7ème Division est le visage de l’honnêteté et de la justice. Guidée par un profond sens moral, elle valorise la sincérité et la loyauté avant tout. Ses membres cherchent à protéger la Soul Society par des actions justes et honorables, préférant la droiture à la ruse. Ils incarnent la force tranquille et l’intégrité absolue."
     },
     "8ème Division": {
       "traits": ["détente", "humour", "improvisation"],
-      "image": "data/images/divisions/division08.png"
+      "image": "data/images/divisions/division08.png",
+      "description": "La 8ème Division est connue pour sa convivialité, son humour et son approche détendue de la vie. Ses membres privilégient la créativité et l’improvisation, trouvant toujours une manière originale de surmonter les obstacles. Derrière leur apparente insouciance, ils cachent une redoutable intelligence et une capacité à surprendre leurs adversaires."
     },
     "9ème Division": {
       "traits": ["courage", "endurance", "résilience"],
