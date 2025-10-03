@@ -41,7 +41,7 @@ class QuizView(discord.ui.View):
         self.author = author
         self.selected_traits = None
 
-        emojis = ["🅰️", "🅱️", "🇨", "🇩"]
+        emojis = ["🇦", "🇧", "🇨", "🇩"]
         for idx, (_, traits) in enumerate(answers):
             self.add_item(QuizButton(emojis[idx], traits))
 
@@ -95,7 +95,7 @@ class Division(commands.Cog):
             all_answers = list(q["answers"].items())
             selected_answers = random.sample(all_answers, min(4, len(all_answers)))
 
-            emojis = ["🅰️", "🅱️", "🇨", "🇩"]
+            emojis = ["🇦", "🇧", "🇨", "🇩"]
             embed = discord.Embed(
                 title=f"🧠 Test de division — Question {q_index}/10",
                 description=f"**{q['question']}**\n\n" + "\n".join(
