@@ -1,9 +1,9 @@
 # ────────────────────────────────────────────────────────────────────────────────
 # 📌 division.py — Commande interactive /division et !division
-# Objectif : Déterminer ta division via un QCM avec choix limité (4 réponses aléatoires)
+# Objectif : Déterminer ta division dans le Gotei 13 via un QCM avec réactions
 # Catégorie : Bleach
 # Accès : Tous
-# Cooldown : 1 essai / 5s
+# Cooldown : 1 utilisation / 5 secondes / utilisateur
 # ────────────────────────────────────────────────────────────────────────────────
 
 # ────────────────────────────────────────────────────────────────────────────────
@@ -12,21 +12,20 @@
 import discord
 from discord import app_commands
 from discord.ext import commands
-from discord.ui import View, Select
 import json
 import os
+import asyncio
 import random
 from collections import Counter
 
-from utils.discord_utils import safe_send, safe_edit, safe_respond, safe_delete
+from utils.discord_utils import safe_send, safe_edit, safe_respond
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 📂 Chargement des données JSON
 # ────────────────────────────────────────────────────────────────────────────────
 DATA_JSON_PATH = os.path.join("data", "divisions_quiz.json")
 
-def load_data():
-    """Charge le fichier JSON contenant les divisions et questions."""
+def load_division_data():
     try:
         with open(DATA_JSON_PATH, "r", encoding="utf-8") as f:
             return json.load(f)
@@ -35,73 +34,89 @@ def load_data():
         return {}
 
 # ────────────────────────────────────────────────────────────────────────────────
-# 🎛️ UI — Menu de sélection pour une question
-# ────────────────────────────────────────────────────────────────────────────────
-class QuestionSelect(Select):
-    def __init__(self, parent_view, question, answers):
-        options = [
-            discord.SelectOption(label=ans, description=None)
-            for ans in answers.keys()
-        ]
-        super().__init__(placeholder=question, options=options, min_values=1, max_values=1)
-        self.parent_view = parent_view
-        self.answers = answers
-
-    async def callback(self, interaction: discord.Interaction):
-        selected = self.values[0]
-        self.parent_view.counter.update(self.answers[selected])
-        await interaction.response.defer()
-        self.parent_view.stop()
-
-class QuestionView(View):
-    def __init__(self, bot, question, answers, counter):
-        super().__init__(timeout=60)
-        self.bot = bot
-        self.counter = counter
-        self.add_item(QuestionSelect(self, question, answers))
-
-# ────────────────────────────────────────────────────────────────────────────────
 # 🧠 Cog principal
 # ────────────────────────────────────────────────────────────────────────────────
 class Division(commands.Cog):
-    """Commande / !division — Détermine ta division du Gotei 13"""
+    """
+    Commande /division et !division — Détermine ta division dans le Gotei 13
+    """
 
     def __init__(self, bot: commands.Bot):
         self.bot = bot
 
-    async def run_quiz(self, ctx_or_interaction):
-        data = load_data()
+    # ────────────────────────────────────────────────────────────────────────────
+    # 🔹 Fonction interne commune
+    # ────────────────────────────────────────────────────────────────────────────
+    async def _run_quiz(self, channel, author):
+        data = load_division_data()
         if not data:
-            await safe_respond(ctx_or_interaction, "❌ Données introuvables.")
+            await safe_send(channel, "❌ Données introuvables.")
             return
 
-        questions = random.sample(data["questions"], k=10)  # 10 questions aléatoires
+        all_questions = data["questions"]
         divisions = data["divisions"]
         personality_counter = Counter()
 
-        for idx, q in enumerate(questions, start=1):
-            # Choisir 4 réponses au hasard
-            all_answers = list(q["answers"].items())
-            selected_answers = dict(random.sample(all_answers, 4))
+        # Tirer 10 questions aléatoires
+        questions = random.sample(all_questions, k=10)
 
-            view = QuestionView(self.bot, f"Q{idx}/10 — {q['question']}", selected_answers, personality_counter)
+        def get_emoji(index):
+            return ["🇦", "🇧", "🇨", "🇩"][index]
+
+        q_index = 0
+        message = None
+
+        while q_index < len(questions):
+            q = questions[q_index]
+
+            # Choisir 4 réponses max parmi celles disponibles
+            all_answers = list(q["answers"].items())
+            selected_answers = random.sample(all_answers, min(4, len(all_answers)))
+
+            desc = ""
+            emojis = []
+            for i, (answer, traits) in enumerate(selected_answers):
+                emoji = get_emoji(i)
+                desc += f"{emoji} {answer}\n"
+                emojis.append((emoji, answer, traits))
+
             embed = discord.Embed(
-                title=f"🧠 Test Division — Question {idx}/10",
-                description="Choisis ta réponse dans le menu déroulant.",
+                title=f"🧠 Test de division — Question {q_index + 1}/10",
+                description=f"**{q['question']}**\n\n{desc}",
                 color=discord.Color.orange()
             )
 
-            if isinstance(ctx_or_interaction, discord.Interaction):
-                message = await safe_respond(ctx_or_interaction, embed=embed, view=view)
+            if q_index == 0:
+                message = await safe_send(channel, embed=embed)
             else:
-                message = await safe_send(ctx_or_interaction.channel, embed=embed, view=view)
+                await safe_edit(message, embed=embed)
 
-            await view.wait()
+            # Ajouter les réactions pour les choix
+            for emoji, _, _ in emojis:
+                await message.add_reaction(emoji)
+
+            def check(reaction, user):
+                return (
+                    user == author
+                    and reaction.message.id == message.id
+                    and str(reaction.emoji) in [e[0] for e in emojis]
+                )
 
             try:
-                await safe_edit(message, embed=embed, view=None)
-            except:
+                reaction, _ = await self.bot.wait_for("reaction_add", timeout=60.0, check=check)
+                selected_emoji = str(reaction.emoji)
+                selected_traits = next(traits for emoji, _, traits in emojis if emoji == selected_emoji)
+                personality_counter.update(selected_traits)
+            except asyncio.TimeoutError:
+                await safe_send(channel, "⏱️ Temps écoulé. Test annulé.")
+                return
+
+            try:
+                await message.clear_reactions()
+            except discord.Forbidden:
                 pass
+
+            q_index += 1
 
         # Résultat final
         division_scores = {
@@ -111,27 +126,34 @@ class Division(commands.Cog):
         best_division = max(division_scores, key=division_scores.get)
 
         embed_result = discord.Embed(
-            title="🧩 Résultat du test",
-            description=f"Tu appartiendrais à la **{best_division}** !",
+            title="🧩 Résultat de ton test",
+            description=f"Tu serais dans la **{best_division}** !",
             color=discord.Color.green()
         )
         embed_result.set_image(url=f"attachment://{os.path.basename(divisions[best_division]['image'])}")
 
-        if isinstance(ctx_or_interaction, discord.Interaction):
-            await safe_respond(ctx_or_interaction, embed=embed_result)
-        else:
-            await safe_send(ctx_or_interaction.channel, embed=embed_result)
+        await safe_send(channel, embed=embed_result)
 
-    # Commande préfixée
-    @commands.command(name="division", help="Détermine ta division du Gotei 13")
-    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
-    async def division_prefix(self, ctx: commands.Context):
-        await self.run_quiz(ctx)
+    # ────────────────────────────────────────────────────────────────────────────
+    # 🔹 Commande SLASH
+    # ────────────────────────────────────────────────────────────────────────────
+    @app_commands.command(
+        name="division",
+        description="Réponds à un QCM pour savoir dans quelle division du Gotei 13 tu serais."
+    )
+    @app_commands.checks.cooldown(1, 5.0, key=lambda i: i.user.id)
+    async def slash_division(self, interaction: discord.Interaction):
+        await interaction.response.defer()
+        await self._run_quiz(interaction.channel, interaction.user)
+        await interaction.delete_original_response()
 
-    # Commande slash
-    @app_commands.command(name="division", description="Détermine ta division du Gotei 13")
-    async def division_slash(self, interaction: discord.Interaction):
-        await self.run_quiz(interaction)
+    # ────────────────────────────────────────────────────────────────────────────
+    # 🔹 Commande PREFIX
+    # ────────────────────────────────────────────────────────────────────────────
+    @commands.command(name="division", help="Détermine ta division dans le Gotei 13")
+    @commands.cooldown(1, 5.0, commands.BucketType.user)
+    async def prefix_division(self, ctx: commands.Context):
+        await self._run_quiz(ctx.channel, ctx.author)
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🔌 Setup du Cog
