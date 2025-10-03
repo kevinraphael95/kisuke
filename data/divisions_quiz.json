@@ -1,44 +1,57 @@
 {
   "divisions": {
     "1ère Division": {
-      "traits" : ["discipline", "leadership", "sagesse"],
-      "image" : "data/images/image_par_defaut.jpeg" },
+      "traits": ["discipline", "leadership", "sagesse"],
+      "image": "data/images/image_par_defaut.jpeg"
+    },
     "2ème Division": {
-      "traits" : ["discrétion", "efficacité", "loyauté"],
-      "image" : "data/images/image_par_defaut.jpeg" },
+      "traits": ["discrétion", "efficacité", "loyauté"],
+      "image": "data/images/image_par_defaut.jpeg"
+    },
     "3ème Division": {
-      "traits" : ["fidélité", "obéissance", "manipulation"],
-      "image" : "data/images/image_par_defaut.jpeg" },
+      "traits": ["fidélité", "obéissance", "manipulation"],
+      "image": "data/images/image_par_defaut.jpeg"
+    },
     "4ème Division": {
-      "traits" : ["empathie", "altruisme", "pacifisme"],
-      "image" : "data/images/image_par_defaut.jpeg" },
+      "traits": ["empathie", "altruisme", "pacifisme"],
+      "image": "data/images/image_par_defaut.jpeg"
+    },
     "5ème Division": {
-      "traits" : ["intelligence", "calme", "analyse"],
-      "image" : "data/images/image_par_defaut.jpeg" },
+      "traits": ["intelligence", "calme", "analyse"],
+      "image": "data/images/image_par_defaut.jpeg"
+    },
     "6ème Division": {
-      "traits" : ["fierté", "honneur", "rigueur"],
-      "image" : "data/images/image_par_defaut.jpeg" },
+      "traits": ["fierté", "honneur", "rigueur"],
+      "image": "data/images/image_par_defaut.jpeg"
+    },
     "7ème Division": {
-      "traits" : ["honnêteté", "justice", "force morale"],
-      "image" : "data/images/image_par_defaut.jpeg" },
+      "traits": ["honnêteté", "justice", "force morale"],
+      "image": "data/images/image_par_defaut.jpeg"
+    },
     "8ème Division": {
-      "traits" : ["détente", "humour", "improvisation"],
-      "image" : "data/images/image_par_defaut.jpeg" },
+      "traits": ["détente", "humour", "improvisation"],
+      "image": "data/images/image_par_defaut.jpeg"
+    },
     "9ème Division": {
-      "traits" : ["courage", "endurance", "résilience"],
-      "image" : "data/images/image_par_defaut.jpeg" },
+      "traits": ["courage", "endurance", "résilience"],
+      "image": "data/images/image_par_defaut.jpeg"
+    },
     "10ème Division": {
-      "traits" : ["équilibre", "adaptabilité", "prudence"],
-      "image" : "data/images/image_par_defaut.jpeg" },
+      "traits": ["équilibre", "adaptabilité", "prudence"],
+      "image": "data/images/image_par_defaut.jpeg"
+    },
     "11ème Division": {
-      "traits" : ["combat", "bravoure", "détermination"],
-      "image" : "data/images/image_par_defaut.jpeg" },
+      "traits": ["combat", "bravoure", "détermination"],
+      "image": "data/images/image_par_defaut.jpeg"
+    },
     "12ème Division": {
-      "traits" : ["curiosité", "invention", "folie"],
-      "image" : "data/images/image_par_defaut.jpeg" },
+      "traits": ["curiosité", "invention", "folie"],
+      "image": "data/images/image_par_defaut.jpeg"
+    },
     "13ème Division": {
-      "traits" : ["compassion", "détermination", "dévouement"],
-      "image" : "data/images/image_par_defaut.jpeg" }
+      "traits": ["compassion", "détermination", "dévouement"],
+      "image": "data/images/image_par_defaut.jpeg"
+    }
   },
   "questions": [
     {
@@ -47,7 +60,11 @@
         "Tenter de comprendre les deux camps.": ["empathie", "justice"],
         "Réagir avec calme et logique.": ["analyse", "prudence"],
         "Frapper en premier.": ["combat", "bravoure"],
-        "Élaborer une stratégie tordue.": ["manipulation", "intelligence"]
+        "Élaborer une stratégie tordue.": ["manipulation", "intelligence"],
+        "Convaincre les autres avec ton charisme.": ["leadership", "détermination"],
+        "Éviter le conflit et rechercher la paix.": ["pacifisme", "altruisme"],
+        "Improviser et m’adapter sur le moment.": ["improvisation", "adaptabilité"],
+        "Observer et attendre le bon moment.": ["sagesse", "discipline"]
       }
     },
     {
@@ -56,7 +73,11 @@
         "Le leader qui guide les autres.": ["leadership", "discipline"],
         "Le soigneur qui protège.": ["altruisme", "pacifisme"],
         "Le combattant qui prend les coups.": ["résilience", "courage"],
-        "Le discret qui agit dans l’ombre.": ["discrétion", "efficacité"]
+        "Le discret qui agit dans l’ombre.": ["discrétion", "efficacité"],
+        "L’intellectuel qui propose des stratégies.": ["intelligence", "analyse"],
+        "Le blagueur qui détend l’atmosphère.": ["humour", "détente"],
+        "L’artiste qui propose des idées nouvelles.": ["invention", "curiosité"],
+        "Le loyal bras droit qui soutient toujours.": ["fidélité", "loyauté"]
       }
     },
     {
@@ -65,7 +86,11 @@
         "Ma créativité.": ["curiosité", "invention"],
         "Ma loyauté.": ["fidélité", "dévouement"],
         "Ma capacité d’adaptation.": ["équilibre", "adaptabilité"],
-        "Mon sens de l’humour.": ["détente", "improvisation"]
+        "Mon sens de l’humour.": ["détente", "improvisation"],
+        "Mon courage.": ["bravoure", "courage"],
+        "Ma discipline.": ["rigueur", "sagesse"],
+        "Mon intelligence.": ["intelligence", "analyse"],
+        "Mon altruisme.": ["empathie", "pacifisme"]
       }
     },
     {
@@ -74,7 +99,11 @@
         "Un loup – noble et loyal.": ["loyauté", "force morale"],
         "Un renard – malin et imprévisible.": ["manipulation", "improvisation"],
         "Un hibou – sage et observateur.": ["sagesse", "analyse"],
-        "Un tigre – féroce et courageux.": ["combat", "détermination"]
+        "Un tigre – féroce et courageux.": ["combat", "détermination"],
+        "Un chien – fidèle et protecteur.": ["fidélité", "altruisme"],
+        "Un serpent – rusé et calculateur.": ["intelligence", "prudence"],
+        "Un singe – joueur et malin.": ["humour", "curiosité"],
+        "Un cheval – libre et indomptable.": ["équilibre", "fierté"]
       }
     },
     {
@@ -83,18 +112,24 @@
         "Dans l’urgence, quitte à improviser.": ["improvisation", "courage"],
         "En planifiant tout à l’avance.": ["discipline", "analyse"],
         "Par instinct, en suivant mon cœur.": ["compassion", "dévouement"],
-        "En testant des solutions originales.": ["invention", "folie"]
+        "En testant des solutions originales.": ["invention", "folie"],
+        "Avec rigueur et organisation.": ["honneur", "rigueur"],
+        "Avec humour pour détendre l’atmosphère.": ["humour", "détente"],
+        "En cherchant toujours la paix.": ["pacifisme", "empathie"],
+        "Avec force et détermination.": ["bravoure", "détermination"]
       }
     },
-
-
-     {
+    {
       "question": "Comment prends-tu une décision importante ?",
       "answers": {
         "En écoutant mon instinct et mon cœur.": ["compassion", "dévouement"],
         "En analysant tous les détails minutieusement.": ["intelligence", "analyse"],
         "En consultant les autres et cherchant un consensus.": ["leadership", "justice"],
-        "En évaluant rapidement les risques et opportunités.": ["prudence", "adaptabilité"]
+        "En évaluant rapidement les risques et opportunités.": ["prudence", "adaptabilité"],
+        "En respectant toujours mes principes et mon honneur.": ["honneur", "rigueur"],
+        "En laissant faire le destin.": ["improvisation", "curiosité"],
+        "En suivant ce qui est juste pour tous.": ["justice", "équilibre"],
+        "En choisissant toujours la paix.": ["pacifisme", "altruisme"]
       }
     },
     {
@@ -103,7 +138,11 @@
         "Perdre la confiance de mes proches.": ["fidélité", "loyauté"],
         "Être considéré comme faible ou inutile.": ["fierté", "honneur"],
         "Ne pas réussir à protéger ceux que j’aime.": ["courage", "résilience"],
-        "Être enfermé dans des règles sans pouvoir créer.": ["folie", "invention"]
+        "Être enfermé dans des règles sans pouvoir créer.": ["folie", "invention"],
+        "Être oublié ou insignifiant.": ["détermination", "rigueur"],
+        "Être trahi par un proche.": ["loyauté", "justice"],
+        "Ne jamais atteindre mes objectifs.": ["discipline", "analyse"],
+        "Perdre ma liberté.": ["équilibre", "curiosité"]
       }
     },
     {
@@ -112,7 +151,11 @@
         "Je reste calme et j’adapte ma stratégie.": ["calme", "adaptabilité"],
         "Je trouve une manière créative de résoudre le problème.": ["curiosité", "invention"],
         "Je demande conseil à quelqu’un de confiance.": ["loyauté", "discipline"],
-        "Je prends les choses en main avec détermination.": ["détermination", "bravoure"]
+        "Je prends les choses en main avec détermination.": ["détermination", "bravoure"],
+        "Je préfère en rire pour alléger la situation.": ["humour", "détente"],
+        "Je me fie à mon instinct.": ["compassion", "improvisation"],
+        "Je me retire pour observer avant d’agir.": ["sagesse", "prudence"],
+        "J’essaie de transformer la crise en opportunité.": ["intelligence", "analyse"]
       }
     },
     {
@@ -121,7 +164,11 @@
         "Aider les autres et apporter la paix.": ["altruisme", "pacifisme"],
         "Devenir le meilleur et montrer ma valeur.": ["fierté", "combat"],
         "Explorer et apprendre sans cesse de nouvelles choses.": ["curiosité", "folie"],
-        "Maintenir l’ordre et la justice.": ["discipline", "justice"]
+        "Maintenir l’ordre et la justice.": ["discipline", "justice"],
+        "Protéger ceux qui comptent pour moi.": ["dévouement", "résilience"],
+        "Être libre et vivre sans contraintes.": ["équilibre", "improvisation"],
+        "Créer quelque chose qui me dépasse.": ["invention", "détermination"],
+        "Être reconnu pour mon intelligence.": ["intelligence", "analyse"]
       }
     },
     {
@@ -130,7 +177,11 @@
         "Travailler en équipe et coordonner les efforts.": ["leadership", "efficacité"],
         "Travailler seul, dans le calme et la concentration.": ["sagesse", "analyse"],
         "Improviser et faire preuve de créativité.": ["improvisation", "détente"],
-        "Agir rapidement et avec détermination.": ["bravoure", "combat"]
+        "Agir rapidement et avec détermination.": ["bravoure", "combat"],
+        "Suivre des règles strictes pour plus d’efficacité.": ["discipline", "rigueur"],
+        "Encourager et protéger mes alliés.": ["altruisme", "loyauté"],
+        "Expérimenter et tester sans cesse.": ["curiosité", "invention"],
+        "Travailler en arrière-plan, discrètement.": ["discrétion", "prudence"]
       }
     },
     {
@@ -139,7 +190,11 @@
         "J’analyse mes erreurs pour mieux rebondir.": ["analyse", "intelligence"],
         "Je persévère avec encore plus de courage.": ["courage", "résilience"],
         "Je cherche du soutien auprès de mes proches.": ["dévouement", "altruisme"],
-        "Je prends du recul pour changer d’approche.": ["adaptabilité", "prudence"]
+        "Je prends du recul pour changer d’approche.": ["adaptabilité", "prudence"],
+        "Je redouble d’efforts pour prouver ma valeur.": ["fierté", "détermination"],
+        "Je reste calme et me concentre sur la suite.": ["calme", "rigueur"],
+        "Je relativise et garde mon humour.": ["humour", "détente"],
+        "Je tente d’innover pour contourner l’obstacle.": ["invention", "curiosité"]
       }
     },
     {
@@ -148,7 +203,11 @@
         "La sagesse et la réflexion profonde.": ["sagesse", "discipline"],
         "La capacité à faire rire et détendre l’atmosphère.": ["humour", "détente"],
         "Le courage et la force face à l’adversité.": ["bravoure", "combat"],
-        "La loyauté et la fidélité sans faille.": ["fidélité", "loyauté"]
+        "La loyauté et la fidélité sans faille.": ["fidélité", "loyauté"],
+        "La créativité et l’originalité.": ["invention", "improvisation"],
+        "L’altruisme et la compassion.": ["empathie", "pacifisme"],
+        "La détermination et la persévérance.": ["détermination", "résilience"],
+        "L’équilibre et le sens de la justice.": ["justice", "équilibre"]
       }
     },
     {
@@ -157,7 +216,11 @@
         "« Agir avec honneur est ma priorité. »": ["honneur", "rigueur"],
         "« Je préfère la paix à la confrontation. »": ["pacifisme", "empathie"],
         "« L’imprévu est une opportunité, pas un obstacle. »": ["improvisation", "curiosité"],
-        "« La justice triomphe toujours. »": ["justice", "discipline"]
+        "« La justice triomphe toujours. »": ["justice", "discipline"],
+        "« Le savoir est une arme puissante. »": ["intelligence", "analyse"],
+        "« Rien ne vaut le courage face à l’adversité. »": ["bravoure", "courage"],
+        "« Rire est la meilleure des forces. »": ["humour", "détente"],
+        "« Créer, c’est vivre vraiment. »": ["invention", "folie"]
       }
     },
     {
@@ -166,7 +229,11 @@
         "Une mission diplomatique pour négocier la paix.": ["empathie", "justice"],
         "Une mission d’infiltration secrète et discrète.": ["discrétion", "manipulation"],
         "Une mission de combat intense et risquée.": ["bravoure", "détermination"],
-        "Une mission scientifique pour découvrir de nouvelles technologies.": ["curiosité", "invention"]
+        "Une mission scientifique pour découvrir de nouvelles technologies.": ["curiosité", "invention"],
+        "Une mission de commandement où tu mènes une équipe.": ["leadership", "discipline"],
+        "Une mission de sauvetage pour protéger les innocents.": ["dévouement", "courage"],
+        "Une mission d’exploration dans l’inconnu.": ["adaptabilité", "folie"],
+        "Une mission d’entraînement pour renforcer les troupes.": ["rigueur", "efficacité"]
       }
     },
     {
@@ -175,14 +242,17 @@
         "En discutant avec des amis autour d’un bon repas.": ["détente", "altruisme"],
         "En méditant ou lisant un livre calme.": ["calme", "sagesse"],
         "En pratiquant un sport ou un combat.": ["combat", "bravoure"],
-        "En créant quelque chose de nouveau ou original.": ["invention", "folie"]
+        "En créant quelque chose de nouveau ou original.": ["invention", "folie"],
+        "En écoutant de la musique ou en rêvant.": ["équilibre", "curiosité"],
+        "En partageant un moment drôle et léger.": ["humour", "improvisation"],
+        "En planifiant mes prochains objectifs.": ["discipline", "prudence"],
+        "En aidant quelqu’un ou en rendant service.": ["empathie", "dévouement"]
       }
     }
-
-
-    
-
- 
-
   ]
 }
+
+
+
+
+
