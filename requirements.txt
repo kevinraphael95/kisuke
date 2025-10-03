@@ -4,3 +4,4 @@ supabase
 flask
 pyspellchecker[fr]
 python-dateutil
+psutil
