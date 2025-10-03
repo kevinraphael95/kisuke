@@ -17,7 +17,8 @@
     },
     "4ème Division": {
       "traits": ["empathie", "altruisme", "pacifisme"],
-      "image": "data/images/divisions/division04.png"
+      "image": "data/images/divisions/division04.png",
+      
     },
     "5ème Division": {
       "traits": ["intelligence", "calme", "analyse"],
@@ -37,23 +38,28 @@
     },
     "9ème Division": {
       "traits": ["courage", "endurance", "résilience"],
-      "image": "data/images/divisions/division09.png"
+      "image": "data/images/divisions/division09.png",
+      "description": "La 9ème Division incarne la détermination, la persévérance et la vigilance. Elle est historiquement liée à la protection de l’ordre et à la préservation de la mémoire de la Soul Society. Ses membres sont endurants et résilients, refusant de plier face à l’adversité. Leur rôle est de veiller et d’assurer que l’histoire ne soit jamais oubliée."
     },
     "10ème Division": {
       "traits": ["équilibre", "adaptabilité", "prudence"],
-      "image": "data/images/divisions/division10.png"
+      "image": "data/images/divisions/division10.png",
+      "description": "La 10ème Division symbolise l’équilibre et l’adaptabilité. Ses membres savent garder leur sang-froid même dans les situations critiques, privilégiant la prudence à l’impulsivité. Ils incarnent la modération et la rationalité, alliant intelligence et souplesse pour s’ajuster à chaque défi sans jamais perdre de vue leurs objectifs."
     },
     "11ème Division": {
       "traits": ["combat", "bravoure", "détermination"],
-      "image": "data/images/divisions/division11.png"
+      "image": "data/images/divisions/division11.png",
+      "description": "La 11ème Division est l’essence même du combat. Ses membres vivent pour le duel, cherchant la gloire dans l’affrontement direct. Le courage, la force brute et la détermination sont leurs valeurs suprêmes. Ils méprisent les subtilités du Kidō et ne jurent que par la puissance des lames, incarnant l’esprit guerrier pur du Gotei 13."
     },
     "12ème Division": {
       "traits": ["curiosité", "invention", "folie"],
-      "image": "data/images/divisions/division12.png"
+      "image": "data/images/divisions/division12.png",
+      "description": "La 12ème Division est celle des chercheurs, des inventeurs et des esprits visionnaires. Étroitement liée au Bureau de Développement Technologique, elle repousse sans cesse les limites de la science et de l’expérimentation. Ses membres incarnent la curiosité et l’innovation, mais flirtent souvent avec la folie et les dangers de leurs propres créations."
     },
     "13ème Division": {
       "traits": ["compassion", "détermination", "dévouement"],
-      "image": "data/images/divisions/division13.png"
+      "image": "data/images/divisions/division13.png",
+      "description": "La 13ème Division est un symbole de compassion, de fidélité et de détermination. Ses membres se distinguent par leur altruisme et leur sens du sacrifice, mettant toujours la protection des autres avant leur propre intérêt. Elle incarne l’espoir et la résilience, même dans les périodes les plus sombres de la Soul Society."
     }
   },
   "questions": [
