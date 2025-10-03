@@ -12,12 +12,12 @@
 import discord
 from discord import app_commands
 from discord.ext import commands
-from discord.ui import View, Button
+from discord.ui import View, Select
 import json
 import os
 import random
 from collections import Counter
-from utils.discord_utils import safe_send, safe_edit
+from utils.discord_utils import safe_send, safe_edit, safe_respond
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 📂 Chargement des données JSON
@@ -34,18 +34,32 @@ def load_division_data():
         return {}
 
 # ────────────────────────────────────────────────────────────────────────────────
-# 🎛️ UI — Boutons pour les réponses
+# 🎛️ UI — Menu de QCM interactif
 # ────────────────────────────────────────────────────────────────────────────────
-EMOJIS = ["🇦", "🇧", "🇨", "🇩"]
-
-class AnswerButton(Button):
-    def __init__(self, parent_view, label, traits):
-        super().__init__(label=label, style=discord.ButtonStyle.primary)
+class QuestionSelect(Select):
+    def __init__(self, parent_view, question, q_index):
         self.parent_view = parent_view
-        self.traits = traits
+        self.question = question
+        self.q_index = q_index
+
+        # Tirer 4 réponses aléatoires parmi toutes les réponses possibles
+        answers_items = list(question["answers"].items())
+        if len(answers_items) > 4:
+            answers_items = random.sample(answers_items, k=4)
+
+        self.emoji_list = ["🇦", "🇧", "🇨", "🇩"]
+        self.mapping = {self.emoji_list[i]: answers_items[i] for i in range(len(answers_items))}
+
+        options = [
+            discord.SelectOption(label=answer, value=emoji)
+            for emoji, (answer, _) in self.mapping.items()
+        ]
+        super().__init__(placeholder="Choisis ta réponse", options=options)
 
     async def callback(self, interaction: discord.Interaction):
-        self.parent_view.personality_counter.update(self.traits)
+        selected_emoji = self.values[0]
+        _, traits = self.mapping[selected_emoji]
+        self.parent_view.personality_counter.update(traits)
         await self.parent_view.next_question(interaction)
 
 class DivisionView(View):
@@ -58,23 +72,17 @@ class DivisionView(View):
         self.q_index = 0
         self.message = None
         self.personality_counter = Counter()
-        self.add_question_buttons()
+        self.add_question()
 
-    def add_question_buttons(self):
-        """Ajoute 4 réponses aléatoires sous forme de boutons."""
-        self.clear_items()
+    def add_question(self):
         if self.q_index < len(self.questions):
-            answers_items = list(self.questions[self.q_index]["answers"].items())
-            if len(answers_items) > 4:
-                answers_items = random.sample(answers_items, k=4)
-            for i, (label, traits) in enumerate(answers_items):
-                self.add_item(AnswerButton(self, f"{EMOJIS[i]} {label}", traits))
+            self.clear_items()
+            self.add_item(QuestionSelect(self, self.questions[self.q_index], self.q_index))
 
     async def next_question(self, interaction: discord.Interaction):
-        """Passe à la question suivante ou affiche le résultat final."""
         self.q_index += 1
         if self.q_index < len(self.questions):
-            self.add_question_buttons()
+            self.add_question()
             embed = discord.Embed(
                 title=f"🧠 Test de division — Question {self.q_index + 1}/{len(self.questions)}",
                 description=f"**{self.questions[self.q_index]['question']}**",
@@ -93,26 +101,14 @@ class DivisionView(View):
                 description=f"Tu serais dans la **{best_division}** !",
                 color=discord.Color.green()
             )
-            # Afficher l'image de la division
-            image_path = self.divisions[best_division]["image"]
-            if os.path.isfile(image_path):
-                file = discord.File(image_path, filename=os.path.basename(image_path))
-                embed_result.set_image(url=f"attachment://{os.path.basename(image_path)}")
-                await safe_send(self.channel, embed=embed_result, file=file)
-            else:
-                await safe_send(self.channel, embed=embed_result)
-            # Désactiver les boutons
-            for child in self.children:
-                child.disabled = True
-            if self.message:
-                await safe_edit(self.message, view=self)
+            embed_result.set_image(url=f"attachment://{os.path.basename(self.divisions[best_division]['image'])}")
+            await safe_edit(self.message, embed=embed_result, view=None)
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🧠 Cog principal
 # ────────────────────────────────────────────────────────────────────────────────
 class Division(commands.Cog):
     """Commande /division et !division — Détermine ta division dans le Gotei 13."""
-
     def __init__(self, bot: commands.Bot):
         self.bot = bot
 
@@ -121,6 +117,7 @@ class Division(commands.Cog):
         if not data:
             await safe_send(channel, "❌ Impossible de charger les données.")
             return
+
         questions = random.sample(data["questions"], k=10)
         divisions = data["divisions"]
         view = DivisionView(self.bot, questions, divisions, channel)
@@ -131,7 +128,9 @@ class Division(commands.Cog):
         )
         view.message = await safe_send(channel, embed=embed, view=view)
 
+    # ──────────────────────────────────────────────────────────────────────────────
     # 🔹 Commande SLASH
+    # ──────────────────────────────────────────────────────────────────────────────
     @app_commands.command(
         name="division",
         description="Détermine ta division dans le Gotei 13."
@@ -142,7 +141,9 @@ class Division(commands.Cog):
         await self._start_quiz(interaction.channel)
         await interaction.delete_original_response()
 
+    # ──────────────────────────────────────────────────────────────────────────────
     # 🔹 Commande PREFIX
+    # ──────────────────────────────────────────────────────────────────────────────
     @commands.command(name="division")
     @commands.cooldown(1, 5.0, commands.BucketType.user)
     async def prefix_division(self, ctx: commands.Context):
@@ -157,4 +158,3 @@ async def setup(bot: commands.Bot):
         if not hasattr(command, "category"):
             command.category = "Bleach"
     await bot.add_cog(cog)
-
