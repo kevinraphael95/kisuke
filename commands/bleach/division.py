@@ -1,6 +1,6 @@
 # ────────────────────────────────────────────────────────────────────────────────
 # 📌 division.py — Commande interactive !division et /division
-# Objectif : Déterminer la division qui te correspond via un QCM interactif avec boutons
+# Objectif : Déterminer la division qui te correspond via un QCM interactif
 # Catégorie : Bleach
 # Accès : Tous
 # Cooldown : 1 utilisation toutes les 5 secondes par utilisateur
@@ -17,7 +17,7 @@ import json
 import os
 import random
 from collections import Counter
-from utils.discord_utils import safe_send, safe_edit, safe_respond
+from utils.discord_utils import safe_send, safe_edit
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 📂 Chargement des données JSON
@@ -34,13 +34,13 @@ def load_division_data():
         return {}
 
 # ────────────────────────────────────────────────────────────────────────────────
-# 🎛️ UI — Boutons avec emojis
+# 🎛️ UI — Boutons pour les réponses
 # ────────────────────────────────────────────────────────────────────────────────
 EMOJIS = ["🇦", "🇧", "🇨", "🇩"]
 
 class AnswerButton(Button):
     def __init__(self, parent_view, label, traits):
-        super().__init__(label=f"{label}", style=discord.ButtonStyle.primary)
+        super().__init__(label=label, style=discord.ButtonStyle.primary)
         self.parent_view = parent_view
         self.traits = traits
 
@@ -61,6 +61,7 @@ class DivisionView(View):
         self.add_question_buttons()
 
     def add_question_buttons(self):
+        """Ajoute 4 réponses aléatoires sous forme de boutons."""
         self.clear_items()
         if self.q_index < len(self.questions):
             answers_items = list(self.questions[self.q_index]["answers"].items())
@@ -70,6 +71,7 @@ class DivisionView(View):
                 self.add_item(AnswerButton(self, f"{EMOJIS[i]} {label}", traits))
 
     async def next_question(self, interaction: discord.Interaction):
+        """Passe à la question suivante ou affiche le résultat final."""
         self.q_index += 1
         if self.q_index < len(self.questions):
             self.add_question_buttons()
@@ -91,8 +93,19 @@ class DivisionView(View):
                 description=f"Tu serais dans la **{best_division}** !",
                 color=discord.Color.green()
             )
-            embed_result.set_image(url=f"attachment://{os.path.basename(self.divisions[best_division]['image'])}")
-            await safe_edit(self.message, embed=embed_result, view=None)
+            # Afficher l'image de la division
+            image_path = self.divisions[best_division]["image"]
+            if os.path.isfile(image_path):
+                file = discord.File(image_path, filename=os.path.basename(image_path))
+                embed_result.set_image(url=f"attachment://{os.path.basename(image_path)}")
+                await safe_send(self.channel, embed=embed_result, file=file)
+            else:
+                await safe_send(self.channel, embed=embed_result)
+            # Désactiver les boutons
+            for child in self.children:
+                child.disabled = True
+            if self.message:
+                await safe_edit(self.message, view=self)
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🧠 Cog principal
@@ -144,3 +157,4 @@ async def setup(bot: commands.Bot):
         if not hasattr(command, "category"):
             command.category = "Bleach"
     await bot.add_cog(cog)
+
