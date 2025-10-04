@@ -65,5 +65,3 @@ RENDER_REDEPLOY_WEBHOOK=https://api.render.com/deploy/srv-xxxxxx?key=yyyyyyyy
 2. Plan gratuit
 3. Startup command : `python bot.py`
 4. Environment Variables → copie **toutes les valeurs du `.env`**
-5. Advanced → Auto Deploy → **OFF**
-
