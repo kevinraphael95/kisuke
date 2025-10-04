@@ -1,6 +1,6 @@
 # ────────────────────────────────────────────────────────────────────────────────
 # 📌 reiatsu_profil.py — Commande interactive /reiatsuprofil et !reiatsuprofil
-# Objectif : Affiche le profil complet d’un joueur : score, classe, skills et cooldowns
+# Objectif : Affiche le profil Reiatsu personnel d’un joueur (classe, compétences, cooldowns)
 # Catégorie : Reiatsu
 # Accès : Public
 # Cooldown : 1 utilisation / 3 secondes / utilisateur
@@ -14,8 +14,8 @@ from discord import app_commands
 from discord.ext import commands
 from dateutil import parser
 from datetime import datetime, timedelta, timezone
-import json
 import time
+import json
 import os
 from utils.supabase_client import supabase
 from utils.discord_utils import safe_send, safe_respond
@@ -25,24 +25,23 @@ from utils.discord_utils import safe_send, safe_respond
 # ────────────────────────────────────────────────────────────────────────────────
 TABLES = {
     "reiatsu": {
-        "description": "Table principale contenant les informations Reiatsu personnelles de chaque joueur.",
-        "columns": {
-            "user_id": "BIGINT — Identifiant Discord unique de l'utilisateur (clé primaire)",
-            "username": "TEXT — Nom d'utilisateur actuel",
-            "points": "INTEGER — Score de Reiatsu actuel",
-            "bonus5": "INTEGER — Bonus éventuel appliqué",
+        "description": "Contient les informations personnelles Reiatsu de chaque joueur : score, classe, bonus et cooldowns.",
+        "colonnes": {
+            "user_id": "BIGINT — Identifiant Discord unique du joueur (clé primaire)",
+            "username": "TEXT — Nom d'utilisateur au moment de la dernière mise à jour",
+            "points": "INTEGER — Quantité actuelle de Reiatsu",
+            "bonus5": "INTEGER — Bonus supplémentaire éventuel",
             "classe": "TEXT — Classe Reiatsu choisie par le joueur",
-            "steal_cd": "INTEGER — Cooldown du vol en heures",
             "last_steal_attempt": "TIMESTAMP — Dernière tentative de vol",
-            "last_skilled_at": "TIMESTAMP — Dernière utilisation du skill",
-            "active_skill": "BOOLEAN — Indique si le skill est actuellement actif",
-            "fake_spawn_id": "TEXT — ID de spawn temporaire (optionnel)"
+            "steal_cd": "INTEGER — Cooldown du vol (en heures)",
+            "last_skilled_at": "TIMESTAMP — Dernière utilisation de skill",
+            "active_skill": "BOOLEAN — Si le skill est actif ou non"
         }
     }
 }
 
 # ────────────────────────────────────────────────────────────────────────────────
-# 📂 Chargement des classes Reiatsu
+# 📂 Chargement des classes depuis JSON
 # ────────────────────────────────────────────────────────────────────────────────
 CLASSES_JSON_PATH = os.path.join("data", "classes.json")
 
@@ -55,11 +54,10 @@ def load_classes():
         return {}
 
 # ────────────────────────────────────────────────────────────────────────────────
-# 🧠 Cog principal
+# 🧠 Cog principal — Reiatsu Profil
 # ────────────────────────────────────────────────────────────────────────────────
-class ReiatsuProfil(commands.Cog):
-    """Commande /reiatsuprofil et !reiatsuprofil — Affiche le profil Reiatsu complet d’un joueur"""
-
+class ReiatsuProfilCommand(commands.Cog):
+    """Commande /reiatsuprofil et !reiatsuprofil — Affiche le profil personnel Reiatsu d’un joueur"""
     COOLDOWN = 3
 
     def __init__(self, bot: commands.Bot):
@@ -74,84 +72,113 @@ class ReiatsuProfil(commands.Cog):
         self.user_cooldowns[user_id] = now
         return 0
 
-    async def _send_profile(self, channel_or_interaction, author, target_user):
+    async def _send_profil(self, channel_or_interaction, author, target_user):
         user = target_user or author
         user_id = int(user.id)
 
-        # 📥 Récupération des données depuis Supabase
+        # Récupération des données utilisateur
         try:
-            data = supabase.table("reiatsu").select("*").eq("user_id", user_id).execute().data
+            res = supabase.table("reiatsu").select(
+                "username, points, bonus5, classe, last_steal_attempt, steal_cd, last_skilled_at, active_skill"
+            ).eq("user_id", user_id).execute()
         except Exception as e:
-            print(f"[ERREUR DB] Impossible de récupérer le profil Reiatsu : {e}")
-            return await safe_send(channel_or_interaction, "❌ Erreur lors de la récupération du profil Reiatsu.")
-        user_data = data[0] if data else {}
+            print(f"[ERREUR DB] Lecture Reiatsu échouée : {e}")
+            return await safe_send(channel_or_interaction, "❌ Erreur lors de la récupération de ton profil.")
 
-        # Champs
-        points = user_data.get("points", 0)
-        classe_nom = user_data.get("classe")
-        bonus = user_data.get("bonus5", 0)
-        last_steal_str = user_data.get("last_steal_attempt")
-        steal_cd = user_data.get("steal_cd", 24)
-        last_skill_str = user_data.get("last_skilled_at")
-        active_skill = user_data.get("active_skill", False)
+        data = res.data[0] if res.data else {}
+        if not data:
+            return await safe_send(channel_or_interaction, "⚠️ Aucun profil Reiatsu trouvé. Utilise `!classe` pour commencer ton parcours.")
 
-        # Chargement des classes
+        # Extraction des champs
+        points = data.get("points", 0)
+        classe_nom = data.get("classe", "Aucune")
+        bonus = data.get("bonus5", 0)
+        last_steal = data.get("last_steal_attempt")
+        steal_cd = data.get("steal_cd")
+        last_skill = data.get("last_skilled_at")
+        active_skill = data.get("active_skill", False)
+
+        # Chargement classes.json
         CLASSES = load_classes()
-        classe_text = "Aucune classe sélectionnée. Utilise `!classe` pour en choisir une."
-        if classe_nom and classe_nom in CLASSES:
-            c = CLASSES[classe_nom]
-            classe_text = (
-                f"🏷️ Classe : **{classe_nom}**\n"
-                f"🌙 Passive : {c.get('Passive', 'Aucune')}\n"
-                f"⚡ Active : {c.get('Active', 'Aucune')}"
-            )
+        classe_data = CLASSES.get(classe_nom, None)
 
-        # Cooldown de vol
-        cooldown_text = "Disponible ✅"
-        if last_steal_str and steal_cd:
+        # ────────────────────────────────────────────────────────────────────────
+        # Formatage des sections du profil
+        # ────────────────────────────────────────────────────────────────────────
+        # Cooldown du vol
+        cooldown_vol = "✅ Disponible"
+        if last_steal and steal_cd:
             try:
-                last_steal = parser.parse(last_steal_str).astimezone(timezone.utc)
-                next_steal = last_steal + timedelta(hours=steal_cd)
+                last_steal_dt = parser.parse(last_steal)
+                if not last_steal_dt.tzinfo:
+                    last_steal_dt = last_steal_dt.replace(tzinfo=timezone.utc)
+                next_cd = last_steal_dt + timedelta(hours=steal_cd)
                 now_dt = datetime.now(timezone.utc)
-                if now_dt < next_steal:
-                    restant = next_steal - now_dt
+                if now_dt < next_cd:
+                    restant = next_cd - now_dt
                     h, m = divmod(int(restant.total_seconds() // 60), 60)
-                    cooldown_text = f"{restant.days}j {h}h{m}m" if restant.days else f"{h}h{m}m"
-            except Exception:
-                pass
+                    cooldown_vol = f"⏳ {restant.days}j {h}h{m}m" if restant.days else f"⏳ {h}h{m}m"
+            except Exception as e:
+                print(f"[WARN] CD vol parsing : {e}")
 
-        # Cooldown skill
-        skill_text = "Disponible ✅"
-        if last_skill_str:
+        # Cooldown du skill
+        cooldown_skill = "✅ Disponible"
+        if last_skill:
             try:
-                last_skill = parser.parse(last_skill_str).astimezone(timezone.utc)
+                last_skill_dt = parser.parse(last_skill)
+                if not last_skill_dt.tzinfo:
+                    last_skill_dt = last_skill_dt.replace(tzinfo=timezone.utc)
                 base_cd = 8 if classe_nom == "Illusionniste" else 12
-                next_skill = last_skill + timedelta(hours=base_cd)
+                next_skill = last_skill_dt + timedelta(hours=base_cd)
                 now_dt = datetime.now(timezone.utc)
                 if now_dt < next_skill:
                     restant = next_skill - now_dt
                     h, m = divmod(int(restant.total_seconds() // 60), 60)
-                    skill_text = f"{restant.days}j {h}h{m}m" if restant.days else f"{h}h{m}m"
-            except Exception:
-                pass
+                    cooldown_skill = f"⏳ {restant.days}j {h}h{m}m" if restant.days else f"⏳ {h}h{m}m"
+            except Exception as e:
+                print(f"[WARN] CD skill parsing : {e}")
         if active_skill:
-            skill_text = "⏳ En cours d'utilisation"
+            cooldown_skill = "🌀 En cours d'utilisation"
 
-        # 📊 Embed
+        # ────────────────────────────────────────────────────────────────────────
+        # Création de l'embed
+        # ────────────────────────────────────────────────────────────────────────
         embed = discord.Embed(
-            title=f"__Profil Reiatsu de {user.display_name}__",
-            description=(
-                f"💠 **Reiatsu** : {points} (+{bonus} bonus)\n"
-                f"🔄 **Cooldown vol** : {cooldown_text}\n"
-                f"⚡ **Skill** : {skill_text}\n\n"
-                f"{classe_text}\n\n"
-                f"`!!rtsv <@utilisateur>` pour voler du Reiatsu\n"
-                f"`!!classe` pour changer de classe\n"
-                f"`!!skill` pour activer ton skill"
-            ),
+            title=f"🎴 Profil Reiatsu de {user.display_name}",
+            description="> *L’énergie spirituelle circule en toi...*",
             color=discord.Color.purple()
         )
-        embed.set_footer(text="💠 Commande /reiatsuprofil ou !reiatsuprofil pour voir ton profil.")
+
+        embed.add_field(
+            name="💠 Statistiques",
+            value=(
+                f"**Reiatsu :** {points}\n"
+                f"**Classe :** {classe_nom}\n"
+                f"**Bonus :** +{bonus}% Reiatsu"
+            ),
+            inline=False
+        )
+
+        if classe_data:
+            embed.add_field(
+                name="⚔️ Compétences",
+                value=(
+                    f"**Passive :** {classe_data['Passive']}\n"
+                    f"**Active :** {classe_data['Active']}"
+                ),
+                inline=False
+            )
+
+        embed.add_field(
+            name="⏳ Cooldowns",
+            value=(
+                f"**Vol :** {cooldown_vol}\n"
+                f"**Skill :** {cooldown_skill}"
+            ),
+            inline=False
+        )
+
+        embed.set_footer(text="Utilise /classe pour changer de voie ou /skill pour activer ton pouvoir.")
 
         if isinstance(channel_or_interaction, discord.Interaction):
             await channel_or_interaction.response.send_message(embed=embed)
@@ -159,33 +186,37 @@ class ReiatsuProfil(commands.Cog):
             await safe_send(channel_or_interaction, embed=embed)
 
     # ────────────────────────────────────────────────────────────────────────────
-    # 🔹 Commandes SLASH + PREFIX
+    # 🔹 Commande SLASH
     # ────────────────────────────────────────────────────────────────────────────
-    @app_commands.command(name="reiatsuprofil", description="💠 Affiche ton profil Reiatsu complet (ou celui d’un autre membre).")
-    @app_commands.describe(member="Membre dont tu veux voir le profil Reiatsu")
-    async def slash_reiatsuprofil(self, interaction: discord.Interaction, member: discord.Member = None):
+    @app_commands.command(name="reiatsuprofil", description="💠 Affiche ton profil Reiatsu détaillé.")
+    @app_commands.describe(member="Voir le profil Reiatsu d’un autre joueur")
+    async def slash_profil(self, interaction: discord.Interaction, member: discord.Member = None):
         remaining = await self._check_cooldown(interaction.user.id)
         if remaining > 0:
             return await safe_respond(interaction, f"⏳ Attends encore {remaining:.1f}s.", ephemeral=True)
-        await self._send_profile(interaction, interaction.user, member)
+        await self._send_profil(interaction, interaction.user, member)
 
-    @commands.command(
-        name="reiatsuprofil",
-        aliases=["rtsp", "rtsprofil", "rts_profil"],
-        help="💠 Affiche ton profil Reiatsu complet (ou celui d’un autre membre)."
-    )
-    async def prefix_reiatsuprofil(self, ctx: commands.Context, member: discord.Member = None):
+    # ────────────────────────────────────────────────────────────────────────────
+    # 🔹 Commande PREFIX
+    # ────────────────────────────────────────────────────────────────────────────
+    @commands.command(name="reiatsuprofil", aliases=["rtsp", "rts profil"], help="💠 Affiche ton profil Reiatsu détaillé.")
+    async def prefix_profil(self, ctx: commands.Context, member: discord.Member = None):
         remaining = await self._check_cooldown(ctx.author.id)
         if remaining > 0:
             return await safe_send(ctx.channel, f"⏳ Attends encore {remaining:.1f}s.")
-        await self._send_profile(ctx.channel, ctx.author, member)
+        await self._send_profil(ctx.channel, ctx.author, member)
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🔌 Setup du Cog
 # ────────────────────────────────────────────────────────────────────────────────
 async def setup(bot: commands.Bot):
-    cog = ReiatsuProfil(bot)
+    cog = ReiatsuProfilCommand(bot)
     for command in cog.get_commands():
         if not hasattr(command, "category"):
             command.category = "Reiatsu"
     await bot.add_cog(cog)
+
+
+
+
+
