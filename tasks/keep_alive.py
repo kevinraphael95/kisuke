@@ -57,8 +57,7 @@ def keep_alive():
     print("[KEEP_ALIVE] Serveur Flask démarré.")
 
     Thread(target=run_ping_loop, daemon=True).start()
-    print("[KEEP_ALIVE] Self-ping 
-    activé.")
+    print("[KEEP_ALIVE] Self-ping activé.")
 
 
 
