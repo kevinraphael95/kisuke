@@ -133,7 +133,7 @@ class ReiatsuProfil(commands.Cog):
         if classe_data:
             embed.add_field(
                 name="🏷️ Classe",
-                value=f"{classe_symbole} {classe_nom}\n• Passif : {classe_data['Passive']}\n• Skill : {classe_data['Active']}",
+                value=f"**{classe_symbole} {classe_nom}**\n**• Passif** : {classe_data['Passive']}\n**• Skill** : {classe_data['Active']}",
                 inline=False
             )
         else:
