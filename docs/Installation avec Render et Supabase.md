@@ -1,5 +1,3 @@
----
-
 ### 1️⃣ Créer et configurer l’application Discord
 
 1. Se connecter au [Portail Développeur Discord](https://discord.com/developers/applications)
