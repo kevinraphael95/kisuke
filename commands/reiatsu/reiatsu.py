@@ -37,9 +37,7 @@ TABLES = {
             "classe": "TEXT — Classe choisie par le joueur",
             "last_skilled_at": "TIMESTAMP — Dernière utilisation de skill",
             "active_skill": "BOOLEAN — Skill actif ou non",
-            "fake_spawn_id": "TEXT — ID du spawn temporaire (optionnel)",
-            "created_at": "TIMESTAMP — Date de création automatique (Supabase)",
-            "updated_at": "TIMESTAMP — Dernière mise à jour automatique (Supabase)"
+            "fake_spawn_id": "TEXT — ID du spawn temporaire (optionnel)"
         }
     },
     "reiatsu_config": {
@@ -51,9 +49,7 @@ TABLES = {
             "is_spawn": "BOOLEAN — Indique si un Reiatsu est actuellement spawné",
             "spawn_speed": "TEXT — Clé de vitesse de spawn (Ultra_Rapide, Rapide, Normal, Lent)",
             "last_spawn_at": "TIMESTAMP — Dernier spawn",
-            "spawn_delay": "INTEGER — Intervalle minimal entre les spawns en secondes",
-            "created_at": "TIMESTAMP — Date de création automatique (Supabase)",
-            "updated_at": "TIMESTAMP — Dernière mise à jour automatique (Supabase)"
+            "spawn_delay": "INTEGER — Intervalle minimal entre les spawns en secondes"
         }
     }
 }
