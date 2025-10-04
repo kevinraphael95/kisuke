@@ -1,7 +1,7 @@
 # ────────────────────────────────────────────────────────────────────────────────
 # 📌 rpg_bleach.py — Mini RPG interactif /rpg_bleach et !rpg_bleach
 # Objectif : Jeu interactif style "livre dont vous êtes le héros" dans l'univers Bleach
-# Catégorie : Fun
+# Catégorie : 
 # Accès : Tous
 # Cooldown : 1 utilisation / 5 secondes / utilisateur
 # ────────────────────────────────────────────────────────────────────────────────
@@ -218,5 +218,5 @@ async def setup(bot: commands.Bot):
     cog = RPGBleach(bot)
     for command in cog.get_commands():
         if not hasattr(command, "category"):
-            command.category = "Bleach"
+            command.category = "Test"
     await bot.add_cog(cog)
