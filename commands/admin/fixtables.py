@@ -16,8 +16,6 @@ from discord import app_commands
 from discord.ext import commands
 from discord.ui import View, Button
 from typing import Dict, List, Tuple
-import importlib.util
-
 from utils.supabase_client import supabase
 from utils.discord_utils import safe_send, safe_edit
 
@@ -31,17 +29,50 @@ WINDOW_CHARS = 2500
 # 🔎 Helpers — Chargement tables déclarées
 # ────────────────────────────────────────────────────────────────────────────────
 def load_tables_from_file(path: str) -> Dict[str, Dict]:
-    """Charge la variable TABLES depuis un fichier Python."""
+    """
+    Analyse le fichier Python et extrait la variable TABLES sans exécuter le reste du code.
+    """
+    tables: Dict[str, Dict] = {}
     try:
-        spec = importlib.util.spec_from_file_location("module", path)
-        mod = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(mod)
-        return getattr(mod, "TABLES", {})
-    except Exception:
-        return {}
+        with open(path, "r", encoding="utf-8") as f:
+            lines = f.readlines()
+
+        inside_tables = False
+        table_lines = []
+
+        for line in lines:
+            stripped = line.strip()
+
+            # Début de la section TABLES
+            if stripped.startswith("TABLES") and "=" in stripped:
+                inside_tables = True
+
+            if inside_tables:
+                table_lines.append(line)
+
+                # Fin probable de la déclaration du dict
+                if stripped == "}" or stripped.endswith("}"):
+                    inside_tables = False
+                    try:
+                        code = "".join(table_lines)
+                        local_vars = {}
+                        exec(code, {}, local_vars)
+                        if "TABLES" in local_vars and isinstance(local_vars["TABLES"], dict):
+                            tables.update(local_vars["TABLES"])
+                    except Exception as e:
+                        print(f"[⚠️] Impossible de parser TABLES dans {path} : {e}")
+                    table_lines = []
+
+    except Exception as e:
+        print(f"[⚠️] Erreur lecture fichier {path} : {e}")
+
+    return tables
+
 
 def discover_expected_tables(dirs: List[str] = CODE_SCAN_DIRS) -> Dict[str, Dict]:
-    """Récupère toutes les tables déclarées via TABLES dans les fichiers du bot."""
+    """
+    Scanne les répertoires commands/ et tasks/ pour trouver les sections TABLES = {...}.
+    """
     results: Dict[str, Dict] = {}
     for base_dir in dirs:
         for root, _, files in os.walk(base_dir):
@@ -53,9 +84,10 @@ def discover_expected_tables(dirs: List[str] = CODE_SCAN_DIRS) -> Dict[str, Dict
                 for table_name, info in tables.items():
                     results[table_name] = {
                         "columns": {col: None for col in info.get("columns", {})},
-                        "locations": [(path, 1)]  # ligne fictive 1, juste pour l'affichage
+                        "locations": [(path, 1)]
                     }
     return results
+
 
 def _infer_sql_type(c: str) -> str:
     """Détecte un type SQL probable pour une colonne donnée."""
@@ -167,7 +199,6 @@ class FixTables(commands.Cog):
                     diff = []
                     if missing: diff.append(f"⚠️ Manquantes : {', '.join(missing)}")
                     if extra: diff.append(f"ℹ️ Supplémentaires : {', '.join(extra)}")
-
                     embed.add_field(name="🔎 Différences", value="\n".join(diff) or "✅ Structure conforme", inline=False)
 
                     file_lines: Dict[str, List[int]] = {}
@@ -187,6 +218,7 @@ class FixTables(commands.Cog):
                     )
 
                     pages.append(embed)
+
                 except Exception as e:
                     await safe_send(channel, f"❌ Erreur sur la table `{table}` : {e}")
 
@@ -226,3 +258,4 @@ async def setup(bot: commands.Bot):
         if not hasattr(command, "category"):
             command.category = "Admin"
     await bot.add_cog(cog)
+
