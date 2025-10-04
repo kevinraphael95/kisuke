@@ -28,7 +28,7 @@
 3. Note les informations suivantes pour le `.env` :
 
    * **SUPABASE_URL** → `Project Settings → Data API → Project URL`
-   * **SUPABASE_KEY** → `Project Settings → API Keys → Publishable Keys ou Secret Keys
+   * **SUPABASE_KEY** → `Project Settings → API Keys → Publishable Keys ou Secret Keys`
    
 
 > ✅ Ces deux infos permettent au bot de lire/écrire dans ta base de données.
