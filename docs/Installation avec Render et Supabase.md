@@ -18,8 +18,8 @@
 2. Crée les tables via le script SQL
 3. Note pour le `.env` :
 
-   * `SUPABASE_URL` → Project URL
-   * `SUPABASE_KEY` → Service Role Key
+   * `SUPABASE_URL` → `Project Settings → Data API → Project URL`
+   * `SUPABASE_KEY` → `Project Settings → API Keys → Publishable Keys ou Secret Keys`
 
 ---
 
