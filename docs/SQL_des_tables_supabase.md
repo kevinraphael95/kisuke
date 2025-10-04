@@ -1,27 +1,42 @@
--- 🗄️ SQL — Création des tables pour le bot
--- Copier-coller le code ci-dessous dans SQL Editor pour créer toutes les tables nécessaires.
+# 🗄️ SQL — Création des tables pour le bot
 
--- 1️⃣ Table bot_lock
+Copier-coller le code ci-dessous dans SQL Editor pour créer toutes les tables nécessaires.
+
+---
+
+## 1️⃣ Table `bot_lock`
+
+```sql
 CREATE TABLE public.bot_lock (
     id TEXT NOT NULL,
     instance_id TEXT NULL,
     updated_at TIMESTAMP WITH TIME ZONE NULL DEFAULT now(),
     CONSTRAINT bot_lock_pkey PRIMARY KEY (id)
 ) TABLESPACE pg_default;
+```
 
--- 2️⃣ Table bot_settings
+---
+
+## 2️⃣ Table `bot_settings`
+
+```sql
 CREATE TABLE public.bot_settings (
     key TEXT NOT NULL,
     value TEXT NOT NULL,
     CONSTRAINT bot_settings_pkey PRIMARY KEY (key)
 ) TABLESPACE pg_default;
+```
 
--- 3️⃣ Table reiatsu (nouvelle version)
+---
+
+## 3️⃣ Table `reiatsu`
+
+```sql
 CREATE TABLE public.reiatsu (
     user_id BIGINT PRIMARY KEY,                    -- ID Discord de l'utilisateur
     username TEXT NOT NULL,                        -- Nom de l'utilisateur
     points BIGINT DEFAULT 0,                       -- Reiatsu actuel
-    bonus5 INT DEFAULT 0,                           -- Bonus éventuel
+    bonus5 INT DEFAULT 0,                          -- Bonus éventuel
     last_steal_attempt TIMESTAMPTZ,               -- Dernière tentative de vol
     steal_cd INT,                                  -- Cooldown vol en heures
     classe TEXT DEFAULT 'Travailleur',            -- Classe de l'utilisateur
@@ -29,8 +44,13 @@ CREATE TABLE public.reiatsu (
     active_skill BOOLEAN DEFAULT FALSE,           -- Si un skill actif est en cours
     fake_spawn_id BIGINT                            -- Pour Illusionniste : ID du faux Reiatsu
 ) TABLESPACE pg_default;
+```
 
--- 4️⃣ Table reiatsu_config (nouvelle version)
+---
+
+## 4️⃣ Table `reiatsu_config`
+
+```sql
 CREATE TABLE public.reiatsu_config (
     guild_id BIGINT PRIMARY KEY,                  -- ID Discord du serveur
     channel_id BIGINT,                             -- ID du salon de spawn
@@ -40,8 +60,13 @@ CREATE TABLE public.reiatsu_config (
     last_spawn_at TIMESTAMPTZ,                     -- Timestamp du dernier spawn
     spawn_delay INT                                -- Temps entre deux spawns en secondes
 ) TABLESPACE pg_default;
+```
 
--- 5️⃣ Table steam_keys
+---
+
+## 5️⃣ Table `steam_keys`
+
+```sql
 CREATE TABLE public.steam_keys (
     id BIGSERIAL NOT NULL,
     game_name TEXT NOT NULL,
@@ -49,8 +74,13 @@ CREATE TABLE public.steam_keys (
     steam_key TEXT NOT NULL,
     CONSTRAINT steam_keys_pkey PRIMARY KEY (id)
 ) TABLESPACE pg_default;
+```
 
--- 6️⃣ Table gardens
+---
+
+## 6️⃣ Table `gardens`
+
+```sql
 CREATE TABLE public.gardens (
     user_id BIGINT NOT NULL,
     username TEXT NOT NULL,
@@ -73,3 +103,5 @@ CREATE TABLE public.gardens (
     argent INTEGER NULL DEFAULT 0,
     CONSTRAINT gardens_pkey PRIMARY KEY (user_id)
 ) TABLESPACE pg_default;
+```
+
