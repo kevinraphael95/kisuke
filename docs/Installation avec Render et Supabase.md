@@ -72,8 +72,6 @@ python bot.py
 
 6. Dans **Environment Variables**, ajouter exactement celles que vous avez définies dans `.env`
 
-7. Dans **Advanced → Auto Deploy**, mettre **Off** pour éviter de dépasser les limites du plan gratuit
-
 ---
 
 ### 5️⃣ Self-Ping avec `keep_alive.py`
@@ -95,6 +93,5 @@ Si vous voulez quand même utiliser UptimeRobot :
 
 * Cette méthode gratuite supporte **un nombre limité d’utilisateurs** (~100 max)
 * Ne **jamais** publier votre Bot Token
-* Après modification du code, **redéployer manuellement** sur Render
 * Le plan gratuit Render met le bot en veille si aucun ping n’est reçu → le self-ping `keep_alive.py` remplace entièrement UptimeRobot si configuré correctement
 
