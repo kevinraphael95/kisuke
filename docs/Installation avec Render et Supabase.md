@@ -1,4 +1,4 @@
-# ⚡ Installer ton bot Discord (Render + Supabase + Self-Ping)
+# Installer avec Render, Supabase et Self-Ping
 
 ---
 
