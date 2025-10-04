@@ -3,18 +3,20 @@
 # Objectif : Chaque utilisateur a un jardin persistant avec des fleurs
 # Catégorie : Jeu
 # Accès : Tout le monde
+# Cooldown : Paramétrable par commande
 # ────────────────────────────────────────────────────────────────────────────────
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 📦 Imports nécessaires
 # ────────────────────────────────────────────────────────────────────────────────
-import os
-import random
-import datetime
-import json
 import discord
 from discord import app_commands
 from discord.ext import commands
+from discord.ui import View, Select
+import json
+import os
+import random
+import datetime
 from utils.supabase_client import supabase
 from utils.discord_utils import safe_send, safe_respond
 
@@ -32,9 +34,7 @@ TABLES = {
             "argent": "INTEGER — Montant d’argent virtuel du joueur 💰",
             "armee": "TEXT — Nom ou type d’armée liée à l’utilisateur (optionnel)",
             "potions": "JSON — Dictionnaire des potions créées via l’alchimie",
-            "last_fertilize": "TIMESTAMP — Dernière utilisation de l’engrais (UTC, format ISO)",
-            "created_at": "TIMESTAMP — Date de création automatique (gérée par Supabase)",
-            "updated_at": "TIMESTAMP — Dernière mise à jour automatique (gérée par Supabase)"
+            "last_fertilize": "TIMESTAMP — Dernière utilisation de l’engrais (UTC, format ISO)"
         }
     }
 }
@@ -425,14 +425,18 @@ class Jardin(commands.Cog):
             await respond_func("❌ Une erreur est survenue.", ephemeral=True)
 
 
-    # ───────── Commande Slash ─────────
+    # ──────────────────────────────────────────────────────────────────────────────
+    # Commande Slash
+    # ──────────────────────────────────────────────────────────────────────────────
     @app_commands.command(name="jardin", description="Affiche ton jardin ou celui d'un autre utilisateur 🌱")
     @app_commands.checks.cooldown(1, 5.0)
     async def slash_jardin(self, interaction:discord.Interaction, user:discord.User=None):
         target = user or interaction.user
         await self._send_garden(target, interaction.user.id, lambda **kwargs: safe_respond(interaction, **kwargs))
 
-    # ───────── Commande Préfixe ─────────
+    # ──────────────────────────────────────────────────────────────────────────────
+    # Commande Préfixe
+    # ──────────────────────────────────────────────────────────────────────────────
     @commands.command(name="jardin", help="Affiche ton jardin ou celui d'un autre utilisateur 🌱")
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def prefix_jardin(self, ctx:commands.Context, user:discord.User=None):
