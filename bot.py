@@ -57,8 +57,8 @@ intents = discord.Intents.default()
 intents.message_content = True
 intents.guilds = True
 intents.members = True
-intents.guild_reactions = True   # ✅ pour les réactions en serveur
-intents.dm_reactions = True      # ✅ pour les réactions en DM
+intents.guild_reactions = True
+intents.dm_reactions = True
 
 bot = commands.Bot(command_prefix=get_prefix, intents=intents, help_command=None)
 bot.is_main_instance = False
@@ -86,14 +86,13 @@ async def load_commands():
 # ──────────────────────────────────────────────────────────────
 async def load_tasks():
     for filename in os.listdir("tasks"):
-        if filename.endswith(".py") and filename != "keep_alive.py":  # on garde keep_alive à part
+        if filename.endswith(".py") and filename != "keep_alive.py":
             path = f"tasks.{filename[:-3]}"
             try:
                 await bot.load_extension(path)
                 print(f"✅ Task loaded: {path}")
             except Exception as e:
                 print(f"❌ Failed to load task {path}: {e}")
-
 
 # ──────────────────────────────────────────────────────────────
 # 🔁 Tâche de vérification continue du verrou
@@ -129,7 +128,6 @@ async def on_ready():
         print(f"🔐 Verrou mis à jour pour cette instance : {INSTANCE_ID}")
         bot.is_main_instance = True
         bot.loop.create_task(verify_lock_loop())
-
     except Exception as e:
         print(f"⚠️ Impossible de se connecter à Supabase : {e}")
         print("🔓 Aucune gestion de verrou — le bot démarre quand même.")
@@ -140,6 +138,9 @@ async def on_ready():
 # ──────────────────────────────────────────────────────────────
 @bot.event
 async def on_message(message):
+    if message.author.bot:
+        return
+
     try:
         lock = supabase.table("bot_lock").select("instance_id").eq("id", "bot_lock").execute()
         if lock.data and isinstance(lock.data, list):
@@ -148,14 +149,8 @@ async def on_message(message):
     except Exception as e:
         print(f"⚠️ Erreur lors de la vérification du lock (ignorée) : {e}")
 
-    if message.author.bot:
-        return
-
-    if message.content.strip() == f"<@!{bot.user.id}>" or message.content.strip() == f"<@{bot.user.id}>":
-    # répond uniquement si le message est exactement la mention du bot
-
+    if message.content.strip() in [f"<@!{bot.user.id}>", f"<@{bot.user.id}>"]:
         prefix = get_prefix(bot, message)
-
         embed = discord.Embed(
             title="Coucou ! 🃏",
             description=(
@@ -198,12 +193,11 @@ async def on_command_error(ctx, error):
 # 🚀 Lancement
 # ──────────────────────────────────────────────────────────────
 if __name__ == "__main__":
-    keep_alive()
+    keep_alive()  # lance Flask + self-ping
 
     async def start():
         await load_commands()
-        await load_tasks()  
+        await load_tasks()
         await bot.start(TOKEN)
 
     asyncio.run(start())
-
