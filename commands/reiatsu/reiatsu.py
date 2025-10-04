@@ -22,6 +22,43 @@ from utils.supabase_client import supabase
 from utils.discord_utils import safe_send, safe_respond
 
 # ────────────────────────────────────────────────────────────────────────────────
+# 📦 Tables utilisées
+# ────────────────────────────────────────────────────────────────────────────────
+TABLES = {
+    "reiatsu": {
+        "description": "Contient les scores, classe, cooldowns et informations utilisateur pour le système de Reiatsu.",
+        "columns": {
+            "user_id": "BIGINT — Identifiant Discord unique de l'utilisateur (clé primaire)",
+            "username": "TEXT — Nom d'utilisateur au moment de la dernière mise à jour",
+            "points": "INTEGER — Score de Reiatsu actuel",
+            "bonus5": "INTEGER — Bonus éventuel à appliquer",
+            "last_steal_attempt": "TIMESTAMP — Dernière tentative de vol effectuée",
+            "steal_cd": "INTEGER — Cooldown en heures entre deux vols",
+            "classe": "TEXT — Classe choisie par le joueur",
+            "last_skilled_at": "TIMESTAMP — Dernière utilisation de skill",
+            "active_skill": "BOOLEAN — Skill actif ou non",
+            "fake_spawn_id": "TEXT — ID du spawn temporaire (optionnel)",
+            "created_at": "TIMESTAMP — Date de création automatique (Supabase)",
+            "updated_at": "TIMESTAMP — Dernière mise à jour automatique (Supabase)"
+        }
+    },
+    "reiatsu_config": {
+        "description": "Contient la configuration du spawn et du salon pour chaque serveur.",
+        "columns": {
+            "guild_id": "BIGINT — Identifiant du serveur Discord (clé primaire)",
+            "channel_id": "BIGINT — Salon de spawn",
+            "message_id": "BIGINT — ID du message de spawn",
+            "is_spawn": "BOOLEAN — Indique si un Reiatsu est actuellement spawné",
+            "spawn_speed": "TEXT — Clé de vitesse de spawn (Ultra_Rapide, Rapide, Normal, Lent)",
+            "last_spawn_at": "TIMESTAMP — Dernier spawn",
+            "spawn_delay": "INTEGER — Intervalle minimal entre les spawns en secondes",
+            "created_at": "TIMESTAMP — Date de création automatique (Supabase)",
+            "updated_at": "TIMESTAMP — Dernière mise à jour automatique (Supabase)"
+        }
+    }
+}
+
+# ────────────────────────────────────────────────────────────────────────────────
 # 📂 Chargement des classes depuis JSON
 # ────────────────────────────────────────────────────────────────────────────────
 CLASSES_JSON_PATH = os.path.join("data", "classes.json")
