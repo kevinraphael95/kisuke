@@ -22,14 +22,15 @@ from utils.discord_utils import safe_send, safe_respond
 # ────────────────────────────────────────────────────────────────────────────────
 # 📂 Chargement des classes depuis JSON
 # ────────────────────────────────────────────────────────────────────────────────
-CLASSES_JSON_PATH = os.path.join("data", "classes.json")
+CONFIG_JSON_PATH = os.path.join("data", "reiatsu_config.json")
 
 def load_classes():
     try:
-        with open(CLASSES_JSON_PATH, "r", encoding="utf-8") as f:
-            return json.load(f)
+        with open(CONFIG_JSON_PATH, "r", encoding="utf-8") as f:
+            data = json.load(f)
+            return data.get("CLASSES", {})
     except Exception as e:
-        print(f"[ERREUR JSON] Impossible de charger {CLASSES_JSON_PATH} : {e}")
+        print(f"[ERREUR JSON] Impossible de charger {CONFIG_JSON_PATH} : {e}")
         return {}
 
 # ────────────────────────────────────────────────────────────────────────────────
@@ -37,7 +38,7 @@ def load_classes():
 # ────────────────────────────────────────────────────────────────────────────────
 class ReiatsuProfil(commands.Cog):
     """Commande /reiatsuprofil et !reiatsuprofil — Affiche le profil personnel Reiatsu d’un joueur"""
-
+    
     def __init__(self, bot: commands.Bot):
         self.bot = bot
 
@@ -56,10 +57,10 @@ class ReiatsuProfil(commands.Cog):
         except Exception as e:
             print(f"[ERREUR DB] Lecture Reiatsu échouée : {e}")
             return await safe_send(channel_or_interaction, "❌ Impossible de récupérer ton profil.")
-
+        
         data = res.data[0] if res.data else {}
         if not data:
-            return await safe_send(channel_or_interaction, "⚠️ Aucun profil trouvé. Utilise `!classe` pour commencer.")
+            return await safe_send(channel_or_interaction, "⚠️ Aucun profil trouvé. Utilise `!!classe` pour commencer.")
 
         points = data.get("points", 0)
         classe_nom = data.get("classe", None)
@@ -69,15 +70,26 @@ class ReiatsuProfil(commands.Cog):
         last_skill = data.get("last_skilled_at")
         active_skill = data.get("active_skill", False)
 
+        # Gestion des classes
         CLASSES = load_classes()
-        classe_data = CLASSES.get(classe_nom) if classe_nom else None
+        classe_data = None
+        classe_symbole = ""
+        if classe_nom:
+            classe_nom_clean = classe_nom.strip().lower()
+            for key, value in CLASSES.items():
+                if key.strip().lower() == classe_nom_clean:
+                    classe_data = value
+                    classe_nom = key  # Nom formaté du JSON
+                    classe_symbole = value.get("Symbole", "")
+                    break
 
         # Cooldowns formatés
         cooldown_vol = "✅ Disponible"
         if last_steal and steal_cd:
             try:
                 last_dt = parser.parse(last_steal)
-                if not last_dt.tzinfo: last_dt = last_dt.replace(tzinfo=timezone.utc)
+                if not last_dt.tzinfo:
+                    last_dt = last_dt.replace(tzinfo=timezone.utc)
                 next_cd = last_dt + timedelta(hours=steal_cd)
                 now_dt = datetime.now(timezone.utc)
                 if now_dt < next_cd:
@@ -90,7 +102,8 @@ class ReiatsuProfil(commands.Cog):
         if last_skill:
             try:
                 last_dt = parser.parse(last_skill)
-                if not last_dt.tzinfo: last_dt = last_dt.replace(tzinfo=timezone.utc)
+                if not last_dt.tzinfo:
+                    last_dt = last_dt.replace(tzinfo=timezone.utc)
                 base_cd = 8 if classe_nom == "Illusionniste" else 12
                 next_cd = last_dt + timedelta(hours=base_cd)
                 now_dt = datetime.now(timezone.utc)
@@ -99,7 +112,8 @@ class ReiatsuProfil(commands.Cog):
                     h, m = divmod(int(restant.total_seconds() // 60), 60)
                     cooldown_skill = f"⏳ {restant.days}j {h}h{m}m" if restant.days else f"⏳ {h}h{m}m"
             except: pass
-        if active_skill: cooldown_skill = "🌀 En cours"
+        if active_skill:
+            cooldown_skill = "🌀 En cours"
 
         # Embed profil
         embed = discord.Embed(
@@ -119,7 +133,7 @@ class ReiatsuProfil(commands.Cog):
         if classe_data:
             embed.add_field(
                 name="🏷️ Classe",
-                value=f"{classe_nom}\n• Passif : {classe_data['Passive']}\n• Skill : {classe_data['Active']}",
+                value=f"{classe_symbole} {classe_nom}\n• Passif : {classe_data['Passive']}\n• Skill : {classe_data['Active']}",
                 inline=False
             )
         else:
@@ -146,7 +160,10 @@ class ReiatsuProfil(commands.Cog):
     # ────────────────────────────────────────────────────────────────────────────
     # 🔹 Commande SLASH
     # ────────────────────────────────────────────────────────────────────────────
-    @app_commands.command(name="reiatsuprofil", description="💠 Affiche ton profil Reiatsu détaillé.")
+    @app_commands.command(
+        name="reiatsuprofil",
+        description="💠 Affiche ton profil Reiatsu détaillé."
+    )
     @app_commands.describe(member="Voir le profil Reiatsu d’un autre joueur")
     @app_commands.checks.cooldown(rate=1, per=5.0, key=lambda i: i.user.id)
     async def slash_profil(self, interaction: discord.Interaction, member: discord.Member = None):
@@ -155,7 +172,11 @@ class ReiatsuProfil(commands.Cog):
     # ────────────────────────────────────────────────────────────────────────────
     # 🔹 Commande PREFIX
     # ────────────────────────────────────────────────────────────────────────────
-    @commands.command(name="reiatsuprofil", aliases=["rtsp", "rts profil"], help="💠 Affiche ton profil Reiatsu détaillé.")
+    @commands.command(
+        name="reiatsuprofil",
+        aliases=["rtsp", "rts profil"],
+        help="💠 Affiche ton profil Reiatsu détaillé."
+    )
     @commands.cooldown(1, 5.0, commands.BucketType.user)
     async def prefix_profil(self, ctx: commands.Context, member: discord.Member = None):
         await self._send_profil(ctx.channel, ctx.author, member)
@@ -169,4 +190,5 @@ async def setup(bot: commands.Bot):
         if not hasattr(command, "category"):
             command.category = "Reiatsu"
     await bot.add_cog(cog)
+
 
