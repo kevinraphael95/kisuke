@@ -18,6 +18,26 @@ import json
 from utils.supabase_client import supabase
 from utils.discord_utils import safe_send, safe_respond, safe_edit
 
+# ────────────────────────────────────────────────────────────────────────────────
+# 📦 Tables utilisées
+# ────────────────────────────────────────────────────────────────────────────────
+TABLES = {
+    "reiatsu": {
+        "description": "Contient les informations Reiatsu des joueurs, y compris leur classe et le cooldown associé.",
+        "colonnes": {
+            "user_id": "BIGINT — Identifiant Discord unique de l'utilisateur (clé primaire)",
+            "username": "TEXT — Nom d'utilisateur Discord",
+            "points": "INTEGER — Score Reiatsu du joueur",
+            "classe": "TEXT — Classe actuellement sélectionnée par le joueur",
+            "steal_cd": "INTEGER — Cooldown du vol (en heures, varie selon la classe)",
+            "last_steal_attempt": "TIMESTAMP — Date et heure de la dernière tentative de vol",
+            "last_skilled_at": "TIMESTAMP — Date et heure de la dernière utilisation de compétence active",
+            "active_skill": "BOOLEAN — Indique si la compétence active est en cours d'utilisation",
+            "fake_spawn_id": "TEXT — Identifiant temporaire d’un spawn simulé (optionnel)"
+        }
+    }
+}
+
 # ────────────────────────────────────────────────────────────────
 # 📊 Données des classes Reiatsu depuis reiatsu_config.json
 # ────────────────────────────────────────────────────────────────
