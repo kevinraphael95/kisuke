@@ -1,4 +1,4 @@
-m# 📦 Installation & Configuration du bot Discord avec Render + Supabase + Self-Ping
+# 📦 Installation & Configuration du bot Discord avec Render + Supabase + Self-Ping
 
 ---
 
