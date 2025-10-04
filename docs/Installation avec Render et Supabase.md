@@ -1,13 +1,3 @@
-# 📦 Installation & Configuration avec Render, Supabase et Uptime Robot
-
----
-
-## 🚀 Outils utilisés
-
-* **[Supabase](https://supabase.com/)** : Base de données SQL gratuite
-* **[Render](https://render.com/)** : Hébergeur gratuit pour le bot
-* **[UptimeRobot](https://uptimerobot.com/)** : Service pour pinger régulièrement le bot et le maintenir actif
-
 ---
 
 ### 1️⃣ Créer et configurer l’application Discord
@@ -54,27 +44,7 @@
    * `SUPABASE_URL` → URL du projet Supabase
    * `SUPABASE_KEY` → Clé API Supabase
    *  `COMMAND_PREFIX` → Préfixe pour les commandes 
-7. Dans Advanced, chercher l’option auto-déploiement (**Auto Deploy**) et le mettre sur Off pour éviter de dépasser les limites du plan gratuit
-
----
-
-### 4️⃣ Maintenir le bot en ligne avec UptimeRobot
-
-1. Aller sur [UptimeRobot](https://uptimerobot.com/)
-2. Créer un **nouveau monitor** :
-
-   * Type : **HTTP(s)**
-   * URL : Utiliser le lien généré par Render dans **Settings → Render Subdomain** 
-   * Intervalle : par défaut (5 minutes ou plus)
-3. Enregistrer pour que UptimeRobot ping régulièrement votre bot
-
----
-
-## ⚠️ Notes importantes
-
-* Cette façon d'héberger et déployer le bot gratuitement peut supporter que peu d'utilisateurs, pas plus d'une centaine je pense
-* Ne **jamais** publier votre Bot Token quelque part de public
-* Si vous modifiez le code, pensez à redéployer manuellement sur Render
-* Le plan gratuit Render met votre bot en veille si aucun ping n’est reçu (d’où l’utilisation d’UptimeRobot)
+ votre bot en veille si aucun ping n’est reçu (d’où l’utilisation d’Up
+timeRobot)
 
 ---
