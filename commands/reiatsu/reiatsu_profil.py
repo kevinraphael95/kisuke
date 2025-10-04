@@ -62,7 +62,7 @@ class ReiatsuProfil(commands.Cog):
             return await safe_send(channel_or_interaction, "⚠️ Aucun profil trouvé. Utilise `!classe` pour commencer.")
 
         points = data.get("points", 0)
-        classe_nom = data.get("classe", "Aucune")
+        classe_nom = data.get("classe", None)
         bonus = data.get("bonus5", 0)
         last_steal = data.get("last_steal_attempt")
         steal_cd = data.get("steal_cd")
@@ -70,7 +70,7 @@ class ReiatsuProfil(commands.Cog):
         active_skill = data.get("active_skill", False)
 
         CLASSES = load_classes()
-        classe_data = CLASSES.get(classe_nom, None)
+        classe_data = CLASSES.get(classe_nom) if classe_nom else None
 
         # Cooldowns formatés
         cooldown_vol = "✅ Disponible"
@@ -107,22 +107,35 @@ class ReiatsuProfil(commands.Cog):
             description="> *L’énergie spirituelle circule en toi...*",
             color=discord.Color.purple()
         )
+
+        # Statistiques
         embed.add_field(
             name="💠 Statistiques",
-            value=f"**Reiatsu :** {points}\n**Classe :** {classe_nom}\n**Bonus :** +{bonus}%",
+            value=f"**Reiatsu :** {points}\n**Bonus :** +{bonus}%",
             inline=False
         )
+
+        # Classe
         if classe_data:
             embed.add_field(
-                name="⚔️ Compétences",
-                value=f"**Passive :** {classe_data['Passive']}\n**Active :** {classe_data['Active']}",
+                name="🏷️ Classe",
+                value=f"{classe_nom}\n• Passif : {classe_data['Passive']}\n• Skill : {classe_data['Active']}",
                 inline=False
             )
+        else:
+            embed.add_field(
+                name="🏷️ Classe",
+                value="Aucune classe choisie\n`!!classe` pour choisir une classe",
+                inline=False
+            )
+
+        # Cooldowns
         embed.add_field(
             name="⏳ Cooldowns",
             value=f"**Vol :** {cooldown_vol}\n**Skill :** {cooldown_skill}",
             inline=False
         )
+
         embed.set_footer(text="Utilise /classe pour changer de voie ou /skill pour activer ton pouvoir.")
 
         if isinstance(channel_or_interaction, discord.Interaction):
@@ -156,3 +169,4 @@ async def setup(bot: commands.Bot):
         if not hasattr(command, "category"):
             command.category = "Reiatsu"
     await bot.add_cog(cog)
+
