@@ -19,6 +19,23 @@ from utils.discord_utils import safe_send, safe_respond
 import random
 
 # ────────────────────────────────────────────────────────────────────────────────
+# 📦 Tables utilisées
+# ────────────────────────────────────────────────────────────────────────────────
+TABLES = {
+    "reiatsu": {
+        "description": "Table principale contenant les informations Reiatsu de chaque joueur : points, classe et cooldowns.",
+        "colonnes": {
+            "user_id": "BIGINT — Identifiant Discord unique du joueur (clé primaire)",
+            "points": "INTEGER — Montant actuel de Reiatsu du joueur",
+            "classe": "TEXT — Classe Reiatsu actuelle du joueur (ex: Voleur, Illusionniste...)",
+            "steal_cd": "INTEGER — Cooldown personnalisé du vol en heures (par défaut 24h, 19h pour Voleur)",
+            "last_steal_attempt": "TIMESTAMP WITH TIME ZONE — Dernière tentative de vol (sert au cooldown persistant)",
+            "active_skill": "BOOLEAN — Indique si la compétence active du joueur (ex: vol garanti pour Voleur) est en cours d'effet"
+        }
+    }
+}
+
+# ────────────────────────────────────────────────────────────────────────────────
 # 🧠 Cog principal
 # ────────────────────────────────────────────────────────────────────────────────
 class ReiatsuVol(commands.Cog):
