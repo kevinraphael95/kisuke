@@ -17,7 +17,6 @@ from discord import app_commands
 from discord.ext import commands
 from discord.ui import View, Button
 from typing import Dict, List, Tuple
-
 from utils.supabase_client import supabase
 from utils.discord_utils import safe_send, safe_edit
 
@@ -52,7 +51,6 @@ def _infer_sql_type(c: str) -> str:
 def discover_expected_tables(dirs: List[str] = CODE_SCAN_DIRS) -> Dict[str, Dict]:
     """Analyse le code et retourne un mapping table -> colonnes réellement utilisées (scan bloc par bloc)."""
     results: Dict[str, Dict] = {}
-
     for base_dir in dirs:
         for root, _, files in os.walk(base_dir):
             for fn in files:
@@ -63,33 +61,24 @@ def discover_expected_tables(dirs: List[str] = CODE_SCAN_DIRS) -> Dict[str, Dict
                     code = open(path, "r", encoding="utf-8").read()
                 except Exception:
                     continue
-
                 matches = list(_table_re.finditer(code))
                 for i, match in enumerate(matches):
                     table = match.group(1)
                     start = match.end()
                     end = matches[i + 1].start() if i + 1 < len(matches) else len(code)
                     snippet = code[start:end]
-
                     line_no = code[:match.start()].count("\n") + 1
                     t_info = results.setdefault(table, {"columns": {}, "locations": []})
                     t_info["locations"].append((path, line_no))
-
-                    # select(...)
                     for s in _select_re.finditer(snippet):
                         for c in [col.strip() for col in s.group(1).split(",") if col.strip() != "*"]:
                             t_info["columns"].setdefault(c, []).append((path, line_no))
-
-                    # eq(...)
                     for e in _eq_re.finditer(snippet):
                         c = e.group(1)
                         t_info["columns"].setdefault(c, []).append((path, line_no))
-
-                    # update/insert dict
                     for block in _update_dict_re.finditer(snippet):
                         for k in _key_in_dict_re.findall(block.group(1)):
                             t_info["columns"].setdefault(k, []).append((path, line_no))
-
     return results
 
 # ────────────────────────────────────────────────────────────────────────────────
@@ -164,7 +153,6 @@ class FixTables(commands.Cog):
 
             pages = []
             sql_per_table = {}
-
             for table, info in expected.items():
                 try:
                     expected_cols = {c: _infer_sql_type(c) for c in info["columns"].keys()}
@@ -189,7 +177,6 @@ class FixTables(commands.Cog):
                     if extra: diff.append(f"ℹ️ Supplémentaires : {', '.join(extra)}")
                     embed.add_field(name="🔎 Différences", value="\n".join(diff) or "✅ Structure conforme", inline=False)
 
-                    # un fichier par ligne + lignes regroupées
                     file_lines: Dict[str, List[int]] = {}
                     for f, ln in info["locations"]:
                         file_lines.setdefault(f, []).append(ln)
@@ -210,16 +197,15 @@ class FixTables(commands.Cog):
             if pages:
                 view = TablePaginator(pages, sql_per_table)
                 view.message = await safe_send(channel, embed=pages[0], view=view)
+
         except Exception as e:
             await safe_send(channel, f"❌ Une erreur est survenue : {e}")
 
-    # ────────────────────────────────────────────────────────────────────────────
     # 🔹 Commandes (Slash + Préfixe regroupées)
-    # ────────────────────────────────────────────────────────────────────────────
     async def _handle_command(self, channel):
         await self._scan_and_report(channel)
 
-    @app_commands.command(name="fixtables", description="Vérifie les tables Supabase et génère des suggestions SQL (par page).")
+    @app_commands.command(name="fixtables", description="Vérifie les tables Supabase et génère des SQL complets pour création/modification.")
     @app_commands.checks.has_permissions(administrator=True)
     @app_commands.checks.cooldown(1, 30.0, key=lambda i: i.guild_id or i.user.id)
     async def slash_fixtables(self, interaction: discord.Interaction):
@@ -227,7 +213,7 @@ class FixTables(commands.Cog):
         await self._handle_command(interaction.channel)
         await interaction.delete_original_response()
 
-    @commands.command(name="fixtables", help="Vérifie les tables Supabase et génère des suggestions SQL (par page).")
+    @commands.command(name="fixtables", help="Vérifie les tables Supabase et génère des SQL complets pour création/modification.")
     @commands.has_permissions(administrator=True)
     @commands.cooldown(1, 30.0, commands.BucketType.guild)
     async def prefix_fixtables(self, ctx: commands.Context):
