@@ -33,7 +33,11 @@ _table_re = re.compile(r'supabase\.table\(\s*["\']([\w\d_]+)["\']\s*\)')
 _select_re = re.compile(r'\.select\(\s*["\']([^"\']+)["\']\s*\)')
 _eq_re = re.compile(r'\.eq\(\s*["\']([\w\d_]+)["\']\s*,')
 _update_dict_re = re.compile(r'\.(?:update|insert)\s*\(\s*\{([^}]+)\}', re.S)
+_update_var_re = re.compile(r'\.(?:update|insert)\s*\(\s*([A-Za-z_]\w*)\s*\)')  # .update(variable)
+_var_dict_re = re.compile(r'([A-Za-z_]\w*)\s*=\s*\{([^}]+)\}', re.S)             # var = { ... }
 _key_in_dict_re = re.compile(r'["\']([\w\d_]+)["\']\s*:')
+_get_key_re = re.compile(r'\.get\(\s*["\']([\w\d_]+)["\']\s*\)')
+_bracket_re = re.compile(r'\[\s*["\']([\w\d_]+)["\']\s*\]')
 
 def _infer_sql_type(c: str) -> str:
     """Détecte un type SQL probable pour une colonne donnée."""
@@ -42,10 +46,12 @@ def _infer_sql_type(c: str) -> str:
         return "text"
     if c.endswith("_at") or c.startswith("last_"):
         return "timestamp with time zone"
-    if c in {"points", "spawn_delay", "quantity"}:
+    if c in {"points", "spawn_delay", "quantity", "argent", "bonus5"}:
         return "integer"
-    if c.startswith("is_") or c.startswith("has_"):
+    if c.startswith("is_") or c.startswith("has_") or c in {"active_skill", "en_attente"}:
         return "boolean"
+    if c in {"inventory", "garden_grid", "potions"}:
+        return "jsonb"
     return "text"
 
 def discover_expected_tables(dirs: List[str] = CODE_SCAN_DIRS) -> Dict[str, Dict]:
@@ -61,6 +67,17 @@ def discover_expected_tables(dirs: List[str] = CODE_SCAN_DIRS) -> Dict[str, Dict
                     code = open(path, "r", encoding="utf-8").read()
                 except Exception:
                     continue
+
+                # 1) repérer variables assignées à des littéraux dict { ... } dans tout le fichier
+                var_dict_keys: Dict[str, List[str]] = {}
+                for vm in _var_dict_re.finditer(code):
+                    varname = vm.group(1)
+                    body = vm.group(2)
+                    keys = _key_in_dict_re.findall(body)
+                    if keys:
+                        var_dict_keys[varname] = keys
+
+                # 2) trouver toutes les utilisations supabase.table(...) dans le fichier
                 matches = list(_table_re.finditer(code))
                 for i, match in enumerate(matches):
                     table = match.group(1)
@@ -70,15 +87,39 @@ def discover_expected_tables(dirs: List[str] = CODE_SCAN_DIRS) -> Dict[str, Dict
                     line_no = code[:match.start()].count("\n") + 1
                     t_info = results.setdefault(table, {"columns": {}, "locations": []})
                     t_info["locations"].append((path, line_no))
+
+                    # select(...)
                     for s in _select_re.finditer(snippet):
                         for c in [col.strip() for col in s.group(1).split(",") if col.strip() != "*"]:
                             t_info["columns"].setdefault(c, []).append((path, line_no))
+
+                    # eq(...)
                     for e in _eq_re.finditer(snippet):
                         c = e.group(1)
                         t_info["columns"].setdefault(c, []).append((path, line_no))
+
+                    # update/insert with literal dict .update({ ... })
                     for block in _update_dict_re.finditer(snippet):
                         for k in _key_in_dict_re.findall(block.group(1)):
                             t_info["columns"].setdefault(k, []).append((path, line_no))
+
+                    # update/insert with variable .update(payload_var) -> check earlier var assignments
+                    for vm in _update_var_re.finditer(snippet):
+                        varname = vm.group(1)
+                        if varname in var_dict_keys:
+                            for k in var_dict_keys[varname]:
+                                t_info["columns"].setdefault(k, []).append((path, line_no))
+
+                    # .get("col") usage (ex: voleur_data.get("last_steal_attempt"))
+                    for g in _get_key_re.finditer(snippet):
+                        k = g.group(1)
+                        t_info["columns"].setdefault(k, []).append((path, line_no))
+
+                    # bracket access like row['last_steal_attempt']
+                    for b in _bracket_re.finditer(snippet):
+                        k = b.group(1)
+                        t_info["columns"].setdefault(k, []).append((path, line_no))
+
     return results
 
 # ────────────────────────────────────────────────────────────────────────────────
@@ -91,6 +132,7 @@ def fetch_actual_columns(table: str) -> Tuple[Dict[str, str], bool]:
         if not res or not getattr(res, "data", None):
             return {}, True
         row = res.data[0]
+        # retourne type détecté simplifié pour comparaison (string names)
         return {k: str(type(v)) for k, v in row.items()}, True
     except Exception:
         return {}, False
@@ -187,8 +229,10 @@ class FixTables(commands.Cog):
                     embed.add_field(name="📂 Fichiers utilisant cette table", value=loc_str or "Non trouvé", inline=False)
 
                     sql_per_table[table] = (
-                        f"CREATE TABLE {table} (\n  " + ",\n  ".join(f"{c} {t}" for c, t in expected_cols.items()) + "\n);",
-                        "\n".join(f"ALTER TABLE {table} ADD COLUMN {c} {_infer_sql_type(c)};" for c in missing)
+                        f"CREATE TABLE IF NOT EXISTS {table} (\n  " +
+                        ",\n  ".join(f"{c} {expected_cols[c]}" for c in expected_cols) +
+                        "\n);",
+                        "\n".join(f"ALTER TABLE {table} ADD COLUMN {c} {expected_cols[c]};" for c in missing)
                     )
                     pages.append(embed)
                 except Exception as e:
@@ -201,7 +245,9 @@ class FixTables(commands.Cog):
         except Exception as e:
             await safe_send(channel, f"❌ Une erreur est survenue : {e}")
 
+    # ────────────────────────────────────────────────────────────────────────────
     # 🔹 Commandes (Slash + Préfixe regroupées)
+    # ────────────────────────────────────────────────────────────────────────────
     async def _handle_command(self, channel):
         await self._scan_and_report(channel)
 
@@ -228,3 +274,4 @@ async def setup(bot: commands.Bot):
         if not hasattr(command, "category"):
             command.category = "Admin"
     await bot.add_cog(cog)
+
