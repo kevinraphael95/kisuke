@@ -11,12 +11,13 @@
 # 📦 Imports nécessaires
 # ────────────────────────────────────────────────────────────────────────────────
 import os
-import re
 import discord
 from discord import app_commands
 from discord.ext import commands
 from discord.ui import View, Button
 from typing import Dict, List, Tuple
+import importlib.util
+
 from utils.supabase_client import supabase
 from utils.discord_utils import safe_send, safe_edit
 
@@ -27,17 +28,34 @@ CODE_SCAN_DIRS = ["commands", "tasks"]
 WINDOW_CHARS = 2500
 
 # ────────────────────────────────────────────────────────────────────────────────
-# 🔎 Helpers — Détection tables/colonnes dans le code
+# 🔎 Helpers — Chargement tables déclarées
 # ────────────────────────────────────────────────────────────────────────────────
-_table_re = re.compile(r'supabase\.table\(\s*["\']([\w\d_]+)["\']\s*\)')
-_select_re = re.compile(r'\.select\(\s*["\']([^"\']+)["\']\s*\)')
-_eq_re = re.compile(r'\.eq\(\s*["\']([\w\d_]+)["\']\s*,')
-_update_dict_re = re.compile(r'\.(?:update|insert)\s*\(\s*\{([^}]+)\}', re.S)
-_update_var_re = re.compile(r'\.(?:update|insert)\s*\(\s*([A-Za-z_]\w*)\s*\)')  # .update(variable)
-_var_dict_re = re.compile(r'([A-Za-z_]\w*)\s*=\s*\{([^}]+)\}', re.S)             # var = { ... }
-_key_in_dict_re = re.compile(r'["\']([\w\d_]+)["\']\s*:')
-_get_key_re = re.compile(r'\.get\(\s*["\']([\w\d_]+)["\']\s*\)')
-_bracket_re = re.compile(r'\[\s*["\']([\w\d_]+)["\']\s*\]')
+def load_tables_from_file(path: str) -> Dict[str, Dict]:
+    """Charge la variable TABLES depuis un fichier Python."""
+    try:
+        spec = importlib.util.spec_from_file_location("module", path)
+        mod = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(mod)
+        return getattr(mod, "TABLES", {})
+    except Exception:
+        return {}
+
+def discover_expected_tables(dirs: List[str] = CODE_SCAN_DIRS) -> Dict[str, Dict]:
+    """Récupère toutes les tables déclarées via TABLES dans les fichiers du bot."""
+    results: Dict[str, Dict] = {}
+    for base_dir in dirs:
+        for root, _, files in os.walk(base_dir):
+            for fn in files:
+                if not fn.endswith(".py"):
+                    continue
+                path = os.path.join(root, fn)
+                tables = load_tables_from_file(path)
+                for table_name, info in tables.items():
+                    results[table_name] = {
+                        "columns": {col: None for col in info.get("columns", {})},
+                        "locations": [(path, 1)]  # ligne fictive 1, juste pour l'affichage
+                    }
+    return results
 
 def _infer_sql_type(c: str) -> str:
     """Détecte un type SQL probable pour une colonne donnée."""
@@ -54,74 +72,6 @@ def _infer_sql_type(c: str) -> str:
         return "jsonb"
     return "text"
 
-def discover_expected_tables(dirs: List[str] = CODE_SCAN_DIRS) -> Dict[str, Dict]:
-    """Analyse le code et retourne un mapping table -> colonnes réellement utilisées (scan bloc par bloc)."""
-    results: Dict[str, Dict] = {}
-    for base_dir in dirs:
-        for root, _, files in os.walk(base_dir):
-            for fn in files:
-                if not fn.endswith(".py"):
-                    continue
-                path = os.path.join(root, fn)
-                try:
-                    code = open(path, "r", encoding="utf-8").read()
-                except Exception:
-                    continue
-
-                # 1) repérer variables assignées à des littéraux dict { ... } dans tout le fichier
-                var_dict_keys: Dict[str, List[str]] = {}
-                for vm in _var_dict_re.finditer(code):
-                    varname = vm.group(1)
-                    body = vm.group(2)
-                    keys = _key_in_dict_re.findall(body)
-                    if keys:
-                        var_dict_keys[varname] = keys
-
-                # 2) trouver toutes les utilisations supabase.table(...) dans le fichier
-                matches = list(_table_re.finditer(code))
-                for i, match in enumerate(matches):
-                    table = match.group(1)
-                    start = match.end()
-                    end = matches[i + 1].start() if i + 1 < len(matches) else len(code)
-                    snippet = code[start:end]
-                    line_no = code[:match.start()].count("\n") + 1
-                    t_info = results.setdefault(table, {"columns": {}, "locations": []})
-                    t_info["locations"].append((path, line_no))
-
-                    # select(...)
-                    for s in _select_re.finditer(snippet):
-                        for c in [col.strip() for col in s.group(1).split(",") if col.strip() != "*"]:
-                            t_info["columns"].setdefault(c, []).append((path, line_no))
-
-                    # eq(...)
-                    for e in _eq_re.finditer(snippet):
-                        c = e.group(1)
-                        t_info["columns"].setdefault(c, []).append((path, line_no))
-
-                    # update/insert with literal dict .update({ ... })
-                    for block in _update_dict_re.finditer(snippet):
-                        for k in _key_in_dict_re.findall(block.group(1)):
-                            t_info["columns"].setdefault(k, []).append((path, line_no))
-
-                    # update/insert with variable .update(payload_var) -> check earlier var assignments
-                    for vm in _update_var_re.finditer(snippet):
-                        varname = vm.group(1)
-                        if varname in var_dict_keys:
-                            for k in var_dict_keys[varname]:
-                                t_info["columns"].setdefault(k, []).append((path, line_no))
-
-                    # .get("col") usage (ex: voleur_data.get("last_steal_attempt"))
-                    for g in _get_key_re.finditer(snippet):
-                        k = g.group(1)
-                        t_info["columns"].setdefault(k, []).append((path, line_no))
-
-                    # bracket access like row['last_steal_attempt']
-                    for b in _bracket_re.finditer(snippet):
-                        k = b.group(1)
-                        t_info["columns"].setdefault(k, []).append((path, line_no))
-
-    return results
-
 # ────────────────────────────────────────────────────────────────────────────────
 # 🗄️ Récupération structure Supabase
 # ────────────────────────────────────────────────────────────────────────────────
@@ -132,7 +82,6 @@ def fetch_actual_columns(table: str) -> Tuple[Dict[str, str], bool]:
         if not res or not getattr(res, "data", None):
             return {}, True
         row = res.data[0]
-        # retourne type détecté simplifié pour comparaison (string names)
         return {k: str(type(v)) for k, v in row.items()}, True
     except Exception:
         return {}, False
@@ -195,6 +144,7 @@ class FixTables(commands.Cog):
 
             pages = []
             sql_per_table = {}
+
             for table, info in expected.items():
                 try:
                     expected_cols = {c: _infer_sql_type(c) for c in info["columns"].keys()}
@@ -217,6 +167,7 @@ class FixTables(commands.Cog):
                     diff = []
                     if missing: diff.append(f"⚠️ Manquantes : {', '.join(missing)}")
                     if extra: diff.append(f"ℹ️ Supplémentaires : {', '.join(extra)}")
+
                     embed.add_field(name="🔎 Différences", value="\n".join(diff) or "✅ Structure conforme", inline=False)
 
                     file_lines: Dict[str, List[int]] = {}
@@ -234,6 +185,7 @@ class FixTables(commands.Cog):
                         "\n);",
                         "\n".join(f"ALTER TABLE {table} ADD COLUMN {c} {expected_cols[c]};" for c in missing)
                     )
+
                     pages.append(embed)
                 except Exception as e:
                     await safe_send(channel, f"❌ Erreur sur la table `{table}` : {e}")
@@ -274,4 +226,3 @@ async def setup(bot: commands.Bot):
         if not hasattr(command, "category"):
             command.category = "Admin"
     await bot.add_cog(cog)
-
