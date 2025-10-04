@@ -15,7 +15,7 @@
 ## 2️⃣ Supabase
 
 1. Crée un projet sur [Supabase](https://supabase.com/)
-2. Crée les tables via le script SQL
+2. Crée les tables via [LES SCRIPTS SQL](SQL_des_tables_supabase.md)
 3. Note pour le `.env` :
 
    * `SUPABASE_URL` → `Project Settings → Data API → Project URL`
