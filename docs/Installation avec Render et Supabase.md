@@ -24,11 +24,12 @@
 ## 2️⃣ Configurer Supabase
 
 1. Crée un projet sur [Supabase](https://supabase.com/)
-2. Crée les tables via le script SQL fourni
+2. Crée les tables via les script SQL
 3. Note les informations suivantes pour le `.env` :
 
-   * **SUPABASE_URL** → `Project Settings → API → Project URL`
-   * **SUPABASE_KEY** → `Project Settings → API → API Keys → Service Role Key`
+   * **SUPABASE_URL** → `Project Settings → Data API → Project URL`
+   * **SUPABASE_KEY** → `Project Settings → API Keys → Publishable Keys ou Secret Keys
+   
 
 > ✅ Ces deux infos permettent au bot de lire/écrire dans ta base de données.
 
