@@ -1,6 +1,6 @@
 # 🗄️ SQL — Création des tables pour le bot
 
-Copier-coller le code ci-dessous dans SQL Editor pour créer toutes les tables nécessaires. (c'est pas à jour)
+Copier-coller le code ci-dessous dans SQL Editor pour créer toutes les tables nécessaires.
 
 ---
 
