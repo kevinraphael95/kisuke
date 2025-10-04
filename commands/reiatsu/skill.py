@@ -8,6 +8,24 @@
 # ────────────────────────────────────────────────────────────────────────────────
 
 # ────────────────────────────────────────────────────────────────────────────────
+# 📦 Tables utilisées
+# ────────────────────────────────────────────────────────────────────────────────
+TABLES = {
+    "reiatsu": {
+        "description": "Table principale contenant les informations Reiatsu de chaque joueur : points, classe et cooldowns.",
+        "colonnes": {
+            "user_id": "BIGINT — Identifiant Discord unique du joueur (clé primaire)",
+            "points": "INTEGER — Montant actuel de Reiatsu du joueur",
+            "classe": "TEXT — Classe Reiatsu actuelle du joueur (ex: Voleur, Illusionniste, Absorbeur, Parieur...)",
+            "last_skilled_at": "TIMESTAMP — Dernière activation du skill (sert au cooldown)",
+            "active_skill": "BOOLEAN — Indique si une compétence active est actuellement en cours (ex: illusion, vol garanti...)",
+            "vol_garanti": "BOOLEAN — Spécifique à la classe Voleur : permet un vol réussi garanti",
+            "fake_spawn_id": "TEXT — Spécifique à l’Illusionniste : identifiant d’un faux Reiatsu généré",
+        }
+    }
+}
+
+# ────────────────────────────────────────────────────────────────────────────────
 # 📦 Imports nécessaires
 # ────────────────────────────────────────────────────────────────────────────────
 import discord
