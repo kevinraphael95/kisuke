@@ -19,6 +19,27 @@ from utils.supabase_client import supabase
 from utils.discord_utils import safe_send, safe_respond
 
 # ────────────────────────────────────────────────────────────────────────────────
+# 📦 Tables utilisées
+# ────────────────────────────────────────────────────────────────────────────────
+TABLES = {
+    "gardens": {
+        "description": "Contient les données persistantes de chaque utilisateur liées au jardin.",
+        "columns": {
+            "user_id": "BIGINT — Identifiant Discord unique de l'utilisateur (clé primaire)",
+            "username": "TEXT — Nom d'utilisateur au moment de la création ou dernière mise à jour",
+            "garden_grid": "ARRAY(TEXT) — Représentation textuelle du jardin (lignes avec emojis 🌱🌸…)",
+            "inventory": "JSON — Dictionnaire des fleurs possédées (clé = type, valeur = quantité)",
+            "argent": "INTEGER — Montant d’argent virtuel du joueur 💰",
+            "armee": "TEXT — Nom ou type d’armée liée à l’utilisateur (optionnel)",
+            "potions": "JSON — Dictionnaire des potions créées via l’alchimie",
+            "last_fertilize": "TIMESTAMP — Dernière utilisation de l’engrais (UTC, format ISO)",
+            "created_at": "TIMESTAMP — Date de création automatique (gérée par Supabase)",
+            "updated_at": "TIMESTAMP — Dernière mise à jour automatique (gérée par Supabase)"
+        }
+    }
+}
+
+# ────────────────────────────────────────────────────────────────────────────────
 # 🔌 table name
 # ────────────────────────────────────────────────────────────────────────────────
 TABLE_NAME = "gardens"
