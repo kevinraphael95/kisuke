@@ -18,6 +18,30 @@ from utils.supabase_client import supabase
 from utils.discord_utils import safe_send, safe_edit, safe_respond
 
 # ────────────────────────────────────────────────────────────────────────────────
+# 📦 Tables utilisées
+# ────────────────────────────────────────────────────────────────────────────────
+TABLES = {
+    "reiatsu": {
+        "description": "Stocke les points Reiatsu des joueurs, utilisés pour miser et recevoir des gains.",
+        "colonnes": {
+            "user_id": "BIGINT — Identifiant Discord unique de l'utilisateur (clé primaire)",
+            "points": "INTEGER — Montant actuel de Reiatsu possédé par le joueur"
+        }
+    },
+    "steam_keys": {
+        "description": "Contient les clés Steam disponibles à gagner dans le mini-jeu du ticket à gratter.",
+        "colonnes": {
+            "id": "SERIAL — Identifiant unique de la clé",
+            "game_name": "TEXT — Nom du jeu associé à la clé Steam",
+            "steam_url": "TEXT — Lien vers la page Steam du jeu",
+            "steam_key": "TEXT — Clé Steam réelle à envoyer au gagnant",
+            "won": "BOOLEAN — Indique si la clé a déjà été remportée (True = déjà gagnée)",
+            "winner": "TEXT — Nom d'utilisateur Discord du gagnant (ou NULL si encore disponible)"
+        }
+    }
+}
+
+# ────────────────────────────────────────────────────────────────────────────────
 # 📂 Constantes
 # ────────────────────────────────────────────────────────────────────────────────
 SCRATCH_COST = 250  # Coût d’un ticket
