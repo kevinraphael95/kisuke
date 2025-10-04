@@ -7,6 +7,34 @@
 # ────────────────────────────────────────────────────────────────────────────────
 
 # ────────────────────────────────────────────────────────────────────────────────
+# 📦 Tables utilisées
+# ────────────────────────────────────────────────────────────────────────────────
+TABLES = {
+    "reiatsu": {
+        "description": "Table principale contenant les informations Reiatsu de chaque joueur : points, classe et cooldowns.",
+        "colonnes": {
+            "user_id": "BIGINT — Identifiant Discord unique du joueur (clé primaire)",
+            "points": "INTEGER — Montant actuel de Reiatsu du joueur",
+            "classe": "TEXT — Classe Reiatsu actuelle du joueur (ex: Voleur, Illusionniste...)",
+            "steal_cd": "INTEGER — Cooldown personnalisé du vol en heures",
+            "last_steal_attempt": "TIMESTAMP WITH TIME ZONE — Dernière tentative de vol",
+            "active_skill": "BOOLEAN — Indique si la compétence active du joueur est en cours d'effet"
+        }
+    },
+    "steam_keys": {
+        "description": "Table contenant toutes les clés Steam disponibles pour le loto.",
+        "colonnes": {
+            "id": "BIGINT — Identifiant unique de la clé (clé primaire)",
+            "game_name": "TEXT — Nom du jeu",
+            "steam_key": "TEXT — La clé Steam à distribuer",
+            "steam_url": "TEXT — URL de la page Steam du jeu",
+            "won": "BOOLEAN — Indique si la clé a déjà été remportée",
+            "winner": "TEXT — Nom ou identifiant du joueur ayant remporté la clé"
+        }
+    }
+}
+
+# ────────────────────────────────────────────────────────────────────────────────
 # 📦 Imports nécessaires
 # ────────────────────────────────────────────────────────────────────────────────
 import discord
