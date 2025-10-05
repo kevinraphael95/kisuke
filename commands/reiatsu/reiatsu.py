@@ -56,12 +56,14 @@ SPAWN_SPEED_INTERVALS = {
 }
 
 # ────────────────────────────────────────────────────────────────────────────────
-# 🎛️ Vue interactive Reiatsu (Classement)
+# 🎛️ Vue interactive Reiatsu (Classement + Lien Spawn)
 # ────────────────────────────────────────────────────────────────────────────────
 class ReiatsuView(View):
-    def __init__(self, author: discord.Member = None):
+    def __init__(self, author: discord.Member = None, spawn_link: str = None):
         super().__init__(timeout=None)
         self.author = author
+        if spawn_link:
+            self.add_item(Button(label="💠 Aller au spawn", style=discord.ButtonStyle.link, url=spawn_link))
 
     @discord.ui.button(label="📊 Classement", style=discord.ButtonStyle.primary, custom_id="reiatsu:classement")
     async def classement_button(self, interaction: discord.Interaction, button: discord.ui.Button):
@@ -116,7 +118,7 @@ class ReiatsuCommand(commands.Cog):
             return await safe_send(channel_or_interaction, "❌ Erreur lors de la récupération de la configuration du serveur.")
 
         config = config_data.data[0] if config_data and config_data.data else None
-        salon_text, spawn_speed_text, temps_text = "❌", "⚠️ Inconnu", "⚠️ Inconnu"
+        salon_text, spawn_speed_text, temps_text, spawn_link = "❌", "⚠️ Inconnu", "⚠️ Inconnu", None
 
         if config:
             salon = guild.get_channel(int(config.get("channel_id"))) if config.get("channel_id") else None
@@ -124,8 +126,9 @@ class ReiatsuCommand(commands.Cog):
             speed_key = config.get("spawn_speed")
             spawn_speed_text = f"{SPAWN_SPEED_INTERVALS.get(speed_key, '⚠️ Inconnu')} ({speed_key})" if speed_key else spawn_speed_text
 
-            if config.get("is_spawn") and config.get("message_id"):
+            if config.get("is_spawn") and config.get("message_id") and config.get("channel_id"):
                 temps_text = "💠 Un Reiatsu est **déjà apparu** !"
+                spawn_link = f"https://discord.com/channels/{guild_id}/{config['channel_id']}/{config['message_id']}"
             else:
                 last_spawn = config.get("last_spawn_at")
                 delay = config.get("spawn_delay", 1800)
@@ -153,14 +156,15 @@ class ReiatsuCommand(commands.Cog):
             color=discord.Color.purple()
         )
         embed.set_footer(text="💠 Utilise /reiatsuprofil pour ton profil personnel.")
-        view = ReiatsuView(author)
+        view = ReiatsuView(author, spawn_link=spawn_link)
+
         if isinstance(channel_or_interaction, discord.Interaction):
             await channel_or_interaction.response.send_message(embed=embed, view=view)
         else:
             await safe_send(channel_or_interaction, embed=embed, view=view)
 
     # ────────────────────────────────────────────────────────────────────────────
-    # 🔹 Commandes SLASH + PREFIX
+    # 🔹 Commandes SLASH
     # ────────────────────────────────────────────────────────────────────────────
     @app_commands.command(name="reiatsu", description="💠 Affiche les informations de spawn Reiatsu du serveur et le classement global.")
     async def slash_reiatsu(self, interaction: discord.Interaction):
@@ -169,6 +173,9 @@ class ReiatsuCommand(commands.Cog):
             return await safe_respond(interaction, f"⏳ Attends encore {remaining:.1f}s.", ephemeral=True)
         await self._send_server_info(interaction, interaction.user, interaction.guild)
 
+    # ────────────────────────────────────────────────────────────────────────────
+    # 🔹 Commandes PREFIX
+    # ────────────────────────────────────────────────────────────────────────────
     @commands.command(name="reiatsu", aliases=["rts"], help="💠 Affiche les informations de spawn Reiatsu du serveur et le classement global.")
     async def prefix_reiatsu(self, ctx: commands.Context):
         remaining = await self._check_cooldown(ctx.author.id)
