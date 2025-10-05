@@ -133,7 +133,7 @@ class ReiatsuProfil(commands.Cog):
         if classe_data:
             embed.add_field(
                 name=f"🏷️ Classe : **{classe_symbole} {classe_nom}**",
-                value=f"**• Passif** : {classe_data['Passive']}\n**• Skill** : {classe_data['Active']}",
+                value=f"**• Passif :** {classe_data['Passive']}\n**• Skill :** {classe_data['Active']}",
                 inline=False
             )
         else:
@@ -146,7 +146,7 @@ class ReiatsuProfil(commands.Cog):
         # Cooldowns
         embed.add_field(
             name="⏳ Cooldowns",
-            value=f"**Vol :** {cooldown_vol}\n**Skill :** {cooldown_skill}",
+            value=f"**Vol :** '!!rtsv' — cooldown_vol}\n**Skill :** '!!skill' — {cooldown_skill}",
             inline=False
         )
 
