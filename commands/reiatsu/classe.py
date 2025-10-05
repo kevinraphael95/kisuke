@@ -38,9 +38,9 @@ TABLES = {
     }
 }
 
-# ────────────────────────────────────────────────────────────────
+# ────────────────────────────────────────────────
 # 📊 Données des classes Reiatsu depuis reiatsu_config.json
-# ────────────────────────────────────────────────────────────────
+# ────────────────────────────────────────────────
 with open("data/reiatsu_config.json", "r", encoding="utf-8") as f:
     config = json.load(f)
 CLASSES = list(config.get("CLASSES", {}).items())  # Liste de tuples [(nom, details), ...]
@@ -58,13 +58,20 @@ class ClassePageView(View):
 
     def update_buttons(self):
         self.clear_items()
-        # Boutons de navigation
-        if self.index > 0:
-            self.add_item(Button(label="⬅️ Précédent", style=discord.ButtonStyle.secondary, custom_id="prev"))
-        if self.index < self.total - 1:
-            self.add_item(Button(label="➡️ Suivant", style=discord.ButtonStyle.secondary, custom_id="next"))
+
+        # Boutons de navigation avec boucle
+        prev_btn = Button(label="⬅️ Précédent", style=discord.ButtonStyle.secondary)
+        prev_btn.callback = self.prev_page
+        self.add_item(prev_btn)
+
+        next_btn = Button(label="➡️ Suivant", style=discord.ButtonStyle.secondary)
+        next_btn.callback = self.next_page
+        self.add_item(next_btn)
+
         # Bouton choisir
-        self.add_item(Button(label="✅ Choisir cette classe", style=discord.ButtonStyle.success, custom_id="choose"))
+        choose_btn = Button(label="✅ Choisir cette classe", style=discord.ButtonStyle.success)
+        choose_btn.callback = self.choose_class
+        self.add_item(choose_btn)
 
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
         if interaction.user.id != self.user_id:
@@ -72,39 +79,44 @@ class ClassePageView(View):
             return False
         return True
 
-    @discord.ui.button()  # Dummy pour gérer callback via custom_id
-    async def button_callback(self, interaction: discord.Interaction, button: Button):
-        if button.custom_id == "prev":
-            self.index -= 1
-            self.update_buttons()
-            await interaction.response.edit_message(embed=self.get_embed(), view=self)
-        elif button.custom_id == "next":
-            self.index += 1
-            self.update_buttons()
-            await interaction.response.edit_message(embed=self.get_embed(), view=self)
-        elif button.custom_id == "choose":
-            nom, data = CLASSES[self.index]
-            try:
-                nouveau_cd = 19 if nom == "Voleur" else 24
-                supabase.table("reiatsu").update({
-                    "classe": nom,
-                    "steal_cd": nouveau_cd
-                }).eq("user_id", str(self.user_id)).execute()
-                symbole = data.get("Symbole", "🌀")
-                embed = discord.Embed(
-                    title=f"✅ Classe choisie : {symbole} {nom}",
-                    description=f"**Passive** : {data['Passive']}\n**Active** : {data['Active']}",
-                    color=discord.Color.green()
-                )
-                await interaction.response.edit_message(embed=embed, view=None)
-            except Exception as e:
-                await safe_respond(interaction, f"❌ Erreur lors de l'enregistrement : {e}", ephemeral=True)
+    # ──────────────────────────────
+    # Callbacks
+    # ──────────────────────────────
+    async def prev_page(self, interaction: discord.Interaction):
+        self.index = (self.index - 1) % self.total
+        await interaction.response.edit_message(embed=self.get_embed(), view=self)
 
+    async def next_page(self, interaction: discord.Interaction):
+        self.index = (self.index + 1) % self.total
+        await interaction.response.edit_message(embed=self.get_embed(), view=self)
+
+    async def choose_class(self, interaction: discord.Interaction):
+        nom, data = CLASSES[self.index]
+        try:
+            nouveau_cd = 19 if nom == "Voleur" else 24
+            supabase.table("reiatsu").update({
+                "classe": nom,
+                "steal_cd": nouveau_cd
+            }).eq("user_id", str(self.user_id)).execute()
+
+            symbole = data.get("Symbole", "🌀")
+            embed = discord.Embed(
+                title=f"✅ Classe choisie : {symbole} {nom}",
+                description=f"**Passive** : {data['Passive']}\n**Active** : {data['Active']}",
+                color=discord.Color.green()
+            )
+            await interaction.response.edit_message(embed=embed, view=None)
+        except Exception as e:
+            await safe_respond(interaction, f"❌ Erreur lors de l'enregistrement : {e}", ephemeral=True)
+
+    # ──────────────────────────────
+    # Embed affichage
+    # ──────────────────────────────
     def get_embed(self):
         nom, data = CLASSES[self.index]
         symbole = data.get("Symbole", "🌀")
         embed = discord.Embed(
-            title=f"🎭 Classe {self.index+1}/{self.total} — {symbole} {nom}",
+            title=f"🎭 Classe {self.index + 1}/{self.total} — {symbole} {nom}",
             description=f"**Passive** : {data['Passive']}\n**Active** : {data['Active']}",
             color=discord.Color.purple()
         )
@@ -126,17 +138,17 @@ class ChoisirClasse(commands.Cog):
         embed = view.get_embed()
         await safe_send(channel, embed=embed, view=view)
 
-    # ────────────────────────────────────────────────────────────────────────────
+    # ────────────────────────────────────────────────────────────
     # 🔹 Commande préfixe
-    # ────────────────────────────────────────────────────────────────────────────
+    # ────────────────────────────────────────────────────────────
     @commands.command(name="classe", help="Choisir sa classe Reiatsu")
     @commands.cooldown(1, 10, commands.BucketType.user)
     async def classe_prefix(self, ctx: commands.Context):
         await self._send_menu(ctx.channel, ctx.author.id)
 
-    # ────────────────────────────────────────────────────────────────────────────
+    # ────────────────────────────────────────────────────────────
     # 🔹 Commande slash
-    # ────────────────────────────────────────────────────────────────────────────
+    # ────────────────────────────────────────────────────────────
     @app_commands.command(name="classe", description="Choisir sa classe Reiatsu")
     async def classe_slash(self, interaction: discord.Interaction):
         await interaction.response.defer()
@@ -155,5 +167,4 @@ async def setup(bot: commands.Bot):
         if not hasattr(command, "category"):
             command.category = "Reiatsu"
     await bot.add_cog(cog)
-
 
