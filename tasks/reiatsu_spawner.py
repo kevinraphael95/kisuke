@@ -233,7 +233,7 @@ class ReiatsuSpawner(commands.Cog):
         gain = SUPER_REIATSU_GAIN if is_super else NORMAL_REIATSU_GAIN
         if not is_super:
             if classe == "Absorbeur":
-                gain += 5
+                gain += 4
             elif classe == "Parieur":
                 gain = 0 if random.random() < 0.5 else random.randint(5, 12)
             if classe == "Travailleur":
