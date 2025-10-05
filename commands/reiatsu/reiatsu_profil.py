@@ -146,7 +146,7 @@ class ReiatsuProfil(commands.Cog):
         # Cooldowns
         embed.add_field(
             name="⏳ Cooldowns",
-            value=f"**Vol :** '!!rtsv' — cooldown_vol}\n**Skill :** '!!skill' — {cooldown_skill}",
+            value=f"**Vol :** '!!rtsv' — {cooldown_vol}\n**Skill :** '!!skill' — {cooldown_skill}",
             inline=False
         )
 
