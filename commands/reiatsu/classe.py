@@ -5,6 +5,7 @@
 # Accès : Public
 # Cooldown : 1 utilisation / 10 secondes / utilisateur
 # ────────────────────────────────────────────────────────────────────────────────
+
 # ────────────────────────────────────────────────────────────────────────────────
 # 📦 Imports nécessaires
 # ────────────────────────────────────────────────────────────────────────────────
@@ -14,7 +15,6 @@ from discord.ext import commands
 from discord.ui import View, Button
 import os
 import json
-import datetime
 from utils.supabase_client import supabase
 from utils.discord_utils import safe_send, safe_respond, safe_edit
 
@@ -58,6 +58,7 @@ class ClassePageView(View):
 
     def update_buttons(self):
         self.clear_items()
+
         # Boutons de navigation avec boucle
         prev_btn = Button(label="⬅️ Précédent", style=discord.ButtonStyle.secondary)
         prev_btn.callback = self.prev_page
@@ -91,40 +92,6 @@ class ClassePageView(View):
 
     async def choose_class(self, interaction: discord.Interaction):
         nom, data = CLASSES[self.index]
-
-        # ─── Vérification du profil Reiatsu ───
-        res = supabase.table("reiatsu").select("*").eq("user_id", str(self.user_id)).execute()
-        if not res.data:
-            await safe_respond(interaction, "❌ Tu n'as pas encore de profil Reiatsu. Utilise `!!reiatsu` pour en créer un.", ephemeral=True)
-            return
-
-        player = res.data[0]
-        now = datetime.datetime.utcnow()
-
-        # ─── Vérifie si le skill est en cours d'utilisation ───
-        if player.get("active_skill"):
-            await safe_respond(interaction, "⚠️ Tu ne peux pas changer de classe pendant que ta compétence est active !", ephemeral=True)
-            return
-
-        # ─── Vérifie si le skill est encore en cooldown ───
-        last_skill = player.get("last_skilled_at")
-        if last_skill:
-            try:
-                last_dt = datetime.datetime.fromisoformat(last_skill)
-                cooldown_h = 8 if player.get("classe") == "Illusionniste" else 12
-                elapsed = (now - last_dt).total_seconds() / 3600
-                remaining = max(0, cooldown_h - elapsed)
-                if remaining > 0:
-                    await safe_respond(
-                        interaction,
-                        f"⏳ Tu dois attendre encore {remaining:.1f}h avant de pouvoir changer de classe (skill en cooldown).",
-                        ephemeral=True
-                    )
-                    return
-            except Exception:
-                pass
-
-        # ─── Si tout est OK : on enregistre la nouvelle classe ───
         try:
             nouveau_cd = 19 if nom == "Voleur" else 24
             supabase.table("reiatsu").update({
@@ -139,7 +106,6 @@ class ClassePageView(View):
                 color=discord.Color.green()
             )
             await interaction.response.edit_message(embed=embed, view=None)
-
         except Exception as e:
             await safe_respond(interaction, f"❌ Erreur lors de l'enregistrement : {e}", ephemeral=True)
 
