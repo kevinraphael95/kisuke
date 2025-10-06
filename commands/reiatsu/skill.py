@@ -1,6 +1,6 @@
 # ────────────────────────────────────────────────────────────────────────────────
 # 📌 skill.py — Commande interactive /skill et !skill
-# Objectif : Afficher et activer la compétence active de la classe du joueur
+# Objectif : Afficher et activer la compétence active du joueur
 # (Illusionniste, Voleur, Absorbeur, Parieur)
 # Catégorie : Reiatsu
 # Accès : Tous
@@ -24,6 +24,7 @@ from utils.supabase_client import supabase
 # 📂 Chargement de la configuration Reiatsu
 # ────────────────────────────────────────────────────────────────────────────────
 REIATSU_CONFIG_PATH = os.path.join("data", "reiatsu_config.json")
+
 def load_reiatsu_config():
     """Charge la configuration Reiatsu depuis le fichier JSON."""
     try:
@@ -57,6 +58,7 @@ class Skill(commands.Cog):
             if not res.data:
                 await safe_send(channel, "❌ Tu n'as pas encore de profil Reiatsu. Utilise `!!reiatsu` pour en créer un.")
                 return
+
             player = res.data[0]
             classe = player.get("classe", "Travailleur")
             now = datetime.datetime.utcnow()
@@ -65,12 +67,16 @@ class Skill(commands.Cog):
             cooldown_h = 8 if classe == "Illusionniste" else 12
             last_skill = player.get("last_skilled_at")
             remaining = 0
-            if last_skill:
+
+            if last_skill:  # Vérifie que la valeur n'est pas None ou vide
                 try:
-                    elapsed = (now - datetime.datetime.fromisoformat(last_skill)).total_seconds() / 3600
+                    last_dt = datetime.datetime.fromisoformat(last_skill)
+                    elapsed = (now - last_dt).total_seconds() / 3600
                     remaining = max(0, cooldown_h - elapsed)
                 except Exception:
-                    remaining = 0
+                    remaining = cooldown_h  # Bloque le skill en cas de problème
+            else:
+                remaining = 0  # Jamais utilisé avant, prêt à activer
 
             if remaining > 0:
                 await safe_send(channel, f"⏳ Tu dois attendre {remaining:.1f}h avant de réutiliser ton skill.")
@@ -144,5 +150,7 @@ async def setup(bot: commands.Bot):
         if not hasattr(command, "category"):
             command.category = "Reiatsu"
     await bot.add_cog(cog)
+
+
 
 
