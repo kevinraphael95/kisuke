@@ -32,6 +32,7 @@ TABLES = {
             "classe": "TEXT — Classe actuelle du joueur (Illusionniste, Voleur, Absorbeur, Parieur, etc.)",
             "last_skilled_at": "TIMESTAMPTZ — Dernière utilisation de la compétence",
             "fake_spawn_id": "BIGINT — ID du faux Reiatsu généré (Illusionniste)",
+            "active_skill": "BOOLEAN — Compétence active (ex: vol garanti pour Voleur)"
         },
     },
 }
@@ -55,6 +56,7 @@ def load_reiatsu_config():
 # ────────────────────────────────────────────────────────────────────────────────
 class Skill(commands.Cog):
     """Commande /skill et !skill — Active la compétence active du joueur."""
+
     def __init__(self, bot: commands.Bot):
         self.bot = bot
         self.config = load_reiatsu_config()
@@ -84,7 +86,11 @@ class Skill(commands.Cog):
             except Exception:
                 remaining = 0
 
-        cooldown_text = f"⏱️ Cooldown restant : {remaining:.1f}h" if remaining > 0 else "✅ Prêt à utiliser !"
+        if remaining > 0:
+            await safe_send(channel, f"⏳ Tu dois attendre {remaining:.1f}h avant de réutiliser ton skill.")
+            return  # Bloque l’activation si le cooldown n’est pas fini
+
+        cooldown_text = "✅ Prêt à utiliser !"
 
         # Préparation de la mise à jour
         update_data = {"last_skilled_at": now.isoformat()}
@@ -95,7 +101,7 @@ class Skill(commands.Cog):
             update_data["fake_spawn_id"] = None
             msg = "🎭 **Illusion activée !** Un faux Reiatsu apparaîtra bientôt."
         elif classe == "Voleur":
-            update_data["vol_garanti"] = True
+            update_data["active_skill"] = True
             msg = "🥷 **Vol garanti activé !** Ton prochain vol réussira à coup sûr."
         elif classe == "Absorbeur":
             msg = "🌀 **Super Absorption !** Le prochain Reiatsu sera forcément un Super Reiatsu."
@@ -153,5 +159,4 @@ async def setup(bot: commands.Bot):
         if not hasattr(command, "category"):
             command.category = "Reiatsu"
     await bot.add_cog(cog)
-
 
