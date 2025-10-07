@@ -63,8 +63,10 @@ class Skill(commands.Cog):
             classe = player.get("classe", "Travailleur")
             now = datetime.datetime.utcnow()
 
-            # Cooldown selon classe
-            cooldown_h = 8 if classe == "Illusionniste" else 12
+            # Cooldown selon la config JSON
+            classe_data = self.config["CLASSES"].get(classe, {})
+            cooldown_h = classe_data.get("Cooldown", 12)
+
             last_skill = player.get("last_skilled_at")
             remaining = 0
 
