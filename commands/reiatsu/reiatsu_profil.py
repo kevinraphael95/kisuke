@@ -16,8 +16,10 @@ from dateutil import parser
 from datetime import datetime, timedelta, timezone
 import os
 import json
+
 from utils.supabase_client import supabase
 from utils.discord_utils import safe_send, safe_respond
+from utils.reiatsu_utils import ensure_profile  # ✅ Ajout pour auto-création profil
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 📂 Chargement des classes depuis JSON
@@ -49,6 +51,9 @@ class ReiatsuProfil(commands.Cog):
         user = target_user or author
         user_id = int(user.id)
 
+        # ✅ Création automatique du profil si inexistant
+        ensure_profile(user_id, user.name)
+
         # Récupération des données Reiatsu
         try:
             res = supabase.table("reiatsu").select(
@@ -60,8 +65,8 @@ class ReiatsuProfil(commands.Cog):
         
         data = res.data[0] if res.data else {}
         if not data:
-            return await safe_send(channel_or_interaction, "⚠️ Aucun profil trouvé. Utilise `!!classe` pour commencer.")
-
+            return await safe_send(channel_or_interaction, "⚠️ Impossible de créer ton profil Reiatsu.")
+        
         points = data.get("points", 0)
         classe_nom = data.get("classe", None)
         bonus = data.get("bonus5", 0)
@@ -106,12 +111,9 @@ class ReiatsuProfil(commands.Cog):
                 last_dt = parser.parse(last_skill)
                 if not last_dt.tzinfo:
                     last_dt = last_dt.replace(tzinfo=timezone.utc)
-
-                # Récupération du cooldown depuis le JSON
                 base_cd = 12  # par défaut
                 if classe_data:
                     base_cd = classe_data.get("Cooldown", 12)
-
                 next_cd = last_dt + timedelta(hours=base_cd)
                 now_dt = datetime.now(timezone.utc)
                 if now_dt < next_cd:
@@ -204,3 +206,5 @@ async def setup(bot: commands.Bot):
         if not hasattr(command, "category"):
             command.category = "Reiatsu"
     await bot.add_cog(cog)
+
+
