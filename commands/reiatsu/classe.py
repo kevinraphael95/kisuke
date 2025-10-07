@@ -117,7 +117,7 @@ class ClassePageView(View):
         symbole = data.get("Symbole", "🌀")
         embed = discord.Embed(
             title=f"🎭 Classe {self.index + 1}/{self.total} — {symbole} {nom}",
-            description=f"**Passive** : {data['Passive']}\n**Active** : {data['Active']}",
+            description=f"**Passif** : {data['Passive']}\n**Skill** : {data['Active']}",
             color=discord.Color.purple()
         )
         embed.set_footer(text="Utilise les flèches pour naviguer et ✅ pour choisir cette classe")
