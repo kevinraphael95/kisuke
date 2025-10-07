@@ -29,38 +29,33 @@ class Say(commands.Cog):
     # ──────────────────────────────────────────────────────────────
     def parse_options(self, raw_message: str):
         """
-        Analyse le début du message et active les options.
-        Retourne: (options: dict, message_sans_options: str)
+        Analyse les options au début du message (*embed, *as_me, etc.) et retourne
+        le message restant **tel quel**, sans modifier les retours à la ligne ni les espaces.
         """
         options = {"embed": False, "as_user": False}
-        words = raw_message.split()
-        remaining = []
 
-        for w in words:
-            lw = w.lower()
-            if lw in ("*embed", "*e"):
+        # Détecte les options au début
+        opts_pattern = r"^(?:\*(embed|e|as_me|am|me)\s*)+"
+        match = re.match(opts_pattern, raw_message, re.IGNORECASE)
+        if match:
+            opts_part = match.group()
+            if re.search(r"\*(embed|e)\b", opts_part, re.IGNORECASE):
                 options["embed"] = True
-            elif lw in ("*as_me", "*am", "*me"):
+            if re.search(r"\*(as_me|am|me)\b", opts_part, re.IGNORECASE):
                 options["as_user"] = True
-            else:
-                remaining.append(w)
+            raw_message = raw_message[len(opts_part):]  # garde le texte exact après les options
 
-        return options, " ".join(remaining)
+        return options, raw_message
 
     # ──────────────────────────────────────────────────────────────
-    # 🔹 Fonction interne : envoi normal
+    # 🔹 Envoi normal
     # ──────────────────────────────────────────────────────────────
     async def _say_message(self, channel: discord.abc.Messageable, message: str, embed: bool = False):
-        """Envoie un message normal (bot) avec remplacement des emojis custom."""
-        message = (message or "").strip()
         if not message:
-            return  # Ne rien faire si message vide
-
+            return
         message = self._replace_custom_emojis(channel, message)
-
         if len(message) > 2000:
             message = message[:1997] + "..."
-
         if embed:
             embed_obj = discord.Embed(description=message, color=discord.Color.blurple())
             await safe_send(channel, embed=embed_obj, allowed_mentions=discord.AllowedMentions.none())
@@ -68,19 +63,14 @@ class Say(commands.Cog):
             await safe_send(channel, message, allowed_mentions=discord.AllowedMentions.none())
 
     # ──────────────────────────────────────────────────────────────
-    # 🔹 Fonction interne : envoi "as user"
+    # 🔹 Envoi "as user"
     # ──────────────────────────────────────────────────────────────
     async def _say_as_user(self, channel: discord.TextChannel, user: discord.User, message: str, embed: bool = False):
-        """Envoie un message via webhook avec pseudo et avatar de l'utilisateur."""
-        message = (message or "").strip()
         if not message:
-            return  # Ne rien faire si message vide
-
+            return
         message = self._replace_custom_emojis(channel, message)
-
         if len(message) > 2000:
             message = message[:1997] + "..."
-
         webhook = await channel.create_webhook(name=f"tmp-{user.name}")
         try:
             if embed:
@@ -92,7 +82,7 @@ class Say(commands.Cog):
             await webhook.delete()
 
     # ──────────────────────────────────────────────────────────────
-    # 🔹 Utilitaire : remplacement des emojis custom
+    # 🔹 Remplacement emojis custom
     # ──────────────────────────────────────────────────────────────
     def _replace_custom_emojis(self, channel, message: str) -> str:
         if hasattr(channel, "guild"):
@@ -160,3 +150,5 @@ async def setup(bot: commands.Bot):
         if not hasattr(command, "category"):
             command.category = "Général"
     await bot.add_cog(cog)
+
+
