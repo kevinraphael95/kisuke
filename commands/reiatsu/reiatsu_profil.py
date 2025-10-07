@@ -188,7 +188,7 @@ class ReiatsuProfil(commands.Cog):
     # ────────────────────────────────────────────────────────────────────────────
     @commands.command(
         name="reiatsuprofil",
-        aliases=["rtsp", "rts profil"],
+        aliases=["rtsp", "rtsprofil"],
         help="💠 Affiche ton profil Reiatsu détaillé."
     )
     @commands.cooldown(1, 5.0, commands.BucketType.user)
