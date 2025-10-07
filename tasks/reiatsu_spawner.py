@@ -202,21 +202,24 @@ class ReiatsuSpawner(commands.Cog):
             except Exception as e:
                 print(f"[WARN] Impossible de delete message spawn {msg_id}: {e}")
 
+
     # ───────────────────────────────────────────────────────────────
     def _calculate_gain(self, user_id: int, is_fake=False):
         user_data = supabase.table("reiatsu").select("classe", "points", "bonus5", "active_skill").eq("user_id", user_id).execute()
+        
         if user_data.data:
-            classe = user_data.data[0].get("classe", "Travailleur")
+            classe = user_data.data[0].get("classe")
             current_points = user_data.data[0].get("points", 0)
             bonus5 = user_data.data[0].get("bonus5", 0) or 0
             active_skill = user_data.data[0].get("active_skill", False)
         else:
-            classe = "Travailleur"
+            # Aucun profil (devrait être rare si ensure_profile est utilisé)
+            classe = None
             current_points = 0
             bonus5 = 0
             active_skill = False
 
-        # Absorbeur skill garanti → Super Reiatsu
+        # Absorbeur → Super Reiatsu garanti si skill actif
         if classe == "Absorbeur" and active_skill and not is_fake:
             is_super = True
             supabase.table("reiatsu").update({"active_skill": False}).eq("user_id", user_id).execute()
@@ -225,12 +228,18 @@ class ReiatsuSpawner(commands.Cog):
 
         gain = SUPER_REIATSU_GAIN if is_super else NORMAL_REIATSU_GAIN
 
+        # ─────────────────────────────
+        # 💠 Application des passifs
+        # ─────────────────────────────
         if not is_super:
             if classe == "Absorbeur":
                 gain += 4
             elif classe == "Parieur":
                 gain = 0 if random.random() < 0.5 else random.randint(5, 12)
-            if classe == "Travailleur":
+            elif classe == "Illusionniste":
+                pass  # pas de bonus direct ici
+            else:
+                # Aucun classe → passif Travailleur (bonus +6 tous les 5 Reiatsu)
                 bonus5 += 1
                 if bonus5 >= 5:
                     gain = 6
@@ -238,8 +247,10 @@ class ReiatsuSpawner(commands.Cog):
         else:
             bonus5 = 0
 
-        return gain, is_super, bonus5, classe, current_points + gain
+        return gain, is_super, bonus5, classe, current_points + 
+            gain
 
+    
     def _update_player(self, user, gain, bonus5, new_total, classe):
         user_id = int(user.id)
         user_data = supabase.table("reiatsu").select("user_id").eq("user_id", user_id).execute()
