@@ -83,7 +83,7 @@ class ReiatsuProfil(commands.Cog):
                     classe_symbole = value.get("Symbole", "")
                     break
 
-        # Cooldowns formatés
+        # Cooldown de vol
         cooldown_vol = "✅ Disponible"
         if last_steal and steal_cd:
             try:
@@ -96,30 +96,38 @@ class ReiatsuProfil(commands.Cog):
                     restant = next_cd - now_dt
                     h, m = divmod(int(restant.total_seconds() // 60), 60)
                     cooldown_vol = f"⏳ {restant.days}j {h}h{m}m" if restant.days else f"⏳ {h}h{m}m"
-            except: pass
+            except:
+                pass
 
-        
-
+        # Cooldown du skill
         cooldown_skill = "✅ Disponible"
         if last_skill:
             try:
                 last_dt = parser.parse(last_skill)
                 if not last_dt.tzinfo:
                     last_dt = last_dt.replace(tzinfo=timezone.utc)
-                base_cd = 8 if classe_nom == "Illusionniste" else 12
+
+                # Récupération du cooldown depuis le JSON
+                base_cd = 12  # par défaut
+                if classe_data:
+                    base_cd = classe_data.get("Cooldown", 12)
+
                 next_cd = last_dt + timedelta(hours=base_cd)
                 now_dt = datetime.now(timezone.utc)
                 if now_dt < next_cd:
                     restant = next_cd - now_dt
                     h, m = divmod(int(restant.total_seconds() // 60), 60)
-                    cooldown_skill = f"⏳ {restant.days}j {h}h{m}m" if restant.days else f"⏳ {h}h{m}m"
-            except: pass
+                    cooldown_skill = (
+                        f"⏳ {restant.days}j {h}h{m}m"
+                        if restant.days
+                        else f"⏳ {h}h{m}m"
+                    )
+            except:
+                pass
+
         if active_skill:
             cooldown_skill = "🌀 En cours"
 
-
-
-        
         # Embed profil
         embed = discord.Embed(
             title=f"🎴 Profil Reiatsu de {user.display_name}",
@@ -157,6 +165,7 @@ class ReiatsuProfil(commands.Cog):
 
         embed.set_footer(text="Utilise /classe pour changer de voie ou /skill pour activer ton pouvoir.")
 
+        # Envoi du profil
         if isinstance(channel_or_interaction, discord.Interaction):
             await channel_or_interaction.response.send_message(embed=embed)
         else:
@@ -195,5 +204,3 @@ async def setup(bot: commands.Bot):
         if not hasattr(command, "category"):
             command.category = "Reiatsu"
     await bot.add_cog(cog)
-
-
