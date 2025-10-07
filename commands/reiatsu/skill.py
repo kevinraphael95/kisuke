@@ -58,7 +58,7 @@ class Skill(commands.Cog):
 
             # ❌ Si pas de classe choisie
             if not has_class(player):
-                await safe_send(channel, "❌ Tu n’as pas encore choisi de classe Reiatsu. Utilise `/choisir_classe` pour débloquer ton skill.")
+                await safe_send(channel, "❌ Tu n’as pas encore choisi de classe Reiatsu. Utilise `!!classe` pour choisir une classe.")
                 return
 
             classe = player["classe"]
