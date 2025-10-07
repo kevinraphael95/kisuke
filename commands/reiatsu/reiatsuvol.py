@@ -104,18 +104,18 @@ class ReiatsuVol(commands.Cog):
         # 🎲 Calcul du vol
         montant = max(1, cible_points // 10)  # 10%
 
-        # 🔹 Si voleur a activé son skill → vol garanti
+        # 🔹 Si voleur a activé son skill → vol garanti + double récompense
         if voleur_classe == "Voleur" and voleur_data.get("active_skill", False):
             succes = True
+            montant *= 2  # 💥 double vol uniquement via le skill actif
             try:
                 supabase.table("reiatsu").update({"active_skill": False}).eq("user_id", voleur_id).execute()
             except Exception as e:
                 print(f"[WARN] Impossible de désactiver active_skill pour {voleur_id}: {e}")
         else:
+            # Passif : vol normal avec proba 67% pour voleur, 25% pour les autres
             if voleur_classe == "Voleur":
                 succes = random.random() < 0.67
-                if random.random() < 0.15:
-                    montant *= 2
             else:
                 succes = random.random() < 0.25
 
@@ -184,6 +184,3 @@ async def setup(bot: commands.Bot):
         if not hasattr(command, "category"):
             command.category = "Reiatsu"
     await bot.add_cog(cog)
-
-
-
