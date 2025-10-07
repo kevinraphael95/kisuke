@@ -247,8 +247,7 @@ class ReiatsuSpawner(commands.Cog):
         else:
             bonus5 = 0
 
-        return gain, is_super, bonus5, classe, current_points + 
-            gain
+        return gain, is_super, bonus5, classe, current_points + gain
 
     
     def _update_player(self, user, gain, bonus5, new_total, classe):
