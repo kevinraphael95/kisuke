@@ -103,46 +103,6 @@ class ClassePageView(View):
     async def choose_class(self, interaction: discord.Interaction):
         nom, data = CLASSES[self.index]
 
-        # 🔒 Vérification du cooldown ou de l'utilisation du skill
-        try:
-            res = supabase.table("reiatsu").select("last_skilled_at, active_skill").eq("user_id", str(self.user_id)).execute()
-            user_data = res.data[0] if res.data else {}
-
-            last_skill = user_data.get("last_skilled_at")
-            active_skill = user_data.get("active_skill", False)
-
-            # ───────────── Skill actif
-            if active_skill:
-                embed = discord.Embed(
-                    title="🌀 Skill en cours d’utilisation",
-                    description="Tu ne peux pas changer de classe tant que ton **skill actif** est en cours.",
-                    color=discord.Color.orange()
-                )
-                embed.set_footer(text="Attends la fin de ton skill avant de retenter.")
-                await interaction.response.send_message(embed=embed, ephemeral=True)
-                return
-
-            # ───────────── Skill en cooldown
-            if last_skill:
-                last_dt = datetime.fromisoformat(last_skill.replace("Z", "+00:00"))
-                cooldown_hours = data.get("Cooldown", 12)
-                restant = (last_dt + timedelta(hours=cooldown_hours)) - datetime.now(timezone.utc)
-                if restant.total_seconds() > 0:
-                    h, m = divmod(int(restant.total_seconds() // 60), 60)
-                    temps = f"{restant.days}j {h}h{m}m" if restant.days else f"{h}h{m}m"
-                    embed = discord.Embed(
-                        title="⏳ Skill en cooldown",
-                        description=f"Ton **skill** est encore en recharge pendant `{temps}`.\nTu pourras changer de classe une fois le cooldown terminé.",
-                        color=discord.Color.red()
-                    )
-                    embed.set_footer(text="Patience, le Reiatsu se régénère…")
-                    await interaction.response.send_message(embed=embed, ephemeral=True)
-                    return
-        except Exception as e:
-            await safe_respond(interaction, f"❌ Erreur lors de la vérification du cooldown : {e}", ephemeral=True)
-            return
-
-        # ✅ Application du changement
         try:
             nouveau_cd = 19 if nom == "Voleur" else 24
             supabase.table("reiatsu").update({
@@ -160,9 +120,6 @@ class ClassePageView(View):
         except Exception as e:
             await safe_respond(interaction, f"❌ Erreur lors de l'enregistrement : {e}", ephemeral=True)
 
-    # ──────────────────────────────
-    # Embed affichage
-    # ──────────────────────────────
     def get_embed(self):
         nom, data = CLASSES[self.index]
         symbole = data.get("Symbole", "🌀")
@@ -184,25 +141,62 @@ class ChoisirClasse(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
 
+    async def _verif_cooldown(self, user_id: int):
+        """Vérifie si le joueur peut changer de classe."""
+        res = supabase.table("reiatsu").select("last_skilled_at, active_skill").eq("user_id", str(user_id)).execute()
+        user_data = res.data[0] if res.data else {}
+
+        last_skill = user_data.get("last_skilled_at")
+        active_skill = user_data.get("active_skill", False)
+
+        if active_skill:
+            embed = discord.Embed(
+                title="🌀 Skill en cours d’utilisation",
+                description="Tu ne peux pas changer de classe tant que ton **skill actif** est en cours.",
+                color=discord.Color.orange()
+            )
+            embed.set_footer(text="Attends la fin de ton skill avant de retenter.")
+            return embed
+
+        if last_skill:
+            last_dt = datetime.fromisoformat(last_skill.replace("Z", "+00:00"))
+            base_cd = 12
+            now = datetime.now(timezone.utc)
+            restant = (last_dt + timedelta(hours=base_cd)) - now
+            if restant.total_seconds() > 0:
+                h, m = divmod(int(restant.total_seconds() // 60), 60)
+                temps = f"{restant.days}j {h}h{m}m" if restant.days else f"{h}h{m}m"
+                embed = discord.Embed(
+                    title="⏳ Skill en cooldown",
+                    description=f"Ton **skill** est encore en recharge pendant `{temps}`.\nTu pourras changer de classe une fois le cooldown terminé.",
+                    color=discord.Color.red()
+                )
+                embed.set_footer(text="Patience, le Reiatsu se régénère…")
+                return embed
+
+        return None
+
     async def _send_menu(self, channel: discord.abc.Messageable, user_id: int):
         view = ClassePageView(user_id)
         embed = view.get_embed()
         message = await safe_send(channel, embed=embed, view=view)
         view.message = message
 
-    # ────────────────────────────────────────────────────────────
-    # 🔹 Commande préfixe
-    # ────────────────────────────────────────────────────────────
     @commands.command(name="classe", help="Choisir sa classe Reiatsu")
     @commands.cooldown(1, 10, commands.BucketType.user)
     async def classe_prefix(self, ctx: commands.Context):
+        embed = await self._verif_cooldown(ctx.author.id)
+        if embed:
+            await safe_send(ctx.channel, embed=embed)
+            return
         await self._send_menu(ctx.channel, ctx.author.id)
 
-    # ────────────────────────────────────────────────────────────
-    # 🔹 Commande slash
-    # ────────────────────────────────────────────────────────────
     @app_commands.command(name="classe", description="Choisir sa classe Reiatsu")
     async def classe_slash(self, interaction: discord.Interaction):
+        embed = await self._verif_cooldown(interaction.user.id)
+        if embed:
+            await interaction.response.send_message(embed=embed, ephemeral=True)
+            return
         await interaction.response.defer()
         await self._send_menu(interaction.channel, interaction.user.id)
         try:
