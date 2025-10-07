@@ -81,7 +81,23 @@ class Skill(commands.Cog):
                 remaining = 0  # Jamais utilisé avant, prêt à activer
 
             if remaining > 0:
-                await safe_send(channel, f"⏳ Tu dois attendre {remaining:.1f}h avant de réutiliser ton skill.")
+                # Calcul du temps restant formaté
+                remaining_seconds = remaining * 3600
+                days = int(remaining_seconds // 86400)
+                hours = int((remaining_seconds % 86400) // 3600)
+                minutes = int((remaining_seconds % 3600) // 60)
+
+                # Heure exacte de disponibilité
+                next_ready = now + datetime.timedelta(seconds=remaining_seconds)
+                next_ready_str = next_ready.strftime("%d/%m %H:%M")
+
+                # Format du message
+                if days > 0:
+                    cd_text = f"⏳ {days}j {hours}h{minutes}m"
+                else:
+                    cd_text = f"⏳ {hours}h{minutes}m"
+
+                await safe_send(channel, f"{cd_text} — Ton skill sera de nouveau disponible vers **{next_ready_str}**.")
                 return  # Bloque l’activation si le cooldown n’est pas fini
 
             cooldown_text = "✅ Prêt à utiliser !"
@@ -117,10 +133,14 @@ class Skill(commands.Cog):
             # Mise à jour Supabase
             supabase.table("reiatsu").update(update_data).eq("user_id", user.id).execute()
 
+            # Prochaine disponibilité
+            next_cd = now + datetime.timedelta(hours=cooldown_h)
+            next_ready_str = next_cd.strftime("%d/%m %H:%M")
+
             # Message embed
             embed = discord.Embed(
                 title=f"🎭 Compétence de {classe} ({player.get('username', user.name)})",
-                description=f"{msg}\n\n{cooldown_text}",
+                description=f"{msg}\n\n{cooldown_text}\n> Prochaine disponibilité : **{next_ready_str}**",
                 color=discord.Color.green()
             )
             await safe_send(channel, embed=embed)
@@ -152,7 +172,5 @@ async def setup(bot: commands.Bot):
         if not hasattr(command, "category"):
             command.category = "Reiatsu"
     await bot.add_cog(cog)
-
-
 
 
