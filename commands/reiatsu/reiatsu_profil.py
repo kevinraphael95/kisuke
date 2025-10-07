@@ -98,6 +98,8 @@ class ReiatsuProfil(commands.Cog):
                     cooldown_vol = f"⏳ {restant.days}j {h}h{m}m" if restant.days else f"⏳ {h}h{m}m"
             except: pass
 
+        
+
         cooldown_skill = "✅ Disponible"
         if last_skill:
             try:
@@ -115,6 +117,9 @@ class ReiatsuProfil(commands.Cog):
         if active_skill:
             cooldown_skill = "🌀 En cours"
 
+
+
+        
         # Embed profil
         embed = discord.Embed(
             title=f"🎴 Profil Reiatsu de {user.display_name}",
