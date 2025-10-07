@@ -19,8 +19,8 @@
     },
     "Voleur": {
       "Symbole": "🥷",
-      "Passive": "Réduction de 5h du cooldown de vol, 67% de chance de réussir un vol, 15% de chance de doubler les gains lors d'un vol",
-      "Active": "!!skill — Le prochain vol est garanti. (CD: 12h)",
+      "Passive": "Réduction de 5h du cooldown de vol, 67% de chance de réussir un vol.",
+      "Active": "!!skill — Le prochain vol est garanti, 15% de chance de doubler les gains lors d'un vol. (CD: 12h)",
       "Cooldown" : 12
     },
     "Absorbeur": {
