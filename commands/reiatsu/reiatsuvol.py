@@ -16,6 +16,7 @@ from datetime import datetime, timedelta, timezone
 from dateutil import parser
 from utils.supabase_client import supabase
 from utils.discord_utils import safe_send, safe_respond
+from utils.reiatsu_utils import ensure_profile  # ✅ Ajout pour auto-création profil
 import random
 
 # ────────────────────────────────────────────────────────────────────────────────
@@ -42,7 +43,7 @@ class ReiatsuVol(commands.Cog):
     """
     Commande /volreiatsu et !volreiatsu — Tente de voler du Reiatsu à un autre joueur
     """
-
+    
     def __init__(self, bot: commands.Bot):
         self.bot = bot
 
@@ -53,11 +54,16 @@ class ReiatsuVol(commands.Cog):
         voleur_id = int(voleur.id)
         cible_id = int(cible.id)
 
+        # ✅ Création automatique des profils si inexistants
+        ensure_profile(voleur_id, voleur.name)
+        ensure_profile(cible_id, cible.name)
+
         # 📥 Récupération des données voleur
         voleur_res = supabase.table("reiatsu").select("*").eq("user_id", voleur_id).execute()
         if not voleur_res.data:
             await safe_send(channel, "⚠️ Données introuvables pour toi.")
             return
+
         voleur_data = voleur_res.data[0]
         voleur_classe = voleur_data.get("classe")
         voleur_cd = voleur_data.get("steal_cd") or 24
@@ -88,8 +94,8 @@ class ReiatsuVol(commands.Cog):
         if not cible_res.data:
             await safe_send(channel, "⚠️ Données introuvables pour la cible.")
             return
-        cible_data = cible_res.data[0]
 
+        cible_data = cible_res.data[0]
         voleur_points = voleur_data.get("points", 0) or 0
         cible_points = cible_data.get("points", 0) or 0
         cible_classe = cible_data.get("classe")
@@ -97,6 +103,7 @@ class ReiatsuVol(commands.Cog):
         if cible_points == 0:
             await safe_send(channel, f"⚠️ {cible.mention} n’a pas de Reiatsu à voler.")
             return
+
         if voleur_points == 0:
             await safe_send(channel, "⚠️ Tu dois avoir au moins **1 point** de Reiatsu pour tenter un vol.")
             return
@@ -121,6 +128,7 @@ class ReiatsuVol(commands.Cog):
 
         # Préparation du payload voleur (enregistre la tentative)
         payload_voleur = {"last_steal_attempt": now.isoformat()}
+
         if succes:
             payload_voleur["points"] = voleur_points + montant
             supabase.table("reiatsu").update(payload_voleur).eq("user_id", voleur_id).execute()
@@ -184,3 +192,5 @@ async def setup(bot: commands.Bot):
         if not hasattr(command, "category"):
             command.category = "Reiatsu"
     await bot.add_cog(cog)
+
+
