@@ -13,7 +13,7 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 from discord.ui import View, Button
-import os
+from datetime import datetime, timedelta, timezone
 import json
 from utils.supabase_client import supabase
 from utils.discord_utils import safe_send, safe_respond, safe_edit
@@ -43,7 +43,7 @@ TABLES = {
 # ────────────────────────────────────────────────
 with open("data/reiatsu_config.json", "r", encoding="utf-8") as f:
     config = json.load(f)
-CLASSES = list(config.get("CLASSES", {}).items())  # Liste de tuples [(nom, details), ...]
+CLASSES = list(config.get("CLASSES", {}).items())
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🎛️ UI — Pagination + Choix de classe
@@ -59,7 +59,7 @@ class ClassePageView(View):
     def update_buttons(self):
         self.clear_items()
 
-        # Boutons de navigation avec boucle
+        # Boutons de navigation
         prev_btn = Button(label="⬅️ Précédent", style=discord.ButtonStyle.secondary)
         prev_btn.callback = self.prev_page
         self.add_item(prev_btn)
@@ -72,6 +72,16 @@ class ClassePageView(View):
         choose_btn = Button(label="✅ Choisir cette classe", style=discord.ButtonStyle.success)
         choose_btn.callback = self.choose_class
         self.add_item(choose_btn)
+
+    async def on_timeout(self):
+        """Désactive automatiquement les boutons après le temps limite."""
+        for item in self.children:
+            item.disabled = True
+        if hasattr(self, "message"):
+            try:
+                await safe_edit(self.message, view=self)
+            except:
+                pass
 
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
         if interaction.user.id != self.user_id:
@@ -92,6 +102,47 @@ class ClassePageView(View):
 
     async def choose_class(self, interaction: discord.Interaction):
         nom, data = CLASSES[self.index]
+
+        # 🔒 Vérification du cooldown ou de l'utilisation du skill
+        try:
+            res = supabase.table("reiatsu").select("last_skilled_at, active_skill").eq("user_id", str(self.user_id)).execute()
+            user_data = res.data[0] if res.data else {}
+
+            last_skill = user_data.get("last_skilled_at")
+            active_skill = user_data.get("active_skill", False)
+
+            # ───────────── Skill actif
+            if active_skill:
+                embed = discord.Embed(
+                    title="🌀 Skill en cours d’utilisation",
+                    description="Tu ne peux pas changer de classe tant que ton **skill actif** est en cours.",
+                    color=discord.Color.orange()
+                )
+                embed.set_footer(text="Attends la fin de ton skill avant de retenter.")
+                await interaction.response.send_message(embed=embed, ephemeral=True)
+                return
+
+            # ───────────── Skill en cooldown
+            if last_skill:
+                last_dt = datetime.fromisoformat(last_skill.replace("Z", "+00:00"))
+                cooldown_hours = data.get("Cooldown", 12)
+                restant = (last_dt + timedelta(hours=cooldown_hours)) - datetime.now(timezone.utc)
+                if restant.total_seconds() > 0:
+                    h, m = divmod(int(restant.total_seconds() // 60), 60)
+                    temps = f"{restant.days}j {h}h{m}m" if restant.days else f"{h}h{m}m"
+                    embed = discord.Embed(
+                        title="⏳ Skill en cooldown",
+                        description=f"Ton **skill** est encore en recharge pendant `{temps}`.\nTu pourras changer de classe une fois le cooldown terminé.",
+                        color=discord.Color.red()
+                    )
+                    embed.set_footer(text="Patience, le Reiatsu se régénère…")
+                    await interaction.response.send_message(embed=embed, ephemeral=True)
+                    return
+        except Exception as e:
+            await safe_respond(interaction, f"❌ Erreur lors de la vérification du cooldown : {e}", ephemeral=True)
+            return
+
+        # ✅ Application du changement
         try:
             nouveau_cd = 19 if nom == "Voleur" else 24
             supabase.table("reiatsu").update({
@@ -136,7 +187,8 @@ class ChoisirClasse(commands.Cog):
     async def _send_menu(self, channel: discord.abc.Messageable, user_id: int):
         view = ClassePageView(user_id)
         embed = view.get_embed()
-        await safe_send(channel, embed=embed, view=view)
+        message = await safe_send(channel, embed=embed, view=view)
+        view.message = message
 
     # ────────────────────────────────────────────────────────────
     # 🔹 Commande préfixe
@@ -167,5 +219,3 @@ async def setup(bot: commands.Bot):
         if not hasattr(command, "category"):
             command.category = "Reiatsu"
     await bot.add_cog(cog)
-
-
