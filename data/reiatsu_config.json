@@ -11,12 +11,6 @@
   },
   "DEFAULT_SPAWN_SPEED": "Normal",
   "CLASSES": {
-    "Travailleur": {
-      "Symbole": "👶",
-      "Passive": "Une fois sur 5 : Récupère 6 Reiatsu au lieu de 1 reiatsu.",
-      "Active": "Aucune",
-      "Cooldown" : 0
-    },
     "Voleur": {
       "Symbole": "🥷",
       "Passive": "Réduction de 5h du cooldown de vol, 67% de chance de réussir un vol.",
