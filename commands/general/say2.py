@@ -1,65 +1,55 @@
-from emoji_utils import run_emoji_code
+# commands/general/say_emoji.py
+
+import discord
+from discord import app_commands
+from discord.ext import commands
+from utils.discord_utils import safe_send, safe_delete, safe_respond
+from utils.emoji_utils import run_emoji_code
 
 code = """
-🏗️ 💬(⚡c.Cog):
+🏗️ 💭(⚡c.Cog):
     🐍 🐝(📝, 🛠️):
-        📝.🐝 = 🛠️
+        📝.🛠️ = 🛠️
 
-    🐍 🕵️‍♂️(📝, 💬: str):
-        ⚙️ = {"🧃": ❎, "👤": ❎}
-        🔎 = r'^(?:\\*(embed|e|as_me|am|me)\\s*)+'
-        🎯 = 🗃️.🔧(🔎, 💬)
-        🟰 🎯:
-            🔧 = 🎯.group()
-            🟰 🗃️.🔎(r"\\*(embed|e)\\b", 🔧):
-                ⚙️["🧃"] = ✅
-            🟰 🗃️.🔎(r"\\*(as_me|am|me)\\b", 🔧):
-                ⚙️["👤"] = ✅
-            💬 = 💬[len(🔧):]
-        🔙 ⚙️, 💬
-
-    🐍 🎭(📝, 📡, 💬: str) -> str:
-        🟰 hasattr(📡, "guild"):
-            🎨 = {e.name.lower(): str(e) for e in 📡.guild.emojis}
-            🔙 🗃️.sub(r":([a-zA-Z0-9_]+):", lambda m: 🎨.get(m.group(1).lower(), m.group(0)), 💬)
-        🔙 💬
-
+    # ────────────── Fonction d'envoi ──────────────
     🐍 📢(📝, 📡, 💬: str, 🧃=❎):
-        🟰 not 💬: 🔙 None
-        💬 = ⚡️ 📝.🎭(📡, 💬)
-        🟰 len(💬)>🔢:
-            💬 = 💬[:🔢-3]+"..."
+        🟰 not 💬: 🔙
+        🟰 len(💬) > 🔢:
+            💬 = 💬[:🔢 - 3] + "..."
         🟰 🧃:
-            🧊 = 🐉.🧊(description=💬 , color=🐉.🎨.blurple())
+            🧊 = 🐉.🧊(description=💬, color=🐉.🎨.blurple())
             ⚡️ 🛡️(📡, embed=🧊, allowed_mentions=🐉.👀.none())
         ❌:
-            ⚡️ 🛡️(📡, 💬 , allowed_mentions=🐉.👀.none())
+            ⚡️ 🛡️(📡, 💬, allowed_mentions=🐉.👀.none())
 
+    # ────────────── Commande Slash ──────────────
     ⚡(
-        name="say2",
-        description="💬🔁"
+        name="say_emoji",
+        description=💬🔁
     )
-    🐍 ⚡(📝, 💬: str, 🧃=❎, 👤=❎):
-        🟰 👤:
-            ⚡️ 📝.📢(📝.📡, 💬 , 🧃)
-        ❌:
-            ⚡️ 📝.📢(📝.📡, 💬 , 🧃)
-        ⚡️ 📝💬(📝, "✅💌", ephemeral=True)
+    🐍 slash_say(📝, interaction: 🐉.Interaction, 💬: str, 🧃=❎):
+        🌀:
+            ⚡️ interaction.response.defer()
+            ⚡️ 📝.📢(interaction.channel, 💬, 🧃)
+            ⚡️ 📝💬(interaction, 💌, ephemeral=True)
+        🌪️ 💥 🖨️(e):
+            🖨️(e)
+            ⚡️ 📝💬(interaction, 🔥, ephemeral=True)
 
-    🧩()
-    🐍 📝_prefix(📝, *, 💬: str):
-        ⚙️, 💬 = 📝.🕵️‍♂️(💬)
-        🟰 ⚙️["👤"]:
-            ⚡️ 📝.📢(📝.📡, 💬 , ⚙️["🧃"])
-        ❌:
-            ⚡️ 📝.📢(📝.📡, 💬 , ⚙️["🧃"])
+    # ────────────── Commande Préfix ──────────────
+    🧩
+    🐍 prefix_say(📝, ctx: ⚡c.Context, *, 💬: str):
+        🌀:
+            ⚡️ 📝.📢(ctx.channel, 💬)
+        🌪️ 💥 🖨️(e):
+            🖨️(e)
+            ⚡️ 🛡️(ctx.channel, 🔥)
+        💨:
+            ⚡️ 🗑️(ctx.message)
 
-    🐍 🕐(📝_cmd):
-        🕐.cooldown(1️⃣, ⏰, ⏱️)
-
-🐍 setup(📝_bot: ⚡c.🪄):
-    cog = 💬(📝_bot)
-    ⚡️ 📝_bot.add_cog(cog)
+🐍 setup(🛠️):
+    cog = 💭(🛠️)
+    ⚡️ 🛠️.add_cog(cog)
 """
 
 run_emoji_code(code, globals())
