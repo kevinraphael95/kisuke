@@ -13,13 +13,14 @@
 import discord
 from discord import app_commands
 from discord.ext import commands
-import datetime
+import asyncio
+from dateutil import parser
+from datetime import datetime, timedelta, timezone
 import os
 import json
-import asyncio
 from utils.discord_utils import safe_send, safe_respond
 from utils.supabase_client import supabase
-from utils.reiatsu_utils import ensure_profile, has_class, get_skill_cooldown
+from utils.reiatsu_utils import ensure_profile, has_class
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 📂 Chargement de la configuration Reiatsu
@@ -44,13 +45,12 @@ class Skill(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
         self.config = load_reiatsu_config()
-        self.skill_locks = {}  # Lock pour chaque utilisateur
+        self.skill_locks = {}
 
     # ────────────────────────────────────────────────────────────────────────
     # 🔹 Fonction interne : activation du skill
     # ────────────────────────────────────────────────────────────────────────
     async def _activate_skill(self, user: discord.User, channel: discord.abc.Messageable):
-        """Vérifie la classe, calcule le cooldown et active la compétence correspondante."""
         if user.id not in self.skill_locks:
             self.skill_locks[user.id] = asyncio.Lock()
 
@@ -58,33 +58,57 @@ class Skill(commands.Cog):
             # ✅ Création automatique du profil
             player = ensure_profile(user.id, user.name)
 
-            # ❌ Si pas de classe choisie
+            # ❌ Si pas de classe
             if not has_class(player):
                 await safe_send(channel, "❌ Tu n’as pas encore choisi de classe Reiatsu. Utilise `!!classe` pour choisir une classe.")
                 return
 
             classe = player["classe"]
-            now = datetime.datetime.utcnow()
             classe_data = self.config["CLASSES"].get(classe, {})
+            base_cd = classe_data.get("Cooldown", 12)
 
-            # 🔹 Vérification cooldown
-            remaining = get_skill_cooldown(player, classe_data)
-            if remaining > 0:
-                remaining_seconds = remaining * 3600
-                days = int(remaining_seconds // 86400)
-                hours = int((remaining_seconds % 86400) // 3600)
-                minutes = int((remaining_seconds % 3600) // 60)
-                cd_text = f"⏳ {days}j {hours}h{minutes}m" if days > 0 else f"⏳ {hours}h{minutes}m"
+            # 🔹 Récupération du timestamp en base
+            res = supabase.table("reiatsu").select("last_skilled_at, active_skill").eq("user_id", user.id).execute()
+            data = res.data[0] if res.data else {}
+            last_skill = data.get("last_skilled_at")
+            active_skill = data.get("active_skill", False)
+
+            cooldown_text = "✅ Disponible"
+
+            # 🔹 Calcul du cooldown (identique à reiatsuprofil)
+            if last_skill:
+                try:
+                    last_dt = parser.parse(last_skill)
+                    if not last_dt.tzinfo:
+                        last_dt = last_dt.replace(tzinfo=timezone.utc)
+                    next_cd = last_dt + timedelta(hours=base_cd)
+                    now_dt = datetime.now(timezone.utc)
+                    if now_dt < next_cd:
+                        restant = next_cd - now_dt
+                        h, m = divmod(int(restant.total_seconds() // 60), 60)
+                        cooldown_text = (
+                            f"⏳ {restant.days}j {h}h{m}m"
+                            if restant.days
+                            else f"⏳ {h}h{m}m"
+                        )
+                except:
+                    pass
+
+            if active_skill:
+                cooldown_text = "🌀 En cours"
+
+            # ⛔ Si en cooldown → affichage comme reiatsuprofil
+            if cooldown_text != "✅ Disponible":
                 embed = discord.Embed(
                     title=f"🎴 Skill de {player.get('username', user.name)}",
-                    description=f"**Classe :** {classe}\n**Statut :** {cd_text}",
+                    description=f"**Classe :** {classe}\n**Statut :** {cooldown_text}",
                     color=discord.Color.orange()
                 )
                 await safe_send(channel, embed=embed)
                 return
 
             # 🔹 Activation du skill
-            update_data = {"last_skilled_at": now.isoformat()}
+            update_data = {"last_skilled_at": datetime.utcnow().isoformat()}
             msg = ""
 
             if classe == "Illusionniste":
@@ -113,7 +137,7 @@ class Skill(commands.Cog):
             # ✅ Mise à jour Supabase
             supabase.table("reiatsu").update(update_data).eq("user_id", user.id).execute()
 
-            # 🔹 Embed de confirmation
+            # Embed succès
             embed = discord.Embed(
                 title=f"🎴 Skill de {player.get('username', user.name)}",
                 description=f"**Classe :** {classe}\n**Statut :** 🌀 En cours\n\n{msg}",
@@ -148,4 +172,5 @@ async def setup(bot: commands.Bot):
         if not hasattr(command, "category"):
             command.category = "Reiatsu"
     await bot.add_cog(cog)
+
 
