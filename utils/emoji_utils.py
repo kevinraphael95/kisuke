@@ -85,5 +85,4 @@ def run_emoji_code(code_str, globals_dict):
     """Traduit les emojis du code en syntaxe Python et exécute."""
     for e, r in emoji_code.items():
         code_str = code_str.replace(e, r)
-    exec(code_str, g
-         lobals_dict)
+    exec(code_str, globals_dict)
