@@ -14,35 +14,29 @@ from discord import app_commands
 from discord.ext import commands
 from discord.ui import View, Button
 from datetime import datetime, timedelta, timezone
+from dateutil import parser
 import json
+import os
+
 from utils.supabase_client import supabase
 from utils.discord_utils import safe_send, safe_respond, safe_edit
+from utils.reiatsu_utils import ensure_profile
 
 # ────────────────────────────────────────────────────────────────────────────────
-# 📦 Tables utilisées
+# 📂 Chargement de la configuration Reiatsu
 # ────────────────────────────────────────────────────────────────────────────────
-TABLES = {
-    "reiatsu": {
-        "description": "Contient les informations Reiatsu des joueurs, y compris leur classe et le cooldown associé.",
-        "colonnes": {
-            "user_id": "BIGINT — Identifiant Discord unique de l'utilisateur (clé primaire)",
-            "username": "TEXT — Nom d'utilisateur Discord",
-            "points": "INTEGER — Score Reiatsu du joueur",
-            "classe": "TEXT — Classe actuellement sélectionnée par le joueur",
-            "steal_cd": "INTEGER — Cooldown du vol (en heures, varie selon la classe)",
-            "last_steal_attempt": "TIMESTAMP — Date et heure de la dernière tentative de vol",
-            "last_skilled_at": "TIMESTAMP — Date et heure de la dernière utilisation de compétence active",
-            "active_skill": "BOOLEAN — Indique si la compétence active est en cours d'utilisation",
-            "fake_spawn_id": "TEXT — Identifiant temporaire d’un spawn simulé (optionnel)"
-        }
-    }
-}
+REIATSU_CONFIG_PATH = os.path.join("data", "reiatsu_config.json")
 
-# ────────────────────────────────────────────────
-# 📊 Données des classes Reiatsu depuis reiatsu_config.json
-# ────────────────────────────────────────────────
-with open("data/reiatsu_config.json", "r", encoding="utf-8") as f:
-    config = json.load(f)
+def load_reiatsu_config():
+    """Charge la configuration Reiatsu depuis le fichier JSON."""
+    try:
+        with open(REIATSU_CONFIG_PATH, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except Exception as e:
+        print(f"[ERREUR JSON] Impossible de charger {REIATSU_CONFIG_PATH} : {e}")
+        return {}
+
+config = load_reiatsu_config()
 CLASSES = list(config.get("CLASSES", {}).items())
 
 # ────────────────────────────────────────────────────────────────────────────────
@@ -102,7 +96,6 @@ class ClassePageView(View):
 
     async def choose_class(self, interaction: discord.Interaction):
         nom, data = CLASSES[self.index]
-
         try:
             nouveau_cd = 19 if nom == "Voleur" else 24
             supabase.table("reiatsu").update({
@@ -117,6 +110,7 @@ class ClassePageView(View):
                 color=discord.Color.green()
             )
             await interaction.response.edit_message(embed=embed, view=None)
+
         except Exception as e:
             await safe_respond(interaction, f"❌ Erreur lors de l'enregistrement : {e}", ephemeral=True)
 
@@ -135,20 +129,28 @@ class ClassePageView(View):
 # 🧠 Cog principal
 # ────────────────────────────────────────────────────────────────────────────────
 class ChoisirClasse(commands.Cog):
-    """
-    Commande !classe ou /classe — Choisir sa classe Reiatsu via pagination et boutons
-    """
+    """Commande !classe ou /classe — Choisir sa classe Reiatsu via pagination et boutons"""
+
     def __init__(self, bot: commands.Bot):
         self.bot = bot
+        self.config = config
 
+    # ────────────────────────────────────────────────────────────────────────
+    # 🔹 Vérification du cooldown ou skill actif
+    # ────────────────────────────────────────────────────────────────────────
     async def _verif_cooldown(self, user_id: int):
-        """Vérifie si le joueur peut changer de classe."""
+        """Empêche le changement de classe si skill en cours ou en cooldown."""
+        player = ensure_profile(user_id, "Unknown")  # auto création si nécessaire
+        classe = player.get("classe", None)
+        classe_data = self.config["CLASSES"].get(classe, {}) if classe else {}
+        base_cd = classe_data.get("Cooldown", 12)
+
         res = supabase.table("reiatsu").select("last_skilled_at, active_skill").eq("user_id", str(user_id)).execute()
         user_data = res.data[0] if res.data else {}
-
         last_skill = user_data.get("last_skilled_at")
         active_skill = user_data.get("active_skill", False)
 
+        # Skill encore actif
         if active_skill:
             embed = discord.Embed(
                 title="🌀 Skill en cours d’utilisation",
@@ -158,30 +160,43 @@ class ChoisirClasse(commands.Cog):
             embed.set_footer(text="Attends la fin de ton skill avant de retenter.")
             return embed
 
+        # Skill encore en cooldown
         if last_skill:
-            last_dt = datetime.fromisoformat(last_skill.replace("Z", "+00:00"))
-            base_cd = 12
-            now = datetime.now(timezone.utc)
-            restant = (last_dt + timedelta(hours=base_cd)) - now
-            if restant.total_seconds() > 0:
-                h, m = divmod(int(restant.total_seconds() // 60), 60)
-                temps = f"{restant.days}j {h}h{m}m" if restant.days else f"{h}h{m}m"
-                embed = discord.Embed(
-                    title="⏳ Skill en cooldown",
-                    description=f"Ton **skill** est encore en recharge pendant `{temps}`.\nTu pourras changer de classe une fois le cooldown terminé.",
-                    color=discord.Color.red()
-                )
-                embed.set_footer(text="Patience, le Reiatsu se régénère…")
-                return embed
+            try:
+                last_dt = parser.parse(last_skill)
+                if not last_dt.tzinfo:
+                    last_dt = last_dt.replace(tzinfo=timezone.utc)
+                next_cd = last_dt + timedelta(hours=base_cd)
+                now_dt = datetime.now(timezone.utc)
+
+                if now_dt < next_cd:
+                    restant = next_cd - now_dt
+                    h, m = divmod(int(restant.total_seconds() // 60), 60)
+                    temps = f"{restant.days}j {h}h{m}m" if restant.days else f"{h}h{m}m"
+                    embed = discord.Embed(
+                        title="⏳ Skill en cooldown",
+                        description=f"Ton **skill** est encore en recharge pendant `{temps}`.\nTu pourras changer de classe une fois le cooldown terminé.",
+                        color=discord.Color.red()
+                    )
+                    embed.set_footer(text="Patience, le Reiatsu se régénère…")
+                    return embed
+            except:
+                pass
 
         return None
 
+    # ────────────────────────────────────────────────────────────────────────
+    # 🔹 Envoi du menu interactif
+    # ────────────────────────────────────────────────────────────────────────
     async def _send_menu(self, channel: discord.abc.Messageable, user_id: int):
         view = ClassePageView(user_id)
         embed = view.get_embed()
         message = await safe_send(channel, embed=embed, view=view)
         view.message = message
 
+    # ────────────────────────────────────────────────────────────────────────
+    # 🔹 Commande PREFIX
+    # ────────────────────────────────────────────────────────────────────────
     @commands.command(name="classe", help="Choisir sa classe Reiatsu")
     @commands.cooldown(1, 10, commands.BucketType.user)
     async def classe_prefix(self, ctx: commands.Context):
@@ -191,6 +206,9 @@ class ChoisirClasse(commands.Cog):
             return
         await self._send_menu(ctx.channel, ctx.author.id)
 
+    # ────────────────────────────────────────────────────────────────────────
+    # 🔹 Commande SLASH
+    # ────────────────────────────────────────────────────────────────────────
     @app_commands.command(name="classe", description="Choisir sa classe Reiatsu")
     async def classe_slash(self, interaction: discord.Interaction):
         embed = await self._verif_cooldown(interaction.user.id)
@@ -213,3 +231,5 @@ async def setup(bot: commands.Bot):
         if not hasattr(command, "category"):
             command.category = "Reiatsu"
     await bot.add_cog(cog)
+
+
