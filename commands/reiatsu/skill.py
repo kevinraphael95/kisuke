@@ -26,7 +26,6 @@ from utils.reiatsu_utils import ensure_profile, has_class
 # 📂 Chargement de la configuration Reiatsu
 # ────────────────────────────────────────────────────────────────────────────────
 REIATSU_CONFIG_PATH = os.path.join("data", "reiatsu_config.json")
-
 def load_reiatsu_config():
     """Charge la configuration Reiatsu depuis le fichier JSON."""
     try:
@@ -53,11 +52,9 @@ class Skill(commands.Cog):
     async def _activate_skill(self, user: discord.User, channel: discord.abc.Messageable):
         if user.id not in self.skill_locks:
             self.skill_locks[user.id] = asyncio.Lock()
-
         async with self.skill_locks[user.id]:
             # ✅ Création automatique du profil
             player = ensure_profile(user.id, user.name)
-
             # ❌ Si pas de classe
             if not has_class(player):
                 await safe_send(channel, "❌ Tu n’as pas encore choisi de classe Reiatsu. Utilise `!!classe` pour choisir une classe.")
@@ -68,36 +65,32 @@ class Skill(commands.Cog):
             base_cd = classe_data.get("Cooldown", 12)
 
             # 🔹 Récupération du timestamp en base
-            res = supabase.table("reiatsu").select("last_skilled_at, active_skill").eq("user_id", user.id).execute()
+            res = supabase.table("reiatsu").select("last_skilled_at, active_skill, fake_spawn_id").eq("user_id", user.id).execute()
             data = res.data[0] if res.data else {}
             last_skill = data.get("last_skilled_at")
             active_skill = data.get("active_skill", False)
-
+            fake_spawn_id = data.get("fake_spawn_id")
             cooldown_text = "✅ Disponible"
 
-            # 🔹 Calcul du cooldown (identique à reiatsuprofil)
+            # 🔹 Calcul du cooldown
             if last_skill:
                 try:
                     last_dt = parser.parse(last_skill)
                     if not last_dt.tzinfo:
                         last_dt = last_dt.replace(tzinfo=timezone.utc)
-                    next_cd = last_dt + timedelta(hours=base_cd)
+                    next_cd = last_dt + timedelta(hours=8 if classe == "Illusionniste" else base_cd)
                     now_dt = datetime.now(timezone.utc)
                     if now_dt < next_cd:
                         restant = next_cd - now_dt
                         h, m = divmod(int(restant.total_seconds() // 60), 60)
-                        cooldown_text = (
-                            f"⏳ {restant.days}j {h}h{m}m"
-                            if restant.days
-                            else f"⏳ {h}h{m}m"
-                        )
+                        cooldown_text = f"⏳ {restant.days}j {h}h{m}m" if restant.days else f"⏳ {h}h{m}m"
                 except:
                     pass
 
             if active_skill:
                 cooldown_text = "🌀 En cours"
 
-            # ⛔ Si en cooldown → affichage comme reiatsuprofil
+            # ⛔ Si en cooldown → affichage
             if cooldown_text != "✅ Disponible":
                 embed = discord.Embed(
                     title=f"🎴 Skill de {player.get('username', user.name)}",
@@ -112,14 +105,41 @@ class Skill(commands.Cog):
             msg = ""
 
             if classe == "Illusionniste":
+                if fake_spawn_id:
+                    await safe_send(channel, "⚠️ Tu as déjà un faux Reiatsu actif !")
+                    return
+
                 update_data["active_skill"] = True
-                msg = "🎭 **Illusion activée !** Un faux Reiatsu apparaîtra bientôt."
+                supabase.table("reiatsu").update(update_data).eq("user_id", user.id).execute()
+
+                # Vérification du salon de spawn configuré
+                conf_data = supabase.table("reiatsu_config").select("*").eq("guild_id", channel.guild.id).execute()
+                if not conf_data.data or not conf_data.data[0].get("channel_id"):
+                    await safe_send(channel, "❌ Aucun canal de spawn configuré pour ce serveur.")
+                    return
+                spawn_channel = self.bot.get_channel(int(conf_data.data[0]["channel_id"]))
+
+                # Spawn du faux Reiatsu identique au vrai
+                cog = self.bot.get_cog("ReiatsuSpawner")
+                if cog:
+                    await cog._spawn_message(spawn_channel, guild_id=None, is_fake=True, owner_id=user.id)
+
+                # Message éphémère pour le joueur
+                embed = discord.Embed(
+                    title="🎭 Skill Illusionniste activé !",
+                    description="Un faux Reiatsu est apparu dans le serveur…\nTu ne peux pas l’absorber toi-même.",
+                    color=discord.Color.green()
+                )
+                await safe_send(channel, embed=embed, ephemeral=True)
+
             elif classe == "Voleur":
                 update_data["active_skill"] = True
                 msg = "🥷 **Vol garanti activé !** Ton prochain vol réussira à coup sûr."
+
             elif classe == "Absorbeur":
                 update_data["active_skill"] = True
                 msg = "🌀 **Super Absorption !** Le prochain Reiatsu sera forcément un Super Reiatsu."
+
             elif classe == "Parieur":
                 points = player.get("points", 0)
                 if points < 10:
@@ -134,16 +154,15 @@ class Skill(commands.Cog):
                     update_data["points"] = points - 10 + gain
                     msg = f"🎲 **Gagné !** Tu as misé 10 Reiatsu et remporté **{gain}**."
 
-            # ✅ Mise à jour Supabase
-            supabase.table("reiatsu").update(update_data).eq("user_id", user.id).execute()
-
-            # Embed succès
-            embed = discord.Embed(
-                title=f"🎴 Skill de {player.get('username', user.name)}",
-                description=f"**Classe :** {classe}\n**Statut :** 🌀 En cours\n\n{msg}",
-                color=discord.Color.green()
-            )
-            await safe_send(channel, embed=embed)
+            # ✅ Mise à jour Supabase pour les autres classes
+            if classe != "Illusionniste":
+                supabase.table("reiatsu").update(update_data).eq("user_id", user.id).execute()
+                embed = discord.Embed(
+                    title=f"🎴 Skill de {player.get('username', user.name)}",
+                    description=f"**Classe :** {classe}\n**Statut :** 🌀 En cours\n\n{msg}",
+                    color=discord.Color.green()
+                )
+                await safe_send(channel, embed=embed)
 
     # ────────────────────────────────────────────────────────────────────────
     # 🔹 Commande SLASH
