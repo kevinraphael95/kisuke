@@ -27,7 +27,7 @@
       "Symbole": "🎭",
       "Passive": "50% de chance de ne pas perdre de reiatsu quand volé",
       "Active": "Envoie un faux reiatsu qui si quelqu'un le prend ça donne 10 reiatsu à l'illusionniste. (CD: 8h)",
-      "Cooldown" : 12
+      "Cooldown" : 8
     },
     "Parieur": {
       "Symbole": "🎲",
