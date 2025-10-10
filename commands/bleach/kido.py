@@ -22,7 +22,6 @@ from utils.discord_utils import safe_send, safe_edit
 # 📂 Chargement des données JSON
 # ────────────────────────────────────────────────────────────────────────────────
 DATA_JSON_PATH = os.path.join("data", "kido.json")
-
 def load_data():
     """Charge le fichier JSON contenant les Kido."""
     try:
@@ -41,13 +40,10 @@ class KidoPaginator(View):
         self.pages = embed_pages
         self.current = 0
         self.message = None
-
         self.prev_button = Button(label="⬅️", style=discord.ButtonStyle.secondary)
         self.next_button = Button(label="➡️", style=discord.ButtonStyle.secondary)
-
         self.prev_button.callback = self.prev_page
         self.next_button.callback = self.next_page
-
         self.add_item(self.prev_button)
         self.add_item(self.next_button)
         self.update_buttons()
@@ -75,15 +71,16 @@ class Kido(commands.Cog):
     """
     Commande /kido et !kido — Affiche un Kido aléatoire, précis ou liste tous les Kido paginés
     """
+
     def __init__(self, bot: commands.Bot):
         self.bot = bot
         self.data = load_data()
-
-        # Dictionnaire d’abréviations : h → hado, b → bakudo, a → autres
+        # Dictionnaire d’abréviations : h → hado, b → bakudo, a → autres, r → random
         self.alias = {
             "h": "hado",
             "b": "bakudo",
-            "a": "other"
+            "a": "other",
+            "r": "random"
         }
         self.types = list(self.data.keys())
 
@@ -91,25 +88,41 @@ class Kido(commands.Cog):
     # 🔹 Fonction interne pour afficher un Kido
     # ────────────────────────────────────────────────────────────────────────────
     async def _send_kido(self, channel: discord.abc.Messageable, kido_type: str = None, number: str = None):
-        # ─────────────── Lister tous les Kido ───────────────
+        # ─────────────── Aucune info → afficher aide + liste paginée ───────────────
         if not kido_type:
+            # Embed d'aide
+            help_embed = discord.Embed(
+                title="📜 Commande Kido",
+                description=(
+                    "**Utilisation :**\n"
+                    "`!!kido <type> <numéro>` — Affiche un Kido précis\n"
+                    "`!!kido <type> random` ou `!!kido <type> r` — Kido aléatoire dans ce type\n"
+                    "`!!kido random` ou `!!kido r` — Kido aléatoire total\n"
+                    "`!!kido all` — Liste de tous les Kido paginés\n\n"
+                    "Types disponibles : " + ", ".join(self.types)
+                ),
+                color=discord.Color.blue()
+            )
+            await safe_send(channel, embed=help_embed)
+            return
+
+        # ─────────────── Liste compacte pour all ───────────────
+        if kido_type.lower() == "all":
             embed_pages = []
             for t in self.types:
                 items = list(self.data[t].keys())
-                for i in range(0, len(items), 10):
+                for i in range(0, len(items), 15):  # 15 Kido par page
+                    chunk = items[i:i+15]
+                    desc = "\n".join(f"{key} - {self.data[t][key].get('nom','Unknown')}" for key in chunk)
                     page = discord.Embed(
-                        title=f"{t.capitalize()} [{i+1}-{min(i+10, len(items))}]",
+                        title=f"{t.capitalize()} [{i+1}-{min(i+15,len(items))}]",
+                        description=desc,
                         color=discord.Color.blue()
                     )
-                    for key in items[i:i+10]:
-                        k = self.data[t][key]
-                        page.add_field(name=f"{key} - {k.get('nom', 'Unknown')}", value="\u200b", inline=False)
                     embed_pages.append(page)
-
             if not embed_pages:
                 await safe_send(channel, "❌ Aucun Kido trouvé.")
                 return
-
             paginator = KidoPaginator(embed_pages)
             paginator.message = await safe_send(channel, embed=embed_pages[0], view=paginator)
             return
@@ -119,32 +132,28 @@ class Kido(commands.Cog):
         if kido_type in self.alias:
             kido_type = self.alias[kido_type]
 
-        if kido_type not in self.data:
-            await safe_send(channel, f"❌ Type de Kido invalide : `{kido_type}`")
+        # ─────────────── Cas random global ───────────────
+        if kido_type == "random":
+            kido_type = random.choice(self.types)
+            number = random.choice(list(self.data[kido_type].keys()))
+        else:
+            if not number or number.lower() in ["random", "r"]:
+                number = random.choice(list(self.data[kido_type].keys()))
+
+        # ─────────────── Vérification existence ───────────────
+        if kido_type not in self.data or number not in self.data[kido_type]:
+            await safe_send(channel, f"❌ Type ou numéro de Kido invalide : `{kido_type} {number}`")
             return
 
-        # ─────────────── Cas random ───────────────
-        if number and number.lower() == "random":
-            number = random.choice(list(self.data[kido_type].keys()))
-        elif not number:
-            # kido <type> → random dans ce type
-            number = random.choice(list(self.data[kido_type].keys()))
-
-        # ─────────────── Kido précis ───────────────
-        if number not in self.data[kido_type]:
-            await safe_send(channel, f"❌ Numéro de Kido invalide pour {kido_type} : `{number}`")
-            return
-
+        # ─────────────── Affichage Kido ───────────────
         infos = self.data[kido_type][number]
         embed = discord.Embed(
             title=f"{infos.get('nom', number)} ({kido_type.capitalize()} {number})",
             color=discord.Color.random()
         )
-
         for field_name, field_value in infos.items():
             value = "\n".join(f"• {item}" for item in field_value) if isinstance(field_value, list) else str(field_value)
             embed.add_field(name=field_name.capitalize(), value=value, inline=False)
-
         await safe_send(channel, embed=embed)
 
     # ────────────────────────────────────────────────────────────────────────────
@@ -187,7 +196,7 @@ class Kido(commands.Cog):
     # ────────────────────────────────────────────────────────────────────────────
     # 🔹 Commande PREFIX
     # ────────────────────────────────────────────────────────────────────────────
-    @commands.command(name="kido")
+    @commands.command(name="kido", help="Affiche un Kido précis, aléatoire ou la liste paginée.")
     @commands.cooldown(1, 5.0, commands.BucketType.user)
     async def prefix_kido(self, ctx: commands.Context, kido_type: str = None, number: str = None):
         await self._send_kido(ctx.channel, kido_type, number)
@@ -201,4 +210,5 @@ async def setup(bot: commands.Bot):
         if not hasattr(command, "category"):
             command.category = "Bleach"
     await bot.add_cog(cog)
+
 
