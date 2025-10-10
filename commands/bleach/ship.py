@@ -24,7 +24,6 @@ from utils.discord_utils import safe_send, safe_edit, safe_respond
 CHAR_DIR = os.path.join("data", "personnages")
 
 def load_character(name: str):
-    """Charge un personnage depuis un JSON individuel"""
     path = os.path.join(CHAR_DIR, f"{name.lower()}.json")
     if not os.path.isfile(path):
         return None
@@ -34,7 +33,6 @@ def load_character(name: str):
         return char
 
 def list_characters():
-    """Retourne la liste des noms de personnages disponibles"""
     files = os.listdir(CHAR_DIR)
     return [f.replace(".json", "") for f in files if f.endswith(".json")]
 
@@ -42,26 +40,22 @@ def list_characters():
 # 🧮 Calcul du score de compatibilité
 # ────────────────────────────────────────────────────────────────────────────────
 def is_compatible(p1, p2):
-    """Vérifie la compatibilité de genre et sexualité"""
     def can_love(person, target):
         if person["sexualite"].lower() == "hétéro":
             return target["genre"].lower() != person["genre"].lower()
         elif person["sexualite"].lower() == "homo":
             return target["genre"].lower() == person["genre"].lower()
-        return True  # Inconnu ou bi (non renseigné)
+        return True
     return can_love(p1, p2) and can_love(p2, p1)
 
 def calculer_score(p1, p2):
-    """Calcule un score de compatibilité logique et simple"""
     if not is_compatible(p1, p2):
         return 0
-    score = 50  # base
-    # --- Races communes
+    score = 50
     races1 = set(p1.get("race", []))
     races2 = set(p2.get("race", []))
     commun_races = races1 & races2
     score += 10 * len(commun_races)
-    # --- Traits de personnalité
     traits1 = set(p1.get("personnalite", []))
     traits2 = set(p2.get("personnalite", []))
     commun_traits = traits1 & traits2
@@ -69,7 +63,6 @@ def calculer_score(p1, p2):
         score += 15
     elif len(commun_traits) == 1:
         score += 5
-    # --- Stats proches
     stats1 = p1.get("stats_base", {})
     stats2 = p2.get("stats_base", {})
     compte_proches = sum(
@@ -84,13 +77,19 @@ def calculer_score(p1, p2):
 # 🎛️ Vue interactive : Bouton Nouveau Ship
 # ────────────────────────────────────────────────────────────────────────────────
 class ShipView(View):
-    def __init__(self, persos):
+    def __init__(self, persos, message):
         super().__init__(timeout=60)
         self.persos = persos
+        self.message = message
 
     async def on_timeout(self):
         for child in self.children:
             child.disabled = True
+        if self.message:
+            try:
+                await safe_edit(self.message, view=self)
+            except Exception:
+                pass
 
     @button(label="💘 Nouveau ship", style=discord.ButtonStyle.blurple)
     async def nouveau_ship(self, interaction: discord.Interaction, button: discord.ui.Button):
@@ -122,16 +121,12 @@ class ShipView(View):
         embed.set_thumbnail(url=p1["image"])
         embed.set_image(url=p2["image"])
 
-        if isinstance(target, discord.abc.Messageable):
-            await safe_send(target, embed=embed, view=self)
-        else:
-            await target.response.send_message(embed=embed, view=self)
+        await interaction.response.edit_message(embed=embed, view=self)
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🧠 Cog principal
 # ────────────────────────────────────────────────────────────────────────────────
 class ShipCommand(commands.Cog):
-    """Commande /ship et !ship — Tire au sort deux personnages de Bleach et calcule leur compatibilité"""
     def __init__(self, bot):
         self.bot = bot
 
@@ -149,8 +144,35 @@ class ShipCommand(commands.Cog):
         else:
             p1, p2 = random.sample(persos, 2)
 
-        view = ShipView(persos)
-        await view._send_result(channel, p1, p2)
+        # Créer directement le premier embed
+        score = calculer_score(p1, p2)
+        if score >= 90:
+            reaction = "âmes sœurs 💞"
+            color = discord.Color.magenta()
+        elif score >= 70:
+            reaction = "une excellente alchimie spirituelle ! 🔥"
+            color = discord.Color.red()
+        elif score >= 50:
+            reaction = "une belle entente possible 🌸"
+            color = discord.Color.orange()
+        elif score >= 30:
+            reaction = "relation instable... mais pas impossible 😬"
+            color = discord.Color.yellow()
+        else:
+            reaction = "aucune chance... ils sont incompatibles 💔"
+            color = discord.Color.blue()
+
+        embed = discord.Embed(title="💘 Test de compatibilité 💘", color=color)
+        embed.add_field(name="👩‍❤️‍👨 Couple", value=f"**{p1['nom']}** ❤️ **{p2['nom']}**", inline=False)
+        embed.add_field(name="🔢 Taux d’affinité", value=f"`{score}%`", inline=True)
+        embed.add_field(name="💬 Verdict", value=f"*{reaction}*", inline=False)
+        embed.set_thumbnail(url=p1["image"])
+        embed.set_image(url=p2["image"])
+
+        # Envoyer le message et créer la vue avec le message stocké
+        message = await safe_send(channel, embed=embed)
+        view = ShipView(persos, message)
+        await message.edit(view=view)
 
     # 🔹 Commande SLASH
     @app_commands.command(name="ship", description="💘 Teste la compatibilité entre deux personnages de Bleach.")
