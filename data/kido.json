@@ -261,9 +261,107 @@
       "utilisateurs": ["Tessai Tsukabishi", "Hachigen Ushōda"],
       "incantation": "Dernière partie: Bankin Taihō (終曲・卍禁太封)"
     }
+  },
+
+
+  "autres": {
+    "1": {
+      "nom": "Fushibi",
+      "nom_japonais": "伏火",
+      "traduction": "Flamme embusquée",
+      "effet": "Crée un réseau qui relie le lanceur aux cibles et ralentit ou immobilise ces dernières selon la volonté du lanceur.",
+      "utilisateurs": ["Hinamori Momo"],
+      "numero_hado": 12,
+      "incantation": null
+    },
+    "2": {
+      "nom": "Hakufuku",
+      "nom_japonais": "白伏",
+      "traduction": "Rayon blanc",
+      "effet": "Brouille la conscience de la cible.",
+      "utilisateurs": ["Hinamori Momo", "Ichimaru Gin"],
+      "numero_hado": null,
+      "incantation": null
+    },
+    "3": {
+      "nom": "Kyōmon",
+      "nom_japonais": "鏡門",
+      "traduction": "Porte réfléchissante",
+      "effet": "Crée une barrière rectangulaire similaire à une vitre. Difficile à franchir depuis l'extérieur mais très facile à briser depuis l'intérieur.",
+      "utilisateurs": ["Tōshirō Hitsugaya"],
+      "numero_hado": null,
+      "incantation": null
+    },
+    "4": {
+      "nom": "Ryubi no Jōmon",
+      "nom_japonais": "竜尾の城門",
+      "traduction": "Portail de la queue du dragon",
+      "effet": "Barrière constituée d'un assemblage de pieux de bois. Prend la forme d'un bouclier.",
+      "utilisateurs": ["Hachigen Ushōda"],
+      "numero_hado": null,
+      "incantation": null
+    },
+    "5": {
+      "nom": "Koko no Jōmon",
+      "nom_japonais": "虎咬の城門",
+      "traduction": "Portail des crocs du tigre",
+      "effet": "Barrière constituée d'un cercle de métal fermé par des plaques triangulaires. Semblable à une iris.",
+      "utilisateurs": ["Hachigen Ushōda"],
+      "numero_hado": null,
+      "incantation": null
+    },
+    "6": {
+      "nom": "Kikai no Jōmon",
+      "nom_japonais": "亀鎧の城門",
+      "traduction": "Portail de la carapace de tortue",
+      "effet": "Barrière hexagonale constituée d'un ensemble d'hexagones plus petits.",
+      "utilisateurs": ["Hachigen Ushōda"],
+      "numero_hado": null,
+      "incantation": null
+    },
+    "7": {
+      "nom": "Hoyoku no Jōmon",
+      "nom_japonais": "翼の城門",
+      "traduction": "Portail des ailes du phénix",
+      "effet": "Barrière en forme d'abat-jours constitué d'un obélisque et de nombreuses planches disposées en cercle.",
+      "utilisateurs": ["Hachigen Ushōda"],
+      "numero_hado": null,
+      "incantation": null
+    },
+    "8": {
+      "nom": "Shiji no Saimon",
+      "nom_japonais": "四獣の塞門",
+      "traduction": "Grand portail des 4 Bêtes",
+      "effet": "Barrière cubique constituée par l'assemblage de ryubi, koko, kikai et hoyoku no jōmon.",
+      "utilisateurs": ["Hachigen Ushōda"],
+      "numero_hado": null,
+      "incantation": null
+    },
+    "9": {
+      "nom": "Jikanteishi",
+      "nom_japonais": "時間停止",
+      "traduction": "Stase temporelle",
+      "effet": "Sort interdit qui stoppe le temps dans la zone d'effet.",
+      "utilisateurs": ["Tessai Tsukabishi"],
+      "numero_hado": null,
+      "incantation": null
+    },
+    "10": {
+      "nom": "Kūkanten'i",
+      "nom_japonais": "空間転位",
+      "traduction": "Déplacement spatial",
+      "effet": "Sort interdit qui échange entièrement deux zones définies, y compris les sorts y étant utilisés.",
+      "utilisateurs": ["Tessai Tsukabishi"],
+      "numero_hado": null,
+      "incantation": null
+    }
   }
-}  
+}
+
   
+  
+  
+
 
 
 
