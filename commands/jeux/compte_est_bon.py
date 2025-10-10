@@ -156,7 +156,7 @@ class CompteEstBon(commands.Cog):
     # ────────────────────────────────────────────────────────────────────────────
     # 🔹 Commande PREFIX
     # ────────────────────────────────────────────────────────────────────────────
-    @commands.command(name="compte_est_bon", aliases="lceb")
+    @commands.command(name="compte_est_bon", aliases=["lceb", "lecompteestbon"])
     @commands.cooldown(1, 10.0, commands.BucketType.user)
     async def prefix_compte(self, ctx: commands.Context, mode: str = None):
         multi = mode and mode.lower() in ["multi", "m"]
