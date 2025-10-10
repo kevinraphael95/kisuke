@@ -26,6 +26,7 @@ from utils.reiatsu_utils import ensure_profile, has_class
 # 📂 Chargement de la configuration Reiatsu
 # ────────────────────────────────────────────────────────────────────────────────
 REIATSU_CONFIG_PATH = os.path.join("data", "reiatsu_config.json")
+
 def load_reiatsu_config():
     """Charge la configuration Reiatsu depuis le fichier JSON."""
     try:
@@ -52,15 +53,31 @@ class Skill(commands.Cog):
     async def _activate_skill(self, user: discord.User, channel: discord.abc.Messageable):
         if user.id not in self.skill_locks:
             self.skill_locks[user.id] = asyncio.Lock()
+
         async with self.skill_locks[user.id]:
             # ✅ Création automatique du profil
             player = ensure_profile(user.id, user.name)
+
             # ❌ Si pas de classe
             if not has_class(player):
                 await safe_send(channel, "❌ Tu n’as pas encore choisi de classe Reiatsu. Utilise `!!classe` pour choisir une classe.")
                 return
 
             classe = player["classe"]
+
+            # ────────────────────────────────────────────────────────────────────────
+            # 🔸 Suppression automatique du message de commande pour Illusionniste
+            # (Discrétion : le message !!skill est supprimé dès l’activation)
+            # ────────────────────────────────────────────────────────────────────────
+            if classe == "Illusionniste" and isinstance(channel, discord.TextChannel):
+                try:
+                    async for msg in channel.history(limit=5):
+                        if msg.author == user and msg.content.lower().startswith("!!skill"):
+                            await msg.delete()
+                            break
+                except Exception:
+                    pass
+
             classe_data = self.config["CLASSES"].get(classe, {})
             base_cd = classe_data.get("Cooldown", 12)
 
@@ -70,6 +87,7 @@ class Skill(commands.Cog):
             last_skill = data.get("last_skilled_at")
             active_skill = data.get("active_skill", False)
             fake_spawn_id = data.get("fake_spawn_id")
+
             cooldown_text = "✅ Disponible"
 
             # 🔹 Calcul du cooldown
@@ -117,6 +135,7 @@ class Skill(commands.Cog):
                 if not conf_data.data or not conf_data.data[0].get("channel_id"):
                     await safe_send(channel, "❌ Aucun canal de spawn configuré pour ce serveur.")
                     return
+
                 spawn_channel = self.bot.get_channel(int(conf_data.data[0]["channel_id"]))
 
                 # Spawn du faux Reiatsu identique au vrai
@@ -191,5 +210,6 @@ async def setup(bot: commands.Bot):
         if not hasattr(command, "category"):
             command.category = "Reiatsu"
     await bot.add_cog(cog)
+
 
 
