@@ -45,7 +45,7 @@ def is_compatible(p1, p2):
     """Vérifie la compatibilité de genre et sexualité"""
     def can_love(person, target):
         if person["sexualite"].lower() == "hétéro":
-            return target["genre"].lower() == "femme" if person["genre"].lower() == "homme" else target["genre"].lower() == "homme"
+            return target["genre"].lower() != person["genre"].lower()
         elif person["sexualite"].lower() == "homo":
             return target["genre"].lower() == person["genre"].lower()
         return True  # Inconnu ou bi (non renseigné)
@@ -55,15 +55,12 @@ def calculer_score(p1, p2):
     """Calcule un score de compatibilité logique et simple"""
     if not is_compatible(p1, p2):
         return 0
-
     score = 50  # base
-
     # --- Races communes
     races1 = set(p1.get("race", []))
     races2 = set(p2.get("race", []))
     commun_races = races1 & races2
     score += 10 * len(commun_races)
-
     # --- Traits de personnalité
     traits1 = set(p1.get("personnalite", []))
     traits2 = set(p2.get("personnalite", []))
@@ -72,7 +69,6 @@ def calculer_score(p1, p2):
         score += 15
     elif len(commun_traits) == 1:
         score += 5
-
     # --- Stats proches
     stats1 = p1.get("stats_base", {})
     stats2 = p2.get("stats_base", {})
@@ -82,33 +78,26 @@ def calculer_score(p1, p2):
     )
     if compte_proches >= 3:
         score += 10
-
     return max(0, min(score, 100))
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🎛️ Vue interactive : Bouton Nouveau Ship
 # ────────────────────────────────────────────────────────────────────────────────
 class ShipView(View):
-    def __init__(self, persos, message=None):
+    def __init__(self, persos):
         super().__init__(timeout=60)
         self.persos = persos
-        self.message = message
 
     async def on_timeout(self):
         for child in self.children:
             child.disabled = True
-        if self.message:
-            try:
-                await safe_edit(self.message, view=self)
-            except Exception:
-                pass
 
     @button(label="💘 Nouveau ship", style=discord.ButtonStyle.blurple)
     async def nouveau_ship(self, interaction: discord.Interaction, button: discord.ui.Button):
         p1, p2 = random.sample(self.persos, 2)
         await self._send_result(interaction, p1, p2)
 
-    async def _send_result(self, interaction, p1, p2):
+    async def _send_result(self, target, p1, p2):
         score = calculer_score(p1, p2)
         if score >= 90:
             reaction = "âmes sœurs 💞"
@@ -125,26 +114,31 @@ class ShipView(View):
         else:
             reaction = "aucune chance... ils sont incompatibles 💔"
             color = discord.Color.blue()
+
         embed = discord.Embed(title="💘 Test de compatibilité 💘", color=color)
         embed.add_field(name="👩‍❤️‍👨 Couple", value=f"**{p1['nom']}** ❤️ **{p2['nom']}**", inline=False)
         embed.add_field(name="🔢 Taux d’affinité", value=f"`{score}%`", inline=True)
         embed.add_field(name="💬 Verdict", value=f"*{reaction}*", inline=False)
         embed.set_thumbnail(url=p1["image"])
         embed.set_image(url=p2["image"])
-        await interaction.response.edit_message(embed=embed, view=self)
+
+        if isinstance(target, discord.abc.Messageable):
+            await safe_send(target, embed=embed, view=self)
+        else:
+            await target.response.send_message(embed=embed, view=self)
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🧠 Cog principal
 # ────────────────────────────────────────────────────────────────────────────────
 class ShipCommand(commands.Cog):
     """Commande /ship et !ship — Tire au sort deux personnages de Bleach et calcule leur compatibilité"""
-
     def __init__(self, bot):
         self.bot = bot
 
     async def _send_ship(self, channel: discord.abc.Messageable, p1_name=None, p2_name=None):
         persos = [load_character(n) for n in list_characters()]
         persos = [p for p in persos if p is not None]
+
         if len(persos) < 2:
             await safe_send(channel, "❌ Il faut au moins **deux personnages** pour créer un ship.")
             return
@@ -156,17 +150,14 @@ class ShipCommand(commands.Cog):
             p1, p2 = random.sample(persos, 2)
 
         view = ShipView(persos)
-        view.message = await safe_send(channel, "💘 Calcul du ship...", view=view)
-        await view._send_result(view.message, p1, p2)
+        await view._send_result(channel, p1, p2)
 
     # 🔹 Commande SLASH
     @app_commands.command(name="ship", description="💘 Teste la compatibilité entre deux personnages de Bleach.")
     @app_commands.describe(p1="Nom du premier personnage", p2="Nom du second personnage")
     @app_commands.checks.cooldown(1, 3.0, key=lambda i: i.user.id)
     async def slash_ship(self, interaction: discord.Interaction, p1: str = None, p2: str = None):
-        await interaction.response.defer()
         await self._send_ship(interaction.channel, p1_name=p1, p2_name=p2)
-        await interaction.delete_original_response()
 
     # 🔹 Commande PREFIX
     @commands.command(name="ship")
@@ -183,4 +174,5 @@ async def setup(bot: commands.Bot):
         if not hasattr(command, "category"):
             command.category = "Bleach"
     await bot.add_cog(cog)
+
 
