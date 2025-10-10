@@ -1,36 +1,38 @@
 # ────────────────────────────────────────────────────────────────────────────────
-# 📌 tutoreiatsu.py — Tutoriel interactif pour nouveaux joueurs
-# Objectif : Afficher un guide paginé pour comprendre le système Reiatsu
+# 📌 tutoreiatsu.py — Tutoriel interactif /tutoreiatsu et !tutoreiatsu
+# Objectif : Afficher un guide interactif et paginé avec navigation directe
 # Catégorie : Reiatsu
 # Accès : Tous
-# Cooldown : 1 utilisation / 10s
+# Cooldown : 1 utilisation / 10 secondes / utilisateur
 # ────────────────────────────────────────────────────────────────────────────────
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 📦 Imports nécessaires
 # ────────────────────────────────────────────────────────────────────────────────
 import discord
+from discord import app_commands
 from discord.ext import commands
-from discord.ui import View, Button
+from discord.ui import View, Button, Select
+from utils.discord_utils import safe_send, safe_edit
 
-# ────────────────────────────────────────────────────────────────
-# 📌 Pages du tutoriel
-# ────────────────────────────────────────────────────────────────
+# ────────────────────────────────────────────────────────────────────────────────
+# 📂 Données du tutoriel
+# ────────────────────────────────────────────────────────────────────────────────
 PAGES = [
     {
-        "title": "📖 Bienvenue dans le mini-jeu de récolte de Reiatsu",
+        "title": "📖 Bienvenue dans Reiatsu",
         "description": (
-            "💠 Le Reiatsu apparaît régulièrement sur le serveur (vitesse variable en fonction des paramètres du serveur).\n\n"
-            "- Absorbe le Reiatsu en cliquant sur l'emoji sur le message d'apparition du reiatsu.\n"
-            "- Le reiatsu normal donne +1, le Super reiatsu rapporte +100 (rare)\n"
-            "- Plus tu accumules, plus tu montes dans le classement. Le reiatsu aura des utilités plus tard."
+            "💠 Le Reiatsu est l’énergie principale de ton personnage.\n\n"
+            "- Gagné en absorbant des orbes qui apparaissent automatiquement.\n"
+            "- Orbes : Normaux (+1) / Super (+100, rare)\n"
+            "- Plus tu accumules, plus tu montes dans le classement."
         ),
         "color": discord.Color.purple()
     },
     {
         "title": "⚡ Commandes principales",
         "description": (
-            "- `/reiatsu` : Voir les infos générales (salon ou apparaît le Reiatsu et dans combien de temps) et le classement\n"
+            "- `/reiatsu` : Voir le top 10 et infos générales\n"
             "- `/reiatsuprofil` : Voir ton profil, classe, skill et cooldowns"
         ),
         "color": discord.Color.blue()
@@ -39,8 +41,8 @@ PAGES = [
         "title": "🎭 Choisir une classe",
         "description": (
             "Chaque classe a un **passif** et un **skill actif** :\n\n"
-            "🥷 **Voleur** : Réduction cooldown vol de 5h, skill : vol garanti et 15% de chance de doubler le vol (12h)\n"
-            "🌀 **Absorbeur** : +5 Reiatsu par absorption, skill : prochain Reiatsu = Super (24h)\n"
+            "🥷 **Voleur** : Réduction cooldown vol, vol garanti possible (12h)\n"
+            "🌀 **Absorbeur** : +5 Reiatsu par absorption, prochain Reiatsu = Super (24h)\n"
             "🎭 **Illusionniste** : 50% chance de ne rien perdre si volé, faux Reiatsu (8h)\n"
             "🎲 **Parieur** : Absorption aléatoire, mise pour gagner 30 Reiatsu (12h)"
         ),
@@ -70,16 +72,6 @@ PAGES = [
         "color": discord.Color.red()
     },
     {
-        "title": "🎟️ KeyLottery",
-        "description": (
-            "📌 Commande : `/keylottery`\n"
-            "- Achète un ticket pour 250 Reiatsu\n"
-            "- 10 boutons pour tenter ta chance :\n"
-            "🔑 Gagner une clé Steam\n💎 Doubler la mise\n❌ Ne rien gagner"
-        ),
-        "color": discord.Color.gold()
-    },
-    {
         "title": "💡 Conseils pour bien débuter",
         "description": (
             "1. Choisis ta classe selon ton style.\n"
@@ -92,16 +84,18 @@ PAGES = [
     }
 ]
 
-# ────────────────────────────────────────────────────────────────
-# 🧠 Vue paginée du tutoriel
-# ────────────────────────────────────────────────────────────────
-class TutoReiatsuView(View):
+# ────────────────────────────────────────────────────────────────────────────────
+# 🎛️ UI — Navigation paginée + boutons directs
+# ────────────────────────────────────────────────────────────────────────────────
+class TutoView(View):
     def __init__(self, user_id: int):
-        super().__init__(timeout=120)
+        super().__init__(timeout=180)
         self.user_id = user_id
         self.index = 0
+        self.message = None
+        # Bouton pour navigation directe
+        self.add_item(PageSelect(self))
 
-    # 🔹 Génération de l'embed actuel
     def get_embed(self):
         page = PAGES[self.index]
         embed = discord.Embed(
@@ -112,76 +106,74 @@ class TutoReiatsuView(View):
         embed.set_footer(text=f"Page {self.index + 1}/{len(PAGES)}")
         return embed
 
-    # 🔹 Vérification utilisateur
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
         if interaction.user.id != self.user_id:
-            await interaction.response.send_message(
-                "❌ Tu ne peux pas interagir avec ce tutoriel.", ephemeral=True
-            )
+            await safe_respond(interaction, "❌ Tu ne peux pas interagir avec ce tutoriel.", ephemeral=True)
             return False
         return True
 
-    # 🔹 Timeout : désactivation des boutons
     async def on_timeout(self):
         for item in self.children:
             item.disabled = True
-        if hasattr(self, "message"):
-            try:
-                await self.message.edit(view=self)
-            except:
-                pass
+        if self.message:
+            await safe_edit(self.message, view=self)
 
-    # 🔹 Bouton précédent
     @discord.ui.button(label="⬅️ Précédent", style=discord.ButtonStyle.secondary)
     async def prev_page(self, interaction: discord.Interaction, button: Button):
         self.index = (self.index - 1) % len(PAGES)
-        await interaction.response.edit_message(embed=self.get_embed(), view=self)
+        await safe_edit(interaction.message, embed=self.get_embed(), view=self)
 
-    # 🔹 Bouton suivant
     @discord.ui.button(label="➡️ Suivant", style=discord.ButtonStyle.secondary)
     async def next_page(self, interaction: discord.Interaction, button: Button):
         self.index = (self.index + 1) % len(PAGES)
-        await interaction.response.edit_message(embed=self.get_embed(), view=self)
+        await safe_edit(interaction.message, embed=self.get_embed(), view=self)
 
-# ────────────────────────────────────────────────────────────────
+class PageSelect(Select):
+    def __init__(self, parent_view: TutoView):
+        self.parent_view = parent_view
+        options = [discord.SelectOption(label=f"Page {i+1}", value=str(i)) for i in range(len(PAGES))]
+        super().__init__(placeholder="Sauter directement à une page", options=options)
+
+    async def callback(self, interaction: discord.Interaction):
+        self.parent_view.index = int(self.values[0])
+        await safe_edit(interaction.message, embed=self.parent_view.get_embed(), view=self.parent_view)
+
+# ────────────────────────────────────────────────────────────────────────────────
 # 🧠 Cog principal
-# ────────────────────────────────────────────────────────────────
+# ────────────────────────────────────────────────────────────────────────────────
 class TutoReiatsu(commands.Cog):
     """Commande /tutoreiatsu et !tutoreiatsu — Tutoriel interactif Reiatsu"""
     def __init__(self, bot: commands.Bot):
         self.bot = bot
 
     # 🔹 Fonction interne pour envoyer le tutoriel
-    async def _send_tuto(self, ctx_or_interaction):
-        user_id = ctx_or_interaction.user.id if hasattr(ctx_or_interaction, "user") else ctx_or_interaction.author.id
-        view = TutoReiatsuView(user_id)
-        embed = view.get_embed()
-        if hasattr(ctx_or_interaction, "response"):  # slash
-            await ctx_or_interaction.response.send_message(embed=embed, view=view)
-            view.message = await ctx_or_interaction.original_message()
-        else:
-            view.message = await ctx_or_interaction.send(embed=embed, view=view)
+    async def _send_tuto(self, channel: discord.abc.Messageable, user_id: int):
+        view = TutoView(user_id)
+        view.message = await safe_send(channel, embed=view.get_embed(), view=view)
 
-    # 🔹 Commande Slash
-    @discord.app_commands.command(
+    # 🔹 Commande SLASH
+    @app_commands.command(
         name="tutoreiatsu",
         description="Affiche le tutoriel complet pour les nouveaux joueurs."
     )
+    @app_commands.checks.cooldown(rate=1, per=10.0, key=lambda i: i.user.id)
     async def slash_tuto(self, interaction: discord.Interaction):
         await interaction.response.defer()
-        await self._send_tuto(interaction)
+        await self._send_tuto(interaction.channel, interaction.user.id)
+        await interaction.delete_original_response()
 
     # 🔹 Commande PREFIX
     @commands.command(
-        name="tutoreiatsu",
+        name="tutoreiatsu", aliases=["tutorts", "rtstuto", "reiatsututo"],
         help="Affiche le tutoriel complet pour les nouveaux joueurs."
     )
+    @commands.cooldown(1, 10.0, commands.BucketType.user)
     async def prefix_tuto(self, ctx: commands.Context):
-        await self._send_tuto(ctx)
+        await self._send_tuto(ctx.channel, ctx.author.id)
 
-# ────────────────────────────────────────────────────────────────
+# ────────────────────────────────────────────────────────────────────────────────
 # 🔌 Setup du Cog
-# ────────────────────────────────────────────────────────────────
+# ────────────────────────────────────────────────────────────────────────────────
 async def setup(bot: commands.Bot):
     cog = TutoReiatsu(bot)
     for command in cog.get_commands():
