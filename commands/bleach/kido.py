@@ -71,11 +71,10 @@ class Kido(commands.Cog):
     """
     Commande /kido et !kido — Affiche un Kido aléatoire, précis ou liste tous les Kido paginés
     """
-
     def __init__(self, bot: commands.Bot):
         self.bot = bot
         self.data = load_data()
-        # Dictionnaire d’abréviations : h → hado, b → bakudo, a → autres, r → random
+        # Abréviations
         self.alias = {
             "h": "hado",
             "b": "bakudo",
@@ -83,14 +82,19 @@ class Kido(commands.Cog):
             "r": "random"
         }
         self.types = list(self.data.keys())
+        # Couleurs par type
+        self.colors = {
+            "hado": discord.Color.red(),
+            "bakudo": discord.Color.blue(),
+            "other": discord.Color.purple()
+        }
 
     # ────────────────────────────────────────────────────────────────────────────
     # 🔹 Fonction interne pour afficher un Kido
     # ────────────────────────────────────────────────────────────────────────────
     async def _send_kido(self, channel: discord.abc.Messageable, kido_type: str = None, number: str = None):
-        # ─────────────── Aucune info → afficher aide + liste paginée ───────────────
+        # ─────────────── Aucune info → embed d’aide ───────────────
         if not kido_type:
-            # Embed d'aide
             help_embed = discord.Embed(
                 title="📜 Commande Kido",
                 description=(
@@ -99,9 +103,9 @@ class Kido(commands.Cog):
                     "`!!kido <type> random` ou `!!kido <type> r` — Kido aléatoire dans ce type\n"
                     "`!!kido random` ou `!!kido r` — Kido aléatoire total\n"
                     "`!!kido all` — Liste de tous les Kido paginés\n\n"
-                    "Types disponibles : " + ", ".join(self.types)
+                    "**Types disponibles :** Hado (`h`), Bakudo (`b`), Autres (`a`)"
                 ),
-                color=discord.Color.blue()
+                color=discord.Color.teal()
             )
             await safe_send(channel, embed=help_embed)
             return
@@ -111,13 +115,13 @@ class Kido(commands.Cog):
             embed_pages = []
             for t in self.types:
                 items = list(self.data[t].keys())
-                for i in range(0, len(items), 15):  # 15 Kido par page
+                for i in range(0, len(items), 15):
                     chunk = items[i:i+15]
                     desc = "\n".join(f"{key} - {self.data[t][key].get('nom','Unknown')}" for key in chunk)
                     page = discord.Embed(
                         title=f"{t.capitalize()} [{i+1}-{min(i+15,len(items))}]",
                         description=desc,
-                        color=discord.Color.blue()
+                        color=self.colors.get(t, discord.Color.teal())
                     )
                     embed_pages.append(page)
             if not embed_pages:
@@ -132,7 +136,7 @@ class Kido(commands.Cog):
         if kido_type in self.alias:
             kido_type = self.alias[kido_type]
 
-        # ─────────────── Cas random global ───────────────
+        # ─────────────── Cas random global ou type ───────────────
         if kido_type == "random":
             kido_type = random.choice(self.types)
             number = random.choice(list(self.data[kido_type].keys()))
@@ -149,7 +153,7 @@ class Kido(commands.Cog):
         infos = self.data[kido_type][number]
         embed = discord.Embed(
             title=f"{infos.get('nom', number)} ({kido_type.capitalize()} {number})",
-            color=discord.Color.random()
+            color=self.colors.get(kido_type, discord.Color.teal())
         )
         for field_name, field_value in infos.items():
             value = "\n".join(f"• {item}" for item in field_value) if isinstance(field_value, list) else str(field_value)
@@ -185,7 +189,7 @@ class Kido(commands.Cog):
     # 🔹 Commande SLASH
     # ────────────────────────────────────────────────────────────────────────────
     @app_commands.command(name="kido", description="Affiche un Kido aléatoire, précis ou liste tous les Kido")
-    @app_commands.describe(type="Type de Kido (hado, bakudo, etc.) ou abrégé (h, b, a)", number="Numéro du Kido ou 'random'")
+    @app_commands.describe(type="Type de Kido (hado, bakudo, autres) ou abrégé (h, b, a)", number="Numéro du Kido ou 'random'")
     @app_commands.autocomplete(type=type_autocomplete, number=number_autocomplete)
     @app_commands.checks.cooldown(rate=1, per=5.0, key=lambda i: i.user.id)
     async def slash_kido(self, interaction: discord.Interaction, type: str = None, number: str = None):
@@ -210,5 +214,4 @@ async def setup(bot: commands.Bot):
         if not hasattr(command, "category"):
             command.category = "Bleach"
     await bot.add_cog(cog)
-
 
