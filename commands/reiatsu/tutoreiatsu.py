@@ -23,9 +23,9 @@ PAGES = [
         "title": "📖 Bienvenue dans le mini-jeu de Reiatsu",
         "description": (
             "💠 Le Reiatsu apparaît régulièrement sur le serveur sur le salon x.\n\n"
-            "- Absorbe le Reiatsu en cliquant sur l'emoji en réaction sur le message d'apparition du reiatsu.\n"
+            "- Quand un Reiatsu apparaît sur le serveur, absorbe le en cliquant sur l'emoji en réaction.\n"
             "- Un Reiatsu normal rapporte +1 et un Super Reiatsu rapporte +100 (rare)\n"
-            "- Plus tu accumules, plus tu montes dans le classement."
+            "- Le but est de récupérer le plus de Reiatsu possible, le Reiatsu aura des utilités plus tard."
         ),
         "color": discord.Color.purple()
     },
@@ -40,7 +40,8 @@ PAGES = [
     {
         "title": "🎭 Choisir une classe",
         "description": (
-            "Chaque classe a un **passif** et un **skill actif** :\n\n"
+            "Chaque classe a un **passif** et un **skill actif**\n"
+            "Le passif s'active automatiqument, le skill doit être activé.\n\n"
             "🥷 Voleur : Vol garanti possible (12h)\n"
             "🌀 Absorbeur : Prochain Reiatsu = Super (24h)\n"
             "🎭 Illusionniste : Faux Reiatsu, chance de ne rien perdre (8h)\n"
