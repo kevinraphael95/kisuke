@@ -1,7 +1,7 @@
 # ────────────────────────────────────────────────────────────────────────────────
 # 📌 kido.py — Commande interactive /kido et !kido
 # Objectif : Affiche un Kido aléatoire, précis ou liste tous les Kido paginés
-# Catégorie : Autre
+# Catégorie : Bleach
 # Accès : Tous
 # Cooldown : 1 utilisation / 5 secondes / utilisateur
 # ────────────────────────────────────────────────────────────────────────────────
@@ -160,7 +160,7 @@ async def setup(bot: commands.Bot):
     cog = Kido(bot)
     for command in cog.get_commands():
         if not hasattr(command, "category"):
-            command.category = "Autre"
+            command.category = "Bleach"
     await bot.add_cog(cog)
 
 
