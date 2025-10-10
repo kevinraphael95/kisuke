@@ -138,7 +138,134 @@
       "incantation": null
     }
   }
-}
+
+
+  "bakudo": {
+    "1": {
+      "nom": "Sai",
+      "nom_japonais": "縛道の一・塞",
+      "traduction": "Entrave",
+      "effet": "Bloque les bras de la cible dans le dos.",
+      "utilisateurs": ["Rukia Kuchiki", "Renji Abarai"],
+      "incantation": null
+    },
+    "4": {
+      "nom": "Hainawa",
+      "nom_japonais": "縛道の四・這縄",
+      "traduction": "Corde rampante",
+      "effet": "Une corde d'énergie étrangle la cible.",
+      "utilisateurs": ["Rukia Kuchiki", "Renji Abarai", "Yumichika Ayasegawa", "Ginrei Kuchiki", "Nanao Ise", "Urahara Kisuke"],
+      "incantation": null
+    },
+    "8": {
+      "nom": "Seki",
+      "nom_japonais": "縛道の八・斥",
+      "traduction": "Repoussoir",
+      "effet": "Crée un bouclier circulaire qui repousse et étourdit tout ce qui le frappe.",
+      "utilisateurs": ["Jūshirō Ukitake"],
+      "incantation": null
+    },
+    "9": {
+      "nom": "Gekijō / Hori",
+      "nom_japonais": "縛道の九",
+      "traduction": "Frappe / Cercle de désintégration",
+      "effet": "Englobe la cible d'une lumière rouge et la paralyse. Peut aussi former un lasso de feu contrôlable.",
+      "utilisateurs": ["Rukia Kuchiki", "Hinamori Momo"],
+      "incantation": "Détruis-toi, ô chien noir de Rondanini! Lis, enflamme-toi et puis dévores ta propre gorge! (自壊せよロンダニーニの黒犬!! 一読し・焼き払い・自ら喉を掻き切るがいい!)"
+    },
+    "21": {
+      "nom": "Sekienton",
+      "nom_japonais": "縛道の二十一・赤煙遁",
+      "traduction": "Fumée rouge d'évasion",
+      "effet": "Effet similaire à une bombe à fumée ninja: explosion et beaucoup de fumée opaque.",
+      "utilisateurs": ["Marechiyo Ōmaeda"],
+      "incantation": null
+    },
+    "26": {
+      "nom": "Kyokko",
+      "nom_japonais": "細道の十六・曲光",
+      "traduction": "Lumière incurvée",
+      "effet": "Camouflage sensoriel qui efface la présence des cibles aux sens des autres personnes.",
+      "utilisateurs": ["Hinamori Momo"],
+      "incantation": null
+    },
+    "30": {
+      "nom": "Shitotsu Sansen",
+      "nom_japonais": "道の三十・嘴突三閃",
+      "traduction": "Triple coup de bec étincelant",
+      "effet": "Épingle la cible au premier obstacle par trois pieux de lumière placés en triangle équilatéral.",
+      "utilisateurs": ["Soi Fon", "Yoruichi Shihōin", "Kira Izuru", "Kujo Nozomi", "Inaba Kageroza"],
+      "incantation": null
+    },
+    "37": {
+      "nom": "Tsuriboshi",
+      "nom_japonais": "道の三十七・吊星",
+      "traduction": "Étoile suspendue",
+      "effet": "Crée une toile en forme d'étoile à 6 branches pour réceptionner un objet ou une personne.",
+      "utilisateurs": ["Hinamori Momo", "Izuru Kira", "Urahara Kisuke"],
+      "incantation": null
+    },
+    "39": {
+      "nom": "Enkosen",
+      "nom_japonais": "縛道の三十九・円閘扇",
+      "traduction": "Mille arcs de cercle",
+      "effet": "Crée un bouclier circulaire par la rotation très rapide d'une barre d'énergie.",
+      "utilisateurs": ["Izuru Kira", "Hinamori Momo"],
+      "incantation": null
+    },
+    "58": {
+      "nom": "Kakushitsuijaku",
+      "nom_japonais": "道の五十八・捆趾追雀",
+      "traduction": "Invocation des moineaux traqueurs",
+      "effet": "Permet de localiser des cibles si l'utilisateur connaît la signature de leurs énergies spirituelles.",
+      "utilisateurs": ["Isane Kotetsu", "Rangiku Matsumoto"],
+      "incantation": "Le cœur au sud... Les yeux au nord... Le bout des doigts à l'ouest... Le talon à l'est... Ő vent, souffle et rassemble! O pluie, tombe et efface! (南の心臓 北の瞳西の指先 東の踵風持ちて 集い雨払いて散れ)"
+    },
+    "61": {
+      "nom": "Rikujōkōrō",
+      "nom_japonais": "縛道の六十六・杖光牢",
+      "traduction": "Prison des 6 pointes de lumière",
+      "effet": "Immobilise la cible par six pieux de lumière disposés en étoile.",
+      "utilisateurs": ["Kuchiki Byakuya", "Kuchiki Rukia", "Urahara Kisuke", "Unohana Retsu"],
+      "incantation": "Char rugissant. Brèche du rouet. Que la lumière sépare en six! (雷鳴の馬車糸車の間隙光もて此を六に別つ!)"
+    },
+    "77": {
+      "nom": "Tenteikūra",
+      "nom_japonais": "道の七十七・天挺空羅",
+      "traduction": "Forteresse céleste",
+      "effet": "Envoie un message mental à toutes les cibles identifiées par le lanceur.",
+      "utilisateurs": ["Isane Kotetsu", "Kaname Tōsen", "Rangiku Matsumoto"],
+      "incantation": "Fils noirs et blancs! 22 ponts géants! 66 couronnes et ceintures! Traces de pas, tonnerre grondant au loin, pluie drue, terre tournante, soir tombant, mer de nuages, colonne bleue de l'armée... Formez une sphère et traversez les cieux! (黒白の羅! 二十二の橋梁 六十六の冠帯足跡・遠雷・尖峰・回地・夜伏・雲海・蒼い隊列 太円に満ちて天を挺れはし)"
+    },
+    "79": {
+      "nom": "Kuyō Shibari",
+      "nom_japonais": "道の七十九・九曜縛",
+      "traduction": "Liens des neuf rayons solaires",
+      "effet": "Crée huit trous noirs autour de la cible avant qu'un neuvième apparaisse sur la cible.",
+      "utilisateurs": ["Urahara Kisuke"],
+      "incantation": null
+    },
+    "81": {
+      "nom": "Dankū",
+      "nom_japonais": "縛道の八十一・斷空",
+      "traduction": "Coupure dans l'espace",
+      "effet": "Crée une barrière rectangulaire qui peut stopper tous les Hadō jusqu'au niveau 89.",
+      "utilisateurs": ["Byakuya Kuchiki", "Sōsuke Aizen", "Retsu Unohana", "Reigai de Byakuya Kuchiki"],
+      "incantation": null
+    },
+    "99": {
+      "nom": "Bankin",
+      "nom_japonais": "縛道の九十九・卍禁",
+      "traduction": "Grand sceau",
+      "effet": "Trois phases: momifie la cible, l'empale de multiples tiges de métal, et écrase la cible sous un immense cube de métal.",
+      "utilisateurs": ["Tessai Tsukabishi", "Hachigen Ushōda"],
+      "incantation": "Dernière partie: Bankin Taihō (終曲・卍禁太封)"
+    }
+  }
+}  
+  
+
+
 
 
 
