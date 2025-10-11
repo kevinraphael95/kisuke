@@ -17,10 +17,13 @@ import os
 import json
 import random
 from utils.discord_utils import safe_send, safe_edit, safe_respond
+
+
 # ────────────────────────────────────────────────────────────────────────────────
 # 📂 Gestion des personnages
 # ────────────────────────────────────────────────────────────────────────────────
 CHAR_DIR = os.path.join("data", "personnages")
+
 
 def load_character(name: str):
     path = os.path.join(CHAR_DIR, f"{name.lower()}.json")
@@ -31,46 +34,89 @@ def load_character(name: str):
         char["image"] = char.get("images", [""])[0] if char.get("images") else ""
         return char
 
+
 def list_characters():
     files = os.listdir(CHAR_DIR)
     return [f.replace(".json", "") for f in files if f.endswith(".json")]
 
+
 # ────────────────────────────────────────────────────────────────────────────────
 # 🧮 Calcul du score de compatibilité
 # ────────────────────────────────────────────────────────────────────────────────
-def is_compatible(p1, p2):
-    def can_love(person, target):
+def compatibilite_amoureuse(p1, p2):
+    """Retourne un coefficient entre 0 et 1 selon la compatibilité amoureuse logique."""
+    g1, g2 = p1["genre"].lower(), p2["genre"].lower()
+    s1, s2 = p1["sexualite"].lower(), p2["sexualite"].lower()
+
+    def peut_aimer(person, cible):
         if person["sexualite"].lower() == "hétéro":
-            return target["genre"].lower() != person["genre"].lower()
+            return cible["genre"].lower() != person["genre"].lower()
         elif person["sexualite"].lower() == "homo":
-            return target["genre"].lower() == person["genre"].lower()
+            return cible["genre"].lower() == person["genre"].lower()
+        elif person["sexualite"].lower() == "bi":
+            return True
         return True
-    return can_love(p1, p2) and can_love(p2, p1)
+
+    # Cas logique : si l'un ne peut pas aimer l'autre → compatibilité amoureuse faible
+    if not (peut_aimer(p1, p2) and peut_aimer(p2, p1)):
+        return 0.2  # faible compatibilité mais pas forcément 0 (amitié, lien spirituel)
+    # Les deux bi → très ouverts
+    if s1 == "bi" and s2 == "bi":
+        return 1.0
+    # Hétéro compatibles → bonne base
+    if s1 == "hétéro" and s2 == "hétéro" and g1 != g2:
+        return 0.9
+    # Homos compatibles → excellente alchimie
+    if s1 == "homo" and s2 == "homo" and g1 == g2:
+        return 0.95
+    # Un bi + un homo/hétéro → très bon équilibre
+    if (s1 == "bi" and s2 in ["homo", "hétéro"]) or (s2 == "bi" and s1 in ["homo", "hétéro"]):
+        return 0.85
+    return 0.5
+
 
 def calculer_score(p1, p2):
-    if not is_compatible(p1, p2):
-        return 0
+    """Calcule un score de compatibilité détaillé entre deux personnages."""
     score = 50
+
+    # Compatibilité amoureuse / sexuelle
+    coeff = compatibilite_amoureuse(p1, p2)
+    score *= coeff
+
+    # Points pour les races communes
     races1 = set(p1.get("race", []))
     races2 = set(p2.get("race", []))
     commun_races = races1 & races2
     score += 10 * len(commun_races)
+
+    # Points pour les traits de personnalité similaires
     traits1 = set(p1.get("personnalite", []))
     traits2 = set(p2.get("personnalite", []))
     commun_traits = traits1 & traits2
-    if len(commun_traits) >= 2:
-        score += 15
+    if len(commun_traits) >= 3:
+        score += 20
+    elif len(commun_traits) == 2:
+        score += 10
     elif len(commun_traits) == 1:
         score += 5
+
+    # Compatibilité des statistiques
     stats1 = p1.get("stats_base", {})
     stats2 = p2.get("stats_base", {})
     compte_proches = sum(
         1 for s in ["attaque", "defense", "pression", "kido", "intelligence", "rapidite"]
         if abs(stats1.get(s, 0) - stats2.get(s, 0)) < 20
     )
-    if compte_proches >= 3:
-        score += 10
-    return max(0, min(score, 100))
+    if compte_proches >= 4:
+        score += 15
+    elif compte_proches >= 2:
+        score += 5
+
+    # Compatibilité aléatoire spirituelle (pour un peu de fun)
+    score += random.randint(-5, 5)
+
+    return max(0, min(int(score), 100))
+
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🎛️ Vue interactive : Bouton Nouveau Ship
@@ -94,7 +140,7 @@ class ShipView(View):
     async def nouveau_ship(self, interaction: discord.Interaction, button: discord.ui.Button):
         p1, p2 = random.sample(self.persos, 2)
         await self._send_result(p1, p2)
-        await interaction.response.defer()  # marque l'interaction comme traitée
+        await interaction.response.defer()
 
     async def _send_result(self, p1, p2):
         score = calculer_score(p1, p2)
@@ -120,9 +166,8 @@ class ShipView(View):
         embed.add_field(name="💬 Verdict", value=f"*{reaction}*", inline=False)
         embed.set_thumbnail(url=p1["image"])
         embed.set_image(url=p2["image"])
-
-        # Éditer le même message pour afficher le nouveau ship
         await self.message.edit(embed=embed, view=self)
+
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🧠 Cog principal
@@ -145,8 +190,8 @@ class ShipCommand(commands.Cog):
         else:
             p1, p2 = random.sample(persos, 2)
 
-        # Créer directement le premier embed
         score = calculer_score(p1, p2)
+
         if score >= 90:
             reaction = "âmes sœurs 💞"
             color = discord.Color.magenta()
@@ -170,7 +215,6 @@ class ShipCommand(commands.Cog):
         embed.set_thumbnail(url=p1["image"])
         embed.set_image(url=p2["image"])
 
-        # Envoyer le message et créer la vue avec le message stocké
         message = await safe_send(channel, embed=embed)
         view = ShipView(persos, message)
         await message.edit(view=view)
@@ -188,6 +232,7 @@ class ShipCommand(commands.Cog):
     async def prefix_ship(self, ctx: commands.Context, p1: str = None, p2: str = None):
         await self._send_ship(ctx.channel, p1_name=p1, p2_name=p2)
 
+
 # ────────────────────────────────────────────────────────────────────────────────
 # 🔌 Setup du Cog
 # ────────────────────────────────────────────────────────────────────────────────
@@ -197,6 +242,4 @@ async def setup(bot: commands.Bot):
         if not hasattr(command, "category"):
             command.category = "Bleach"
     await bot.add_cog(cog)
-
-
 
