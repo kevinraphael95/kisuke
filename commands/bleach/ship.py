@@ -5,7 +5,6 @@
 # Accès : Public
 # Cooldown : 1 utilisation / 3 secondes / utilisateur
 # ────────────────────────────────────────────────────────────────────────────────
-
 # ────────────────────────────────────────────────────────────────────────────────
 # 📦 Imports nécessaires
 # ────────────────────────────────────────────────────────────────────────────────
@@ -17,7 +16,6 @@ import os
 import json
 import random
 from utils.discord_utils import safe_send, safe_edit, safe_respond
-
 # ────────────────────────────────────────────────────────────────────────────────
 # 📂 Gestion des personnages
 # ────────────────────────────────────────────────────────────────────────────────
@@ -87,16 +85,17 @@ class ShipView(View):
             child.disabled = True
         if self.message:
             try:
-                await safe_edit(self.message, view=self)
+                await self.message.edit(view=self)
             except Exception:
                 pass
 
     @button(label="💘 Nouveau ship", style=discord.ButtonStyle.blurple)
     async def nouveau_ship(self, interaction: discord.Interaction, button: discord.ui.Button):
         p1, p2 = random.sample(self.persos, 2)
-        await self._send_result(interaction, p1, p2)
+        await self._send_result(p1, p2)
+        await interaction.response.defer()  # marque l'interaction comme traitée
 
-    async def _send_result(self, target, p1, p2):
+    async def _send_result(self, p1, p2):
         score = calculer_score(p1, p2)
         if score >= 90:
             reaction = "âmes sœurs 💞"
@@ -121,7 +120,8 @@ class ShipView(View):
         embed.set_thumbnail(url=p1["image"])
         embed.set_image(url=p2["image"])
 
-        await interaction.response.edit_message(embed=embed, view=self)
+        # Éditer le même message pour afficher le nouveau ship
+        await self.message.edit(embed=embed, view=self)
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🧠 Cog principal
@@ -196,5 +196,6 @@ async def setup(bot: commands.Bot):
         if not hasattr(command, "category"):
             command.category = "Bleach"
     await bot.add_cog(cog)
+
 
 
