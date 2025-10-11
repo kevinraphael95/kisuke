@@ -152,7 +152,7 @@ class TutoReiatsu(commands.Cog):
 
     # 🔹 Commande PREFIX
     @commands.command(
-        name="tutoreiatsu",
+        name="tutoreiatsu", aliases=["tutorts", "reiatsututo", "rtstuto"]
         help="Affiche le tutoriel complet pour les nouveaux joueurs."
     )
     @commands.cooldown(1, 10.0, commands.BucketType.user)
