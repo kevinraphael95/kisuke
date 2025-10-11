@@ -182,7 +182,7 @@ class ShipCommand(commands.Cog):
         await self._send_ship(interaction.channel, p1_name=p1, p2_name=p2)
 
     # 🔹 Commande PREFIX
-    @commands.command(name="ship")
+    @commands.command(name="ship", help="💘 Teste la compatibilité entre deux personnages de Bleach.")
     @commands.cooldown(1, 3, commands.BucketType.user)
     async def prefix_ship(self, ctx: commands.Context, p1: str = None, p2: str = None):
         await self._send_ship(ctx.channel, p1_name=p1, p2_name=p2)
