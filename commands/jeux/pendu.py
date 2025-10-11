@@ -9,8 +9,9 @@
 # 📦 Imports nécessaires
 # ────────────────────────────────────────────────────────────────────────────────
 import discord
-from discord.ext import commands
+from discord.ext import commands, tasks
 import aiohttp
+import asyncio
 from utils.discord_utils import safe_send, safe_edit, safe_respond  # ✅ Utilisation safe_
 
 # ────────────────────────────────────────────────────────────────────────────────
@@ -26,8 +27,8 @@ PENDU_ASCII = [
     "`     +---+\n     |   |\n     O   |\n    /|\\  |\n    /    |\n     =========`",
     "`     +---+\n     |   |\n     O   |\n    /|\\  |\n    / \\  |\n     =========`",
 ]
-
 MAX_ERREURS = 7
+INACTIVITE_MAX = 180  # ⏰ 3 minutes (en secondes)
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🧩 Classe PenduGame
@@ -87,12 +88,11 @@ class PenduSession:
         self.game = game
         self.message = message
         self.mode = mode  # "solo" ou "multi"
+        self.last_activity = asyncio.get_event_loop().time()  # ⏱️ Pour le timer
         if mode == "multi":
             self.players = set()
-            if author_id:
-                self.players.add(author_id)
         else:
-            self.player_id = author_id  # solo : stocke juste le joueur qui a lancé la partie
+            self.player_id = author_id
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🧠 Cog principal
@@ -106,6 +106,10 @@ class Pendu(commands.Cog):
         self.bot = bot
         self.sessions = {}  # dict channel_id -> PenduSession
         self.http_session = aiohttp.ClientSession()
+        self.verif_inactivite.start()
+
+    def cog_unload(self):
+        self.verif_inactivite.cancel()
 
     @commands.command(
         name="pendu",
@@ -131,11 +135,7 @@ class Pendu(commands.Cog):
         embed = game.create_embed()
         message = await safe_send(ctx.channel, embed=embed)
 
-        if mode == "multi":
-            session = PenduSession(game, message, mode="multi", author_id=ctx.author.id)
-        else:
-            session = PenduSession(game, message, mode="solo", author_id=ctx.author.id)
-
+        session = PenduSession(game, message, mode=mode, author_id=ctx.author.id)
         self.sessions[channel_id] = session
 
     async def _fetch_random_word(self) -> str | None:
@@ -149,6 +149,29 @@ class Pendu(commands.Cog):
         except Exception:
             return None
 
+    # ───────────────────────────────────────────────────────────────────────
+    # 🔄 Vérification d’inactivité toutes les 30 secondes
+    # ───────────────────────────────────────────────────────────────────────
+    @tasks.loop(seconds=30)
+    async def verif_inactivite(self):
+        now = asyncio.get_event_loop().time()
+        a_supprimer = []
+
+        for channel_id, session in list(self.sessions.items()):
+            if now - session.last_activity > INACTIVITE_MAX:
+                a_supprimer.append(channel_id)
+
+        for cid in a_supprimer:
+            session = self.sessions.pop(cid, None)
+            if session:
+                await safe_send(
+                    session.message.channel,
+                    "⏰ Partie terminée pour inactivité (3 minutes sans réponse)."
+                )
+
+    # ───────────────────────────────────────────────────────────────────────
+    # 💬 Réception des messages (propositions)
+    # ───────────────────────────────────────────────────────────────────────
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message):
         if message.author.bot or not message.guild:
@@ -163,14 +186,12 @@ class Pendu(commands.Cog):
         if session.mode == "solo" and message.author.id != session.player_id:
             return
 
-        # Multi : tous les joueurs peuvent proposer
-        if session.mode == "multi" and session.players is not None and message.author.id not in session.players:
-            session.players.add(message.author.id)  # ajoute le joueur si nouveau
-
+        # Multi : tout le monde peut proposer
         content = message.content.strip().lower()
         if len(content) != 1 or not content.isalpha():
             return
 
+        session.last_activity = asyncio.get_event_loop().time()  # 🔁 reset timer
         game = session.game
         resultat = game.propose_lettre(content)
 
@@ -208,3 +229,4 @@ async def setup(bot: commands.Bot):
         if not hasattr(command, "category"):
             command.category = "Jeux"
     await bot.add_cog(cog)
+
