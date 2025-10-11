@@ -112,9 +112,6 @@ def calculer_score(p1, p2):
     elif compte_proches >= 2:
         score += 5
 
-    # Compatibilité aléatoire spirituelle (pour un peu de fun)
-    score += random.randint(-5, 5)
-
     return max(0, min(int(score), 100))
 
 
