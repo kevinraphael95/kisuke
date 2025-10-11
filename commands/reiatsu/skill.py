@@ -21,6 +21,7 @@ import json
 from utils.discord_utils import safe_send, safe_respond
 from utils.supabase_client import supabase
 from utils.reiatsu_utils import ensure_profile, has_class
+import random
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 📂 Chargement de la configuration Reiatsu
@@ -50,25 +51,18 @@ class Skill(commands.Cog):
     # ────────────────────────────────────────────────────────────────────────
     # 🔹 Fonction interne : activation du skill
     # ────────────────────────────────────────────────────────────────────────
-    async def _activate_skill(self, user: discord.User, channel: discord.abc.Messageable):
+    async def _activate_skill(self, user: discord.User, channel: discord.abc.Messageable, mise_arg: int = None):
         if user.id not in self.skill_locks:
             self.skill_locks[user.id] = asyncio.Lock()
 
         async with self.skill_locks[user.id]:
-            # ✅ Création automatique du profil
             player = ensure_profile(user.id, user.name)
-
-            # ❌ Si pas de classe
             if not has_class(player):
                 await safe_send(channel, "❌ Tu n’as pas encore choisi de classe Reiatsu. Utilise `!!classe` pour choisir une classe.")
                 return
 
             classe = player["classe"]
 
-            # ────────────────────────────────────────────────────────────────────────
-            # 🔸 Suppression automatique du message de commande pour Illusionniste
-            # (Discrétion : le message !!skill est supprimé dès l’activation)
-            # ────────────────────────────────────────────────────────────────────────
             if classe == "Illusionniste" and isinstance(channel, discord.TextChannel):
                 try:
                     async for msg in channel.history(limit=5):
@@ -81,7 +75,6 @@ class Skill(commands.Cog):
             classe_data = self.config["CLASSES"].get(classe, {})
             base_cd = classe_data.get("Cooldown", 12)
 
-            # 🔹 Récupération du timestamp en base
             res = supabase.table("reiatsu").select("last_skilled_at, active_skill, fake_spawn_id").eq("user_id", user.id).execute()
             data = res.data[0] if res.data else {}
             last_skill = data.get("last_skilled_at")
@@ -89,8 +82,6 @@ class Skill(commands.Cog):
             fake_spawn_id = data.get("fake_spawn_id")
 
             cooldown_text = "✅ Disponible"
-
-            # 🔹 Calcul du cooldown
             if last_skill:
                 try:
                     last_dt = parser.parse(last_skill)
@@ -108,7 +99,6 @@ class Skill(commands.Cog):
             if active_skill:
                 cooldown_text = "🌀 En cours"
 
-            # ⛔ Si en cooldown → affichage
             if cooldown_text != "✅ Disponible":
                 embed = discord.Embed(
                     title=f"🎴 Skill de {player.get('username', user.name)}",
@@ -118,7 +108,6 @@ class Skill(commands.Cog):
                 await safe_send(channel, embed=embed)
                 return
 
-            # 🔹 Activation du skill
             update_data = {"last_skilled_at": datetime.utcnow().isoformat()}
             msg = ""
 
@@ -126,28 +115,20 @@ class Skill(commands.Cog):
                 if fake_spawn_id:
                     await safe_send(channel, "⚠️ Tu as déjà un faux Reiatsu actif !")
                     return
-
                 update_data["active_skill"] = True
                 supabase.table("reiatsu").update(update_data).eq("user_id", user.id).execute()
-
-                # Vérification du salon de spawn configuré
                 conf_data = supabase.table("reiatsu_config").select("*").eq("guild_id", channel.guild.id).execute()
                 if not conf_data.data or not conf_data.data[0].get("channel_id"):
                     await safe_send(channel, "❌ Aucun canal de spawn configuré pour ce serveur.")
                     return
-
                 spawn_channel = self.bot.get_channel(int(conf_data.data[0]["channel_id"]))
-
-                # Spawn du faux Reiatsu identique au vrai
                 cog = self.bot.get_cog("ReiatsuSpawner")
                 if cog:
                     await cog._spawn_message(spawn_channel, guild_id=None, is_fake=True, owner_id=user.id)
-
-                # Message éphémère pour le joueur
                 embed = discord.Embed(
                     title="🎭 Skill Illusionniste activé !",
                     description="Un faux Reiatsu est apparu dans le serveur…\nTu ne peux pas l’absorber toi-même.",
-                    color=discord.Color.green()
+                    color=discord.Color.green
                 )
                 await safe_send(channel, embed=embed, ephemeral=True)
 
@@ -161,25 +142,41 @@ class Skill(commands.Cog):
 
             elif classe == "Parieur":
                 points = player.get("points", 0)
-                if points < 10:
-                    await safe_send(channel, "❌ Tu n'as pas assez de Reiatsu pour parier (10 requis).")
+                if points < 1:
+                    await safe_send(channel, "❌ Tu n'as pas assez de Reiatsu pour parier.")
                     return
-                import random
-                gain = 30
-                if random.random() < 0.5:
-                    update_data["points"] = points - 10
-                    msg = "🎲 **Perdu !** Tu as perdu 10 Reiatsu."
-                else:
-                    update_data["points"] = points - 10 + gain
-                    msg = f"🎲 **Gagné !** Tu as misé 10 Reiatsu et remporté **{gain}**."
 
-            # ✅ Mise à jour Supabase pour les autres classes
+                # Définir la mise selon l'argument
+                mise = mise_arg if mise_arg else 10
+                mise = max(1, min(50, mise, points))  # entre 1 et 50 et ≤ points dispo
+
+                symbols = ["🍀", "⭐", "💎", "🔥", "💰"]
+                reels = [random.choice(symbols) for _ in range(3)]
+
+                trefle_count = reels.count("🍀")
+                gain = 0
+                if trefle_count >= 1:
+                    gain = mise * 2
+                    msg_gain = f"Tu as {trefle_count} trèfle(s) 🍀 ! Gain x2 → {gain} Reiatsu."
+                elif reels[0] == reels[1] == reels[2]:
+                    gain = mise * 4
+                    msg_gain = f"Trois symboles identiques {reels} ! Gain x4 → {gain} Reiatsu."
+                elif reels[0] == reels[1] or reels[0] == reels[2] or reels[1] == reels[2]:
+                    gain = mise * 3
+                    msg_gain = f"Deux symboles identiques {reels} ! Gain x3 → {gain} Reiatsu."
+                else:
+                    gain = 0
+                    msg_gain = f"Aucun gain {reels}. Tu perds ta mise de {mise} Reiatsu."
+
+                update_data["points"] = points - mise + gain
+                msg = f"🎲 **Machine à sous !**\n{msg_gain}"
+
             if classe != "Illusionniste":
                 supabase.table("reiatsu").update(update_data).eq("user_id", user.id).execute()
                 embed = discord.Embed(
                     title=f"🎴 Skill de {player.get('username', user.name)}",
                     description=f"**Classe :** {classe}\n**Statut :** 🌀 En cours\n\n{msg}",
-                    color=discord.Color.green()
+                    color=discord.Color.green
                 )
                 await safe_send(channel, embed=embed)
 
@@ -188,9 +185,9 @@ class Skill(commands.Cog):
     # ────────────────────────────────────────────────────────────────────────
     @app_commands.command(name="skill", description="Active la compétence de ta classe Reiatsu.")
     @app_commands.checks.cooldown(rate=1, per=5.0, key=lambda i: i.user.id)
-    async def slash_skill(self, interaction: discord.Interaction):
+    async def slash_skill(self, interaction: discord.Interaction, mise: int = None):
         await interaction.response.defer()
-        await self._activate_skill(interaction.user, interaction.channel)
+        await self._activate_skill(interaction.user, interaction.channel, mise)
         await interaction.delete_original_response()
 
     # ────────────────────────────────────────────────────────────────────────
@@ -198,8 +195,8 @@ class Skill(commands.Cog):
     # ────────────────────────────────────────────────────────────────────────
     @commands.command(name="skill", help="Active la compétence de ta classe Reiatsu.")
     @commands.cooldown(1, 5.0, commands.BucketType.user)
-    async def prefix_skill(self, ctx: commands.Context):
-        await self._activate_skill(ctx.author, ctx.channel)
+    async def prefix_skill(self, ctx: commands.Context, mise: int = None):
+        await self._activate_skill(ctx.author, ctx.channel, mise)
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🔌 Setup du Cog
@@ -210,6 +207,3 @@ async def setup(bot: commands.Bot):
         if not hasattr(command, "category"):
             command.category = "Reiatsu"
     await bot.add_cog(cog)
-
-
-
