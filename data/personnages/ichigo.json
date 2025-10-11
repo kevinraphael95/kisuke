@@ -3,7 +3,7 @@
   "nom": "Ichigo Kurosaki",
   "genre": "Homme",
   "sexualite": "Hétéro",
-  "personnalite": ["Courageux", "Déterminé", "Protecteur", "Impulsif", "Stratège"],
+  "personnalite": ["Courageux", "Déterminé", "Protecteur", "Impulsif", "Bienveillant"],
   "race": ["Humain", "Fullbring", "Shinigami", "Hollow", "Arrancar", "Vizard", "Quincy", "Transcendant"],
   "stats_base": {
     "attaque": 75,
