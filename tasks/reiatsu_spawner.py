@@ -141,7 +141,10 @@ class ReiatsuSpawner(commands.Cog):
         data = supabase.table("reiatsu").select("fake_spawn_id").eq("user_id", owner_id).execute()
         if data.data and data.data[0].get("fake_spawn_id") == str(message.id):
             await safe_delete(message)
-            supabase.table("reiatsu").update({"fake_spawn_id": None}).eq("user_id", owner_id).execute()
+            supabase.table("reiatsu").update({
+                "fake_spawn_id": None,
+                "active_skill": False
+            }).eq("user_id", owner_id).execute()
 
     # ──────────────────────────────────────────────────────────────
     async def _spawn_faux_reiatsu(self, channel: discord.TextChannel):
@@ -187,7 +190,8 @@ class ReiatsuSpawner(commands.Cog):
                         current_points = user_data.data[0]["points"] if user_data.data else 0
                         supabase.table("reiatsu").update({
                             "points": current_points + gain,
-                            "fake_spawn_id": None
+                            "fake_spawn_id": None,
+                            "active_skill": False
                         }).eq("user_id", owner_id).execute()
                         await safe_send(channel, f"🎭 {user.mention} a absorbé un **faux Reiatsu** ! {owner.mention} gagne **+{gain}** reiatsu !")
                     try:
