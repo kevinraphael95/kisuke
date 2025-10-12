@@ -99,7 +99,7 @@ class GardenButton(discord.ui.Button):
         }).eq("user_id", view.user_id).execute()
 
         self.label = "🌱"
-        await interaction.response.edit_message(viewkey=view)
+        await interaction.response.edit_message(view=view)
 
 class GardenGridView(discord.ui.View):
     def __init__(self, garden: dict, user_id: int):
