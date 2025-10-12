@@ -100,19 +100,21 @@ class AnagrammeView(View):
 
     # ───────────── Feedback visuel (lettres emoji + carrés noirs) ─────────────
     def create_feedback_line(self, entry: dict) -> str:
-        """Transforme les lettres correctes en emoji lettres et les autres en carré noir"""
+        """Affiche les lettres correctes sous forme d’emojis (comme Motus)"""
         word = entry['word']
-        feedback = ""
-        for i, c in enumerate(word):
-            if i < len(self.target_word) and self.remove_accents(c) == self.remove_accents(self.target_word[i]):
-                # Lettre correcte → emoji regional indicator
-                if c.isalpha():
-                    feedback += chr(ord('🇦') + ord(c.upper()) - ord('A'))
-                else:
-                    feedback += c
-            else:
-                feedback += "⬛"
-        return feedback
+
+        def letter_to_flag(c: str) -> str:
+            if not c.isalpha():
+                return c
+            c_clean = self.remove_accents(c)
+            return chr(0x1F1E6 + (ord(c_clean.upper()) - ord('A')))
+
+        letters = " ".join(letter_to_flag(c) if i < len(self.target_word)
+                           and self.remove_accents(c) == self.remove_accents(self.target_word[i])
+                           else "⬛"
+                           for i, c in enumerate(word))
+        return letters
+
 
     # ───────────── Construction de l’embed ─────────────
     def build_embed(self) -> discord.Embed:
