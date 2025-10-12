@@ -119,7 +119,6 @@ class AnagrammeView(View):
             description=f"Mot mélangé : **{' '.join(self.display_word)}**",
             color=discord.Color.orange()
         )
-
         if self.attempts:
             tries_text = "\n\n".join(self.create_feedback_line(entry) for entry in self.attempts)
             embed.add_field(name=f"Essais ({len(self.attempts)}/{self.max_attempts})", value=tries_text, inline=False)
@@ -146,12 +145,10 @@ class AnagrammeView(View):
         filtered_guess = guess.replace("-", "")
         if len(filtered_guess) != self.display_length:
             return await safe_respond(interaction, f"⚠️ Le mot doit faire {self.display_length} lettres.", ephemeral=True)
-
         if not is_valid_word(filtered_guess):
             return await safe_respond(interaction, f"❌ `{guess}` n’est pas reconnu comme un mot valide.", ephemeral=True)
 
         self.attempts.append({'word': guess.upper(), 'hint': False})
-
         if self.remove_accents(filtered_guess) == self.remove_accents(self.target_word) or len(self.attempts) >= self.max_attempts:
             self.finished = True
             for child in self.children:
@@ -196,19 +193,23 @@ class HintButtonAnagramme(Button):
             return await interaction.response.send_message("❌ Seul le lanceur peut utiliser l'indice.", ephemeral=True)
         if pv.finished:
             return await interaction.response.send_message("⚠️ La partie est déjà terminée.", ephemeral=True)
+
         available_indices = [i for i in range(len(pv.target_word)) if i not in pv.hinted_indices]
         if not available_indices:
             return await interaction.response.send_message("ℹ️ Aucune lettre restante à révéler.", ephemeral=True)
+
         idx = random.choice(available_indices)
         hint_word = ["_" for _ in range(len(pv.target_word))]
         hint_word[idx] = pv.target_word[idx]
         pv.attempts.append({'word': "".join(hint_word), 'hint': True})
         pv.hinted_indices.add(idx)
         self.disabled = True
+
         if len(pv.attempts) >= pv.max_attempts:
             pv.finished = True
             for child in pv.children:
                 child.disabled = True
+
         await safe_edit(pv.message, embed=pv.build_embed(), view=pv)
         await interaction.response.send_message(f"🔎 Indice utilisé — lettre **{pv.target_word[idx]}** révélée.", ephemeral=True)
 
@@ -264,7 +265,4 @@ async def setup(bot: commands.Bot):
         if not hasattr(command, "category"):
             command.category = "Jeux"
     await bot.add_cog(cog)
-
-
-
 
