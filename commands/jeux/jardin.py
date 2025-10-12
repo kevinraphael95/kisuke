@@ -463,7 +463,7 @@ class Jardin(commands.Cog):
             embed = build_garden_embed(garden, viewer_id)
             view = None
             if target_user.id == viewer_id:
-                view = JardinView(garden, viewer_id)
+                view = GardenView(garden, viewer_id)
                 view.update_buttons()
             await respond_func(embed=embed, view=view)
         except Exception as e:
