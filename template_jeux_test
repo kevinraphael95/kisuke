@@ -1,0 +1,180 @@
+# ────────────────────────────────────────────────────────────────────────────────
+# 📦 template_jeu.py
+# Description : Modèle universel pour tous les mini-jeux (/ et !)
+# Auteur : Kevin Raphael (kisuke)
+# Catégorie : Jeux
+# Date : À compléter
+# ────────────────────────────────────────────────────────────────────────────────
+
+import discord
+from discord import app_commands
+from discord.ext import commands
+from discord.ui import View, Button, Modal, TextInput
+import asyncio
+from utils.discord_utils import safe_send, safe_edit, safe_respond
+
+# ────────────────────────────────────────────────────────────────────────────────
+# ⚙️ CONFIGURATION DU JEU (à adapter)
+# ────────────────────────────────────────────────────────────────────────────────
+GAME_NAME = "Nom du Jeu"
+DESCRIPTION = "But du jeu : explique ici brièvement les règles."
+COLOR_DEFAULT = discord.Color.orange()
+COLOR_SUCCESS = discord.Color.green()
+COLOR_FAIL = discord.Color.red()
+
+SOLO_TIMEOUT = 120       # Temps max pour une partie solo
+MULTI_TIMEOUT = 180      # Temps max pour une partie multi
+COOLDOWN = 5.0           # Cooldown utilisateur (en secondes)
+
+# ────────────────────────────────────────────────────────────────────────────────
+# 💬 MODAL DE RÉPONSE (optionnel)
+# ────────────────────────────────────────────────────────────────────────────────
+class GameModal(Modal):
+    def __init__(self, parent_view):
+        super().__init__(title=f"{GAME_NAME} - Réponse")
+        self.parent_view = parent_view
+        self.answer = TextInput(
+            label="Entre ta réponse",
+            placeholder="Tape ici ta réponse...",
+            required=True,
+            max_length=100,
+        )
+        self.add_item(self.answer)
+
+    async def on_submit(self, interaction: discord.Interaction):
+        await self.parent_view.process_input(interaction, self.answer.value.strip())
+
+# ────────────────────────────────────────────────────────────────────────────────
+# 🎮 VUE PRINCIPALE DU JEU
+# ────────────────────────────────────────────────────────────────────────────────
+class GameView(View):
+    def __init__(self, author: discord.User, multi: bool = False):
+        super().__init__(timeout=MULTI_TIMEOUT if multi else SOLO_TIMEOUT)
+        self.author = author
+        self.multi = multi
+        self.message = None
+        self.finished = False
+        self.data = {}  # tu peux stocker ici les états du jeu
+        self.add_item(AnswerButton(self))
+
+    # ──────────────────────────────────────────────
+    # 🧩 EMBED PRINCIPAL DU JEU
+    # ──────────────────────────────────────────────
+    def build_embed(self):
+        mode_text = "🌍 Multijoueur" if self.multi else "🧍 Solo"
+        embed = discord.Embed(
+            title=f"{GAME_NAME} - {mode_text}",
+            description=DESCRIPTION,
+            color=COLOR_DEFAULT,
+        )
+        if self.finished:
+            embed.color = COLOR_SUCCESS
+            embed.set_footer(text="✅ Partie terminée")
+        else:
+            embed.set_footer(text="⏳ Partie en cours...")
+        return embed
+
+    # ──────────────────────────────────────────────
+    # 🧠 TRAITEMENT DES RÉPONSES
+    # ──────────────────────────────────────────────
+    async def process_input(self, interaction: discord.Interaction, value: str):
+        if self.finished:
+            return await safe_respond(interaction, "⚠️ La partie est déjà terminée.", ephemeral=True)
+
+        # ─── LOGIQUE DU JEU (à personnaliser) ─────────────────────────────
+        # Exemple : le mot à deviner est “python”
+        if value.lower() == "python":
+            self.finished = True
+            for c in self.children:
+                c.disabled = True
+
+            embed = self.build_embed()
+            embed.add_field(name="🏆 Gagnant", value=interaction.user.mention, inline=False)
+            await safe_edit(self.message, embed=embed, view=self)
+            return await safe_respond(interaction, "🎉 Bonne réponse !", ephemeral=True)
+
+        # Sinon, simple feedback
+        await safe_respond(interaction, "❌ Mauvaise réponse.", ephemeral=True)
+
+    # ──────────────────────────────────────────────
+    # ⏰ TEMPS ÉCOULÉ
+    # ──────────────────────────────────────────────
+    async def on_timeout(self):
+        if not self.finished:
+            self.finished = True
+            for c in self.children:
+                c.disabled = True
+            embed = self.build_embed()
+            embed.color = COLOR_FAIL
+            embed.set_footer(text="⏱️ Temps écoulé !")
+            await safe_edit(self.message, embed=embed, view=self)
+
+# ────────────────────────────────────────────────────────────────────────────────
+# 🔘 BOUTON "RÉPONDRE"
+# ────────────────────────────────────────────────────────────────────────────────
+class AnswerButton(Button):
+    def __init__(self, parent_view):
+        super().__init__(label="Répondre", style=discord.ButtonStyle.primary, emoji="💬")
+        self.parent_view = parent_view
+
+    async def callback(self, interaction: discord.Interaction):
+        if not self.parent_view.multi and interaction.user.id != self.parent_view.author.id:
+            return await safe_respond(interaction, "❌ Ce jeu est en mode solo.", ephemeral=True)
+        await interaction.response.send_modal(GameModal(self.parent_view))
+
+# ────────────────────────────────────────────────────────────────────────────────
+# ⚡ COG PRINCIPAL DU JEU
+# ────────────────────────────────────────────────────────────────────────────────
+class TemplateJeu(commands.Cog):
+    """Template universel pour les mini-jeux"""
+
+    def __init__(self, bot: commands.Bot):
+        self.bot = bot
+
+    # ──────────────────────────────────────────────
+    # 🔹 LANCEMENT DU JEU
+    # ──────────────────────────────────────────────
+    async def start_game(self, channel: discord.abc.Messageable, author: discord.User, multi: bool = False):
+        view = GameView(author, multi)
+        embed = view.build_embed()
+        view.message = await safe_send(channel, embed=embed, view=view)
+        await view.wait()
+
+        # En fin de partie (timeout ou victoire)
+        for c in view.children:
+            c.disabled = True
+        try:
+            await safe_edit(view.message, view=view)
+        except Exception:
+            pass
+
+    # ──────────────────────────────────────────────
+    # 💬 SLASH COMMAND
+    # ──────────────────────────────────────────────
+    @app_commands.command(name="jeu", description=f"Lance le jeu {GAME_NAME}")
+    @app_commands.describe(mode="Écris 'multi' ou 'm' pour le mode multijoueur")
+    @app_commands.checks.cooldown(1, COOLDOWN, key=lambda i: i.user.id)
+    async def slash_game(self, interaction: discord.Interaction, mode: str = None):
+        await interaction.response.defer()
+        multi = bool(mode and mode.lower() in ["m", "multi"])
+        await self.start_game(interaction.channel, author=interaction.user, multi=multi)
+        await interaction.delete_original_response()
+
+    # ──────────────────────────────────────────────
+    # 💬 PREFIX COMMAND
+    # ──────────────────────────────────────────────
+    @commands.command(name="jeu", help=f"Lance le jeu {GAME_NAME}")
+    @commands.cooldown(1, COOLDOWN, commands.BucketType.user)
+    async def prefix_game(self, ctx: commands.Context, mode: str = None):
+        multi = bool(mode and mode.lower() in ["m", "multi"])
+        await self.start_game(ctx.channel, author=ctx.author, multi=multi)
+
+# ────────────────────────────────────────────────────────────────────────────────
+# 🔌 SETUP DU COG
+# ────────────────────────────────────────────────────────────────────────────────
+async def setup(bot: commands.Bot):
+    cog = TemplateJeu(bot)
+    for cmd in cog.get_commands():
+        if not hasattr(cmd, "category"):
+            cmd.category = "Jeux"
+    await bot.add_cog(cog)
