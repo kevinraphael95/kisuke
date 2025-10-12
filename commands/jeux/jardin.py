@@ -68,6 +68,52 @@ POTIONS = CONFIG["POTIONS"]
 # ────────────────────────────────────────────────────────────────────────────────
 # 🧠 Fonctions utilitaires
 # ────────────────────────────────────────────────────────────────────────────────
+class GardenButton(discord.ui.Button):
+    def __init__(self, label: str, row: int, custom_id: str):
+        super().__init__(label=label, style=discord.ButtonStyle.green, row=row, custom_id=custom_id)
+
+    async def callback(self, interaction: discord.Interaction):
+        view: GardenGridView = self.view
+        if interaction.user.id != view.user_id:
+            return await interaction.response.send_message("❌ Ce jardin n’est pas à toi !", ephemeral=True)
+
+        i, j = map(int, self.custom_id.split("-"))
+        current_emoji = view.garden["garden_grid"][i][j]
+
+        if current_emoji == "🌱":
+            return await interaction.response.send_message("🪴 Rien à cueillir ici.", ephemeral=True)
+
+        # Chercher le nom de la fleur
+        for name, emoji in FLEUR_EMOJIS.items():
+            if emoji == current_emoji:
+                view.garden["inventory"][name] = view.garden["inventory"].get(name, 0) + 1
+                line = list(view.garden["garden_grid"][i])
+                line[j] = "🌱"
+                view.garden["garden_grid"][i] = "".join(line)
+                break
+
+        # Mise à jour dans la base
+        supabase.table(TABLE_NAME).update({
+            "garden_grid": view.garden["garden_grid"],
+            "inventory": view.garden["inventory"]
+        }).eq("user_id", view.user_id).execute()
+
+        self.label = "🌱"
+        await interaction.response.edit_message(viewkey=view)
+
+class GardenGridView(discord.ui.View):
+    def __init__(self, garden: dict, user_id: int):
+        super().__init__(timeout=120)
+        self.garden = garden
+        self.user_id = user_id
+
+        # Créer les boutons pour chaque case du jardin
+        for i, line in enumerate(garden["garden_grid"]):
+            for j, emoji in enumerate(line):
+                custom_id = f"{i}-{j}"
+                self.add_item(GardenButton(label=emoji, row=i, custom_id=custom_id))
+
+
 async def get_or_create_garden(user_id: int, username: str):
     res = supabase.table(TABLE_NAME).select("*").eq("user_id", user_id).execute()
     if res.data:
