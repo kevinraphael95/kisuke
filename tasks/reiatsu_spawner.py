@@ -138,13 +138,32 @@ class ReiatsuSpawner(commands.Cog):
     # ──────────────────────────────────────────────────────────────
     async def _delete_fake_after_delay(self, channel, message, owner_id):
         await asyncio.sleep(180)  # 3 minutes
+        
+        # Vérifie toujours que le fake existe encore
         data = supabase.table("reiatsu").select("fake_spawn_id").eq("user_id", owner_id).execute()
-        if data.data and data.data[0].get("fake_spawn_id") == str(message.id):
-            await safe_delete(message)
-            supabase.table("reiatsu").update({
-                "fake_spawn_id": None,
-                "active_skill": False
-            }).eq("user_id", owner_id).execute()
+        if not data.data:
+            print(f"[FAKE] Aucun fake trouvé pour user {owner_id}")
+            return
+        
+        fake_id = data.data[0].get("fake_spawn_id")
+        if not fake_id:
+            print(f"[FAKE] Pas de fake_spawn_id enregistré pour user {owner_id}")
+            return
+
+        try:
+            # Refetch le message depuis Discord (objet original peut être expiré)
+            msg = await channel.fetch_message(int(fake_id))
+            await safe_delete(msg)
+            print(f"[FAKE DELETE] Suppression réussie du faux reiatsu {fake_id}")
+        except Exception as e:
+            print(f"[FAKE DELETE] Échec suppression message {fake_id} → {e}")
+
+        # Nettoie la DB, même si le message n'existe plus
+        supabase.table("reiatsu").update({
+            "fake_spawn_id": None,
+            "active_skill": False
+        }).eq("user_id", owner_id).execute()
+
 
     # ──────────────────────────────────────────────────────────────
     async def _spawn_faux_reiatsu(self, channel: discord.TextChannel):
