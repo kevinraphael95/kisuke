@@ -6,11 +6,11 @@
   "race": ["Humain", "Quincy", "Transcendant"],
   "stats_base": {
     "attaque": 60,
-    "defense": 40,
+    "defense": 20,
     "pression": 50,
-    "kido": 30,
+    "kido": 20,
     "intelligence": 60,
-    "rapidite": 60,
+    "rapidite": 90,
     "total_stats": 300
   },
   "formes": {
