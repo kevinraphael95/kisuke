@@ -137,15 +137,14 @@ class AnagrammeView(View):
                 embed.color = discord.Color.green()
                 # 🎯 mentionne le gagnant uniquement en multi
                 if not self.author_id and self.winner:
-                    embed.set_footer(text=f"🎉 Bravo {self.winner.mention} ! Tu as trouvé le mot.")
+                    embed.description += f"\n\n🎉 **Bravo {self.winner.mention} !** Tu as trouvé le mot."
                 else:
-                    embed.set_footer(text="🎉 Bravo ! Tu as trouvé le mot.")
+                    embed.description += "\n\n🎉 **Bravo !** Tu as trouvé le mot."
             else:
                 embed.color = discord.Color.red()
-                embed.set_footer(text=f"💀 Partie terminée. Le mot était {self.target_word}.")
+                embed.description += f"\n\n💀 **Partie terminée.** Le mot était **{self.target_word}**."
         else:
             embed.set_footer(text=f"⏳ Temps restant : 180 secondes")
-
         return embed
 
     # ───────────── Gestion d’une proposition ─────────────
