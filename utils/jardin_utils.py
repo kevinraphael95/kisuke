@@ -1,25 +1,43 @@
 # ────────────────────────────────────────────────────────────────────────────────
 # 📌 jardin_utils.py — Fonctions utilitaires pour le jardin
+# Objectif : Contient la logique métier et la manipulation des jardins
 # ────────────────────────────────────────────────────────────────────────────────
-import discord
-import datetime
+
+# ────────────────────────────────────────────────────────────────────────────────
+# 📦 Imports nécessaires
+# ────────────────────────────────────────────────────────────────────────────────
+import json
 import random
+import datetime
 from utils.supabase_client import supabase
 
-# Ces constantes doivent être initialisées depuis le JSON dans jardin.py
-TABLE_NAME = None
-DEFAULT_GRID = None
-DEFAULT_INVENTORY = None
-FLEUR_EMOJIS = None
-FLEUR_VALUES = None
-FLEUR_SIGNS = None
-FLEUR_LIST = None
-FERTILIZE_COOLDOWN = None
-FERTILIZE_PROBABILITY = None
-POTIONS = None
+# ────────────────────────────────────────────────────────────────────────────────
+# 🔹 Chargement des constantes depuis un JSON
+# ────────────────────────────────────────────────────────────────────────────────
+with open("data/jardin_config.json", "r", encoding="utf-8") as f:
+    CONFIG = json.load(f)
 
+DEFAULT_GRID = CONFIG["DEFAULT_GRID"]
+DEFAULT_INVENTORY = CONFIG["DEFAULT_INVENTORY"]
 
-async def get_or_create_garden(user_id: int, username: str):
+FLEUR_EMOJIS = CONFIG["FLEUR_EMOJIS"]
+FLEUR_VALUES = CONFIG["FLEUR_VALUES"]
+FLEUR_SIGNS = CONFIG["FLEUR_SIGNS"]
+
+FLEUR_LIST = list(FLEUR_EMOJIS.items())
+
+FERTILIZE_COOLDOWN = datetime.timedelta(minutes=CONFIG["FERTILIZE_COOLDOWN_MINUTES"])
+FERTILIZE_PROBABILITY = CONFIG["FERTILIZE_PROBABILITY"]
+
+POTIONS = CONFIG["POTIONS"]
+
+TABLE_NAME = "gardens"
+
+# ────────────────────────────────────────────────────────────────────────────────
+# 🧠 Fonctions utilitaires
+# ────────────────────────────────────────────────────────────────────────────────
+async def get_or_create_garden(user_id: int, username: str) -> dict:
+    """Récupère le jardin d'un utilisateur ou le crée s'il n'existe pas."""
     res = supabase.table(TABLE_NAME).select("*").eq("user_id", user_id).execute()
     if res.data:
         return res.data[0]
@@ -31,13 +49,16 @@ async def get_or_create_garden(user_id: int, username: str):
         "inventory": DEFAULT_INVENTORY.copy(),
         "argent": 0,
         "armee": "",
-        "last_fertilize": None
+        "last_fertilize": None,
+        "potions": {}
     }
     supabase.table(TABLE_NAME).insert(new_garden).execute()
     return new_garden
 
 
-def build_garden_embed(garden: dict, viewer_id: int) -> discord.Embed:
+def build_garden_embed(garden: dict, viewer_id: int):
+    """Construit l'embed du jardin pour Discord."""
+    import discord  # Import local pour éviter des conflits circulaires
     lines = garden["garden_grid"]
     inv_dict = garden["inventory"]
     inv = " / ".join(f"{FLEUR_EMOJIS[f]}{inv_dict.get(f, 0)}" for f in FLEUR_EMOJIS)
@@ -72,6 +93,7 @@ def build_garden_embed(garden: dict, viewer_id: int) -> discord.Embed:
 
 
 def pousser_fleurs(lines: list[str]) -> list[str]:
+    """Fait pousser aléatoirement des fleurs dans le jardin."""
     new_lines = []
     for line in lines:
         chars = []
@@ -86,6 +108,7 @@ def pousser_fleurs(lines: list[str]) -> list[str]:
 
 
 def couper_fleurs(lines: list[str], garden: dict) -> tuple[list[str], dict]:
+    """Cueille toutes les fleurs du jardin et les ajoute à l'inventaire."""
     new_lines = []
     inv = garden["inventory"]
     for line in lines:
@@ -101,11 +124,12 @@ def couper_fleurs(lines: list[str], garden: dict) -> tuple[list[str], dict]:
     return new_lines, garden
 
 
-def build_potions_embed(potions: dict) -> discord.Embed:
+def build_potions_embed(potions: dict):
+    """Construit l'embed pour afficher les potions."""
+    import discord
     if not potions:
         desc = "🧪 Tu n’as aucune potion."
     else:
-        # Tri par valeur croissante
         sorted_potions = dict(sorted(
             potions.items(),
             key=lambda x: next((int(v) for v, n in POTIONS.items() if n == x[0]), 0)
