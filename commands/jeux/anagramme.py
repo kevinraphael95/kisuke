@@ -85,7 +85,6 @@ class AnagrammeView(View):
         self.finished = False
         self.author_id = author_id
         self.hinted_indices: set[int] = set()
-        self.winner: discord.Member | discord.User | None = None  # 🏆 gagnant
 
         # Boutons
         self.add_item(AnagrammeButton(self))
@@ -116,6 +115,7 @@ class AnagrammeView(View):
                            for i, c in enumerate(word))
         return letters
 
+
     # ───────────── Construction de l’embed ─────────────
     def build_embed(self) -> discord.Embed:
         mode_text = "Solo 🧍‍♂️" if self.author_id else "Multi 🌍"
@@ -135,16 +135,13 @@ class AnagrammeView(View):
             last_word = self.attempts[-1]['word'] if self.attempts else ""
             if self.remove_accents(last_word) == self.remove_accents(self.target_word):
                 embed.color = discord.Color.green()
-                # 🎯 mentionne le gagnant uniquement en multi
-                if not self.author_id and self.winner:
-                    embed.description += f"\n\n🎉 **Bravo {self.winner.mention} !** Tu as trouvé le mot."
-                else:
-                    embed.description += "\n\n🎉 **Bravo !** Tu as trouvé le mot."
+                embed.set_footer(text="🎉 Bravo ! Tu as trouvé le mot.")
             else:
                 embed.color = discord.Color.red()
-                embed.description += f"\n\n💀 **Partie terminée.** Le mot était **{self.target_word}**."
+                embed.set_footer(text=f"💀 Partie terminée. Le mot était {self.target_word}.")
         else:
             embed.set_footer(text=f"⏳ Temps restant : 180 secondes")
+
         return embed
 
     # ───────────── Gestion d’une proposition ─────────────
@@ -159,13 +156,7 @@ class AnagrammeView(View):
             return await safe_respond(interaction, f"❌ `{guess}` n’est pas reconnu comme un mot valide.", ephemeral=True)
 
         self.attempts.append({'word': guess.upper(), 'hint': False})
-
-        if self.remove_accents(filtered_guess) == self.remove_accents(self.target_word):
-            self.finished = True
-            self.winner = interaction.user  # 🏆 garde le gagnant
-            for child in self.children:
-                child.disabled = True
-        elif len(self.attempts) >= self.max_attempts:
+        if self.remove_accents(filtered_guess) == self.remove_accents(self.target_word) or len(self.attempts) >= self.max_attempts:
             self.finished = True
             for child in self.children:
                 child.disabled = True
@@ -174,7 +165,6 @@ class AnagrammeView(View):
         if not interaction.response.is_done():
             await interaction.response.defer(ephemeral=True)
 
-    # ───────────── Fin de partie (timeout) ─────────────
     async def on_timeout(self):
         if self.finished:
             return
@@ -271,7 +261,6 @@ class Anagramme(commands.Cog):
             print(f"[ERREUR !anagramme] {e}")
             await safe_send(ctx.channel, "❌ Une erreur est survenue.")
 
-
 # ────────────────────────────────────────────────────────────────────────────────
 # 🔌 Setup du Cog
 # ────────────────────────────────────────────────────────────────────────────────
@@ -281,4 +270,3 @@ async def setup(bot: commands.Bot):
         if not hasattr(command, "category"):
             command.category = "Jeux"
     await bot.add_cog(cog)
-
