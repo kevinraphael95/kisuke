@@ -214,3 +214,19 @@ class JardinView(discord.ui.View):
             "argent": self.garden["argent"],
             "armee": self.garden["armee"]
         }).eq("user_id", self.user_id).execute()
+
+    @discord.ui.button(label="🪴 Voir la grille", style=discord.ButtonStyle.green)
+    async def show_grid(self, interaction: discord.Interaction, button: discord.ui.Button):
+        """Affiche la grille interactive du jardin (clic sur les fleurs)."""
+        if interaction.user.id != self.user_id:
+            return await interaction.response.send_message("❌ Ce jardin n’est pas à toi !", ephemeral=True)
+
+        from utils.jardin_ui_utils import GardenGridView  # éviter import circulaire
+        grid_view = GardenGridView(self.garden, self.user_id)
+
+        await interaction.response.edit_message(
+            content="🌾 **Clique sur les fleurs pour les cueillir !**",
+            embed=None,
+            view=grid_view
+    )
+        
