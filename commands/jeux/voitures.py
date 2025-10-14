@@ -64,9 +64,9 @@ class VoitureButton(Button):
                     f"⏳ Attends encore {h}h {m}m {s}s avant d’acheter une autre voiture.", ephemeral=True
                 )
 
-        voitures_user = set(user_data.get("voitures", []))  # set pour éviter les doublons
+        voitures_user = set(user_data.get("voitures", []))
         voitures_user.add(self.voiture["nom"])
-        voitures_user = sorted(voitures_user)  # ordre alphabétique
+        voitures_user = sorted(voitures_user)
 
         supabase.table("voitures_users").update({
             "voitures": voitures_user,
@@ -121,7 +121,6 @@ class Voitures(commands.Cog):
                 m, s = divmod(rem, 60)
                 return await safe_send(channel, f"⏳ Attends encore {h}h {m}m {s}s pour tirer une voiture.")
 
-        # Exclure les voitures déjà possédées
         owned_names = set(user.get("voitures", []))
         available = [v for v in self.voitures if v["nom"] not in owned_names]
         if not available:
@@ -141,12 +140,13 @@ class Voitures(commands.Cog):
         await safe_send(channel, embed=embed, view=view)
 
     # ────────────────────────────────────────────────────────────────────────────
-    # 🔹 Voir le garage (pagination 20 par page)
+    # 🔹 Voir le garage (pagination 20 par page, support utilisateur mentionné)
     # ────────────────────────────────────────────────────────────────────────────
-    async def send_garage(self, channel, user):
-        voitures_user = sorted(user.get("voitures", []))  # ordre alphabétique
+    async def send_garage(self, channel, target_user: discord.User):
+        user_data = await self.get_user(target_user)
+        voitures_user = sorted(user_data.get("voitures", []))
         if not voitures_user:
-            return await safe_send(channel, "🚗 Ton garage est vide.")
+            return await safe_send(channel, f"🚗 Le garage de {target_user.display_name} est vide.")
 
         pages = [voitures_user[i:i + 20] for i in range(0, len(voitures_user), 20)]
 
@@ -158,7 +158,7 @@ class Voitures(commands.Cog):
             async def update_message(self, interaction=None):
                 page_voitures = pages[self.current_page]
                 embed = discord.Embed(
-                    title=f"🚗 Garage de {len(voitures_user)} voitures",
+                    title=f"🚗 Garage de {target_user.display_name} ({len(voitures_user)} voitures)",
                     color=discord.Color.green()
                 )
                 description = "\n".join(f"{v}" for v in page_voitures)
@@ -196,13 +196,14 @@ class Voitures(commands.Cog):
         await interaction.delete_original_response()
 
     # ────────────────────────────────────────────────────────────────────────────
-    # 🔹 Commande SLASH Garage
+    # 🔹 Commande SLASH Garage (option mention)
     # ────────────────────────────────────────────────────────────────────────────
-    @app_commands.command(name="garage", description="Voir ton garage")
-    async def slash_garage(self, interaction: discord.Interaction):
+    @app_commands.command(name="garage", description="Voir ton garage ou celui d'un autre")
+    @app_commands.describe(user="Mention d'un autre utilisateur (optionnel)")
+    async def slash_garage(self, interaction: discord.Interaction, user: discord.User = None):
         await interaction.response.defer(ephemeral=True)
-        user = await self.get_user(interaction.user)
-        await self.send_garage(interaction.channel, user)
+        target = user or interaction.user
+        await self.send_garage(interaction.channel, target)
         await interaction.delete_original_response()
 
     # ────────────────────────────────────────────────────────────────────────────
@@ -214,12 +215,12 @@ class Voitures(commands.Cog):
         await self.send_voiture_tirage(ctx.channel, user)
 
     # ────────────────────────────────────────────────────────────────────────────
-    # 🔹 Commande PREFIX Garage
+    # 🔹 Commande PREFIX Garage (option mention)
     # ────────────────────────────────────────────────────────────────────────────
     @commands.command(name="garage")
-    async def prefix_garage(self, ctx: commands.Context):
-        user = await self.get_user(ctx.author)
-        await self.send_garage(ctx.channel, user)
+    async def prefix_garage(self, ctx: commands.Context, target: discord.User = None):
+        target_user = target or ctx.author
+        await self.send_garage(ctx.channel, target_user)
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🔌 Setup du Cog
