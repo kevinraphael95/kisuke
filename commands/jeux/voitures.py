@@ -61,7 +61,7 @@ class VoitureButton(Button):
             "last_acheter": datetime.utcnow().isoformat()
         }).eq("user_id", str(self.user["user_id"])).execute()
 
-        await interaction.response.edit_message(content=f"🎉 Tu as acheté **{self.voiture['nom']}** ({self.voiture['rarité']}) !", embed=None, view=None)
+        await interaction.response.edit_message(content=f"🎉 Tu as acheté **{self.voiture['nom']}** ({self.voiture['rarete']}) !", embed=None, view=None)
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🧠 Cog principal
@@ -107,7 +107,7 @@ class Voitures(commands.Cog):
 
         for voiture in tirage:
             embed = discord.Embed(
-                title=f"{voiture['nom']} ({voiture['rarité']})",
+                title=f"{voiture['nom']} ({voiture['rarete']})",
                 description=voiture.get("description", ""),
                 color=discord.Color.blue()
             )
@@ -126,7 +126,7 @@ class Voitures(commands.Cog):
 
         for v in voitures_user:
             embed = discord.Embed(
-                title=f"{v['nom']} ({v['rarité']})",
+                title=f"{v['nom']} ({v['rarete']})",
                 description=v.get("description", ""),
                 color=discord.Color.green()
             )
