@@ -88,7 +88,7 @@ class InfoVoitures(commands.Cog):
     # ────────────────────────────────────────────────────────────────────────────
     async def send_voiture_details(self, channel, nom_voiture):
         voiture = next(
-            (v for v in self.voitures if v["nom"].lower() == nom_voiture.lower()), 
+            (v for v in self.voitures if nom_voiture.lower() in v["nom"].lower()), 
             None
         )
 
