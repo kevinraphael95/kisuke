@@ -44,24 +44,40 @@ class VoitureButton(Button):
         self.user = user
 
     async def callback(self, interaction: discord.Interaction):
-        if interaction.user.id != self.user.id:
+        # Vérifie que le bouton appartient au bon utilisateur
+        if str(interaction.user.id) != str(self.user["user_id"]):
             return await interaction.response.send_message("❌ Ce bouton n'est pas pour toi !", ephemeral=True)
 
-        last = self.user.get("last_acheter")
+        # Recharge les données de l'utilisateur depuis Supabase
+        res = supabase.table("voitures_users").select("*").eq("user_id", str(self.user["user_id"])).execute()
+        if not res.data:
+            return await interaction.response.send_message("⚠️ Erreur : utilisateur introuvable.", ephemeral=True)
+        user_data = res.data[0]
+
+        # Vérifie le cooldown d'achat
+        last = user_data.get("last_acheter")
         if last:
             last_dt = datetime.fromisoformat(last)
             if datetime.utcnow() - last_dt < timedelta(seconds=COOLDOWN_ACHETER):
-                remain = COOLDOWN_ACHETER - (datetime.utcnow() - last_dt).seconds
-                return await interaction.response.send_message(f"⏳ Attends encore {remain}s pour acheter.", ephemeral=True)
+                remain = int(COOLDOWN_ACHETER - (datetime.utcnow() - last_dt).total_seconds())
+                return await interaction.response.send_message(f"⏳ Attends encore {remain}s avant d’acheter une autre voiture.", ephemeral=True)
 
-        voitures_user = self.user["voitures"]
+        # Ajoute la voiture dans le garage
+        voitures_user = user_data.get("voitures", [])
         voitures_user.append(self.voiture)
+
         supabase.table("voitures_users").update({
             "voitures": voitures_user,
             "last_acheter": datetime.utcnow().isoformat()
-        }).eq("user_id", str(self.user["user_id"])).execute()
+        }).eq("user_id", str(user_data["user_id"])).execute()
 
-        await interaction.response.edit_message(content=f"🎉 Tu as acheté **{self.voiture['nom']}** ({self.voiture['rarete']}) !", embed=None, view=None)
+        # Désactive le bouton après achat
+        self.disabled = True
+        await interaction.response.edit_message(
+            content=f"🎉 Tu as acheté **{self.voiture['nom']}** ({self.voiture['rarete']}) !",
+            embed=None,
+            view=None
+        )
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🧠 Cog principal
@@ -99,7 +115,7 @@ class Voitures(commands.Cog):
         if last:
             last_dt = datetime.fromisoformat(last)
             if datetime.utcnow() - last_dt < timedelta(seconds=COOLDOWN_VOITURE):
-                remain = COOLDOWN_VOITURE - (datetime.utcnow() - last_dt).seconds
+                remain = int(COOLDOWN_VOITURE - (datetime.utcnow() - last_dt).total_seconds())
                 return await safe_send(channel, f"⏳ Attends encore {remain}s pour tirer des voitures.")
 
         tirage = random.sample(self.voitures, k=3)
@@ -122,7 +138,7 @@ class Voitures(commands.Cog):
     async def send_garage(self, channel, user):
         voitures_user = user["voitures"]
         if not voitures_user:
-            return await safe_send(channel, "Ton garage est vide.")
+            return await safe_send(channel, "🚗 Ton garage est vide.")
 
         for v in voitures_user:
             embed = discord.Embed(
