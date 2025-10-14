@@ -6,9 +6,6 @@
 # Cooldown : 5 secondes / utilisateur
 # ────────────────────────────────────────────────────────────────────────────────
 
-# ────────────────────────────────────────────────────────────────────────────────
-# 📦 Imports nécessaires
-# ────────────────────────────────────────────────────────────────────────────────
 import discord
 from discord.ext import commands
 from discord import app_commands
@@ -45,40 +42,68 @@ class InfoVoitures(commands.Cog):
     # ────────────────────────────────────────────────────────────────────────────
     async def send_liste_voitures(self, channel):
         embed = discord.Embed(
-            title="📋 Liste des voitures",
-            description="Voici toutes les voitures disponibles :",
-            color=discord.Color.blue()
+            title="📋 Liste des voitures disponibles",
+            color=discord.Color.blurple()
         )
+
         voitures_sorted = sorted(self.voitures, key=lambda x: x["nom"])
-        for v in voitures_sorted:
-            embed.add_field(name=v["nom"], value=f"Rareté : {v['rarete']}", inline=True)
+        description_lines = [
+            f"**{v['nom']}** — 🏅 {v['rarete'].capitalize()}"
+            for v in voitures_sorted
+        ]
+
+        embed.description = "\n".join(description_lines)
+        embed.set_footer(text=f"{len(voitures_sorted)} voitures disponibles")
         await safe_send(channel, embed=embed)
 
     # ────────────────────────────────────────────────────────────────────────────
     # 🔹 Fonction pour afficher une voiture spécifique
     # ────────────────────────────────────────────────────────────────────────────
     async def send_voiture_details(self, channel, nom_voiture):
-        voiture = next((v for v in self.voitures if v["nom"].lower() == nom_voiture.lower()), None)
+        voiture = next(
+            (v for v in self.voitures if v["nom"].lower() == nom_voiture.lower()), 
+            None
+        )
+
         if not voiture:
             return await safe_send(channel, f"❌ Voiture `{nom_voiture}` introuvable.")
 
+        # Couleurs selon rareté
+        colors = {
+            "commun": discord.Color.light_grey(),
+            "rare": discord.Color.blue(),
+            "épique": discord.Color.purple(),
+            "légendaire": discord.Color.gold()
+        }
+        color = colors.get(voiture["rarete"].lower(), discord.Color.green())
+
+        # Embed compact
         embed = discord.Embed(
-            title=f"{voiture['nom']} ({voiture['rarete']})",
-            description=voiture.get("description", ""),
-            color=discord.Color.green()
+            title=f"{voiture['nom']} — {voiture['rarete'].capitalize()}",
+            description=voiture.get("description", "Aucune description disponible."),
+            color=color
         )
-        embed.set_image(url=voiture.get("image"))
 
+        # ✅ Image affichée correctement
+        image_url = voiture.get("image")
+        if image_url and image_url.startswith(("http://", "https://")):
+            embed.set_thumbnail(url=image_url)  # thumbnail = plus compact
+        else:
+            embed.set_thumbnail(url="https://upload.wikimedia.org/wikipedia/commons/6/65/No-Image-Placeholder.svg")
+
+        # Formatage compact des stats
         stats = voiture.get("stats", {})
-        for k, v in stats.items():
-            embed.add_field(name=k.replace("_", " ").capitalize(), value=str(v), inline=True)
+        formatted_stats = "\n".join(
+            [f"**{k.replace('_', ' ').capitalize()}** : {v}" for k, v in stats.items()]
+        )
 
+        embed.add_field(name="📊 Caractéristiques", value=formatted_stats or "Aucune donnée", inline=False)
         await safe_send(channel, embed=embed)
 
     # ────────────────────────────────────────────────────────────────────────────
     # 🔹 Commande SLASH
     # ────────────────────────────────────────────────────────────────────────────
-    @app_commands.command(name="infovoitures", description="Liste des voitures ou fiche d'une voiture")
+    @app_commands.command(name="infovoitures", description="Liste les voitures ou affiche leurs détails")
     @app_commands.describe(nom="Nom de la voiture (optionnel)")
     async def slash_infovoitures(self, interaction: discord.Interaction, nom: str = None):
         await interaction.response.defer(ephemeral=True)
