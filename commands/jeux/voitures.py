@@ -1,5 +1,5 @@
 # ────────────────────────────────────────────────────────────────────────────────
-# 📌 voitures_api_full.py — Commande /voiture, /garage et /infovoitures
+# 📌 voitures_api.py — Commande /voiture, /garage et /infovoitures
 # Objectif : Tirer des voitures aléatoires depuis une API, voir son garage, info sur voitures
 # Catégorie : Jeux
 # Accès : Tous
@@ -27,7 +27,6 @@ COOLDOWN_VOITURE = 5 * 60       # 5 min
 COOLDOWN_ACHETER = 60 * 60      # 1h
 COOLDOWN_INFOS = 5              # 5 sec
 API_URL = "https://www.carqueryapi.com/api/0.3/"
-
 MAKES = ["peugeot", "renault", "citroen", "ferrari", "lamborghini", "porsche", "bmw", "audi"]
 
 # ────────────────────────────────────────────────────────────────────────────────
@@ -176,14 +175,13 @@ class VoituresAPI(commands.Cog):
         if nom_voiture:
             voiture = next((v for v in tirage if f"{v['make']} {v['model']}".lower() == nom_voiture.lower()), None)
             if not voiture:
-                voiture = tirage[0]  # fallback
+                voiture = tirage[0]
             tirage = [voiture]
 
         embed = discord.Embed(
             title=f"🚗 Voitures aléatoires" if not nom_voiture else f"🚗 Détails de {tirage[0]['make']} {tirage[0]['model']}",
             color=discord.Color.blue()
         )
-
         for v in tirage:
             embed.add_field(
                 name=f"{v['make']} {v['model']} ({v['year']})",
@@ -191,7 +189,6 @@ class VoituresAPI(commands.Cog):
                 inline=False
             )
             embed.set_image(url=v["image"])
-
         await safe_send(channel, embed=embed)
 
     # ────────────────────────────────────────────────────────────────────────────
