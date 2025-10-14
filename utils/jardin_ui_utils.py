@@ -228,5 +228,5 @@ class JardinView(discord.ui.View):
             content="🌾 **Clique sur les fleurs pour les cueillir !**",
             embed=None,
             view=grid_view
-    )
+        )
         
