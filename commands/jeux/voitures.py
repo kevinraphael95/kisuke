@@ -1,6 +1,6 @@
 # ────────────────────────────────────────────────────────────────────────────────
-# 📌 voitures.py — Commande interactive /voiture et !voiture
-# Objectif : Tirer des voitures aléatoires, pouvoir acheter via bouton et voir son garage
+# 📌 voitures_api.py — Commande interactive /voiture et !voiture
+# Objectif : Tirer des voitures aléatoires depuis une API, pouvoir acheter via bouton et voir son garage
 # Catégorie : Jeux
 # Accès : Tous
 # Cooldown : Tirage 3 voitures toutes les 5 min, achat 1h
@@ -13,26 +13,19 @@ import discord
 from discord.ext import commands
 from discord import app_commands
 from discord.ui import View, Button
-import json, os, random
+import random
 from datetime import datetime, timedelta
+import requests
 
 from utils.discord_utils import safe_send, safe_edit, safe_respond
 from utils.supabase_client import supabase
 
 # ────────────────────────────────────────────────────────────────────────────────
-# 📂 Chargement des données JSON des voitures
+# 📂 Config
 # ────────────────────────────────────────────────────────────────────────────────
-DATA_PATH = "data/voitures"
 COOLDOWN_VOITURE = 5 * 60       # 5 min
 COOLDOWN_ACHETER = 60 * 60      # 1h
-
-def load_voitures():
-    voitures = []
-    for file in os.listdir(DATA_PATH):
-        if file.endswith(".json"):
-            with open(os.path.join(DATA_PATH, file), "r", encoding="utf-8") as f:
-                voitures.append(json.load(f))
-    return voitures
+API_URL = "https://www.carqueryapi.com/api/0.3/"
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🎛️ UI — Bouton pour acheter une voiture
@@ -61,19 +54,22 @@ class VoitureButton(Button):
             "last_acheter": datetime.utcnow().isoformat()
         }).eq("user_id", str(self.user["user_id"])).execute()
 
-        await interaction.response.edit_message(content=f"🎉 Tu as acheté **{self.voiture['nom']}** ({self.voiture['rarité']}) !", embed=None, view=None)
+        await interaction.response.edit_message(
+            content=f"🎉 Tu as acheté **{self.voiture['make']} {self.voiture['model']} ({self.voiture['year']})** !",
+            embed=None,
+            view=None
+        )
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🧠 Cog principal
 # ────────────────────────────────────────────────────────────────────────────────
-class Voitures(commands.Cog):
+class VoituresAPI(commands.Cog):
     """
     Commande /voiture et /garage et !voiture / !garage
-    Tirage de voitures aléatoires avec possibilité d'achat via bouton.
+    Tirage de voitures aléatoires depuis une API avec possibilité d'achat via bouton.
     """
     def __init__(self, bot: commands.Bot):
         self.bot = bot
-        self.voitures = load_voitures()
 
     # ────────────────────────────────────────────────────────────────────────────
     # 🔹 Récupération ou création d'un utilisateur Supabase
@@ -92,7 +88,35 @@ class Voitures(commands.Cog):
         return await self.get_user(user)
 
     # ────────────────────────────────────────────────────────────────────────────
-    # 🔹 Tirer 3 voitures aléatoires
+    # 🔹 Tirer des voitures aléatoires depuis l'API
+    # ────────────────────────────────────────────────────────────────────────────
+    def get_random_voitures(self, n=3):
+        # Tirage de marques et modèles aléatoires
+        makes = ["peugeot", "renault", "citroen", "ferrari", "lamborghini", "porsche", "bmw", "audi"]
+        tirage = []
+        while len(tirage) < n:
+            make = random.choice(makes)
+            params = {"cmd": "getTrims", "make": make, "sold_in_us": "1"}
+            response = requests.get(API_URL, params=params)
+            if response.status_code != 200:
+                continue
+            data = response.json().get("Trims", [])
+            if not data:
+                continue
+            trim = random.choice(data)
+            voiture = {
+                "make": trim.get("model_make_id"),
+                "model": trim.get("model_name"),
+                "year": trim.get("model_year"),
+                "body": trim.get("model_body"),
+                "engine": trim.get("model_engine_type"),
+                "image": f"https://loremflickr.com/320/240/car?random={random.randint(1,1000)}"
+            }
+            tirage.append(voiture)
+        return tirage
+
+    # ────────────────────────────────────────────────────────────────────────────
+    # 🔹 Envoyer le tirage
     # ────────────────────────────────────────────────────────────────────────────
     async def send_voiture_tirage(self, channel, user):
         last = user.get("last_voiture")
@@ -102,13 +126,13 @@ class Voitures(commands.Cog):
                 remain = COOLDOWN_VOITURE - (datetime.utcnow() - last_dt).seconds
                 return await safe_send(channel, f"⏳ Attends encore {remain}s pour tirer des voitures.")
 
-        tirage = random.sample(self.voitures, k=3)
+        tirage = self.get_random_voitures()
         supabase.table("voitures_users").update({"last_voiture": datetime.utcnow().isoformat()}).eq("user_id", str(user["user_id"])).execute()
 
         for voiture in tirage:
             embed = discord.Embed(
-                title=f"{voiture['nom']} ({voiture['rarité']})",
-                description=voiture.get("description", ""),
+                title=f"{voiture['make']} {voiture['model']} ({voiture['year']})",
+                description=f"Type: {voiture['body']}\nMoteur: {voiture['engine']}",
                 color=discord.Color.blue()
             )
             embed.set_image(url=voiture["image"])
@@ -126,8 +150,8 @@ class Voitures(commands.Cog):
 
         for v in voitures_user:
             embed = discord.Embed(
-                title=f"{v['nom']} ({v['rarité']})",
-                description=v.get("description", ""),
+                title=f"{v['make']} {v['model']} ({v['year']})",
+                description=f"Type: {v.get('body','?')}\nMoteur: {v.get('engine','?')}",
                 color=discord.Color.green()
             )
             embed.set_image(url=v["image"])
@@ -136,7 +160,7 @@ class Voitures(commands.Cog):
     # ────────────────────────────────────────────────────────────────────────────
     # 🔹 Commande SLASH Voiture
     # ────────────────────────────────────────────────────────────────────────────
-    @app_commands.command(name="voiture", description="Tire 3 voitures aléatoires")
+    @app_commands.command(name="voiture", description="Tire 3 voitures aléatoires depuis l'API")
     async def slash_voiture(self, interaction: discord.Interaction):
         await interaction.response.defer(ephemeral=True)
         user = await self.get_user(interaction.user)
@@ -173,7 +197,7 @@ class Voitures(commands.Cog):
 # 🔌 Setup du Cog
 # ────────────────────────────────────────────────────────────────────────────────
 async def setup(bot: commands.Bot):
-    cog = Voitures(bot)
+    cog = VoituresAPI(bot)
     for command in cog.get_commands():
         if not hasattr(command, "category"):
             command.category = "Jeux"
