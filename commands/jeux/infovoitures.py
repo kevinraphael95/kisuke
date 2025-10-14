@@ -38,23 +38,47 @@ class InfoVoitures(commands.Cog):
         self.voitures = load_voitures()
 
     # ────────────────────────────────────────────────────────────────────────────
-    # 🔹 Fonction pour afficher toutes les voitures
+    # 🔹 Fonction pour afficher toutes les voitures (pagination 20 par page)
     # ────────────────────────────────────────────────────────────────────────────
     async def send_liste_voitures(self, channel):
-        embed = discord.Embed(
-            title="📋 Liste des voitures disponibles",
-            color=discord.Color.blurple()
-        )
-
         voitures_sorted = sorted(self.voitures, key=lambda x: x["nom"])
-        description_lines = [
-            f"**{v['nom']}** — 🏅 {v['rarete'].capitalize()}"
-            for v in voitures_sorted
-        ]
+        pages = [voitures_sorted[i:i + 20] for i in range(0, len(voitures_sorted), 20)]
 
-        embed.description = "\n".join(description_lines)
-        embed.set_footer(text=f"{len(voitures_sorted)} voitures disponibles")
-        await safe_send(channel, embed=embed)
+        class VoituresPaginator(discord.ui.View):
+            def __init__(self):
+                super().__init__(timeout=120)
+                self.current_page = 0
+
+            async def update_message(self, interaction=None):
+                page_voitures = pages[self.current_page]
+                embed = discord.Embed(
+                    title="📋 Liste des voitures disponibles",
+                    color=discord.Color.blurple()
+                )
+                embed.description = "\n".join(
+                    f"**{v['nom']}** — 🏅 {v['rarete'].capitalize()}" for v in page_voitures
+                )
+                embed.set_footer(text=f"Page {self.current_page + 1}/{len(pages)} — {len(voitures_sorted)} voitures disponibles")
+
+                if interaction:
+                    await interaction.response.edit_message(embed=embed, view=self)
+                else:
+                    await safe_send(channel, embed=embed, view=self)
+
+            @discord.ui.button(label="◀️", style=discord.ButtonStyle.grey)
+            async def previous(self, interaction: discord.Interaction, button: discord.ui.Button):
+                if self.current_page > 0:
+                    self.current_page -= 1
+                    await self.update_message(interaction)
+
+            @discord.ui.button(label="▶️", style=discord.ButtonStyle.grey)
+            async def next(self, interaction: discord.Interaction, button: discord.ui.Button):
+                if self.current_page < len(pages) - 1:
+                    self.current_page += 1
+                    await self.update_message(interaction)
+
+        paginator = VoituresPaginator()
+        await paginator.update_message()
 
     # ────────────────────────────────────────────────────────────────────────────
     # 🔹 Fonction pour afficher une voiture spécifique
@@ -77,27 +101,26 @@ class InfoVoitures(commands.Cog):
         }
         color = colors.get(voiture["rarete"].lower(), discord.Color.green())
 
-        # Embed compact
         embed = discord.Embed(
             title=f"{voiture['nom']} — {voiture['rarete'].capitalize()}",
             description=voiture.get("description", "Aucune description disponible."),
             color=color
         )
 
-        # ✅ Image affichée correctement
+        # Image
         image_url = voiture.get("image")
         if image_url and image_url.startswith(("http://", "https://")):
-            embed.set_thumbnail(url=image_url)  # thumbnail = plus compact
+            embed.set_thumbnail(url=image_url)
         else:
             embed.set_thumbnail(url="https://upload.wikimedia.org/wikipedia/commons/6/65/No-Image-Placeholder.svg")
 
-        # Formatage compact des stats
+        # Stats
         stats = voiture.get("stats", {})
         formatted_stats = "\n".join(
             [f"**{k.replace('_', ' ').capitalize()}** : {v}" for k, v in stats.items()]
         )
-
         embed.add_field(name="📊 Caractéristiques", value=formatted_stats or "Aucune donnée", inline=False)
+
         await safe_send(channel, embed=embed)
 
     # ────────────────────────────────────────────────────────────────────────────
