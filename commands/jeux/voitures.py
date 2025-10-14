@@ -16,7 +16,7 @@ from discord.ui import View, Button
 import json, os, random
 from datetime import datetime, timedelta
 
-from utils.discord_utils import safe_send, safe_edit, safe_respond
+from utils.discord_utils import safe_send
 from utils.supabase_client import supabase
 
 # ────────────────────────────────────────────────────────────────────────────────
@@ -44,11 +44,9 @@ class VoitureButton(Button):
         self.user = user
 
     async def callback(self, interaction: discord.Interaction):
-        # Vérifie que le bouton appartient au bon utilisateur
         if str(interaction.user.id) != str(self.user["user_id"]):
             return await interaction.response.send_message("❌ Ce bouton n'est pas pour toi !", ephemeral=True)
 
-        # Recharge les données de l'utilisateur depuis Supabase
         res = supabase.table("voitures_users").select("*").eq("user_id", str(self.user["user_id"])).execute()
         if not res.data:
             return await interaction.response.send_message("⚠️ Erreur : utilisateur introuvable.", ephemeral=True)
@@ -58,11 +56,12 @@ class VoitureButton(Button):
         last = user_data.get("last_acheter")
         if last:
             last_dt = datetime.fromisoformat(last)
-            if datetime.utcnow() - last_dt < timedelta(seconds=COOLDOWN_ACHETER):
-                remain = int(COOLDOWN_ACHETER - (datetime.utcnow() - last_dt).total_seconds())
-                return await interaction.response.send_message(f"⏳ Attends encore {remain}s avant d’acheter une autre voiture.", ephemeral=True)
+            delta = timedelta(seconds=COOLDOWN_ACHETER) - (datetime.utcnow() - last_dt)
+            if delta.total_seconds() > 0:
+                h, rem = divmod(int(delta.total_seconds()), 3600)
+                m, s = divmod(rem, 60)
+                return await interaction.response.send_message(f"⏳ Attends encore {h}h {m}m {s}s avant d’acheter une autre voiture.", ephemeral=True)
 
-        # Ajoute la voiture dans le garage
         voitures_user = user_data.get("voitures", [])
         voitures_user.append(self.voiture)
 
@@ -71,7 +70,6 @@ class VoitureButton(Button):
             "last_acheter": datetime.utcnow().isoformat()
         }).eq("user_id", str(user_data["user_id"])).execute()
 
-        # Désactive le bouton après achat
         self.disabled = True
         await interaction.response.edit_message(
             content=f"🎉 Tu as acheté **{self.voiture['nom']}** ({self.voiture['rarete']}) !",
@@ -114,9 +112,11 @@ class Voitures(commands.Cog):
         last = user.get("last_voiture")
         if last:
             last_dt = datetime.fromisoformat(last)
-            if datetime.utcnow() - last_dt < timedelta(seconds=COOLDOWN_VOITURE):
-                remain = int(COOLDOWN_VOITURE - (datetime.utcnow() - last_dt).total_seconds())
-                return await safe_send(channel, f"⏳ Attends encore {remain}s pour tirer des voitures.")
+            delta = timedelta(seconds=COOLDOWN_VOITURE) - (datetime.utcnow() - last_dt)
+            if delta.total_seconds() > 0:
+                h, rem = divmod(int(delta.total_seconds()), 3600)
+                m, s = divmod(rem, 60)
+                return await safe_send(channel, f"⏳ Attends encore {h}h {m}m {s}s pour tirer des voitures.")
 
         tirage = random.sample(self.voitures, k=3)
         supabase.table("voitures_users").update({"last_voiture": datetime.utcnow().isoformat()}).eq("user_id", str(user["user_id"])).execute()
@@ -133,21 +133,51 @@ class Voitures(commands.Cog):
             await safe_send(channel, embed=embed, view=view)
 
     # ────────────────────────────────────────────────────────────────────────────
-    # 🔹 Voir le garage
+    # 🔹 Voir le garage (pagination 20 par page)
     # ────────────────────────────────────────────────────────────────────────────
     async def send_garage(self, channel, user):
         voitures_user = user["voitures"]
         if not voitures_user:
             return await safe_send(channel, "🚗 Ton garage est vide.")
 
-        for v in voitures_user:
-            embed = discord.Embed(
-                title=f"{v['nom']} ({v['rarete']})",
-                description=v.get("description", ""),
-                color=discord.Color.green()
-            )
-            embed.set_image(url=v["image"])
-            await safe_send(channel, embed=embed)
+        pages = [voitures_user[i:i + 20] for i in range(0, len(voitures_user), 20)]
+
+        class GaragePaginator(discord.ui.View):
+            def __init__(self):
+                super().__init__(timeout=120)
+                self.current_page = 0
+
+            async def update_message(self, interaction=None):
+                page_voitures = pages[self.current_page]
+                embed = discord.Embed(
+                    title=f"🚗 Garage de {len(voitures_user)} voitures",
+                    color=discord.Color.green()
+                )
+                description = "\n".join(
+                    f"{v['nom']} — 🏅 {v['rarete'].capitalize()}" for v in page_voitures
+                )
+                embed.description = description
+                embed.set_footer(text=f"Page {self.current_page + 1}/{len(pages)}")
+
+                if interaction:
+                    await interaction.response.edit_message(embed=embed, view=self)
+                else:
+                    await safe_send(channel, embed=embed, view=self)
+
+            @discord.ui.button(label="◀️", style=discord.ButtonStyle.grey)
+            async def previous(self, interaction: discord.Interaction, button: discord.ui.Button):
+                if self.current_page > 0:
+                    self.current_page -= 1
+                    await self.update_message(interaction)
+
+            @discord.ui.button(label="▶️", style=discord.ButtonStyle.grey)
+            async def next(self, interaction: discord.Interaction, button: discord.ui.Button):
+                if self.current_page < len(pages) - 1:
+                    self.current_page += 1
+                    await self.update_message(interaction)
+
+        paginator = GaragePaginator()
+        await paginator.update_message()
 
     # ────────────────────────────────────────────────────────────────────────────
     # 🔹 Commande SLASH Voiture
