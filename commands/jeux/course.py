@@ -78,7 +78,7 @@ class AnimalRace(commands.Cog):
     # 🔹 Commande SLASH
     # ────────────────────────────────────────────────────────────────────────────
     @app_commands.command(
-        name="course",
+        name="course_animal",
         description="Lance une course animée entre plusieurs animaux et affiche le gagnant."
     )
     @app_commands.checks.cooldown(1, 10.0, key=lambda i: (i.user.id))
@@ -96,7 +96,7 @@ class AnimalRace(commands.Cog):
     # ────────────────────────────────────────────────────────────────────────────
     # 🔹 Commande PREFIX
     # ────────────────────────────────────────────────────────────────────────────
-    @commands.command(name="course")
+    @commands.command(name="course_animal", aliases=["acourse"])
     @commands.cooldown(1, 10.0, commands.BucketType.user)
     async def prefix_animal_race(self, ctx: commands.Context):
         try:
