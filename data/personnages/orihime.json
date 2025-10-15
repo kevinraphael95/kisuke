@@ -6,9 +6,9 @@
   "race": ["Humain", "Fullbringer"],
   "stats_base": {
     "attaque": 40,
-    "defense": 80,
+    "defense": 100,
     "pression": 65,
-    "kido": 30,
+    "kido": 10,
     "intelligence": 55,
     "rapidite": 30,
     "total_stats": 300
