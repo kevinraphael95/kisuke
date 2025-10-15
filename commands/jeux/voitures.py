@@ -145,6 +145,8 @@ class Voitures(commands.Cog):
     async def send_garage(self, channel, target_user: discord.User):
         user_data = await self.get_user(target_user)
         voitures_user = sorted(user_data.get("voitures", []))
+        voiture_choisie = user_data.get("voiture_choisie")
+
         if not voitures_user:
             return await safe_send(channel, f"🚗 Le garage de {target_user.display_name} est vide.")
 
@@ -157,12 +159,34 @@ class Voitures(commands.Cog):
 
             async def update_message(self, interaction=None):
                 page_voitures = pages[self.current_page]
+
                 embed = discord.Embed(
                     title=f"🚗 Garage de {target_user.display_name} ({len(voitures_user)} voitures)",
                     color=discord.Color.green()
                 )
+
+                # Affichage de la voiture choisie
+                if voiture_choisie:
+                    embed.add_field(
+                        name="🏎️ Voiture choisie",
+                        value=f"**{voiture_choisie}**",
+                        inline=False
+                    )
+                else:
+                    embed.add_field(
+                        name="🏎️ Voiture choisie",
+                        value="*(Aucune sélectionnée)*",
+                        inline=False
+                    )
+
+                # Liste des voitures
                 description = "\n".join(f"{v}" for v in page_voitures)
-                embed.description = description
+                embed.add_field(
+                    name="🚘 Voitures possédées",
+                    value=description,
+                    inline=False
+                )
+
                 embed.set_footer(text=f"Page {self.current_page + 1}/{len(pages)}")
 
                 if interaction:
