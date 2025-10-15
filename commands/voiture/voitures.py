@@ -1,7 +1,7 @@
 # ────────────────────────────────────────────────────────────────────────────────
 # 📌 voitures.py — Commande interactive /voiture et !voiture
 # Objectif : Tirer des voitures aléatoires, pouvoir acheter via bouton et voir son garage
-# Catégorie : Jeux
+# Catégorie : Voiture
 # Accès : Tous
 # Cooldown : Tirage 1 voiture toutes les 5 min, achat 1h
 # ────────────────────────────────────────────────────────────────────────────────
@@ -297,5 +297,5 @@ async def setup(bot: commands.Bot):
     cog = Voitures(bot)
     for command in cog.get_commands():
         if not hasattr(command, "category"):
-            command.category = "Jeux"
+            command.category = "Voiture"
     await bot.add_cog(cog)
