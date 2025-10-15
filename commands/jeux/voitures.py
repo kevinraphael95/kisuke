@@ -222,6 +222,50 @@ class Voitures(commands.Cog):
         target_user = target or ctx.author
         await self.send_garage(ctx.channel, target_user)
 
+    # ────────────────────────────────────────────────────────────────────────────
+    # 🔹 Commande pour choisir une voiture dans son garage
+    # ────────────────────────────────────────────────────────────────────────────
+    async def choisir_voiture(self, channel, user_data, voiture_nom: str):
+        voitures_user = user_data.get("voitures", [])
+        if not voitures_user:
+            return await safe_send(channel, "🚗 Ton garage est vide, impossible de choisir une voiture.")
+
+        voiture_match = next((v for v in voitures_user if voiture_nom.lower() in v.lower()), None)
+        if not voiture_match:
+            return await safe_send(channel, f"❌ Tu ne possèdes pas de voiture nommée `{voiture_nom}`.")
+
+        supabase.table("voitures_users").update({
+            "voiture_choisie": voiture_match
+        }).eq("user_id", str(user_data["user_id"])).execute()
+
+        embed = discord.Embed(
+            title="🚘 Voiture sélectionnée",
+            description=f"Tu as choisi **{voiture_match}** comme voiture actuelle !",
+            color=discord.Color.green()
+        )
+        await safe_send(channel, embed=embed)
+
+    # ────────────────────────────────────────────────────────────────────────────
+    # 🔹 Commande SLASH /choisir_voiture
+    # ────────────────────────────────────────────────────────────────────────────
+    @app_commands.command(name="choisir_voiture", description="Choisis une voiture de ton garage")
+    @app_commands.describe(nom="Nom de la voiture que tu veux utiliser")
+    async def slash_choisir_voiture(self, interaction: discord.Interaction, nom: str):
+        await interaction.response.defer(ephemeral=True)
+        user_data = await self.get_user(interaction.user)
+        await self.choisir_voiture(interaction.channel, user_data, nom)
+        await interaction.delete_original_response()
+
+    # ────────────────────────────────────────────────────────────────────────────
+    # 🔹 Commande PREFIX !choisir_voiture / !cv
+    # ────────────────────────────────────────────────────────────────────────────
+    @commands.command(name="choisir_voiture", aliases=["cv"])
+    async def prefix_choisir_voiture(self, ctx: commands.Context, *, nom: str):
+        user_data = await self.get_user(ctx.author)
+        await self.choisir_voiture(ctx.channel, user_data, nom)
+
+        
+
 # ────────────────────────────────────────────────────────────────────────────────
 # 🔌 Setup du Cog
 # ────────────────────────────────────────────────────────────────────────────────
