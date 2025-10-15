@@ -169,7 +169,7 @@ class Voitures(commands.Cog):
                 if voiture_choisie:
                     embed.add_field(
                         name="🏎️ Voiture choisie",
-                        value=f"**{voiture_choisie}**",
+                        value=f"{voiture_choisie}",
                         inline=False
                     )
                 else:
