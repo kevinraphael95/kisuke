@@ -10,6 +10,9 @@ from discord.ext import commands
 import random, os, json
 from utils.discord_utils import safe_send
 
+# ────────────────────────────────────────────────────────────────────────────────
+# 📂 Gestion des personnages et combat
+# ────────────────────────────────────────────────────────────────────────────────
 CHAR_DIR = os.path.join("data", "personnages")
 COMBAT_FILE = os.path.join("data", "combat.json")
 
@@ -89,7 +92,7 @@ def forme_suivante(p: dict):
     return None
 
 # ────────────────────────────────────────────────────────────────────────────────
-# 🔹 View de combat
+# 🔹 View et boutons
 # ────────────────────────────────────────────────────────────────────────────────
 class CombatView(discord.ui.View):
     def __init__(self, joueur, bot_perso, user):
@@ -112,22 +115,23 @@ class CombatButton(discord.ui.Button):
         if interaction.user.id != self.view_ref.user.id:
             return await interaction.response.send_message("Ce n’est pas ton combat !", ephemeral=True)
 
+        # Attaque joueur
         self.atk["PP"] -= 1
         appliquer_attaque(self.view_ref.joueur, self.view_ref.bot, self.atk, self.view_ref.narratif)
         fs = forme_suivante(self.view_ref.joueur)
         if fs: self.view_ref.narratif.append(fs)
 
-        # Victoire joueur
+        # Vérif victoire joueur
         if self.view_ref.bot["pv"] <= 0:
             return await interaction.response.edit_message(content=f"🏆 **{self.view_ref.joueur['nom']}** remporte le combat !", embed=None, view=None)
 
-        # Tour bot
+        # Attaque bot
         bot_atk = random.choice(attaque_disponible(self.view_ref.bot))
         appliquer_attaque(self.view_ref.bot, self.view_ref.joueur, bot_atk, self.view_ref.narratif)
         fs = forme_suivante(self.view_ref.bot)
         if fs: self.view_ref.narratif.append(fs)
 
-        # Victoire bot
+        # Vérif victoire bot
         if self.view_ref.joueur["pv"] <= 0:
             return await interaction.response.edit_message(content=f"💀 **{self.view_ref.bot['nom']}** (bot) gagne !", embed=None, view=None)
 
@@ -141,6 +145,39 @@ class CombatButton(discord.ui.Button):
         embed.set_thumbnail(url=self.view_ref.joueur["image"])
         embed.set_image(url=self.view_ref.bot["image"])
         await interaction.response.edit_message(embed=embed, view=self.view_ref)
+
+# ────────────────────────────────────────────────────────────────────────────────
+# 🔹 Select personnage
+# ────────────────────────────────────────────────────────────────────────────────
+class SelectPersonnage(discord.ui.Select):
+    def __init__(self, persos, user):
+        options = [
+            discord.SelectOption(label=p["nom"], description=p.get("description","")[:80])
+            for p in persos[:25]
+        ]
+        super().__init__(placeholder="Choisis ton personnage...", options=options)
+        self.persos = persos
+        self.user = user
+
+    async def callback(self, interaction: discord.Interaction):
+        if interaction.user.id != self.user.id:
+            return await interaction.response.send_message("Ce n’est pas ton combat !", ephemeral=True)
+
+        nom = self.values[0]
+        joueur = init_combat(load_character(nom))
+        bot_perso = init_combat(random.choice(self.persos))
+
+        embed = discord.Embed(
+            title=f"🗡️ {joueur['nom']} vs {bot_perso['nom']}",
+            description=f"❤️ {joueur['nom']} : {joueur['pv']} PV\n💀 {bot_perso['nom']} : {bot_perso['pv']} PV\n\nChoisis ton attaque :",
+            color=discord.Color.red()
+        )
+        embed.set_thumbnail(url=joueur["image"])
+        embed.set_image(url=bot_perso["image"])
+
+        combat_view = CombatView(joueur, bot_perso, self.user)
+        await interaction.response.edit_message(content="⚔️ **Combat commencé !**", embed=embed, view=combat_view)
+        self.view.stop()
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🧠 Cog principal
@@ -167,32 +204,8 @@ class VersusBotCommand(commands.Cog):
         if not persos:
             return await safe_send(channel, "❌ Aucun personnage disponible.")
 
-        options = [discord.SelectOption(label=p["nom"], description=p.get("description","")[:80]) for p in persos]
-        select = discord.ui.Select(placeholder="Choisis ton personnage...", options=options[:25])
         view = discord.ui.View()
-        view.add_item(select)
-
-        async def select_callback(interaction: discord.Interaction):
-            if interaction.user.id != user.id:
-                return await interaction.response.send_message("Ce n’est pas ton combat !", ephemeral=True)
-
-            nom = select.values[0]
-            joueur = init_combat(load_character(nom))
-            bot_perso = init_combat(random.choice(persos))
-
-            embed = discord.Embed(
-                title=f"🗡️ {joueur['nom']} vs {bot_perso['nom']}",
-                description=f"❤️ {joueur['nom']} : {joueur['pv']} PV\n💀 {bot_perso['nom']} : {bot_perso['pv']} PV\n\nChoisis ton attaque :",
-                color=discord.Color.red()
-            )
-            embed.set_thumbnail(url=joueur["image"])
-            embed.set_image(url=bot_perso["image"])
-
-            combat_view = CombatView(joueur, bot_perso, user)
-            await interaction.response.send_message(f"⚔️ **Combat commencé !**", embed=embed, view=combat_view)
-            view.stop()
-
-        select.callback = select_callback
+        view.add_item(SelectPersonnage(persos, user))
 
         if isinstance(source, discord.Interaction):
             await source.response.send_message(f"{user.mention}, choisis ton personnage :", view=view)
