@@ -1,6 +1,6 @@
 # ────────────────────────────────────────────────────────────────────────────────
-# 📌 mini_pvz_buttons.py — Mini-jeu Plants vs Zombies interactif
-# Objectif : Placer des plantes sur une grille avec boutons et repousser les zombies
+# 📌 mini_pvz.py — Mini-jeu Plants vs Zombies
+# Objectif : Placer des plantes sur une grille et repousser les zombies
 # Catégorie : Jeux
 # Accès : Tous
 # Cooldown : 1 utilisation / 5 secondes / utilisateur
@@ -19,13 +19,13 @@ import random
 # ────────────────────────────────────────────────────────────────────────────────
 # 🧠 Cog principal
 # ────────────────────────────────────────────────────────────────────────────────
-class MiniPvZButtons(commands.Cog):
+class MiniPvZ(commands.Cog):
     """
-    Commande /pvz et !pvz — Mini-jeu Plants vs Zombies avec boutons interactifs
+    Commande /pvz et !pvz — Mini-jeu Plants vs Zombies interactif
     """
     GRID_ROWS = 3
     GRID_COLS = 5
-    ZOMBIE_PROB = 0.3
+    ZOMBIE_PROB = 0.3   # Probabilité d'apparition d'un zombie par tour
 
     def __init__(self, bot: commands.Bot):
         self.bot = bot
@@ -36,7 +36,7 @@ class MiniPvZButtons(commands.Cog):
     # ────────────────────────────────────────────────────────────────────────────
     @app_commands.command(
         name="pvz",
-        description="Joue à un mini Plants vs Zombies interactif !"
+        description="Joue à un mini Plants vs Zombies !"
     )
     @app_commands.checks.cooldown(1, 5.0, key=lambda i: i.user.id)
     async def slash_pvz(self, interaction: discord.Interaction):
@@ -59,6 +59,7 @@ class MiniPvZButtons(commands.Cog):
         if user.id in self.active_games:
             return await channel.send("❌ Tu as déjà une partie en cours !")
 
+        # Initialisation de l'état du jeu
         state = {
             "grid": [[None for _ in range(self.GRID_COLS)] for _ in range(self.GRID_ROWS)],
             "selected_plant": None,
@@ -69,79 +70,90 @@ class MiniPvZButtons(commands.Cog):
         }
         self.active_games[user.id] = state
 
+        # Affichage initial
         view = self.create_game_view(user, state)
-        msg = await channel.send("🌱 Mini PvZ", view=view)
+        embed = self.render_grid(state)
+        msg = await channel.send(embed=embed, view=view)
         state["message"] = msg
 
+        # Boucle du jeu
         asyncio.create_task(self.game_loop(user, state))
 
     # ────────────────────────────────────────────────────────────────────────────
-    # 🔹 Création de la view du jeu (grille + plantes)
+    # 🔹 Création de la vue complète (grille + plantes)
     # ────────────────────────────────────────────────────────────────────────────
     def create_game_view(self, user, state):
-        class GridButton(Button):
-            def __init__(self, row, col):
-                super().__init__(label="⬜", style=discord.ButtonStyle.secondary)
-                self.row = row
-                self.col = col
+        view = View(timeout=None)
 
-            async def callback(inner_self, interaction: discord.Interaction):
-                if interaction.user.id != user.id:
-                    return await interaction.response.send_message("❌ Ce bouton n'est pas pour toi !", ephemeral=True)
+        # Boutons de la grille
+        for r in range(self.GRID_ROWS):
+            for c in range(self.GRID_COLS):
+                btn = self.GridButton(r, c, user, state)
+                view.add_item(btn)
 
-                plant = state["selected_plant"]
-                if plant and state["grid"][inner_self.row][inner_self.col] is None:
-                    state["grid"][inner_self.row][inner_self.col] = plant
-                    state["selected_plant"] = None  # désélectionne après placement
-                    await inner_self.view.update_buttons(state)
-                    await interaction.response.edit_message(view=inner_self.view)
+        # Boutons des plantes (en bas)
+        for plant in ["Tournesol", "Tire-pois", "Noix"]:
+            btn = self.PlantSelectorButton(plant, user, state)
+            view.add_item(btn)
 
-        class PlantSelector(Button):
-            def __init__(self, plant_name):
-                super().__init__(label=plant_name, style=discord.ButtonStyle.secondary)
-                self.plant_name = plant_name
+        return view
 
-            async def callback(inner_self, interaction: discord.Interaction):
-                if interaction.user.id != user.id:
-                    return await interaction.response.send_message("❌ Ce bouton n'est pas pour toi !", ephemeral=True)
-                state["selected_plant"] = self.plant_name if state["selected_plant"] != self.plant_name else None
-                await inner_self.view.update_buttons(state)
-                await interaction.response.edit_message(view=inner_self.view)
+    # ────────────────────────────────────────────────────────────────────────────
+    # 🔹 Bouton de sélection de plante
+    # ────────────────────────────────────────────────────────────────────────────
+    class PlantSelectorButton(Button):
+        def __init__(self, plant_name, user, state):
+            super().__init__(label=plant_name, style=discord.ButtonStyle.secondary)
+            self.plant_name = plant_name
+            self.user = user
+            self.state = state
 
-        class PvZView(View):
-            def __init__(self):
-                super().__init__(timeout=None)
-                self.grid_buttons = [[GridButton(r, c) for c in range(MiniPvZButtons.GRID_COLS)] for r in range(MiniPvZButtons.GRID_ROWS)]
-                for row in self.grid_buttons:
-                    for btn in row:
-                        self.add_item(btn)
-                self.plant_buttons = [PlantSelector(p) for p in ["Tournesol", "Tire-pois", "Noix"]]
-                for btn in self.plant_buttons:
-                    self.add_item(btn)
+        async def callback(self, interaction: discord.Interaction):
+            if interaction.user.id != self.user.id:
+                return await interaction.response.send_message("❌ Ce bouton n'est pas pour toi !", ephemeral=True)
 
-            async def update_buttons(self, state):
-                # Met à jour la grille
-                for r in range(MiniPvZButtons.GRID_ROWS):
-                    for c in range(MiniPvZButtons.GRID_COLS):
-                        plant = state["grid"][r][c]
-                        zombie_here = c in state["zombies"][r]
-                        if plant == "Tournesol":
-                            label = "🌻"
-                        elif plant == "Tire-pois":
-                            label = "🌿"
-                        elif plant == "Noix":
-                            label = "🥥"
-                        else:
-                            label = "⬜"
-                        if zombie_here:
-                            label += "🧟"
-                        self.grid_buttons[r][c].label = label
-                        self.grid_buttons[r][c].style = discord.ButtonStyle.secondary
-                # Met à jour les boutons plantes
-                for btn in self.plant_buttons:
-                    btn.style = discord.ButtonStyle.success if state["selected_plant"] == btn.plant_name else discord.ButtonStyle.secondary
+            # Toggle sélection
+            if self.state["selected_plant"] == self.plant_name:
+                self.state["selected_plant"] = None
+            else:
+                self.state["selected_plant"] = self.plant_name
 
-        return PvZView()
+            # Mise à jour des couleurs
+            for b in self.view.children:
+                if isinstance(b, Button) and b.label in ["Tournesol", "Tire-pois", "Noix"]:
+                    b.style = discord.ButtonStyle.success if b.label == self.state["selected_plant"] else discord.ButtonStyle.secondary
+
+            await interaction.response.edit_message(view=self.view)
+
+    # ────────────────────────────────────────────────────────────────────────────
+    # 🔹 Bouton de la grille pour placer une plante
+    # ────────────────────────────────────────────────────────────────────────────
+    class GridButton(Button):
+        def __init__(self, row, col, user, state):
+            super().__init__(label="⬜", style=discord.ButtonStyle.secondary, row=row)
+            self.row = row
+            self.col = col
+            self.user = user
+            self.state = state
+
+        async def callback(self, interaction: discord.Interaction):
+            if interaction.user.id != self.user.id:
+                return await interaction.response.send_message("❌ Ce bouton n'est pas pour toi !", ephemeral=True)
+
+            plant = self.state["selected_plant"]
+            if not plant:
+                return await interaction.response.send_message("❌ Sélectionne d'abord une plante !", ephemeral=True)
+
+            if self.state["grid"][self.row][self.col] is None:
+                self.state["grid"][self.row][self.col] = plant
+                self.state["selected_plant"] = None
+                # Désélectionne toutes les plantes
+                for b in self.view.children:
+                    if isinstance(b, Button) and b.label in ["Tournesol", "Tire-pois", "Noix"]:
+                        b.style = discord.ButtonStyle.secondary
+                await interaction.response.edit_message(embed=self.state["message"].embeds[0], view=self.view)
+            else:
+                await interaction.response.send_message("❌ Case déjà occupée !", ephemeral=True)
 
     # ────────────────────────────────────────────────────────────────────────────
     # 🔹 Boucle principale du jeu
@@ -155,17 +167,20 @@ class MiniPvZButtons(commands.Cog):
                 if random.random() < self.ZOMBIE_PROB:
                     state["zombies"][r].append(self.GRID_COLS - 1)
 
-            # Déplacement des zombies et vérification Game Over
+            # Déplacer les zombies
             for r in range(self.GRID_ROWS):
                 for i in range(len(state["zombies"][r])):
                     state["zombies"][r][i] -= 1
                 if 0 in state["zombies"][r]:
                     state["running"] = False
-                    await state["message"].edit(content="💀 Game Over ! Un zombie a envahi ton jardin !", view=None)
+                    await state["message"].edit(
+                        embed=discord.Embed(title="💀 Game Over!", description="Un zombie a envahi ton jardin !", color=discord.Color.red()),
+                        view=None
+                    )
                     del self.active_games[user.id]
                     return
 
-            # Attaque des Tire-pois
+            # Attaque des plantes
             for r in range(self.GRID_ROWS):
                 for c in range(self.GRID_COLS):
                     plant = state["grid"][r][c]
@@ -174,15 +189,42 @@ class MiniPvZButtons(commands.Cog):
                         if zombies:
                             state["zombies"][r].remove(min(zombies))
 
-            # Mise à jour de la grille
-            await state["message"].view.update_buttons(state)
-            await state["message"].edit(view=state["message"].view)
+            # Mise à jour du message
+            embed = self.render_grid(state)
+            await state["message"].edit(embed=embed)
+
+    # ────────────────────────────────────────────────────────────────────────────
+    # 🔹 Rendu de la grille en embed
+    # ────────────────────────────────────────────────────────────────────────────
+    def render_grid(self, state):
+        rows = []
+        for r in range(self.GRID_ROWS):
+            row = ""
+            for c in range(self.GRID_COLS):
+                plant = state["grid"][r][c]
+                zombie = c in state["zombies"][r]
+                if plant == "Tournesol":
+                    cell = "🌻"
+                elif plant == "Tire-pois":
+                    cell = "🌿"
+                elif plant == "Noix":
+                    cell = "🥥"
+                else:
+                    cell = "⬜"
+                if zombie:
+                    cell += "🧟"
+                row += cell
+            rows.append(row)
+        embed = discord.Embed(title="🌱 Mini PvZ", description="\n".join(rows), color=discord.Color.green())
+        if state["selected_plant"]:
+            embed.set_footer(text=f"Plante sélectionnée : {state['selected_plant']}")
+        return embed
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🔌 Setup du Cog
 # ────────────────────────────────────────────────────────────────────────────────
 async def setup(bot: commands.Bot):
-    cog = MiniPvZButtons(bot)
+    cog = MiniPvZ(bot)
     for command in cog.get_commands():
         if not hasattr(command, "category"):
             command.category = "Jeux"
