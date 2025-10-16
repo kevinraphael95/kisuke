@@ -222,15 +222,51 @@ class CombatCommand(commands.Cog):
                     continue
                 break
 
-            # Embed final
-            embed = discord.Embed(title=f"🗡️ {p1['nom']} vs {p2['nom']}", description="\n".join(narratif), color=discord.Color.red())
+            # ────────────────────────────────────────────────────────────────────
+            # 📜 Embed final avec pagination
+            # ────────────────────────────────────────────────────────────────────
+            PAGINATION_TAILLE = 3500  # limite par page
+            texte_combat = "\n".join(narratif)
+            pages = [texte_combat[i:i + PAGINATION_TAILLE] for i in range(0, len(texte_combat), PAGINATION_TAILLE)]
+            index = 0
+
+            embed = discord.Embed(
+                title=f"🗡️ {p1['nom']} vs {p2['nom']}",
+                description=pages[index],
+                color=discord.Color.red()
+            )
             embed.set_thumbnail(url=p1["image"])
             embed.set_image(url=p2["image"])
-            await safe_send(channel, embed=embed)
+
+            # ────────────────────────────────────────────────────────────────────
+            # 🔘 Pagination avec boutons
+            # ────────────────────────────────────────────────────────────────────
+            class PagesView(discord.ui.View):
+                def __init__(self):
+                    super().__init__(timeout=120)
+
+                @discord.ui.button(label="◀️", style=discord.ButtonStyle.secondary)
+                async def prev(self, interaction: discord.Interaction, button: discord.ui.Button):
+                    nonlocal index
+                    index = (index - 1) % len(pages)
+                    embed.description = pages[index]
+                    await interaction.response.edit_message(embed=embed, view=self)
+
+                @discord.ui.button(label="▶️", style=discord.ButtonStyle.secondary)
+                async def next(self, interaction: discord.Interaction, button: discord.ui.Button):
+                    nonlocal index
+                    index = (index + 1) % len(pages)
+                    embed.description = pages[index]
+                    await interaction.response.edit_message(embed=embed, view=self)
+
+            view = PagesView()
+            await safe_send(channel, embed=embed, view=view)
 
         except Exception as e:
-            import traceback; traceback.print_exc()
+            import traceback
+            traceback.print_exc()
             await safe_send(channel, f"❌ Erreur dans !combat : `{e}`")
+
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🔌 Setup du Cog
