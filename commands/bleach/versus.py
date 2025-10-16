@@ -1,6 +1,6 @@
 # ────────────────────────────────────────────────────────────────────────────────
-# 📌 versus.py — Combat interactif contre le bot
-# Objectif : Combat style Pokémon entre joueur et bot (avec attaques choisies)
+# 📌 versus_bot.py — Combat interactif contre le bot
+# Objectif : Combat style Pokémon entre joueur et bot avec boutons
 # Catégorie : Bleach
 # ────────────────────────────────────────────────────────────────────────────────
 
@@ -11,7 +11,7 @@ import random, os, json
 from utils.discord_utils import safe_send
 
 # ────────────────────────────────────────────────────────────────────────────────
-# 📂 Données du jeu
+# 📂 Gestion des personnages et combat
 # ────────────────────────────────────────────────────────────────────────────────
 CHAR_DIR = os.path.join("data", "personnages")
 COMBAT_FILE = os.path.join("data", "combat.json")
@@ -71,27 +71,35 @@ def appliquer_attaque(a, d, atk, narratif):
     if atk["categorie"] == "Soin":
         soin = atk["puissance"]
         a["pv"] = min(a["stats_base"]["total_stats"] // 3, a["pv"] + soin)
-        narratif.append(f"{CATEGORIE_EMOJI['Soin']} **{a['nom']}** se soigne de {soin} PV !")
+        narratif.append(f"{CATEGORIE_EMOJI['Soin']} **{a['nom']}** utilise *{atk['nom']}* et se soigne {soin} PV !")
         return
     degats, mult, crit = calcul_degats(a, d, atk)
     d["pv"] -= degats
-    txt = f"{CATEGORIE_EMOJI['Offensive']} **{a['nom']}** utilise *{atk['nom']}* et inflige {degats} PV à **{d['nom']}** !"
+    emoji_type = TYPE_EMOJI.get(atk["type"], "")
+    txt = f"{CATEGORIE_EMOJI['Offensive']} **{a['nom']}** utilise *{atk['nom']}* {emoji_type} et inflige {degats} PV à **{d['nom']}** !"
     if crit: txt += " ⚡ Coup critique !"
     if mult > 1: txt += " 💥 Super efficace !"
     elif mult < 1: txt += " ⚠️ Pas très efficace..."
     narratif.append(txt)
-    if "statut" in atk:
-        d["statut"] = atk["statut"]
+    if "statut" in atk: d["statut"] = atk["statut"]
+
+def forme_suivante(p: dict):
+    formes = list(p["formes"].keys())
+    idx = formes.index(p["forme_actuelle"])
+    if idx < len(formes) - 1 and random.random() < 0.15:
+        p["forme_actuelle"] = formes[idx + 1]
+        return f"✨ **{p['nom']}** passe en **{p['forme_actuelle']}** !"
+    return None
 
 # ────────────────────────────────────────────────────────────────────────────────
-# 🧠 Cog principal — /versus
+# 🧠 Cog principal
 # ────────────────────────────────────────────────────────────────────────────────
-class VersusCommand(commands.Cog):
-    """Combat interactif contre le bot"""
-    def __init__(self, bot):
+class VersusBotCommand(commands.Cog):
+    """Combat interactif contre le bot avec boutons"""
+    def __init__(self, bot: commands.Bot):
         self.bot = bot
 
-    @app_commands.command(name="versus", description="Affronte le bot dans un combat Pokémon-style !")
+    @app_commands.command(name="versus", description="⚔️ Combat interactif contre le bot.")
     async def slash_versus(self, interaction: discord.Interaction):
         await self.start_versus(interaction)
 
@@ -108,31 +116,33 @@ class VersusCommand(commands.Cog):
         if not persos:
             return await safe_send(channel, "❌ Aucun personnage disponible.")
 
-        # Étape 1 — Choix du perso par le joueur
-        options = [discord.SelectOption(label=p["nom"], description=p["description"][:80]) for p in persos]
-
+        # Choix du perso
+        options = [discord.SelectOption(label=p["nom"], description=p.get("description","")[:80]) for p in persos]
         select = discord.ui.Select(placeholder="Choisis ton personnage...", options=options[:25])
-
         view = discord.ui.View()
         view.add_item(select)
 
-        msg = await safe_send(channel, f"{user.mention}, choisis ton personnage :", view=view)
+        if isinstance(source, discord.Interaction):
+            await source.response.send_message(f"{user.mention}, choisis ton personnage :", view=view)
+        else:
+            await safe_send(channel, f"{user.mention}, choisis ton personnage :", view=view)
 
-        async def select_callback(interaction):
+        async def select_callback(interaction: discord.Interaction):
             if interaction.user.id != user.id:
                 return await interaction.response.send_message("Ce n’est pas ton combat !", ephemeral=True)
+            await interaction.response.defer()
             nom = select.values[0]
             joueur = init_combat(load_character(nom))
             bot_perso = init_combat(random.choice(persos))
-            await self.run_versus(channel, user, joueur, bot_perso)
+            await self.run_versus(interaction, joueur, bot_perso)
             view.stop()
 
         select.callback = select_callback
 
-    async def run_versus(self, channel, user, p1, p2):
-        narratif = [f"⚔️ **{p1['nom']} (toi)** vs **{p2['nom']} (bot)** ⚔️\n"]
+    async def run_versus(self, interaction, p1, p2):
+        narratif = []
 
-        while p1["pv"] > 0 and p2["pv"] > 0:
+        async def tour_joueur():
             # Embed état
             embed = discord.Embed(
                 title=f"🗡️ {p1['nom']} vs {p2['nom']}",
@@ -142,42 +152,49 @@ class VersusCommand(commands.Cog):
             embed.set_thumbnail(url=p1["image"])
             embed.set_image(url=p2["image"])
 
-            # Boutons d’attaque
             view = discord.ui.View(timeout=60)
             attaques = attaque_disponible(p1)[:4]
-
             for atk in attaques:
+                button = discord.ui.Button(label=atk["nom"], style=discord.ButtonStyle.primary)
                 async def callback(interaction, atk=atk):
-                    if interaction.user.id != user.id:
+                    if interaction.user.id != interaction.user.id:
                         return await interaction.response.send_message("Ce n’est pas ton combat !", ephemeral=True)
                     atk["PP"] -= 1
                     appliquer_attaque(p1, p2, atk, narratif)
+                    fs = forme_suivante(p1)
+                    if fs: narratif.append(fs)
+
                     if p2["pv"] <= 0:
-                        await interaction.response.edit_message(content=f"🏆 **{p1['nom']}** remporte le combat !", view=None)
+                        await interaction.response.edit_message(content=f"🏆 **{p1['nom']}** remporte le combat !", embed=None, view=None)
                         return
-                    # Tour du bot
+
+                    # Tour bot
                     bot_atk = random.choice(attaque_disponible(p2))
                     appliquer_attaque(p2, p1, bot_atk, narratif)
+                    fs = forme_suivante(p2)
+                    if fs: narratif.append(fs)
+
                     if p1["pv"] <= 0:
-                        await interaction.response.edit_message(content=f"💀 **{p2['nom']}** (bot) gagne !", view=None)
+                        await interaction.response.edit_message(content=f"💀 **{p2['nom']}** (bot) gagne !", embed=None, view=None)
                         return
-                    await self.run_versus(channel, user, p1, p2)
-                    view.stop()
 
-                view.add_item(discord.ui.Button(label=atk["nom"], style=discord.ButtonStyle.primary, custom_id=atk["nom"]))
-                view.children[-1].callback = callback
+                    # Met à jour embed pour nouveau tour
+                    embed.description = f"❤️ {p1['nom']} : {p1['pv']} PV\n💀 {p2['nom']} : {p2['pv']} PV\n\nChoisis ton attaque :"
+                    await interaction.response.edit_message(embed=embed, view=view)
 
-            await safe_send(channel, embed=embed, view=view)
-            break
+                button.callback = callback
+                view.add_item(button)
+
+            await interaction.response.edit_message(embed=embed, view=view)
+
+        await tour_joueur()
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🔌 Setup du Cog
 # ────────────────────────────────────────────────────────────────────────────────
 async def setup(bot: commands.Bot):
-    cog = VersusCommand(bot)
+    cog = VersusBotCommand(bot)
     for command in cog.get_commands():
         if not hasattr(command, "category"):
-            command.category = "Fun&Random"
+            command.category = "Bleach"
     await bot.add_cog(cog)
-
-
