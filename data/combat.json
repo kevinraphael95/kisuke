@@ -1,138 +1,41 @@
 {
-  "Ichigo Kurosaki": {
-    "type": "Shinigami",
-    "stats": {
-      "HP": 100,
-      "ATK": 40,
-      "DEF": 25,
-      "SPD": 30,
-      "REI": 40,
-      "TEC": 25
-    },
-    "moves": {
-      "Attaque légère": {"type": "basic", "power": 10, "rei_cost": 0},
-      "Attaque lourde": {"type": "basic", "power": 20, "rei_cost": 0},
-      "Getsuga Tenshō": {"type": "special", "power": 35, "rei_cost": 20},
-      "Bankai": {"type": "transform", "power": 0, "rei_cost": 50, "cooldown": true}
-    }
+  "type_effectiveness": {
+    "Normal": {"Roche": 0.5, "Spectre": 0},
+    "Feu": {"Feu": 0.5, "Eau": 0.5, "Plante": 2, "Glace": 2, "Insecte": 2, "Roche": 0.5, "Acier": 2},
+    "Eau": {"Feu": 2, "Eau": 0.5, "Plante": 0.5, "Sol": 2, "Roche": 2, "Dragon": 0.5},
+    "Plante": {"Eau": 2, "Feu": 0.5, "Plante": 0.5, "Poison": 0.5, "Vol": 0.5, "Sol": 2, "Roche": 2, "Insecte": 0.5, "Dragon": 0.5, "Acier": 0.5},
+    "Électrik": {"Eau": 2, "Électrik": 0.5, "Plante": 0.5, "Sol": 0, "Vol": 2, "Dragon": 0.5},
+    "Glace": {"Plante": 2, "Feu": 0.5, "Eau": 0.5, "Glace": 0.5, "Sol": 2, "Vol": 2, "Dragon": 2, "Acier": 0.5},
+    "Combat": {"Normal": 2, "Glace": 2, "Roche": 2, "Ténèbres": 2, "Acier": 2, "Poison": 0.5, "Vol": 0.5, "Psy": 0.5, "Fée": 0.5},
+    "Poison": {"Plante": 2, "Poison": 0.5, "Sol": 0.5, "Roche": 0.5, "Spectre": 0.5, "Acier": 0},
+    "Sol": {"Feu": 2, "Électrik": 2, "Plante": 0.5, "Poison": 2, "Vol": 0, "Roche": 2, "Acier": 2},
+    "Vol": {"Plante": 2, "Électrik": 0.5, "Combat": 2, "Roche": 0.5, "Insecte": 2},
+    "Psy": {"Combat": 2, "Poison": 2, "Psy": 0.5, "Ténèbres": 0, "Acier": 0.5},
+    "Insecte": {"Plante": 2, "Feu": 0.5, "Combat": 0.5, "Poison": 0.5, "Vol": 0.5, "Spectre": 0.5, "Ténèbres": 2, "Acier": 0.5, "Fée": 0.5},
+    "Roche": {"Feu": 2, "Glace": 2, "Combat": 0.5, "Sol": 0.5, "Vol": 2, "Acier": 0.5},
+    "Spectre": {"Normal": 0, "Psy": 2, "Spectre": 2, "Ténèbres": 0.5},
+    "Dragon": {"Dragon": 2, "Acier": 0.5, "Fée": 0},
+    "Ténèbres": {"Psy": 2, "Spectre": 2, "Combat": 0.5, "Fée": 0.5},
+    "Acier": {"Glace": 2, "Roche": 2, "Fée": 2, "Feu": 0.5, "Eau": 0.5, "Électrik": 0.5, "Acier": 0.5},
+    "Fée": {"Combat": 2, "Dragon": 2, "Ténèbres": 2, "Feu": 0.5, "Poison": 0.5, "Acier": 0.5}
   },
-  "Byakuya Kuchiki": {
-    "type": "Shinigami",
-    "stats": {
-      "HP": 100,
-      "ATK": 30,
-      "DEF": 30,
-      "SPD": 35,
-      "REI": 40,
-      "TEC": 25
-    },
-    "moves": {
-      "Attaque légère": {"type": "basic", "power": 10, "rei_cost": 0},
-      "Senbonzakura": {"type": "special", "power": 30, "rei_cost": 20},
-      "Shukei Hakuteiken": {"type": "special", "power": 50, "rei_cost": 40},
-      "Bankai": {"type": "transform", "power": 0, "rei_cost": 50, "cooldown": true}
-    }
+  "types_emoji": {
+    "Normal": "⚪", "Feu": "🔥", "Eau": "💧", "Plante": "🌿", "Électrik": "⚡",
+    "Glace": "❄️", "Combat": "🥊", "Poison": "☠️", "Sol": "🌍", "Vol": "🕊️",
+    "Psy": "🔮", "Insecte": "🐛", "Roche": "🪨", "Spectre": "👻", "Dragon": "🐉",
+    "Ténèbres": "🌑", "Acier": "⚙️", "Fée": "🧚"
   },
-  "Sosuke Aizen": {
-    "type": "Arrancar",
-    "stats": {
-      "HP": 120,
-      "ATK": 35,
-      "DEF": 30,
-      "SPD": 25,
-      "REI": 45,
-      "TEC": 30
-    },
-    "moves": {
-      "Kyōka Suigetsu": {"type": "special", "power": 25, "rei_cost": 20},
-      "Coup de rei": {"type": "basic", "power": 15, "rei_cost": 0},
-      "Shikai": {"type": "transform", "power": 0, "rei_cost": 40, "cooldown": true},
-      "Hōgyoku": {"type": "special", "power": 50, "rei_cost": 50, "cooldown": true}
-    }
+  "categories_emoji": {
+    "Offensive": "💥", "Défensive": "🛡️", "Soin": "💖", "Statut": "✨"
   },
-  "Tōshirō Hitsugaya": {
-    "type": "Shinigami",
-    "stats": {
-      "HP": 95,
-      "ATK": 35,
-      "DEF": 20,
-      "SPD": 40,
-      "REI": 35,
-      "TEC": 30
-    },
-    "moves": {
-      "Coup de glace": {"type": "basic", "power": 15, "rei_cost": 0},
-      "Hyōten Hyakkasō": {"type": "special", "power": 30, "rei_cost": 20},
-      "Daiguren Hyōrinmaru": {"type": "transform", "power": 0, "rei_cost": 50, "cooldown": true},
-      "Bankai": {"type": "transform", "power": 0, "rei_cost": 50, "cooldown": true}
-    }
+  "statuts": {
+    "Paralysie": {"emoji": "⚡", "chance_move": 0.25},
+    "Brûlure": {"emoji": "🔥", "degats": 5, "attaque_mod": 0.5},
+    "Sommeil": {"emoji": "💤", "tour_max": 3},
+    "Gel": {"emoji": "❄️", "chance_move": 0.2},
+    "Poison": {"emoji": "☠️", "degats": 5},
+    "Confusion": {"emoji": "😵", "chance_self": 0.5, "degats": 10},
+    "Attraction": {"emoji": "❤️", "chance_skip": 0.25}
   },
-  "Kenpachi Zaraki": {
-    "type": "Shinigami",
-    "stats": {
-      "HP": 150,
-      "ATK": 50,
-      "DEF": 20,
-      "SPD": 20,
-      "REI": 20,
-      "TEC": 15
-    },
-    "moves": {
-      "Coup sauvage": {"type": "basic", "power": 20, "rei_cost": 0},
-      "Rafale": {"type": "basic", "power": 25, "rei_cost": 0},
-      "Kendo": {"type": "special", "power": 35, "rei_cost": 20},
-      "Bankai": {"type": "transform", "power": 0, "rei_cost": 50, "cooldown": true}
-    }
-  },
-  "Grimmjow Jaegerjaquez": {
-    "type": "Arrancar",
-    "stats": {
-      "HP": 110,
-      "ATK": 40,
-      "DEF": 25,
-      "SPD": 35,
-      "REI": 30,
-      "TEC": 25
-    },
-    "moves": {
-      "Coup rapide": {"type": "basic", "power": 15, "rei_cost": 0},
-      "Desgarrar": {"type": "special", "power": 30, "rei_cost": 20},
-      "Resurrección": {"type": "transform", "power": 0, "rei_cost": 50, "cooldown": true},
-      "Caída Azul": {"type": "special", "power": 45, "rei_cost": 40}
-    }
-  },
-  "Ulquiorra Cifer": {
-    "type": "Arrancar",
-    "stats": {
-      "HP": 115,
-      "ATK": 35,
-      "DEF": 30,
-      "SPD": 30,
-      "REI": 40,
-      "TEC": 30
-    },
-    "moves": {
-      "Coup d'ombre": {"type": "basic", "power": 15, "rei_cost": 0},
-      "Lanza del Relámpago": {"type": "special", "power": 40, "rei_cost": 30},
-      "Resurrección": {"type": "transform", "power": 0, "rei_cost": 50, "cooldown": true},
-      "Cero Oscuras": {"type": "special", "power": 50, "rei_cost": 40}
-    }
-  },
-  "Yoruichi Shihōin": {
-    "type": "Shinigami",
-    "stats": {
-      "HP": 90,
-      "ATK": 35,
-      "DEF": 25,
-      "SPD": 50,
-      "REI": 35,
-      "TEC": 35
-    },
-    "moves": {
-      "Coup rapide": {"type": "basic", "power": 15, "rei_cost": 0},
-      "Frappe éclair": {"type": "special", "power": 30, "rei_cost": 20},
-      "Transformation féline": {"type": "transform", "power": 0, "rei_cost": 40, "cooldown": true},
-      "Shunpo suprême": {"type": "special", "power": 40, "rei_cost": 30}
-    }
-  }
+  "boosts": ["Attaque", "Defense", "Rapidite", "Pression", "Kido", "Intelligence"]
 }
