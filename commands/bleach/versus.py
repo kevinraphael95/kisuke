@@ -4,18 +4,12 @@
 # Catégorie : Bleach
 # ────────────────────────────────────────────────────────────────────────────────
 
-# ────────────────────────────────────────────────────────────────────────────────
-# 📦 Imports nécessaires
-# ────────────────────────────────────────────────────────────────────────────────
 import discord
 from discord import app_commands
 from discord.ext import commands
 import random, os, json
 from utils.discord_utils import safe_send
 
-# ────────────────────────────────────────────────────────────────────────────────
-# 📂 Gestion des personnages et combat
-# ────────────────────────────────────────────────────────────────────────────────
 CHAR_DIR = os.path.join("data", "personnages")
 COMBAT_FILE = os.path.join("data", "combat.json")
 
@@ -95,6 +89,60 @@ def forme_suivante(p: dict):
     return None
 
 # ────────────────────────────────────────────────────────────────────────────────
+# 🔹 View de combat
+# ────────────────────────────────────────────────────────────────────────────────
+class CombatView(discord.ui.View):
+    def __init__(self, joueur, bot_perso, user):
+        super().__init__(timeout=None)
+        self.joueur = joueur
+        self.bot = bot_perso
+        self.user = user
+        self.narratif = []
+
+        for atk in attaque_disponible(joueur)[:4]:
+            self.add_item(CombatButton(atk, self))
+
+class CombatButton(discord.ui.Button):
+    def __init__(self, atk, view: CombatView):
+        super().__init__(label=atk["nom"], style=discord.ButtonStyle.primary)
+        self.atk = atk
+        self.view_ref = view
+
+    async def callback(self, interaction: discord.Interaction):
+        if interaction.user.id != self.view_ref.user.id:
+            return await interaction.response.send_message("Ce n’est pas ton combat !", ephemeral=True)
+
+        self.atk["PP"] -= 1
+        appliquer_attaque(self.view_ref.joueur, self.view_ref.bot, self.atk, self.view_ref.narratif)
+        fs = forme_suivante(self.view_ref.joueur)
+        if fs: self.view_ref.narratif.append(fs)
+
+        # Victoire joueur
+        if self.view_ref.bot["pv"] <= 0:
+            return await interaction.response.edit_message(content=f"🏆 **{self.view_ref.joueur['nom']}** remporte le combat !", embed=None, view=None)
+
+        # Tour bot
+        bot_atk = random.choice(attaque_disponible(self.view_ref.bot))
+        appliquer_attaque(self.view_ref.bot, self.view_ref.joueur, bot_atk, self.view_ref.narratif)
+        fs = forme_suivante(self.view_ref.bot)
+        if fs: self.view_ref.narratif.append(fs)
+
+        # Victoire bot
+        if self.view_ref.joueur["pv"] <= 0:
+            return await interaction.response.edit_message(content=f"💀 **{self.view_ref.bot['nom']}** (bot) gagne !", embed=None, view=None)
+
+        # Mise à jour embed
+        embed = discord.Embed(
+            title=f"🗡️ {self.view_ref.joueur['nom']} vs {self.view_ref.bot['nom']}",
+            description=f"❤️ {self.view_ref.joueur['nom']} : {self.view_ref.joueur['pv']} PV\n💀 {self.view_ref.bot['nom']} : {self.view_ref.bot['pv']} PV\n\n" +
+                        "\n".join(self.view_ref.narratif[-4:]),
+            color=discord.Color.red()
+        )
+        embed.set_thumbnail(url=self.view_ref.joueur["image"])
+        embed.set_image(url=self.view_ref.bot["image"])
+        await interaction.response.edit_message(embed=embed, view=self.view_ref)
+
+# ────────────────────────────────────────────────────────────────────────────────
 # 🧠 Cog principal
 # ────────────────────────────────────────────────────────────────────────────────
 class VersusBotCommand(commands.Cog):
@@ -102,23 +150,14 @@ class VersusBotCommand(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
 
-    # ────────────────────────────────────────────────────────────────────────────
-    # 🔹 Commande SLASH
-    # ────────────────────────────────────────────────────────────────────────────
     @app_commands.command(name="versus", description="⚔️ Combat interactif contre le bot.")
     async def slash_versus(self, interaction: discord.Interaction):
         await self.start_versus(interaction)
 
-    # ────────────────────────────────────────────────────────────────────────────
-    # 🔹 Commande PREFIX
-    # ────────────────────────────────────────────────────────────────────────────
     @commands.command(name="versus")
     async def prefix_versus(self, ctx: commands.Context):
         await self.start_versus(ctx)
 
-    # ────────────────────────────────────────────────────────────────────────────
-    # 🔧 Lancement du choix de personnage
-    # ────────────────────────────────────────────────────────────────────────────
     async def start_versus(self, source):
         channel = source.channel if isinstance(source, commands.Context) else source.channel
         user = source.author if isinstance(source, commands.Context) else source.user
@@ -141,7 +180,6 @@ class VersusBotCommand(commands.Cog):
             joueur = init_combat(load_character(nom))
             bot_perso = init_combat(random.choice(persos))
 
-            # Embed du premier tour
             embed = discord.Embed(
                 title=f"🗡️ {joueur['nom']} vs {bot_perso['nom']}",
                 description=f"❤️ {joueur['nom']} : {joueur['pv']} PV\n💀 {bot_perso['nom']} : {bot_perso['pv']} PV\n\nChoisis ton attaque :",
@@ -150,10 +188,8 @@ class VersusBotCommand(commands.Cog):
             embed.set_thumbnail(url=joueur["image"])
             embed.set_image(url=bot_perso["image"])
 
-            # Crée la view avec boutons
-            view_attack = self.create_attack_buttons(joueur, bot_perso, interaction)
-
-            await interaction.response.send_message(content=f"⚔️ **Combat commencé !**", embed=embed, view=view_attack)
+            combat_view = CombatView(joueur, bot_perso, user)
+            await interaction.response.send_message(f"⚔️ **Combat commencé !**", embed=embed, view=combat_view)
             view.stop()
 
         select.callback = select_callback
@@ -162,56 +198,6 @@ class VersusBotCommand(commands.Cog):
             await source.response.send_message(f"{user.mention}, choisis ton personnage :", view=view)
         else:
             await safe_send(channel, f"{user.mention}, choisis ton personnage :", view=view)
-
-    # ────────────────────────────────────────────────────────────────────────────
-    # 🔧 Création de boutons pour les attaques
-    # ────────────────────────────────────────────────────────────────────────────
-    def create_attack_buttons(self, p1, p2, interaction):
-        view = discord.ui.View(timeout=None)
-        narratif = []
-
-        for atk in attaque_disponible(p1)[:4]:
-            button = discord.ui.Button(label=atk["nom"], style=discord.ButtonStyle.primary)
-            async def callback(i: discord.Interaction, atk=atk):
-                if i.user.id != interaction.user.id:
-                    return await i.response.send_message("Ce n’est pas ton combat !", ephemeral=True)
-
-                atk["PP"] -= 1
-                appliquer_attaque(p1, p2, atk, narratif)
-                fs = forme_suivante(p1)
-                if fs: narratif.append(fs)
-
-                # Vérification victoire joueur
-                if p2["pv"] <= 0:
-                    await i.response.edit_message(content=f"🏆 **{p1['nom']}** remporte le combat !", embed=None, view=None)
-                    return
-
-                # Tour bot
-                bot_atk = random.choice(attaque_disponible(p2))
-                appliquer_attaque(p2, p1, bot_atk, narratif)
-                fs = forme_suivante(p2)
-                if fs: narratif.append(fs)
-
-                # Vérification victoire bot
-                if p1["pv"] <= 0:
-                    await i.response.edit_message(content=f"💀 **{p2['nom']}** (bot) gagne !", embed=None, view=None)
-                    return
-
-                # Mise à jour embed
-                embed = discord.Embed(
-                    title=f"🗡️ {p1['nom']} vs {p2['nom']}",
-                    description=f"❤️ {p1['nom']} : {p1['pv']} PV\n💀 {p2['nom']} : {p2['pv']} PV\n\nChoisis ton attaque :",
-                    color=discord.Color.red()
-                )
-                embed.set_thumbnail(url=p1["image"])
-                embed.set_image(url=p2["image"])
-
-                await i.response.edit_message(embed=embed, view=view)
-
-            button.callback = callback
-            view.add_item(button)
-
-        return view
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🔌 Setup du Cog
