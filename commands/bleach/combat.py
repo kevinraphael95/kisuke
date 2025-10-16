@@ -100,7 +100,11 @@ class CombatCommand(commands.Cog):
 
             tour_order = sorted([p1, p2], key=lambda x: x["stats_base"]["rapidite"] + random.randint(0, 10), reverse=True)
 
-            while p1["pv"] > 0 and p2["pv"] > 0:
+            tour = 0
+            while p1["pv"] > 0 and p2["pv"] > 0 and tour < 30:
+                tour += 1
+                narratif.append(f"\n🔁 **Tour {tour}**")
+
                 for attaquant in tour_order:
                     defenseur = p2 if attaquant == p1 else p1
                     if attaquant["pv"] <= 0 or defenseur["pv"] <= 0:
@@ -120,9 +124,12 @@ class CombatCommand(commands.Cog):
                     if defenseur["pv"] <= 0:
                         narratif.append(f"\n🏆 **{attaquant['nom']}** remporte le combat !")
                         break
-                break  # Combat s'arrête après un tour complet
 
-            # Si les deux sont encore debout
+            # Si le combat dure trop longtemps
+            if tour >= 30 and p1["pv"] > 0 and p2["pv"] > 0:
+                narratif.append("\n⏱️ Le combat s'achève par épuisement mutuel !")
+
+            # Si les deux sont encore debout à la fin
             if p1["pv"] > 0 and p2["pv"] > 0:
                 gagnant = p1 if p1["pv"] > p2["pv"] else p2
                 narratif.append(f"\n🏁 Fin du combat, vainqueur : **{gagnant['nom']}**")
@@ -150,6 +157,3 @@ async def setup(bot: commands.Bot):
         if not hasattr(command, "category"):
             command.category = "Bleach"
     await bot.add_cog(cog)
-
-
-
