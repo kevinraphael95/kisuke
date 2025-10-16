@@ -97,6 +97,19 @@ def appliquer_statut(p: dict, narratif: list):
         p["pv"] -= deg
         p["boosts"]["Attaque"] *= atk_mod
         narratif.append(f"{s['emoji']} **{p['nom']}** subit {deg} PV de brûlure et attaque réduite !")
+    elif p["statut"] == "Peut réduire rapidité ennemi":
+        s = STATUTS[p["statut"]]
+        if random.random() < s["chance"]:
+            p["boosts"]["Rapidite"] += s["mod_rapidite"]
+            narratif.append(f"{s['emoji']} **{p['nom']}** voit sa rapidité réduite !")
+
+    elif p["statut"] == "Augmente défense":
+        s = STATUTS[p["statut"]]
+        if random.random() < s["chance"]:
+            p["boosts"]["Defense"] += s["mod_defense"]
+            narratif.append(f"{s['emoji']} **{p['nom']}** augmente sa défense !")
+
+
     return False
 
 # ────────────────────────────────────────────────────────────────────────────────
