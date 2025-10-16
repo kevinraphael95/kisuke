@@ -1,6 +1,6 @@
-
 {
   "nom": "Ichigo Kurosaki",
+  "type": "Ténèbres",
   "genre": "Homme",
   "sexualite": "Hétéro",
   "personnalite": ["Courageux", "Déterminé", "Protecteur", "Impulsif", "Bienveillant"],
@@ -23,9 +23,10 @@
           "nom": "Getsuga Tenshō",
           "description": "Vague d'énergie spirituelle simple mais efficace.",
           "puissance": 65,
-          "cout_endurance": 15
+          "cout_endurance": 15,
+          "categorie": "Offensive",
+          "type": "Ténèbres"
         }
-        
       ]
     },
     "Shikai": {
@@ -36,7 +37,17 @@
           "nom": "Getsuga Tenshō Amélioré",
           "description": "Version plus rapide et puissante du Getsuga Tenshō.",
           "puissance": 75,
-          "cout_endurance": 20
+          "cout_endurance": 20,
+          "categorie": "Offensive",
+          "type": "Ténèbres"
+        },
+        {
+          "nom": "Shunpo",
+          "description": "Déplacement ultra-rapide pour esquiver ou se repositionner.",
+          "puissance": 0,
+          "cout_endurance": 10,
+          "categorie": "Déplacement",
+          "type": "Normal"
         }
       ]
     },
@@ -48,11 +59,28 @@
           "nom": "Getsuga Tenshō Ultime",
           "description": "Getsuga Tenshō ultime, extrêmement rapide et dévastatrice.",
           "puissance": 85,
-          "cout_endurance": 25
+          "cout_endurance": 25,
+          "categorie": "Offensive",
+          "type": "Ténèbres"
+        },
+        {
+          "nom": "Cero Hollow",
+          "description": "Vague d'énergie inspirée du Hollow intérieur, très puissante mais coûteuse.",
+          "puissance": 90,
+          "cout_endurance": 30,
+          "categorie": "Offensive",
+          "type": "Spectre"
+        },
+        {
+          "nom": "Shunpo Amélioré",
+          "description": "Déplacement instantané à très haute vitesse pour esquiver ou attaquer en surprise.",
+          "puissance": 0,
+          "cout_endurance": 15,
+          "categorie": "Déplacement",
+          "type": "Normal"
         }
       ]
     }
   },
-  "images": [
-  ]
+  "images": []
 }
