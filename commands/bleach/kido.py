@@ -78,7 +78,7 @@ class Kido(commands.Cog):
         self.alias = {
             "h": "hado",
             "b": "bakudo",
-            "a": "other",
+            "a": "autre",
             "r": "random"
         }
         self.types = list(self.data.keys())
@@ -103,7 +103,7 @@ class Kido(commands.Cog):
                     "`!!kido <type> random` ou `!!kido <type> r` — Kido aléatoire dans ce type\n"
                     "`!!kido random` ou `!!kido r` — Kido aléatoire total\n"
                     "`!!kido all` — Liste de tous les Kido paginés\n\n"
-                    "**Types disponibles :** Hado (`h`), Bakudo (`b`), Autres (`a`)"
+                    "**Types disponibles :** Hado (`h`), Bakudo (`b`), Autre (`a`)"
                 ),
                 color=discord.Color.teal()
             )
