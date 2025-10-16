@@ -19,15 +19,35 @@
     "Acier": {"Glace": 2, "Roche": 2, "Fée": 2, "Feu": 0.5, "Eau": 0.5, "Électrik": 0.5, "Acier": 0.5},
     "Fée": {"Combat": 2, "Dragon": 2, "Ténèbres": 2, "Feu": 0.5, "Poison": 0.5, "Acier": 0.5}
   },
+
   "types_emoji": {
-    "Normal": "⚪", "Feu": "🔥", "Eau": "💧", "Plante": "🌿", "Électrik": "⚡",
-    "Glace": "❄️", "Combat": "🥊", "Poison": "☠️", "Sol": "🌍", "Vol": "🕊️",
-    "Psy": "🔮", "Insecte": "🐛", "Roche": "🪨", "Spectre": "👻", "Dragon": "🐉",
-    "Ténèbres": "🌑", "Acier": "⚙️", "Fée": "🧚"
+    "Normal": "⚪",
+    "Feu": "🔥",
+    "Eau": "💧",
+    "Plante": "🌿",
+    "Électrik": "⚡",
+    "Glace": "❄️",
+    "Combat": "🥊",
+    "Poison": "☠️",
+    "Sol": "🌍",
+    "Vol": "🕊️",
+    "Psy": "🔮",
+    "Insecte": "🐛",
+    "Roche": "🪨",
+    "Spectre": "👻",
+    "Dragon": "🐉",
+    "Ténèbres": "🌑",
+    "Acier": "⚙️",
+    "Fée": "🧚"
   },
+
   "categories_emoji": {
-    "Offensive": "💥", "Défensive": "🛡️", "Soin": "💖", "Statut": "✨"
+    "Offensive": "💥",
+    "Défensive": "🛡️",
+    "Soin": "💖",
+    "Statut": "✨"
   },
+
   "statuts": {
     "Paralysie": {"emoji": "⚡", "chance_move": 0.25},
     "Brûlure": {"emoji": "🔥", "degats": 5, "attaque_mod": 0.5},
@@ -36,9 +56,26 @@
     "Poison": {"emoji": "☠️", "degats": 5},
     "Confusion": {"emoji": "😵", "chance_self": 0.5, "degats": 10},
     "Attraction": {"emoji": "❤️", "chance_skip": 0.25},
-    "Peut réduire rapidité ennemi": {"emoji": "🐢", "effet": "Réduit la rapidité de l’ennemi", "chance": 0.3, "mod_rapidite": -1},
-    "Augmente défense": {"emoji": "🛡️", "effet": "Augmente la défense du lanceur", "chance": 1.0, "mod_defense": 1}
 
+    "Peut réduire rapidité ennemi": {
+      "emoji": "🐢",
+      "effet": "Réduit la rapidité de l’ennemi",
+      "chance": 0.3,
+      "mod_rapidite": -1
+    },
+    "Augmente défense": {
+      "emoji": "🛡️",
+      "effet": "Augmente la défense du lanceur",
+      "chance": 1.0,
+      "mod_defense": 1
+    },
+    "Augmente rapidité": {
+      "emoji": "💨",
+      "effet": "Augmente la rapidité du lanceur",
+      "chance": 1.0,
+      "mod_rapidite": 1
+    }
   },
+
   "boosts": ["Attaque", "Defense", "Rapidite", "Pression", "Kido", "Intelligence"]
 }
