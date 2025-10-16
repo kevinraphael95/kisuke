@@ -1,9 +1,12 @@
 # ────────────────────────────────────────────────────────────────────────────────
 # 📌 versus_bot.py — Combat interactif contre le bot
-# Objectif : Combat style Pokémon entre joueur et bot avec boutons
+# Objectif : Combat style Pokémon complet avec statuts et formes évolutives
 # Catégorie : Bleach
 # ────────────────────────────────────────────────────────────────────────────────
 
+# ────────────────────────────────────────────────────────────────────────────────
+# 📦 Imports nécessaires
+# ────────────────────────────────────────────────────────────────────────────────
 import discord
 from discord import app_commands
 from discord.ext import commands
@@ -99,14 +102,23 @@ class VersusBotCommand(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
 
+    # ────────────────────────────────────────────────────────────────────────────
+    # 🔹 Commande SLASH
+    # ────────────────────────────────────────────────────────────────────────────
     @app_commands.command(name="versus", description="⚔️ Combat interactif contre le bot.")
     async def slash_versus(self, interaction: discord.Interaction):
         await self.start_versus(interaction)
 
+    # ────────────────────────────────────────────────────────────────────────────
+    # 🔹 Commande PREFIX
+    # ────────────────────────────────────────────────────────────────────────────
     @commands.command(name="versus")
     async def prefix_versus(self, ctx: commands.Context):
         await self.start_versus(ctx)
 
+    # ────────────────────────────────────────────────────────────────────────────
+    # 🔧 Lancement du choix de personnage
+    # ────────────────────────────────────────────────────────────────────────────
     async def start_versus(self, source):
         channel = source.channel if isinstance(source, commands.Context) else source.channel
         user = source.author if isinstance(source, commands.Context) else source.user
@@ -139,11 +151,13 @@ class VersusBotCommand(commands.Cog):
 
         select.callback = select_callback
 
+    # ────────────────────────────────────────────────────────────────────────────
+    # 🔧 Boucle de combat interactive
+    # ────────────────────────────────────────────────────────────────────────────
     async def run_versus(self, interaction, p1, p2):
         narratif = []
 
         async def tour_joueur():
-            # Embed état
             embed = discord.Embed(
                 title=f"🗡️ {p1['nom']} vs {p2['nom']}",
                 description=f"❤️ {p1['nom']} : {p1['pv']} PV\n💀 {p2['nom']} : {p2['pv']} PV\n\nChoisis ton attaque :",
@@ -154,18 +168,19 @@ class VersusBotCommand(commands.Cog):
 
             view = discord.ui.View(timeout=60)
             attaques = attaque_disponible(p1)[:4]
+
             for atk in attaques:
                 button = discord.ui.Button(label=atk["nom"], style=discord.ButtonStyle.primary)
-                async def callback(interaction, atk=atk):
-                    if interaction.user.id != interaction.user.id:
-                        return await interaction.response.send_message("Ce n’est pas ton combat !", ephemeral=True)
+                async def callback(interaction2, atk=atk):
+                    if interaction2.user.id != interaction.user.id:
+                        return await interaction2.response.send_message("Ce n’est pas ton combat !", ephemeral=True)
                     atk["PP"] -= 1
                     appliquer_attaque(p1, p2, atk, narratif)
                     fs = forme_suivante(p1)
                     if fs: narratif.append(fs)
 
                     if p2["pv"] <= 0:
-                        await interaction.response.edit_message(content=f"🏆 **{p1['nom']}** remporte le combat !", embed=None, view=None)
+                        await interaction2.response.edit_message(content=f"🏆 **{p1['nom']}** remporte le combat !", embed=None, view=None)
                         return
 
                     # Tour bot
@@ -175,18 +190,18 @@ class VersusBotCommand(commands.Cog):
                     if fs: narratif.append(fs)
 
                     if p1["pv"] <= 0:
-                        await interaction.response.edit_message(content=f"💀 **{p2['nom']}** (bot) gagne !", embed=None, view=None)
+                        await interaction2.response.edit_message(content=f"💀 **{p2['nom']}** (bot) gagne !", embed=None, view=None)
                         return
 
-                    # Met à jour embed pour nouveau tour
                     embed.description = f"❤️ {p1['nom']} : {p1['pv']} PV\n💀 {p2['nom']} : {p2['pv']} PV\n\nChoisis ton attaque :"
-                    await interaction.response.edit_message(embed=embed, view=view)
+                    await interaction2.response.edit_message(embed=embed, view=view)
 
                 button.callback = callback
                 view.add_item(button)
 
             await interaction.response.edit_message(embed=embed, view=view)
 
+        # Lancer le premier tour
         await tour_joueur()
 
 # ────────────────────────────────────────────────────────────────────────────────
