@@ -110,8 +110,13 @@ class Kido(commands.Cog):
             await safe_send(channel, embed=help_embed)
             return
 
-        # ─────────────── Liste compacte pour all ───────────────
-        if kido_type.lower() == "all":
+        # ─────────────── Gestion abréviations ───────────────
+        kido_type = kido_type.lower()
+        if kido_type in self.alias:
+            kido_type = self.alias[kido_type]
+
+        # ─────────────── Liste complète (all) ───────────────
+        if kido_type == "all":
             embed_pages = []
             for t in self.types:
                 items = list(self.data[t].keys())
@@ -131,10 +136,22 @@ class Kido(commands.Cog):
             paginator.message = await safe_send(channel, embed=embed_pages[0], view=paginator)
             return
 
-        # ─────────────── Gestion abréviations ───────────────
-        kido_type = kido_type.lower()
-        if kido_type in self.alias:
-            kido_type = self.alias[kido_type]
+        # ─────────────── ✅ Liste paginée pour un type précis ───────────────
+        if kido_type in self.data and not number:
+            items = list(self.data[kido_type].keys())
+            embed_pages = []
+            for i in range(0, len(items), 15):
+                chunk = items[i:i+15]
+                desc = "\n".join(f"{key} - {self.data[kido_type][key].get('nom','Unknown')}" for key in chunk)
+                page = discord.Embed(
+                    title=f"{kido_type.capitalize()} [{i+1}-{min(i+15,len(items))}]",
+                    description=desc,
+                    color=self.colors.get(kido_type, discord.Color.teal())
+                )
+                embed_pages.append(page)
+            paginator = KidoPaginator(embed_pages)
+            paginator.message = await safe_send(channel, embed=embed_pages[0], view=paginator)
+            return
 
         # ─────────────── Cas random global ou type ───────────────
         if kido_type == "random":
@@ -214,4 +231,3 @@ async def setup(bot: commands.Bot):
         if not hasattr(command, "category"):
             command.category = "Bleach"
     await bot.add_cog(cog)
-
