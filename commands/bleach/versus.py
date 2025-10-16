@@ -139,17 +139,28 @@ class VersusBotCommand(commands.Cog):
         else:
             await safe_send(channel, f"{user.mention}, choisis ton personnage :", view=view)
 
+
         async def select_callback(interaction: discord.Interaction):
             if interaction.user.id != user.id:
                 return await interaction.response.send_message("Ce n’est pas ton combat !", ephemeral=True)
-            await interaction.response.defer()
+
             nom = select.values[0]
             joueur = init_combat(load_character(nom))
             bot_perso = init_combat(random.choice(persos))
+
+            # On envoie immédiatement l'embed du premier tour avec boutons
+            embed = discord.Embed(
+                title=f"🗡️ {joueur['nom']} vs {bot_perso['nom']}",
+                description=f"❤️ {joueur['nom']} : {joueur['pv']} PV\n💀 {bot_perso['nom']} : {bot_perso['pv']} PV\n\nChoisis ton attaque :",
+                color=discord.Color.red()
+            )
+            embed.set_thumbnail(url=joueur["image"])
+            embed.set_image(url=bot_perso["image"])
+
+            await interaction.response.edit_message(content=f"⚔️ **Combat commencé !**", embed=embed, view=None)
             await self.run_versus(interaction, joueur, bot_perso)
             view.stop()
 
-        select.callback = select_callback
 
     # ────────────────────────────────────────────────────────────────────────────
     # 🔧 Boucle de combat interactive
@@ -199,7 +210,7 @@ class VersusBotCommand(commands.Cog):
                 button.callback = callback
                 view.add_item(button)
 
-            await interaction.response.edit_message(embed=embed, view=view)
+            await interaction.followup.edit_message(message_id=interaction.message.id, embed=embed, view=view)
 
         # Lancer le premier tour
         await tour_joueur()
