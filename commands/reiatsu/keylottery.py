@@ -49,21 +49,17 @@ NB_BUTTONS = 10   # Nombre de boutons dans le ticket
 WIN_CHANCE = 0.1  # 10% de chance de gagner (utilisé pour tirage aléatoire)
 
 # ────────────────────────────────────────────────────────────────────────────────
-# 🎛️ UI — Ticket à gratter
+# 🎛️ UI — Ticket à gratter (tout-révélé)
 # ────────────────────────────────────────────────────────────────────────────────
 class ScratchTicketView(View):
-    """
-    View Discord contenant le ticket à gratter.
-    Au départ, seul le bouton 'Miser et jouer' est affiché.
-    Les 10 boutons apparaissent après avoir misé.
-    """
+    """View Discord pour le ticket à gratter — révèle tout le ticket en un clic"""
     def __init__(self, author_id: int, message: discord.Message = None, parent=None):
         super().__init__(timeout=120)
         self.author_id = author_id
         self.message = message
         self.value = None
         self.last_interaction = None
-        self.parent = parent  # Référence au Cog pour accéder aux méthodes
+        self.parent = parent
 
         # Tirage aléatoire des boutons gagnants
         self.winning_button = random.randint(0, NB_BUTTONS - 1)
@@ -71,18 +67,21 @@ class ScratchTicketView(View):
         while self.double_button == self.winning_button:
             self.double_button = random.randint(0, NB_BUTTONS - 1)
 
+        # Résultats des cases
+        self.results = ["lose"] * NB_BUTTONS
+        self.results[self.winning_button] = "key"
+        self.results[self.double_button] = "jackpot"
+
         # Au départ, seul le bouton Miser est visible
         self.add_item(BetButton(self))
 
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
-        """Empêche les autres utilisateurs de cliquer sur le ticket"""
         if interaction.user.id != self.author_id:
             await safe_respond(interaction, "❌ Ce ticket n'est pas pour toi.", ephemeral=True)
             return False
         return True
 
     async def on_timeout(self):
-        """Désactive les boutons si le temps est écoulé"""
         for child in self.children:
             child.disabled = True
         if self.message and self.message.embeds:
@@ -94,76 +93,79 @@ class ScratchTicketView(View):
 # 🔹 Bouton Miser
 # ────────────────────────────────────────────────────────────────────────────────
 class BetButton(Button):
-    """
-    Bouton permettant de miser les points et révéler les 10 boutons du ticket
-    """
+    """Permet de miser les points et révéler le ticket"""
     def __init__(self, parent_view: ScratchTicketView):
         super().__init__(label=f"Miser {SCRATCH_COST} Reiatsu et jouer", style=discord.ButtonStyle.green)
         self.parent_view = parent_view
 
     async def callback(self, interaction: discord.Interaction):
-        """Déclenchement du ticket après avoir misé"""
         reiatsu_points = await self.parent_view.parent._get_reiatsu(str(interaction.user.id))
         if reiatsu_points < SCRATCH_COST:
             return await safe_respond(interaction, f"❌ Pas assez de Reiatsu ! Il te faut {SCRATCH_COST}.", ephemeral=True)
 
-        # Déduction des points
+        # Déduire les points
         await self.parent_view.parent._update_reiatsu(str(interaction.user.id), reiatsu_points - SCRATCH_COST)
 
-        # Supprimer le bouton Miser et ajouter les 10 boutons
+        # Supprimer le bouton Miser et ajouter les cases
         self.parent_view.clear_items()
         for i in range(NB_BUTTONS):
             self.parent_view.add_item(ScratchButton(i, self.parent_view))
 
+        # Éditer le message pour montrer les boutons
         await interaction.response.edit_message(view=self.parent_view)
 
 # ────────────────────────────────────────────────────────────────────────────────
-# 🔹 Boutons de ticket
+# 🔹 Boutons du ticket
 # ────────────────────────────────────────────────────────────────────────────────
 class ScratchButton(Button):
-    """
-    Boutons représentant chaque case du ticket à gratter
-    """
+    """Représente une case du ticket à gratter — dévoile tout le ticket au clic"""
     def __init__(self, index: int, parent: ScratchTicketView):
         super().__init__(label=f"🎟️ {index+1}", style=discord.ButtonStyle.blurple)
         self.index = index
         self.parent_view = parent
 
     async def callback(self, interaction: discord.Interaction):
-        """Détermine le résultat du ticket et crée un seul embed final"""
-        # Désactivation de tous les boutons
+        # Désactiver tous les boutons
         for child in self.parent_view.children:
             child.disabled = True
 
-        # Déterminer le type de résultat
-        if self.index == self.parent_view.winning_button:
-            result_type = "key"       # Clé Steam
+        # Construire la vue complète du ticket
+        result_emojis = []
+        for i, result in enumerate(self.parent_view.results):
+            if result == "key":
+                result_emojis.append("🔑")
+            elif result == "jackpot":
+                result_emojis.append("💎")
+            else:
+                result_emojis.append("❌")
+
+        # Résultat principal
+        chosen_result = self.parent_view.results[self.index]
+        if chosen_result == "key":
             color = discord.Color.green()
             msg = "🎉 Tu as trouvé une clé Steam !"
-        elif self.index == self.parent_view.double_button:
-            result_type = "jackpot"   # Double Reiatsu
+        elif chosen_result == "jackpot":
             color = discord.Color.gold()
             msg = "💎 Jackpot ! Tu gagnes le double de ta mise !"
         else:
-            result_type = "lose"      # Perdu
             color = discord.Color.red()
             msg = "😢 Pas de chance cette fois !"
 
-        # Créer un embed unique pour le résultat
+        # Embed final
         embed = discord.Embed(
             title="🎰 Résultat du Ticket à Gratter",
-            description=msg,
+            description=" ".join(result_emojis) + f"\n\n{msg}",
             color=color
         )
         embed.set_footer(text="Relance /scratchkey pour tenter à nouveau.")
 
-        # Envoyer le nouvel embed
-        await interaction.response.send_message(embed=embed, ephemeral=False)
+        await interaction.response.edit_message(embed=embed, view=None)
 
-        # Enregistrer le résultat et stopper la View
-        self.parent_view.value = result_type
+        # Enregistrer le résultat et stopper la view
+        self.parent_view.value = chosen_result
         self.parent_view.last_interaction = interaction
         self.parent_view.stop()
+
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🎛️ UI — Confirmation + choix de clé
