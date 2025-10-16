@@ -35,7 +35,10 @@
     "Gel": {"emoji": "❄️", "chance_move": 0.2},
     "Poison": {"emoji": "☠️", "degats": 5},
     "Confusion": {"emoji": "😵", "chance_self": 0.5, "degats": 10},
-    "Attraction": {"emoji": "❤️", "chance_skip": 0.25}
+    "Attraction": {"emoji": "❤️", "chance_skip": 0.25},
+    "Peut réduire rapidité ennemi": {"emoji": "🐢", "effet": "Réduit la rapidité de l’ennemi", "chance": 0.3, "mod_rapidite": -1},
+    "Augmente défense": {"emoji": "🛡️", "effet": "Augmente la défense du lanceur", "chance": 1.0, "mod_defense": 1}
+
   },
   "boosts": ["Attaque", "Defense", "Rapidite", "Pression", "Kido", "Intelligence"]
 }
