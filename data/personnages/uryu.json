@@ -25,7 +25,9 @@
           "puissance": 60,
           "cout_endurance": 15,
           "categorie": "Offensive",
-          "type": "Électrik"
+          "type": "Électrik",
+          "pp_max": 15,
+          "statut": null
         },
         {
           "nom": "Heilig Pfeil",
@@ -33,7 +35,9 @@
           "puissance": 50,
           "cout_endurance": 10,
           "categorie": "Offensive",
-          "type": "Électrik"
+          "type": "Électrik",
+          "pp_max": 20,
+          "statut": null
         }
       ]
     },
@@ -47,7 +51,9 @@
           "puissance": 75,
           "cout_endurance": 20,
           "categorie": "Offensive",
-          "type": "Électrik"
+          "type": "Électrik",
+          "pp_max": 15,
+          "statut": null
         }
       ]
     },
@@ -61,10 +67,21 @@
           "puissance": 90,
           "cout_endurance": 25,
           "categorie": "Offensive",
-          "type": "Électrik"
+          "type": "Électrik",
+          "pp_max": 10,
+          "statut": null
         }
       ]
     }
   },
-  "images": []
+  "images": [],
+  "statuts": {
+    "Paralysie": {"emoji": "⚡", "chance_move": 0.25},
+    "Brûlure": {"emoji": "🔥", "degats": 5, "attaque_mod": 0.5},
+    "Sommeil": {"emoji": "💤", "tour_max": 3},
+    "Gel": {"emoji": "❄️", "chance_move": 0.2},
+    "Poison": {"emoji": "☠️", "degats": 5},
+    "Confusion": {"emoji": "😵", "chance_self": 0.5, "degats": 10},
+    "Attraction": {"emoji": "❤️", "chance_skip": 0.25}
+  }
 }
