@@ -1,5 +1,6 @@
 {
   "nom": "Uryū Ishida",
+  "type": "Électrik",
   "genre": "Homme",
   "sexualite": "Hétéro",
   "personnalite": ["Intelligent", "Calme", "Déterminé", "Stratégique", "Protecteur"],
@@ -22,13 +23,17 @@
           "nom": "Seele Schneider",
           "description": "Attaque rapide avec l’arc Quincy classique.",
           "puissance": 60,
-          "cout_endurance": 15
+          "cout_endurance": 15,
+          "categorie": "Offensive",
+          "type": "Électrik"
         },
         {
           "nom": "Heilig Pfeil",
           "description": "Flèche spirituelle tirée à distance.",
           "puissance": 50,
-          "cout_endurance": 10
+          "cout_endurance": 10,
+          "categorie": "Offensive",
+          "type": "Électrik"
         }
       ]
     },
@@ -40,7 +45,9 @@
           "nom": "Licht Regen",
           "description": "Pluie de flèches spirituelles sur l’ennemi.",
           "puissance": 75,
-          "cout_endurance": 20
+          "cout_endurance": 20,
+          "categorie": "Offensive",
+          "type": "Électrik"
         }
       ]
     },
@@ -52,7 +59,9 @@
           "nom": "Heilig Bogen",
           "description": "Arc Quincy ultime, extrêmement puissant et rapide.",
           "puissance": 90,
-          "cout_endurance": 25
+          "cout_endurance": 25,
+          "categorie": "Offensive",
+          "type": "Électrik"
         }
       ]
     }
