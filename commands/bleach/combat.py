@@ -104,11 +104,11 @@ def attaque_faible(p: dict):
     return {"nom": "Attaque faible", "type": "Normal", "categorie": "Offensive", "puissance": 10, "cout_endurance": 0}
 
 def appliquer_degats(cible: dict, degats: int, narratif: list, attaquant: dict, attaque: dict):
-    """Applique les dégâts selon la catégorie et le type."""
+    """Applique les dégâts ou effets selon la catégorie et le type."""
     if attaque["categorie"] == "Soin":
-        cible["pv"] += attaque["puissance"]
-        narratif.append(f"💖 **{attaquant['nom']}** utilise *{attaque['nom']}* et soigne **{attaque['puissance']} PV** ! "
-                        f"(PV : {cible['pv']})")
+        attaquant["pv"] += attaque["puissance"]  # <-- soin appliqué à soi-même
+        narratif.append(f"💖 **{attaquant['nom']}** utilise *{attaque['nom']}* et se soigne **{attaque['puissance']} PV** ! "
+                        f"(PV : {attaquant['pv']})")
         return narratif
 
     if attaque["categorie"] == "Défensive":
