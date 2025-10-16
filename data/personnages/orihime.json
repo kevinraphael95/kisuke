@@ -1,5 +1,6 @@
 {
   "nom": "Orihime Inoue",
+  "type": "Fée",
   "genre": "Femme",
   "sexualite": "Hétéro",
   "personnalite": ["Bienveillant", "Protecteur", "Altruiste", "Amical", "Émotif"],
@@ -21,24 +22,37 @@
         {
           "nom": "Santen Kesshun",
           "description": "Bouclier défensif qui repousse les attaques et protège Orihime ou ses alliés.",
-          "puissance": 60,
-          "cout_endurance": 15
+          "puissance": 0,
+          "cout_endurance": 15,
+          "categorie": "Défense",
+          "type": "Fée"
         },
         {
           "nom": "Shun Shun Rikka : Sōten Kisshun",
           "description": "Guérison d'une partie ou d'une personne, peut réparer les blessures physiques.",
           "puissance": 50,
-          "cout_endurance": 20
+          "cout_endurance": 20,
+          "categorie": "Soin",
+          "type": "Fée"
         },
         {
           "nom": "Hōchū",
           "description": "Attaque offensive avec les six petites fées de Shun Shun Rikka, peut repousser ou bloquer un ennemi.",
           "puissance": 45,
-          "cout_endurance": 15
+          "cout_endurance": 15,
+          "categorie": "Offensive",
+          "type": "Fée"
+        },
+        {
+          "nom": "Kaze no Chikai",
+          "description": "Projette une attaque douce mais persistante qui peut perturber les mouvements ennemis.",
+          "puissance": 35,
+          "cout_endurance": 10,
+          "categorie": "Contrôle",
+          "type": "Fée"
         }
       ]
     }
   },
-  "images": [
-  ]
+  "images": []
 }
