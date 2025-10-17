@@ -63,29 +63,31 @@ class Kawashima(commands.Cog):
     async def run_all(self, ctx_or_interaction):
         embed = discord.Embed(
             title="🧠 Entraînement cérébral Kawashima",
-            description="Réponds aux mini-jeux suivants dans l'ordre !",
+            description="Réponds aux mini-jeux suivants !",
             color=0x00ff00
         )
-        send = lambda text: ctx_or_interaction.followup.send(text) if isinstance(ctx_or_interaction, discord.Interaction) else ctx_or_interaction.send(text)
-        get_user_id = lambda: ctx_or_interaction.user.id if isinstance(ctx_or_interaction, discord.Interaction) else ctx_or_interaction.author.id
 
         if isinstance(ctx_or_interaction, discord.Interaction):
-            await ctx_or_interaction.response.send_message(embed=embed)
+            msg_embed = await ctx_or_interaction.response.send_message(embed=embed, fetch_response=True)
+            ctx = await ctx_or_interaction.original_response()
         else:
-            await ctx_or_interaction.send(embed=embed)
+            ctx = ctx_or_interaction
+            msg_embed = ctx
+
+        get_user_id = lambda: ctx_or_interaction.user.id if isinstance(ctx_or_interaction, discord.Interaction) else ctx_or_interaction.author.id
 
         score = 0
         games = self.minijeux.copy()
         random.shuffle(games)
-        for game in games:
-            result = await game(ctx_or_interaction, embed, get_user_id, self.bot)
-            score += result
 
+        for game in games:
+            result = await game(ctx, embed, get_user_id, self.bot)
+            score += 1 if result else 0
+
+        embed.clear_fields()
         embed.add_field(name="🏆 Score final", value=f"{score} / {len(games)}", inline=False)
         embed.color = 0xffd700
-        await send(embed=embed)
-
-
+        await ctx.edit(embed=embed)
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🔌 Setup du Cog
