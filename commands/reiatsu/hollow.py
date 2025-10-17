@@ -124,7 +124,7 @@ class Hollow(commands.Cog):
 # 🔌 Setup du Cog
 # ────────────────────────────────────────────────────────────────────────────────
 async def setup(bot: commands.Bot):
-    cog = HollowCommand(bot)
+    cog = Hollow(bot)
     for command in cog.get_commands():
         if not hasattr(command, "category"):
             command.category = "Reiatsu"
