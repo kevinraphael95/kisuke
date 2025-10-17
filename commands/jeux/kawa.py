@@ -41,7 +41,7 @@ class Kawashima(commands.Cog):
     # ───────────────────────────────────────────────────────────────────────
     # 🎮 Commande principale
     # ───────────────────────────────────────────────────────────────────────
-    @commands.command(name="kawashima", aliases=["k"], help="Lance le mode arcade ou affiche le top 20.")
+    @commands.command(name="kawashima", aliases=["k"], help="Lance le mode arcade ou affiche le top 10.")
     async def kawashima_cmd(self, ctx: commands.Context, arg: str = ""):
         if arg.lower() == "top":
             await self.show_leaderboard(ctx)
@@ -51,7 +51,7 @@ class Kawashima(commands.Cog):
     # ────────────────────────────────────────────────────────────────────────────
     # 🔹 Commande SLASH
     # ────────────────────────────────────────────────────────────────────────────    
-    @app_commands.command(name="kawashima", description="Mode arcade Kawashima ou Top 20.")
+    @app_commands.command(name="kawashima", description="Mode arcade Kawashima ou Top 10.")
     async def kawashima_slash(self, interaction: discord.Interaction, arg: str = ""):
         if arg.lower() == "top":
             await self.show_leaderboard(interaction)
@@ -104,24 +104,50 @@ class Kawashima(commands.Cog):
         else:
             rank = "😴 En veille..."
 
-        # Enregistrement Supabase
+        # ─────────── Gestion Top 10 ───────────
         try:
-            supabase.table(TABLE_NAME).insert({
-                "user_id": str(user.id),
-                "username": str(user.name),
-                "score": total_score,
-                "timestamp": int(time.time())
-            }).execute()
-        except Exception as e:
-            print(f"[Kawashima] Erreur insertion Supabase: {e}")
+            # Récupération Top 10 actuel
+            leaderboard = (
+                supabase.table(TABLE_NAME)
+                .select("id, score")
+                .order("score", desc=True)
+                .limit(10)
+                .execute()
+            )
+            entries = leaderboard.data if leaderboard and leaderboard.data else []
+            top_scores = [entry["score"] for entry in entries]
 
-        # Récupération leaderboard Top 20
+            # Ajout si score suffisant
+            if len(top_scores) < 10 or total_score > top_scores[-1]:
+                supabase.table(TABLE_NAME).insert({
+                    "user_id": str(user.id),
+                    "username": str(user.name),
+                    "score": total_score,
+                    "timestamp": int(time.time())
+                }).execute()
+
+                # Supprime les scores les plus bas pour garder exactement 10
+                leaderboard = (
+                    supabase.table(TABLE_NAME)
+                    .select("id, score")
+                    .order("score", desc=True)
+                    .execute()
+                )
+                all_entries = leaderboard.data if leaderboard and leaderboard.data else []
+                if len(all_entries) > 10:
+                    lowest_ids = [e["id"] for e in sorted(all_entries, key=lambda x: x["score"])[:len(all_entries)-10]]
+                    supabase.table(TABLE_NAME).delete().in_("id", lowest_ids).execute()
+
+        except Exception as e:
+            print(f"[Kawashima] Erreur Top 10 Supabase: {e}")
+
+        # ─────────── Récupération Top 10 final ───────────
         try:
             leaderboard = (
                 supabase.table(TABLE_NAME)
                 .select("username, score")
                 .order("score", desc=True)
-                .limit(20)
+                .limit(10)
                 .execute()
             )
             entries = leaderboard.data if leaderboard and leaderboard.data else []
@@ -138,17 +164,17 @@ class Kawashima(commands.Cog):
             f"**Résultats**\n{results_text}\n\n"
             f"**Score total :** `{total_score:,}` pts\n"
             f"**Niveau cérébral :** {rank}\n\n"
-            f"🏆 **Classement Global (Top 20)**\n{top_text}"
+            f"🏆 **Classement Global (Top 10)**\n{top_text}"
         )
         embed.color = discord.Color.gold()
         await message.edit(embed=embed)
 
     # ───────────────────────────────────────────────────────────────────────
-    # 🧩 Fonction affichage Top 20
+    # 🧩 Fonction affichage Top 10
     # ───────────────────────────────────────────────────────────────────────
     async def show_leaderboard(self, ctx_or_interaction):
         embed = discord.Embed(
-            title="🏆 Kawashima — Top 20",
+            title="🏆 Kawashima — Top 10",
             description="Voici le classement global des meilleurs scores !",
             color=discord.Color.gold()
         )
@@ -158,7 +184,7 @@ class Kawashima(commands.Cog):
                 supabase.table(TABLE_NAME)
                 .select("username, score")
                 .order("score", desc=True)
-                .limit(20)
+                .limit(10)
                 .execute()
             )
             entries = leaderboard.data if leaderboard and leaderboard.data else []
@@ -169,7 +195,7 @@ class Kawashima(commands.Cog):
         except Exception as e:
             top_text = f"⚠️ Erreur récupération classement : {e}"
 
-        embed.add_field(name="Top 20", value=top_text, inline=False)
+        embed.add_field(name="Top 10", value=top_text, inline=False)
 
         if isinstance(ctx_or_interaction, discord.Interaction):
             await ctx_or_interaction.response.send_message(embed=embed)
@@ -186,5 +212,3 @@ async def setup(bot: commands.Bot):
         if not hasattr(command, "category"):
             command.category = "Jeux"
     await bot.add_cog(cog)
-
-
