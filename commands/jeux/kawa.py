@@ -6,9 +6,6 @@
 # Cooldown : 1 utilisation / 5 secondes / utilisateur
 # ────────────────────────────────────────────────────────────────────────────────
 
-# ────────────────────────────────────────────────────────────────────────────────
-# 📦 Imports nécessaires
-# ────────────────────────────────────────────────────────────────────────────────
 import discord
 from discord.ext import commands
 from discord import app_commands
@@ -18,14 +15,8 @@ import inspect
 from utils import kawashima_games
 from utils.supabase_client import supabase
 
-# ────────────────────────────────────────────────────────────────────────────────
-# 📦 Nom de table
-# ────────────────────────────────────────────────────────────────────────────────
 TABLE_NAME = "kawashima_scores"
 
-# ────────────────────────────────────────────────────────────────────────────────
-# 🧠 Cog principal
-# ────────────────────────────────────────────────────────────────────────────────
 class Kawashima(commands.Cog):
     """Mode arcade — Entraînement cérébral avec classement global."""
 
@@ -38,9 +29,6 @@ class Kawashima(commands.Cog):
                 titre = getattr(func, "title", func.__name__.replace("_", " ").title())
                 self.minijeux.append((f"{emoji} {titre}", func))
 
-    # ───────────────────────────────────────────────────────────────────────
-    # 🎮 Commande principale
-    # ───────────────────────────────────────────────────────────────────────
     @commands.command(name="kawashima", aliases=["k"], help="Lance le mode arcade ou affiche le top 10.")
     async def kawashima_cmd(self, ctx: commands.Context, arg: str = ""):
         if arg.lower() == "top":
@@ -48,9 +36,6 @@ class Kawashima(commands.Cog):
         else:
             await self.run_arcade(ctx)
 
-    # ────────────────────────────────────────────────────────────────────────────
-    # 🔹 Commande SLASH
-    # ────────────────────────────────────────────────────────────────────────────    
     @app_commands.command(name="kawashima", description="Mode arcade Kawashima ou Top 10.")
     async def kawashima_slash(self, interaction: discord.Interaction, arg: str = ""):
         if arg.lower() == "top":
@@ -58,9 +43,6 @@ class Kawashima(commands.Cog):
         else:
             await self.run_arcade(interaction)
 
-    # ───────────────────────────────────────────────────────────────────────
-    # 🧩 Fonction mode arcade
-    # ───────────────────────────────────────────────────────────────────────
     async def run_arcade(self, ctx_or_interaction):
         embed = discord.Embed(
             title="🧠 Entraînement cérébral — Mode Arcade",
@@ -106,7 +88,6 @@ class Kawashima(commands.Cog):
 
         # ─────────── Gestion Top 10 ───────────
         try:
-            # Récupération Top 10 actuel
             leaderboard = (
                 supabase.table(TABLE_NAME)
                 .select("id, score")
@@ -117,26 +98,28 @@ class Kawashima(commands.Cog):
             entries = leaderboard.data if leaderboard and leaderboard.data else []
             top_scores = [entry["score"] for entry in entries]
 
-            # Ajout si score suffisant
+            # Insère le score seulement s'il fait partie du Top 10
             if len(top_scores) < 10 or total_score > top_scores[-1]:
-                supabase.table(TABLE_NAME).insert({
+                insert_res = supabase.table(TABLE_NAME).insert({
                     "user_id": str(user.id),
                     "username": str(user.name),
                     "score": total_score,
                     "timestamp": int(time.time())
                 }).execute()
 
-                # Supprime les scores les plus bas pour garder exactement 10
-                leaderboard = (
+                # Supprime les scores les plus bas si >10
+                leaderboard_all = (
                     supabase.table(TABLE_NAME)
                     .select("id, score")
                     .order("score", desc=True)
                     .execute()
                 )
-                all_entries = leaderboard.data if leaderboard and leaderboard.data else []
+                all_entries = leaderboard_all.data if leaderboard_all and leaderboard_all.data else []
                 if len(all_entries) > 10:
+                    # On supprime les scores les plus bas
                     lowest_ids = [e["id"] for e in sorted(all_entries, key=lambda x: x["score"])[:len(all_entries)-10]]
-                    supabase.table(TABLE_NAME).delete().in_("id", lowest_ids).execute()
+                    if lowest_ids:
+                        supabase.table(TABLE_NAME).delete().in_("id", lowest_ids).execute()
 
         except Exception as e:
             print(f"[Kawashima] Erreur Top 10 Supabase: {e}")
@@ -169,9 +152,6 @@ class Kawashima(commands.Cog):
         embed.color = discord.Color.gold()
         await message.edit(embed=embed)
 
-    # ───────────────────────────────────────────────────────────────────────
-    # 🧩 Fonction affichage Top 10
-    # ───────────────────────────────────────────────────────────────────────
     async def show_leaderboard(self, ctx_or_interaction):
         embed = discord.Embed(
             title="🏆 Kawashima — Top 10",
