@@ -3,33 +3,33 @@
     "nom": "Omelette japonaise",
     "difficulte": "★☆☆",
     "etapes": [
-      { "nom": "Étape 1", "action": "Casse les œufs 🥚", "emoji": "🥚", "delai": 3 },
-      { "nom": "Étape 2", "action": "Bats les œufs 🍴", "emoji": "🍴", "delai": 3 },
-      { "nom": "Étape 3", "action": "Fais chauffer la poêle 🔥", "emoji": "🔥", "delai": 3 },
-      { "nom": "Étape 4", "action": "Verse les œufs et retourne l’omelette 🍳", "emoji": "🍳", "delai": 3 },
-      { "nom": "Étape 5", "action": "Dresse joliment ton plat 🍽️", "emoji": "🍽️", "delai": 4 }
+      { "nom": "Casse les œufs", "emoji": "🥚", "type": "reflexe" },
+      { "nom": "Bats les œufs", "emoji": "🍴", "type": "mixage" },
+      { "nom": "Fais chauffer la poêle", "emoji": "🔥", "type": "cuisson" },
+      { "nom": "Retourne l’omelette", "emoji": "🍳", "type": "timing" },
+      { "nom": "Dresse ton plat", "emoji": "🍽️", "type": "dressage" }
     ]
   },
   "ramen": {
     "nom": "Ramen maison",
     "difficulte": "★★☆",
     "etapes": [
-      { "nom": "Étape 1", "action": "Fais bouillir l’eau 💧", "emoji": "💧", "delai": 3 },
-      { "nom": "Étape 2", "action": "Ajoute les nouilles 🍜", "emoji": "🍜", "delai": 3 },
-      { "nom": "Étape 3", "action": "Ajoute le bouillon 🍲", "emoji": "🍲", "delai": 4 },
-      { "nom": "Étape 4", "action": "Dispose les garnitures 🥩", "emoji": "🥩", "delai": 4 },
-      { "nom": "Étape 5", "action": "Serre chaud avant que ça refroidisse 🔥", "emoji": "🔥", "delai": 3 }
+      { "nom": "Fais bouillir l’eau", "emoji": "💧", "type": "timing" },
+      { "nom": "Ajoute les nouilles", "emoji": "🍜", "type": "reflexe" },
+      { "nom": "Prépare le bouillon", "emoji": "🌶️", "type": "memoire" },
+      { "nom": "Dispose les garnitures", "emoji": "🥩", "type": "dressage" },
+      { "nom": "Sers chaud", "emoji": "🔥", "type": "quiz" }
     ]
   },
   "sushi": {
     "nom": "Sushi traditionnel",
     "difficulte": "★★☆",
     "etapes": [
-      { "nom": "Étape 1", "action": "Prépare le riz 🍚", "emoji": "🍚", "delai": 3 },
-      { "nom": "Étape 2", "action": "Coupe le poisson 🐟", "emoji": "🐟", "delai": 3 },
-      { "nom": "Étape 3", "action": "Roule les sushis 🌿", "emoji": "🌿", "delai": 4 },
-      { "nom": "Étape 4", "action": "Coupe en morceaux 🔪", "emoji": "🔪", "delai": 3 },
-      { "nom": "Étape 5", "action": "Dispose sur le plateau 🍱", "emoji": "🍱", "delai": 4 }
+      { "nom": "Prépare le riz", "emoji": "🍚", "type": "mixage" },
+      { "nom": "Coupe le poisson", "emoji": "🐟", "type": "decoupe" },
+      { "nom": "Roule les sushis", "emoji": "🌿", "type": "timing" },
+      { "nom": "Coupe en morceaux", "emoji": "🔪", "type": "reflexe" },
+      { "nom": "Dispose sur le plateau", "emoji": "🍱", "type": "dressage" }
     ]
   }
 }
