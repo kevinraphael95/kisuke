@@ -5,11 +5,11 @@
 import random
 import asyncio
 
+TIMEOUT = 60  # 1 minute pour répondre à chaque mini-jeu
+
 # ────────────────────────────────────────────────────────────────────────────────
 # 🔹 Mini-jeux
 # ────────────────────────────────────────────────────────────────────────────────
-TIMEOUT = 60  # temps de réaction pour chaque mini-jeu en secondes
-
 async def calcul_rapide(ctx, embed, get_user_id, bot):
     a = random.randint(20, 80)
     b = random.randint(20, 80)
@@ -20,11 +20,7 @@ async def calcul_rapide(ctx, embed, get_user_id, bot):
     embed.add_field(name="🧮 Calcul rapide", value=question, inline=False)
     await ctx.edit(embed=embed)
     try:
-        msg = await bot.wait_for(
-            "message",
-            check=lambda m: m.author.id == get_user_id(),
-            timeout=TIMEOUT
-        )
+        msg = await bot.wait_for("message", check=lambda m: m.author.id == get_user_id(), timeout=TIMEOUT)
         return int(msg.content) == answer
     except:
         return False
@@ -39,11 +35,7 @@ async def memoire_numerique(ctx, embed, get_user_id, bot):
     embed.add_field(name="🔢 Mémoire numérique", value="🕵️‍♂️ Séquence disparue, retapez-la !", inline=False)
     await ctx.edit(embed=embed)
     try:
-        msg = await bot.wait_for(
-            "message",
-            check=lambda m: m.author.id == get_user_id(),
-            timeout=TIMEOUT
-        )
+        msg = await bot.wait_for("message", check=lambda m: m.author.id == get_user_id(), timeout=TIMEOUT)
         return msg.content == "".join(map(str, sequence))
     except:
         return False
@@ -56,11 +48,7 @@ async def trouver_intrus(ctx, embed, get_user_id, bot):
     embed.add_field(name="🔍 Trouver l’intrus", value=str(shuffle), inline=False)
     await ctx.edit(embed=embed)
     try:
-        msg = await bot.wait_for(
-            "message",
-            check=lambda m: m.author.id == get_user_id(),
-            timeout=TIMEOUT
-        )
+        msg = await bot.wait_for("message", check=lambda m: m.author.id == get_user_id(), timeout=TIMEOUT)
         return msg.content.lower() == intrus
     except:
         return False
@@ -74,11 +62,7 @@ async def trouver_difference(ctx, embed, get_user_id, bot):
     embed.add_field(name="🔎 Trouver la différence", value=str(liste2), inline=False)
     await ctx.edit(embed=embed)
     try:
-        msg = await bot.wait_for(
-            "message",
-            check=lambda m: m.author.id == get_user_id(),
-            timeout=TIMEOUT
-        )
+        msg = await bot.wait_for("message", check=lambda m: m.author.id == get_user_id(), timeout=TIMEOUT)
         return int(msg.content) == index + 1
     except:
         return False
@@ -92,11 +76,7 @@ async def suite_logique(ctx, embed, get_user_id, bot):
     embed.add_field(name="➗ Suite logique", value=str(serie) + " ... ?", inline=False)
     await ctx.edit(embed=embed)
     try:
-        msg = await bot.wait_for(
-            "message",
-            check=lambda m: m.author.id == get_user_id(),
-            timeout=TIMEOUT
-        )
+        msg = await bot.wait_for("message", check=lambda m: m.author.id == get_user_id(), timeout=TIMEOUT)
         return int(msg.content) == answer
     except:
         return False
@@ -111,11 +91,7 @@ async def typo_trap(ctx, embed, get_user_id, bot):
     embed.add_field(name="✏️ Typo trap", value=mot_mod, inline=False)
     await ctx.edit(embed=embed)
     try:
-        msg = await bot.wait_for(
-            "message",
-            check=lambda m: m.author.id == get_user_id(),
-            timeout=TIMEOUT
-        )
+        msg = await bot.wait_for("message", check=lambda m: m.author.id == get_user_id(), timeout=TIMEOUT)
         return int(msg.content) == typo_index + 1
     except:
         return False
