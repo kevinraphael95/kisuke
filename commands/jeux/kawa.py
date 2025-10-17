@@ -5,10 +5,6 @@
 # Accès : Tous
 # Cooldown : 1 utilisation / 5 secondes / utilisateur
 # ────────────────────────────────────────────────────────────────────────────────
-
-# ────────────────────────────────────────────────────────────────────────────────
-# 📦 Imports nécessaires
-# ────────────────────────────────────────────────────────────────────────────────
 import discord
 from discord import app_commands
 from discord.ext import commands
@@ -66,11 +62,12 @@ class Kawashima(commands.Cog):
             color=0x00ff00
         )
 
+        # Envoyer le message initial et récupérer l'objet Message
         if isinstance(ctx_or_interaction, discord.Interaction):
             await ctx_or_interaction.response.send_message(embed=embed)
-            ctx = await ctx_or_interaction.original_response()
+            message = await ctx_or_interaction.original_response()
         else:
-            ctx = ctx_or_interaction
+            message = await ctx_or_interaction.send(embed=embed)
 
         get_user_id = lambda: ctx_or_interaction.user.id if isinstance(ctx_or_interaction, discord.Interaction) else ctx_or_interaction.author.id
 
@@ -78,15 +75,25 @@ class Kawashima(commands.Cog):
         games = self.minijeux.copy()
         random.shuffle(games)
 
+        # Boucle sur les mini-jeux
         for game in games:
-            result = await game(ctx, embed, get_user_id, self.bot)
+            result = await game(message, embed, get_user_id, self.bot)
             if result:
                 score += 1
 
+        # Afficher le score final
         embed.clear_fields()
         embed.add_field(name="🏆 Score final", value=f"{score} / {len(games)}", inline=False)
         embed.color = 0xffd700
-        await ctx.edit(embed=embed)
+        await message.edit(embed=embed)
+
+
+# ────────────────────────────────────────────────────────────────────────────────
+# 🔌 Setup du Cog
+# ────────────────────────────────────────────────────────────────────────────────
+async def setup(bot: commands.Bot):
+    await bot.add_cog(Kawashima(bot))
+
 
 
 
