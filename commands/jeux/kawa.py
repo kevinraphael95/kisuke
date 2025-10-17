@@ -1,6 +1,6 @@
 # ────────────────────────────────────────────────────────────────────────────────
 # 📌 kawashima.py — Commande /kawashima et !kawashima
-# Objectif : Lancer tous les mini-jeux style Professeur Kawashima
+# Objectif : Lancer tous les mini-jeux style Professeur Kawashima avec score final
 # Catégorie : Autre
 # Accès : Tous
 # Cooldown : 1 utilisation / 5 secondes / utilisateur
@@ -21,7 +21,7 @@ from utils.kawashima_games import *
 # ────────────────────────────────────────────────────────────────────────────────
 class Kawashima(commands.Cog):
     """
-    Commande /kawashima et !kawashima — Lance tous les mini-jeux d'entraînement cérébral
+    Commande /kawashima et !kawashima — Lance tous les mini-jeux avec score final
     """
     def __init__(self, bot: commands.Bot):
         self.bot = bot
@@ -39,7 +39,7 @@ class Kawashima(commands.Cog):
     # ────────────────────────────────────────────────────────────────────────────
     @app_commands.command(
         name="kawashima",
-        description="Lance tous les mini-jeux d'entraînement cérébral !"
+        description="Lance tous les mini-jeux d'entraînement cérébral avec score !"
     )
     @app_commands.checks.cooldown(1, 5.0, key=lambda i: i.user.id)
     async def slash_kawashima(self, interaction: discord.Interaction):
@@ -51,14 +51,14 @@ class Kawashima(commands.Cog):
     @commands.command(
         name="kawashima",
         aliases=["k"],
-        help="Lance tous les mini-jeux d'entraînement cérébral !"
+        help="Lance tous les mini-jeux d'entraînement cérébral avec score !"
     )
     @commands.cooldown(1, 5.0, commands.BucketType.user)
     async def prefix_kawashima(self, ctx: commands.Context):
         await self.run_all(ctx)
 
     # ────────────────────────────────────────────────────────────────────────────
-    # 🔹 Fonction pour lancer tous les mini-jeux
+    # 🔹 Fonction pour lancer tous les mini-jeux avec embed unique et score
     # ────────────────────────────────────────────────────────────────────────────
     async def run_all(self, ctx_or_interaction):
         embed = discord.Embed(
@@ -66,18 +66,25 @@ class Kawashima(commands.Cog):
             description="Réponds aux mini-jeux suivants dans l'ordre !",
             color=0x00ff00
         )
+        send = lambda text: ctx_or_interaction.followup.send(text) if isinstance(ctx_or_interaction, discord.Interaction) else ctx_or_interaction.send(text)
+        get_user_id = lambda: ctx_or_interaction.user.id if isinstance(ctx_or_interaction, discord.Interaction) else ctx_or_interaction.author.id
+
         if isinstance(ctx_or_interaction, discord.Interaction):
             await ctx_or_interaction.response.send_message(embed=embed)
         else:
             await ctx_or_interaction.send(embed=embed)
 
-        send = lambda text: ctx_or_interaction.followup.send(text) if isinstance(ctx_or_interaction, discord.Interaction) else ctx_or_interaction.send(text)
-        get_user_id = lambda: ctx_or_interaction.user.id if isinstance(ctx_or_interaction, discord.Interaction) else ctx_or_interaction.author.id
-
+        score = 0
         games = self.minijeux.copy()
         random.shuffle(games)
         for game in games:
-            await game(ctx_or_interaction, send, get_user_id, self.bot)
+            result = await game(ctx_or_interaction, embed, get_user_id, self.bot)
+            score += result
+
+        embed.add_field(name="🏆 Score final", value=f"{score} / {len(games)}", inline=False)
+        embed.color = 0xffd700
+        await send(embed=embed)
+
 
 
 # ────────────────────────────────────────────────────────────────────────────────
