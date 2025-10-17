@@ -95,6 +95,10 @@ class Hollow(commands.Cog):
             async def update_embed(e: discord.Embed):
                 await interaction.edit_original_response(embed=e)
 
+            embed.clear_fields()
+            embed.add_field(name="Préparation...", value="Les épreuves vont commencer...", inline=False)
+            await update_embed(embed)
+            
             try:
                 victoire = await lancer_3_taches(interaction, embed, update_embed)
             except Exception:
