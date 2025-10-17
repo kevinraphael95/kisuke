@@ -13,7 +13,6 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 import random
-import asyncio
 from utils.kawashima_games import *
 
 # ────────────────────────────────────────────────────────────────────────────────
@@ -68,11 +67,10 @@ class Kawashima(commands.Cog):
         )
 
         if isinstance(ctx_or_interaction, discord.Interaction):
-            msg_embed = await ctx_or_interaction.response.send_message(embed=embed, fetch_response=True)
+            await ctx_or_interaction.response.send_message(embed=embed)
             ctx = await ctx_or_interaction.original_response()
         else:
             ctx = ctx_or_interaction
-            msg_embed = ctx
 
         get_user_id = lambda: ctx_or_interaction.user.id if isinstance(ctx_or_interaction, discord.Interaction) else ctx_or_interaction.author.id
 
@@ -82,12 +80,15 @@ class Kawashima(commands.Cog):
 
         for game in games:
             result = await game(ctx, embed, get_user_id, self.bot)
-            score += 1 if result else 0
+            if result:
+                score += 1
 
         embed.clear_fields()
         embed.add_field(name="🏆 Score final", value=f"{score} / {len(games)}", inline=False)
         embed.color = 0xffd700
         await ctx.edit(embed=embed)
+
+
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🔌 Setup du Cog
