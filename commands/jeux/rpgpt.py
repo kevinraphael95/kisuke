@@ -2,7 +2,7 @@
 # 📌 rpgpt.py — Mini RPG Bleach (Les Fissures du Néant) amélioré
 # Commande /rpgpt et !rpgpt avec persistance Supabase et gestion sécurisée Discord
 # Objectif : Mini RPG narratif où le joueur répond avec un seul mot.
-# Catégorie : Jeu / RPG
+# Catégorie : Jeux
 # Accès : Tous
 # Cooldown : 1 utilisation / 5 secondes / utilisateur
 # ────────────────────────────────────────────────────────────────────────────────
@@ -165,5 +165,5 @@ async def setup(bot: commands.Bot):
     cog = RPGPT(bot)
     for command in cog.get_commands():
         if not hasattr(command, "category"):
-            command.category = "Jeu / RPG"
+            command.category = "Jeux"
     await bot.add_cog(cog)
