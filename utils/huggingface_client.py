@@ -1,17 +1,24 @@
 # ────────────────────────────────────────────────────────────────────────────────
 # 📌 huggingface_client.py — Gestion des appels à l'API Hugging Face
 # Objectif : Fournir une fonction get_story_continuation() pour le mini-RPG
+# avec fallback automatique entre plusieurs modèles gratuits
 # ────────────────────────────────────────────────────────────────────────────────
 
 import os
 import requests
 
 # ────────────────────────────────────────────────────────────────────────────────
-# ⚙️ Configuration du modèle
+# ⚙️ Configuration
 # ────────────────────────────────────────────────────────────────────────────────
 HF_API_KEY = os.getenv("HF_API_KEY")
-MODEL_URL = "https://api-inference.huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.2"
 HEADERS = {"Authorization": f"Bearer {HF_API_KEY}"}
+
+# Liste de modèles gratuits légers et accessibles
+MODEL_URLS = [
+    "https://api-inference.huggingface.co/models/TheBloke/gpt4all-lora-quantized",
+    "https://api-inference.huggingface.co/models/TheBloke/GPT4-x-Alpaca-7B-Chat",
+    "https://api-inference.huggingface.co/models/mosaicml/mpt-7b-chat",
+]
 
 print("🔑 Clé HuggingFace détectée :", bool(HF_API_KEY))
 
@@ -24,10 +31,10 @@ def get_story_continuation(history: list[dict]) -> str:
     Chaque élément de 'history' est une dict : {role: 'user'/'assistant'/'system', content: str}
     """
 
-    # On recompose le prompt complet à partir de l'historique
-    prompt = "\n".join([f"{m['role']}: {m['content']}" for m in history])
+    prompt = "\n".join([f"{m['role']}: {m['content']}" for m in history]) + "\nassistant:"
+
     payload = {
-        "inputs": f"{prompt}\nassistant:",
+        "inputs": prompt,
         "parameters": {
             "max_new_tokens": 250,
             "temperature": 0.9,
@@ -35,26 +42,27 @@ def get_story_continuation(history: list[dict]) -> str:
         }
     }
 
-    try:
-        response = requests.post(MODEL_URL, headers=HEADERS, json=payload, timeout=60)
+    for url in MODEL_URLS:
+        try:
+            response = requests.post(url, headers=HEADERS, json=payload, timeout=60)
+            if response.status_code != 200:
+                print(f"[Erreur HF] Modèle {url} → {response.status_code}: {response.text}")
+                continue
 
-        if response.status_code != 200:
-            print(f"[Erreur HuggingFace] {response.status_code}: {response.text}")
-            return "⚠️ Le narrateur reste silencieux... (*erreur du modèle*)"
+            data = response.json()
+            if isinstance(data, list):
+                text = data[0].get("generated_text", "")
+            elif "generated_text" in data:
+                text = data["generated_text"]
+            else:
+                text = str(data)
 
-        data = response.json()
-        # HuggingFace peut renvoyer plusieurs formats différents selon le modèle
-        if isinstance(data, list):
-            text = data[0].get("generated_text", "")
-        elif "generated_text" in data:
-            text = data["generated_text"]
-        else:
-            text = str(data)
+            text = text.split("assistant:")[-1].strip()
+            if text:
+                return text
+        except Exception as e:
+            print(f"[Erreur HF] Modèle {url} → {e}")
+            continue
 
-        # Nettoyage basique du texte
-        text = text.split("assistant:")[-1].strip()
-        return text or "🌫️ Le Néant murmure sans mot..."
-
-    except Exception as e:
-        print(f"[Erreur HF API] {e}")
-        return "⚠️ Le narrateur se tait... (*erreur de connexion*)"
+    # Si aucun modèle ne répond
+    return "⚠️ Le narrateur reste silencieux... (*tous les modèles ont échoué*)"
