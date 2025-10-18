@@ -6,3 +6,4 @@ pyspellchecker[fr]
 python-dateutil
 psutil
 openai
+requests
