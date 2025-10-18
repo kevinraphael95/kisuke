@@ -1,7 +1,7 @@
 # ────────────────────────────────────────────────────────────────────────────────
 # 📌 cook.py — Mini-jeu Cooking Mama avec boutons et mini-jeux variés
 # Objectif : Préparer une recette façon Cooking Mama avec mini-jeux interactifs
-# Catégorie : Fun
+# Catégorie : Jeux
 # Accès : Tous
 # Cooldown : 1 utilisation / 5 secondes / utilisateur
 # ────────────────────────────────────────────────────────────────────────────────
@@ -223,5 +223,5 @@ async def setup(bot: commands.Bot):
     cog = Cooking(bot)
     for command in cog.get_commands():
         if not hasattr(command, "category"):
-            command.category = "Fun"
+            command.category = "Jeux"
     await bot.add_cog(cog)
