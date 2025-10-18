@@ -1,15 +1,12 @@
 # ────────────────────────────────────────────────────────────────────────────────
 # 📌 rpgpt.py — Mini RPG Bleach (Les Fissures du Néant) amélioré
 # Commande /rpgpt et !rpgpt avec persistance Supabase et gestion sécurisée Discord
-# Objectif : Mini RPG narratif où le joueur répond avec un seul mot.
+# Objectif : Mini RPG narratif où le joueur répond avec un seul mot précédé de "!"
 # Catégorie : Jeux
 # Accès : Tous
 # Cooldown : 1 utilisation / 5 secondes / utilisateur
 # ────────────────────────────────────────────────────────────────────────────────
 
-# ────────────────────────────────────────────────────────────────────────────────
-# 📦 Imports nécessaires
-# ────────────────────────────────────────────────────────────────────────────────
 import discord
 from discord import app_commands
 from discord.ext import commands
@@ -29,13 +26,14 @@ MAX_TURNS = 10
 # ────────────────────────────────────────────────────────────────────────────────
 SYSTEM_PROMPT = """
 Tu es le narrateur d’un mini-RPG textuel inspiré de *Bleach*, intitulé **Les Fissures du Néant**.
-Le joueur incarne un shinigami (ou âme errante) explorant les fissures qui relient le Seireitei et le Hueco Mundo.
-L’histoire suit trois actes :
-1️⃣ Découverte des fissures
-2️⃣ Rencontre d’un allié ambigu
-3️⃣ Choix final face au Néant
+Le joueur incarne un shinigami (ou âme errante) explorant les fissures reliant le Seireitei et le Hueco Mundo.
 
-Tu adaptes tes descriptions à ses choix (réponses d’un seul mot), tu ajoutes des indices et de la tension.
+L’histoire suit trois actes :
+1️⃣ Découverte des fissures.
+2️⃣ Rencontre d’un allié ambigu.
+3️⃣ Choix final face au Néant.
+
+Tu adaptes tes descriptions à ses choix (réponses d’un seul mot précédé de "!"), tu ajoutes des indices et de la tension.
 L’ambiance doit être immersive, poétique et mystérieuse. Ne révèle pas la fin trop tôt.
 """
 
@@ -47,31 +45,44 @@ class RPGPT(commands.Cog):
 
     def __init__(self, bot: commands.Bot):
         self.bot = bot
-        self.sessions = {}  # session locale pour suivre le canal et limiter les tours en mémoire
+        self.sessions = {}
 
     # ────────────────────────────────────────────────────────────────────────────
     # 🧱 Démarrage d’une session
     # ────────────────────────────────────────────────────────────────────────────
     async def start_session(self, user: discord.User, channel: discord.TextChannel):
-        # Vérifie limite active
         active_players = supabase.table("players").select("*").execute().data
         if len(active_players) >= MAX_ACTIVE_PLAYERS and not any(p["discord_id"] == user.id for p in active_players):
             await safe_send(channel, "🚫 Trop de shinigamis enquêtent déjà sur les fissures. Réessaie plus tard !")
             return
 
-        # Récupère ou crée le joueur
         result = supabase.table("players").select("*").eq("discord_id", user.id).execute()
         player = result.data[0] if result.data else None
 
         if player:
+            # Reprise de partie
             history = player["history"]
             turns = player["turns"]
+            await safe_send(channel, "🌫️ *Le vent du Néant souffle à nouveau...*")
         else:
+            # Nouvelle partie — grande introduction
+            intro = (
+                "🌌 **Bienvenue, âme errante...**\n\n"
+                "Tu es sur le point de plonger dans *Les Fissures du Néant*, un mini-RPG inspiré de Bleach.\n"
+                "Le principe est simple : tu ne peux répondre qu’avec **un seul mot**, précédé de `!`.\n\n"
+                "Exemples : `!attaque`, `!parle`, `!observe`\n\n"
+                "Ton choix influencera le cours de l’histoire.\n\n"
+                "🌒 **Acte I — Le Frisson du Vide**\n"
+                "Un souffle froid parcourt le Seireitei. Une fissure s’ouvre entre deux mondes...\n\n"
+                "Que fais-tu ? (`!attaque`, `!observe`, `!fuis`)"
+            )
+
             history = [
                 {"role": "system", "content": SYSTEM_PROMPT},
-                {"role": "assistant", "content": "🌫️ Un vent glacial traverse le Seireitei... Choisis un mot : attaque, parle, fuis."}
+                {"role": "assistant", "content": intro}
             ]
             turns = 0
+
             supabase.table("players").insert({
                 "discord_id": user.id,
                 "history": history,
@@ -79,18 +90,13 @@ class RPGPT(commands.Cog):
                 "last_channel": str(channel.id)
             }).execute()
 
-        # Sauvegarde localement la session
         self.sessions[user.id] = {"history": history, "turns": turns, "channel": channel}
-
         await safe_send(channel, history[-1]["content"])
 
     # ────────────────────────────────────────────────────────────────────────────
     # 🔹 Commande SLASH
     # ────────────────────────────────────────────────────────────────────────────
-    @app_commands.command(
-        name="rpgpt",
-        description="Lance une mini-aventure RPG inspirée de Bleach."
-    )
+    @app_commands.command(name="rpgpt", description="Lance une mini-aventure RPG inspirée de Bleach.")
     @app_commands.checks.cooldown(1, 5.0, key=lambda i: i.user.id)
     async def slash_rpgpt(self, interaction: discord.Interaction):
         await safe_respond(interaction, "✨ L’aventure commence...", ephemeral=True)
@@ -105,7 +111,7 @@ class RPGPT(commands.Cog):
         await self.start_session(ctx.author, ctx.channel)
 
     # ────────────────────────────────────────────────────────────────────────────
-    # 🧩 Listener : réponses du joueur
+    # 🧩 Listener : réponses du joueur (uniquement avec "!")
     # ────────────────────────────────────────────────────────────────────────────
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message):
@@ -117,15 +123,20 @@ class RPGPT(commands.Cog):
             return
 
         session = self.sessions[user_id]
-
-        # Ignore si message pas dans le même salon
         if message.channel != session["channel"]:
             return
 
-        # Vérifie mot unique
         content = message.content.strip()
-        if len(content.split()) > 1:
-            await safe_send(message.channel, "❌ Un seul mot à la fois, shinigami.")
+
+        # Vérifie que le message commence par "!"
+        if not content.startswith("!"):
+            return  # ignore tout autre message
+
+        mot = content[1:].strip()
+
+        # Vérifie qu’il y a bien un mot et qu’il est unique
+        if not mot or len(mot.split()) > 1:
+            await safe_send(message.channel, "❌ Réponds avec **un seul mot**, précédé de `!`.")
             return
 
         # Limite de tours
@@ -135,11 +146,9 @@ class RPGPT(commands.Cog):
             supabase.table("players").delete().eq("discord_id", user_id).execute()
             return
 
-        # Ajoute la réponse à l’historique
-        session["history"].append({"role": "user", "content": content})
+        session["history"].append({"role": "user", "content": mot})
         session["turns"] += 1
 
-        # Appel OpenAI
         try:
             response = await asyncio.to_thread(get_story_continuation, session["history"])
         except Exception as e:
@@ -148,7 +157,6 @@ class RPGPT(commands.Cog):
             del self.sessions[user_id]
             return
 
-        # Met à jour l’historique local et Supabase
         session["history"].append({"role": "assistant", "content": response})
         supabase.table("players").update({
             "history": session["history"],
