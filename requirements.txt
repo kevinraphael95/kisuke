@@ -5,3 +5,4 @@ flask
 pyspellchecker[fr]
 python-dateutil
 psutil
+openai
