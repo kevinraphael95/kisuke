@@ -1,5 +1,5 @@
 # ────────────────────────────────────────────────────────────────────────────────
-# 📌 kawashima.py — Commande /kawashima et !kawashima
+# 📌 entrainement_cerebral.py — Commande /cerebral et !cerebral
 # Objectif : Lancer 5 mini-jeux aléatoires style Professeur Kawashima avec score arcade
 # Catégorie : Autre
 # Accès : Tous
@@ -27,7 +27,7 @@ TABLE_NAME = "kawashima_scores"
 # ────────────────────────────────────────────────────────────────────────────────
 # Commande
 # ────────────────────────────────────────────────────────────────────────────────
-class Kawashima(commands.Cog):
+class EntrainementCerebral(commands.Cog):
     """Mode arcade — Entraînement cérébral avec classement global."""
 
     def __init__(self, bot: commands.Bot):
@@ -40,16 +40,16 @@ class Kawashima(commands.Cog):
                 self.minijeux.append((f"{emoji} {titre}", func))
 
     # ─────────── Commande texte ───────────
-    @commands.command(name="kawashima", aliases=["k"], help="Lance le mode arcade ou affiche le top 10.")
-    async def kawashima_cmd(self, ctx: commands.Context, arg: str = ""):
+    @commands.command(name="entrainementcerebral", aliases=["ec", "kawashima", "k"], help="Lance le mode arcade ou affiche le top 10.")
+    async def cerebral_cmd(self, ctx: commands.Context, arg: str = ""):
         if arg.lower() == "top":
             await self.show_leaderboard(ctx)
         else:
             await self.run_arcade(ctx)
 
     # ─────────── Commande slash ───────────
-    @app_commands.command(name="kawashima", description="Mode arcade Kawashima ou Top 10.")
-    async def kawashima_slash(self, interaction: discord.Interaction, arg: str = ""):
+    @app_commands.command(name="cerebral", description="Mode arcade Entraînement cérébral ou Top 10.")
+    async def cerebral_slash(self, interaction: discord.Interaction, arg: str = ""):
         if arg.lower() == "top":
             await self.show_leaderboard(interaction)
         else:
@@ -61,7 +61,7 @@ class Kawashima(commands.Cog):
         start_embed = discord.Embed(
             title="🧠 Entraînement cérébral — Mode Arcade",
             description=(
-                "Bienvenue dans le **Mode Arcade Kawashima** ! 🧩\n\n"
+                "Bienvenue dans le **Mode Arcade Entraînement cérébral** ! 🧩\n\n"
                 "🧠 Tu vas affronter **5 mini-jeux** choisis au hasard.\n"
                 "Réponds **vite et bien** pour marquer un maximum de points !\n\n"
                 "Appuie sur le bouton ci-dessous quand tu es prêt à commencer."
@@ -127,18 +127,9 @@ class Kawashima(commands.Cog):
         selected_games = self.minijeux[:5]
 
         for index, (name, game) in enumerate(selected_games, start=1):
-            # Embed d’intro pour chaque mini-jeu (nouveau message)
-            intro_embed = discord.Embed(
-                title=f"🧩 Mini-jeu {index} — {name}",
-                description="Prépare-toi...",
-                color=discord.Color.blurple()
-            )
-            await send(embed=intro_embed)
-            await asyncio.sleep(1)
-
-            # Exécution du mini-jeu
+            # Lancement direct du mini-jeu (pas de message "Prépare-toi")
             start = time.time()
-            success = await game(ctx_or_interaction, intro_embed, get_user_id, self.bot)
+            success = await game(ctx_or_interaction, None, get_user_id, self.bot)
             end = time.time()
             elapsed = round(end - start, 2)
 
@@ -206,7 +197,7 @@ class Kawashima(commands.Cog):
                     if lowest_ids:
                         supabase.table(TABLE_NAME).delete().in_("id", lowest_ids).execute()
         except Exception as e:
-            print(f"[Kawashima] Erreur Top 10 Supabase: {e}")
+            print(f"[Entraînement cérébral] Erreur Top 10 Supabase: {e}")
 
         # ─────────── Récupération du Top 10 final ───────────
         try:
@@ -227,7 +218,7 @@ class Kawashima(commands.Cog):
 
         # ─────────── Embed final (nouveau message) ───────────
         final_embed = discord.Embed(
-            title="🏁 Résultats — Mode Arcade",
+            title="🏁 Résultats — Entraînement cérébral",
             description=(
                 f"**Résultats des 5 jeux :**\n{results_text}\n\n"
                 f"**Score total :** `{total_score:,}` pts\n"
@@ -241,7 +232,7 @@ class Kawashima(commands.Cog):
     # ─────────── Affichage du classement ───────────
     async def show_leaderboard(self, ctx_or_interaction):
         embed = discord.Embed(
-            title="🏆 Kawashima — Top 10",
+            title="🏆 Entraînement cérébral — Top 10",
             description="Voici le classement global des meilleurs scores !",
             color=discord.Color.gold()
         )
@@ -274,7 +265,7 @@ class Kawashima(commands.Cog):
 # 🔌 Setup
 # ────────────────────────────────────────────────────────────────────────────────
 async def setup(bot: commands.Bot):
-    cog = Kawashima(bot)
+    cog = EntrainementCerebral(bot)
     for command in cog.get_commands():
         if not hasattr(command, "category"):
             command.category = "Jeux"
