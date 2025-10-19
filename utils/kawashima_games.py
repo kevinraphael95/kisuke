@@ -370,7 +370,7 @@ async def carre_magique_fiable_emoji(ctx, embed, get_user_id, bot):
     # Cacher un nombre
     row, col = random.randint(0, 2), random.randint(0, 2)
     answer = base[row][col]
-    base[row][col] = "?"
+    base[row][col] = "❓"
 
     # Conversion en emoji Discord
     num_to_emoji = {
@@ -381,7 +381,7 @@ async def carre_magique_fiable_emoji(ctx, embed, get_user_id, bot):
 
     display = ""
     for r in base:
-        display += " | ".join(num_to_emoji.get(x, x) for x in r) + "\n"
+        display += "|".join(num_to_emoji.get(x, x) for x in r) + "\n"
 
     embed.clear_fields()
     embed.add_field(
