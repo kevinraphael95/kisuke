@@ -41,7 +41,7 @@ class EntrainementCerebral(commands.Cog):
                 self.minijeux.append((f"{emoji} {titre}", func))
 
     # ─────────── Commande texte ───────────
-    @commands.command(name="entrainementcerebral", aliases=["ec", "kawashima", "k"], help="Lance le mode arcade ou affiche le top 10.")
+    @commands.command(name="entrainementcerebral", aliases=["ec", "kawashima", "k"], help="Entraînement cérébral composé de 5 minijeux.")
     async def cerebral_cmd(self, ctx: commands.Context, arg: str = ""):
         if arg.lower() == "top":
             await self.show_leaderboard(ctx)
@@ -51,7 +51,7 @@ class EntrainementCerebral(commands.Cog):
             await self.run_arcade(ctx)
 
     # ─────────── Commande slash ───────────
-    @app_commands.command(name="cerebral", description="Mode arcade Entraînement cérébral ou Top 10.")
+    @app_commands.command(name="cerebral", description="Entraînement cérébral composé de 5 minijeux.")
     async def cerebral_slash(self, interaction: discord.Interaction, arg: str = ""):
         await interaction.response.defer()
         if arg.lower() == "top":
