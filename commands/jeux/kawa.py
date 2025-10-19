@@ -62,13 +62,13 @@ class EntrainementCerebral(commands.Cog):
 
     # ─────────── Lancement du mode arcade ───────────
     async def run_arcade(self, ctx_or_interaction, multiplayer=False):
-        guild_id = getattr(ctx_or_interaction, "guild", None)
+        guild = getattr(ctx_or_interaction, "guild", None)
+        guild_id = guild.id if guild else None
+        if guild_id and guild_id in self.active_sessions:
+            return await (ctx_or_interaction.send if not isinstance(ctx_or_interaction, discord.Interaction) else ctx_or_interaction.response.send_message)(
+                "⚠️ Un entraînement cérébral est déjà en cours sur ce serveur.", ephemeral=True
+            )
         if guild_id:
-            guild_id = guild_id.id
-            if guild_id in self.active_sessions:
-                return await (ctx_or_interaction.send if not isinstance(ctx_or_interaction, discord.Interaction) else ctx_or_interaction.response.send_message)(
-                    "⚠️ Un entraînement cérébral est déjà en cours sur ce serveur.", ephemeral=True
-                )
             self.active_sessions.add(guild_id)
 
         try:
@@ -98,6 +98,7 @@ class EntrainementCerebral(commands.Cog):
                 def __init__(self):
                     super().__init__(timeout=30)
                     self.ready_event = asyncio.Event()
+                    self.clicked = False  # Ne démarre que si clic
 
                 @discord.ui.button(label="🟢 Je suis prêt !", style=discord.ButtonStyle.success)
                 async def ready(self, interaction: discord.Interaction, button: discord.ui.Button):
@@ -116,6 +117,7 @@ class EntrainementCerebral(commands.Cog):
                             button.disabled = True
                             button.label = "✅ On y va !"
                             await interaction.response.edit_message(view=self)
+                            self.clicked = True
                             self.ready_event.set()
                     else:
                         if interaction.user != users[0]:
@@ -124,26 +126,22 @@ class EntrainementCerebral(commands.Cog):
                         button.disabled = True
                         button.label = "✅ C’est parti !"
                         await interaction.response.edit_message(view=self)
+                        self.clicked = True
                         self.ready_event.set()
 
                 async def on_timeout(self):
-                    for child in self.children:
-                        child.disabled = True
-                        child.label = "⏰ Temps écoulé"
-                    self.ready_event.set()
+                    if not self.clicked:
+                        for child in self.children:
+                            child.disabled = True
+                            child.label = "⏰ Temps écoulé"
+                        self.ready_event.set()
 
             view = ReadyButton()
             msg_start = await send(embed=start_embed, view=view)
             await view.ready_event.wait()
 
-            if multiplayer and len(ready_users) < 2:
-                timeout_embed = discord.Embed(
-                    title="⏰ Temps écoulé",
-                    description="Au moins 2 joueurs n'ont pas cliqué à temps. Relancez la commande !",
-                    color=discord.Color.red()
-                )
-                return await msg_start.edit(embed=timeout_embed, view=None)
-            if not multiplayer and not view.ready_event.is_set():
+            # ─────────── Annule si pas de clic ───────────
+            if not view.clicked:
                 timeout_embed = discord.Embed(
                     title="⏰ Temps écoulé",
                     description="Tu n’as pas cliqué à temps. Relance la commande pour rejouer !",
