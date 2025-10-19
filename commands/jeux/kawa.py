@@ -74,9 +74,11 @@ class Kawashima(commands.Cog):
             await ctx_or_interaction.response.send_message(embed=start_embed)
             message = await ctx_or_interaction.original_response()
             user = ctx_or_interaction.user
+            send = ctx_or_interaction.channel.send
         else:
             message = await ctx_or_interaction.send(embed=start_embed)
             user = ctx_or_interaction.author
+            send = ctx_or_interaction.send
 
         get_user_id = lambda: user.id
         total_score = 0
@@ -125,18 +127,18 @@ class Kawashima(commands.Cog):
         selected_games = self.minijeux[:5]
 
         for index, (name, game) in enumerate(selected_games, start=1):
-            # Embed d’intro pour chaque mini-jeu
+            # Embed d’intro pour chaque mini-jeu (nouveau message)
             intro_embed = discord.Embed(
                 title=f"🧩 Mini-jeu {index} — {name}",
                 description="Prépare-toi...",
                 color=discord.Color.blurple()
             )
-            await message.edit(embed=intro_embed, view=None)
+            await send(embed=intro_embed)
             await asyncio.sleep(1)
 
             # Exécution du mini-jeu
             start = time.time()
-            success = await game(message, intro_embed, get_user_id, self.bot)
+            success = await game(ctx_or_interaction, intro_embed, get_user_id, self.bot)
             end = time.time()
             elapsed = round(end - start, 2)
 
@@ -144,7 +146,7 @@ class Kawashima(commands.Cog):
             total_score += score
             results.append((index, name, success, elapsed, score))
 
-            # Embed résultat pour ce mini-jeu
+            # Embed résultat (nouveau message)
             result_embed = discord.Embed(
                 title=f"🎯 Résultat — {name}",
                 description=(
@@ -154,7 +156,7 @@ class Kawashima(commands.Cog):
                 ),
                 color=discord.Color.green() if success else discord.Color.red()
             )
-            await message.edit(embed=result_embed)
+            await send(embed=result_embed)
             await asyncio.sleep(1.5)
 
         # ─────────── Calcul du rang ───────────
@@ -223,7 +225,7 @@ class Kawashima(commands.Cog):
         except Exception as e:
             top_text = f"⚠️ Erreur récupération classement : {e}"
 
-        # ─────────── Embed final ───────────
+        # ─────────── Embed final (nouveau message) ───────────
         final_embed = discord.Embed(
             title="🏁 Résultats — Mode Arcade",
             description=(
@@ -234,7 +236,7 @@ class Kawashima(commands.Cog):
             ),
             color=discord.Color.gold()
         )
-        await message.edit(embed=final_embed)
+        await send(embed=final_embed)
 
     # ─────────── Affichage du classement ───────────
     async def show_leaderboard(self, ctx_or_interaction):
