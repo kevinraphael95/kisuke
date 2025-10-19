@@ -37,7 +37,7 @@ class TestKawashima(commands.Cog):
     # ─────────── Commande SLASH ───────────
     @app_commands.command(
         name="testgame",
-        description="Tester un mini-jeu Kawashima via son numéro ou afficher la liste."
+        description="Tester un mini-jeu de l'entraînement cérébral via son numéro ou afficher la liste."
     )
     @app_commands.checks.cooldown(1, 5.0, key=lambda i: i.user.id)
     async def slash_testgame(self, interaction: discord.Interaction, choice: int = None):
@@ -45,7 +45,7 @@ class TestKawashima(commands.Cog):
         await self.run_game(interaction, choice)
 
     # ─────────── Commande PREFIX ───────────
-    @commands.command(name="testgame", aliases=["tg"])
+    @commands.command(name="testgame", aliases=["tg"], help="Tester un mini-jeu de l'entraînement cérébral via son numéro ou afficher la liste.")
     @commands.cooldown(1, 5.0, commands.BucketType.user)
     async def prefix_testgame(self, ctx: commands.Context, choice: int = None):
         await self.run_game(ctx, choice)
