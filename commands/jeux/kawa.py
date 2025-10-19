@@ -87,6 +87,13 @@ class EntrainementCerebral(commands.Cog):
             title_mode = "Mode Multijoueur" if multiplayer else "Mode Arcade"
             ready_users = []
 
+            description_text = f"{'🔹 Mode Multijoueur : au moins 2 joueurs requis.' if multiplayer else ''}\nAppuie sur le bouton ci-dessous quand tu es prêt à commencer."
+            start_embed = discord.Embed(
+                title=f"🧠 Entraînement cérébral — {title_mode}",
+                description=description_text,
+                color=discord.Color.blurple()
+            )
+
             class ReadyButton(discord.ui.View):
                 def __init__(self):
                     super().__init__(timeout=30)
@@ -126,7 +133,7 @@ class EntrainementCerebral(commands.Cog):
                     self.ready_event.set()
 
             view = ReadyButton()
-            msg_start = await send(view=view)
+            msg_start = await send(embed=start_embed, view=view)
             await view.ready_event.wait()
 
             if multiplayer and len(ready_users) < 2:
