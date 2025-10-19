@@ -57,26 +57,11 @@ class EntrainementCerebral(commands.Cog):
 
     # ─────────── Lancement du mode arcade ───────────
     async def run_arcade(self, ctx_or_interaction):
-        # Embed d’introduction
-        start_embed = discord.Embed(
-            title="🧠 Entraînement cérébral — Mode Arcade",
-            description=(
-                "Bienvenue dans le **Mode Arcade Entraînement cérébral** ! 🧩\n\n"
-                "🧠 Tu vas affronter **5 mini-jeux** choisis au hasard.\n"
-                "Réponds **vite et bien** pour marquer un maximum de points !\n\n"
-                "Appuie sur le bouton ci-dessous quand tu es prêt à commencer."
-            ),
-            color=discord.Color.blurple(),
-        )
-
         # Gestion du contexte
         if isinstance(ctx_or_interaction, discord.Interaction):
-            await ctx_or_interaction.response.send_message(embed=start_embed)
-            message = await ctx_or_interaction.original_response()
             user = ctx_or_interaction.user
             send = ctx_or_interaction.channel.send
         else:
-            message = await ctx_or_interaction.send(embed=start_embed)
             user = ctx_or_interaction.author
             send = ctx_or_interaction.send
 
@@ -84,60 +69,33 @@ class EntrainementCerebral(commands.Cog):
         total_score = 0
         results = []
 
-        # ─────────── Bouton de démarrage ───────────
-        class ReadyButton(discord.ui.View):
-            def __init__(self):
-                super().__init__(timeout=30)
-                self.ready = asyncio.Event()
-
-            @discord.ui.button(label="🟢 Je suis prêt !", style=discord.ButtonStyle.success)
-            async def ready_button(self, interaction: discord.Interaction, button: discord.ui.Button):
-                if interaction.user.id != user.id:
-                    return await interaction.response.send_message("🚫 Ce n’est pas ton entraînement.", ephemeral=True)
-                button.disabled = True
-                button.label = "✅ C’est parti !"
-                await interaction.response.edit_message(view=self)
-                self.ready.set()
-
-            async def on_timeout(self):
-                for child in self.children:
-                    child.disabled = True
-                    child.label = "⏰ Temps écoulé"
-                try:
-                    await message.edit(view=self)
-                except:
-                    pass
-                self.ready.set()
-
-        view = ReadyButton()
-        await message.edit(embed=start_embed, view=view)
-        await view.ready.wait()
-
-        # Si l'utilisateur n'a pas cliqué à temps
-        if all(child.disabled and "écoulé" in child.label for child in view.children):
-            timeout_embed = discord.Embed(
-                title="⏰ Temps écoulé",
-                description="Tu n’as pas appuyé à temps. Relance la commande pour rejouer !",
-                color=discord.Color.red()
-            )
-            return await message.edit(embed=timeout_embed, view=None)
-
         # ─────────── Sélection de 5 mini-jeux différents ───────────
         random.shuffle(self.minijeux)
         selected_games = self.minijeux[:5]
 
         for index, (name, game) in enumerate(selected_games, start=1):
-            # Lancement direct du mini-jeu (pas de message "Prépare-toi")
+            # Crée un embed pour le mini-jeu
+            game_embed = discord.Embed(
+                title=f"🧩 Mini-jeu {index} — {name}",
+                description="Réponds rapidement !",
+                color=discord.Color.blurple()
+            )
+
+            # Envoie le message du mini-jeu
+            msg_game = await send(embed=game_embed)
+
+            # Lancement du mini-jeu avec cet embed et ce message
             start = time.time()
-            success = await game(ctx_or_interaction, None, get_user_id, self.bot)
+            success = await game(msg_game, game_embed, get_user_id, self.bot)
             end = time.time()
             elapsed = round(end - start, 2)
 
+            # Calcul du score
             score = (1000 + max(0, 500 - int(elapsed * 25))) if success else 0
             total_score += score
             results.append((index, name, success, elapsed, score))
 
-            # Embed résultat (nouveau message)
+            # Embed résultat
             result_embed = discord.Embed(
                 title=f"🎯 Résultat — {name}",
                 description=(
