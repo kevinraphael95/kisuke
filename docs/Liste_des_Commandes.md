@@ -9,6 +9,7 @@ Liste des Commandes
 Usage: !say_as <mention|id|pseudo> <message>
 - **stats :** Pas de description.
 - **sync :** Commande préfixe pour synchroniser les commandes (guild ou global).
+- **testgame :** Tester un mini-jeu de l'entraînement cérébral via son numéro ou afficher la liste.
 
 ### 📂 Bleach
 - **bmoji :** Devine quel personnage Bleach se cache derrière ces emojis.
@@ -19,9 +20,6 @@ Usage: !say_as <mention|id|pseudo> <message>
 - **perso :** Affiche la fiche d'un personnage Bleach.
 - **pilote :** 📖 Lire le pilote de Bleach.
 - **ship :** 💘 Teste la compatibilité entre deux personnages de Bleach.
-
-### 📂 Fun
-- **cook :** Commande préfixe : !cook <recette>
 
 ### 📂 Fun&Random
 - **calc :** Pas de description.
@@ -40,17 +38,18 @@ Usage: !say_as <mention|id|pseudo> <message>
 - **anagramme :** Lance une partie d'Anagramme. anagramme multi ou m pour jouer en multi.
 - **capitales :** Pas de description.
 - **compte_est_bon :** Pas de description.
+- **cook :** Commande préfixe : !cook <recette>
 - **course_animal :** Pas de description.
-- **course_voiture :** Pas de description.
 - **devinelenombre :** Devine un nombre entre 0 et 100 (multi = plusieurs joueurs)
 - **drapeaux :** Pas de description.
+- **entrainementcerebral :** Entraînement cérébral composé de 5 minijeux.
 - **jardin :** Affiche ton jardin ou celui d'un autre utilisateur 🌱
 - **jardin2 :** Pas de description.
-- **kawashima :** Lance le mode arcade ou affiche le top 10.
 - **lightsout :** Joue au jeu des lumières à éteindre (solo ou multi).
 - **mastermind :** Jouer au Mastermind interactif.
 - **motus :** Lance une partie de Motus. motus multi ou m pour jouer en multi.
 - **pendu :** Démarre une partie du jeu du pendu.
+- **rpgpt :** Pas de description.
 
 ### 📂 Reiatsu
 - **classe :** Choisir sa classe Reiatsu
@@ -68,6 +67,7 @@ Usage: !say_as <mention|id|pseudo> <message>
 
 ### 📂 Voiture
 - **choisir_voiture :** Pas de description.
+- **course_voiture :** Pas de description.
 - **garage :** Pas de description.
 - **infovoitures :** Pas de description.
 - **voiture :** Pas de description.
