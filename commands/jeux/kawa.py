@@ -57,48 +57,50 @@ class Kawashima(commands.Cog):
 
     # ─────────── Lancement du mode arcade ───────────
     async def run_arcade(self, ctx_or_interaction):
-        embed = discord.Embed(
+        # Embed d’introduction
+        start_embed = discord.Embed(
             title="🧠 Entraînement cérébral — Mode Arcade",
-            description="Réponds vite à chaque mini-jeu !",
+            description="Réponds vite à chaque mini-jeu !\n5 épreuves t’attendent...",
             color=discord.Color.blurple(),
         )
 
         if isinstance(ctx_or_interaction, discord.Interaction):
-            await ctx_or_interaction.response.send_message(embed=embed)
-            message = await ctx_or_interaction.original_response()
+            await ctx_or_interaction.response.send_message(embed=start_embed)
+            send = ctx_or_interaction.followup.send
             user = ctx_or_interaction.user
         else:
-            message = await ctx_or_interaction.send(embed=embed)
+            await ctx_or_interaction.send(embed=start_embed)
+            send = ctx_or_interaction.send
             user = ctx_or_interaction.author
 
         get_user_id = lambda: user.id
         total_score = 0
         results = []
 
-        # ─────────── Sélection de 5 mini-jeux aléatoires ───────────
+        # ─────────── Sélection de 5 mini-jeux différents ───────────
         random.shuffle(self.minijeux)
         selected_games = self.minijeux[:5]
 
         for index, (name, game) in enumerate(selected_games, start=1):
-            # Embed d’introduction du mini-jeu
-            game_embed = discord.Embed(
+            # Embed d’intro pour chaque mini-jeu
+            intro_embed = discord.Embed(
                 title=f"🧩 Mini-jeu {index} — {name}",
                 description="Prépare-toi...",
                 color=discord.Color.blurple()
             )
-            await message.edit(embed=game_embed)
+            await send(embed=intro_embed)
             await asyncio.sleep(1)
 
             # Exécution du mini-jeu
             start = time.time()
-            success = await game(message, game_embed, get_user_id, self.bot)
+            success = await game(None, intro_embed, get_user_id, self.bot)
             end = time.time()
             elapsed = round(end - start, 2)
             score = (1000 + max(0, 500 - int(elapsed * 25))) if success else 0
             total_score += score
             results.append((index, name, success, elapsed, score))
 
-            # Embed de résultat du mini-jeu
+            # Embed résultat pour ce mini-jeu
             result_embed = discord.Embed(
                 title=f"🎯 Résultat — {name}",
                 description=(
@@ -108,12 +110,12 @@ class Kawashima(commands.Cog):
                 ),
                 color=discord.Color.green() if success else discord.Color.red()
             )
-            await message.edit(embed=result_embed)
-            await asyncio.sleep(1.5)
+            await send(embed=result_embed)
+            await asyncio.sleep(1)
 
         # ─────────── Calcul du rang ───────────
         results_text = "\n".join(
-            f"**Jeu {i}** {'✅' if s else '❌'} {name}{f' - {t}s' if s else ''}"
+            f"**Jeu {i}** {'✅' if s else '❌'} {name}{f' — {t}s' if s else ''}"
             for i, name, s, t, _ in results
         )
 
@@ -126,7 +128,7 @@ class Kawashima(commands.Cog):
         else:
             rank = "😴 En veille..."
 
-        # ─────────── Gestion Top 10 ───────────
+        # ─────────── Gestion du Top 10 ───────────
         try:
             leaderboard = (
                 supabase.table(TABLE_NAME)
@@ -181,14 +183,14 @@ class Kawashima(commands.Cog):
         final_embed = discord.Embed(
             title="🏁 Résultats — Mode Arcade",
             description=(
-                f"**Résultats**\n{results_text}\n\n"
+                f"**Résultats des 5 jeux :**\n{results_text}\n\n"
                 f"**Score total :** `{total_score:,}` pts\n"
                 f"**Niveau cérébral :** {rank}\n\n"
                 f"🏆 **Classement Global (Top 10)**\n{top_text}"
             ),
             color=discord.Color.gold()
         )
-        await message.edit(embed=final_embed)
+        await send(embed=final_embed)
 
     # ─────────── Affichage du classement ───────────
     async def show_leaderboard(self, ctx_or_interaction):
