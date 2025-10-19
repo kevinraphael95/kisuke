@@ -73,10 +73,11 @@ class EntrainementCerebral(commands.Cog):
         results = {}
 
         # ─────────── Message d'introduction et bouton "Je suis prêt" ───────────
+        title_mode = "Mode Multijoueur" if multiplayer else "Mode Arcade"
         start_embed = discord.Embed(
-            title="🧠 Entraînement cérébral — Mode Arcade",
+            title=f"🧠 Entraînement cérébral — {title_mode}",
             description=(
-                "Bienvenue dans le **Mode Arcade Entraînement cérébral** ! 🧩\n\n"
+                f"Bienvenue dans le **{title_mode} Entraînement cérébral** ! 🧩\n\n"
                 "🧠 Tu vas affronter **5 mini-jeux** choisis au hasard.\n"
                 "Réponds **vite et bien** pour marquer un maximum de points !\n\n"
                 f"{'🔹 Mode Multijoueur : au moins 2 joueurs requis.' if multiplayer else ''}\n"
@@ -96,18 +97,27 @@ class EntrainementCerebral(commands.Cog):
             async def ready(self, interaction: discord.Interaction, button: discord.ui.Button):
                 if multiplayer:
                     if interaction.user in ready_users:
-                        return await interaction.response.send_message("✅ Tu es déjà prêt !", ephemeral=True)
+                        await interaction.response.send_message("✅ Tu es déjà prêt !", ephemeral=True)
+                        return
                     ready_users.append(interaction.user)
-                    await interaction.response.send_message(f"✅ {interaction.user.name} est prêt !", ephemeral=True)
+                    participants = ", ".join([u.name for u in ready_users])
+                    await interaction.response.edit_message(embed=discord.Embed(
+                        title=f"🧠 Entraînement cérébral — {title_mode}",
+                        description=f"Participants prêts : {participants}\n\nAppuyez sur le bouton quand vous êtes prêts !",
+                        color=discord.Color.blurple()
+                    ), view=self)
                     if len(ready_users) >= 2:
                         button.disabled = True
                         button.label = "✅ On y va !"
+                        await interaction.response.edit_message(view=self)
                         self.ready_event.set()
                 else:
                     if interaction.user != users[0]:
-                        return await interaction.response.send_message("🚫 Ce n’est pas ton entraînement.", ephemeral=True)
+                        await interaction.response.send_message("🚫 Ce n’est pas ton entraînement.", ephemeral=True)
+                        return
                     button.disabled = True
                     button.label = "✅ C’est parti !"
+                    await interaction.response.edit_message(view=self)
                     self.ready_event.set()
 
             async def on_timeout(self):
