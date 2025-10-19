@@ -343,31 +343,34 @@ datation.emoji = "📅"
 
 
 # ────────────────────────────────────────────────────────────────────────────────
-# 🔹 🔢 Carré magique 3x3 aléatoire emoji
+# 🔹 🔢 Carré magique 3x3 fiable emoji
 # ────────────────────────────────────────────────────────────────────────────────
-async def carre_magique_aleatoire_emoji(ctx, embed, get_user_id, bot):
-    import itertools
+async def carre_magique_fiable_emoji(ctx, embed, get_user_id, bot):
+    import random
 
-    # Fonction pour vérifier si un carré est magique
-    def is_magic(square):
-        s = 15  # somme magique pour 3x3 avec 1..9
-        rows = all(sum(row) == s for row in square)
-        cols = all(sum(col) == s for col in zip(*square))
-        diags = sum(square[i][i] for i in range(3)) == s and sum(square[i][2-i] for i in range(3)) == s
-        return rows and cols and diags
+    # Base carré magique 3x3
+    base = [
+        [8, 1, 6],
+        [3, 5, 7],
+        [4, 9, 2]
+    ]
 
-    # Générer aléatoirement un carré magique 3x3
-    nums = list(range(1, 10))
-    for _ in range(1000):  # essayer 1000 permutations max
-        random.shuffle(nums)
-        square = [nums[0:3], nums[3:6], nums[6:9]]
-        if is_magic(square):
-            break
+    # Appliquer une rotation/symétrie aléatoire
+    def rotate(square):
+        return [list(x) for x in zip(*square[::-1])]  # rotation 90°
 
-    # Cacher un nombre au hasard
+    def flip(square):
+        return [row[::-1] for row in square]  # miroir horizontal
+
+    for _ in range(random.randint(0, 3)):
+        base = rotate(base)
+    if random.choice([True, False]):
+        base = flip(base)
+
+    # Cacher un nombre
     row, col = random.randint(0, 2), random.randint(0, 2)
-    answer = square[row][col]
-    square[row][col] = "?"
+    answer = base[row][col]
+    base[row][col] = "?"
 
     # Conversion en emoji Discord
     num_to_emoji = {
@@ -377,7 +380,7 @@ async def carre_magique_aleatoire_emoji(ctx, embed, get_user_id, bot):
     }
 
     display = ""
-    for r in square:
+    for r in base:
         display += " | ".join(num_to_emoji.get(x, x) for x in r) + "\n"
 
     embed.clear_fields()
@@ -395,8 +398,9 @@ async def carre_magique_aleatoire_emoji(ctx, embed, get_user_id, bot):
     except:
         return False
 
-carre_magique_aleatoire_emoji.title = "Carré magique 3x3"
-carre_magique_aleatoire_emoji.emoji = "🔢"
+carre_magique_fiable_emoji.title = "Carré magique 3x3"
+carre_magique_fiable_emoji.emoji = "🔢"
+
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🔹 🔁 Symétrie
