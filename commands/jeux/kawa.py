@@ -53,6 +53,7 @@ class EntrainementCerebral(commands.Cog):
     # ─────────── Commande slash ───────────
     @app_commands.command(name="cerebral", description="Mode arcade Entraînement cérébral ou Top 10.")
     async def cerebral_slash(self, interaction: discord.Interaction, arg: str = ""):
+        await interaction.response.defer()  # ✅ Débloque le slash command immédiatement
         if arg.lower() == "top":
             await self.show_leaderboard(interaction)
         elif arg.lower() in ["m", "multi"]:
@@ -65,7 +66,7 @@ class EntrainementCerebral(commands.Cog):
         guild = getattr(ctx_or_interaction, "guild", None)
         guild_id = guild.id if guild else None
         if guild_id and guild_id in self.active_sessions:
-            return await (ctx_or_interaction.send if not isinstance(ctx_or_interaction, discord.Interaction) else ctx_or_interaction.response.send_message)(
+            return await (ctx_or_interaction.send if not isinstance(ctx_or_interaction, discord.Interaction) else ctx_or_interaction.followup.send)(
                 "⚠️ Un entraînement cérébral est déjà en cours sur ce serveur.", ephemeral=True
             )
         if guild_id:
@@ -74,7 +75,7 @@ class EntrainementCerebral(commands.Cog):
         try:
             # Gestion du contexte
             if isinstance(ctx_or_interaction, discord.Interaction):
-                send = ctx_or_interaction.channel.send
+                send = ctx_or_interaction.followup.send
                 users = [ctx_or_interaction.user]
             else:
                 send = ctx_or_interaction.send
@@ -102,7 +103,7 @@ class EntrainementCerebral(commands.Cog):
                 def __init__(self):
                     super().__init__(timeout=30)
                     self.ready_event = asyncio.Event()
-                    self.clicked = False  # Ne démarre que si clic
+                    self.clicked = False
 
                 @discord.ui.button(label="🟢 Je suis prêt !", style=discord.ButtonStyle.success)
                 async def ready(self, interaction: discord.Interaction, button: discord.ui.Button):
@@ -144,7 +145,6 @@ class EntrainementCerebral(commands.Cog):
             msg_start = await send(embed=start_embed, view=view)
             await view.ready_event.wait()
 
-            # ─────────── Annule si pas de clic ───────────
             if not view.clicked:
                 timeout_embed = discord.Embed(
                     title="⏰ Temps écoulé",
@@ -215,18 +215,20 @@ class EntrainementCerebral(commands.Cog):
                 )
                 await send(embed=final_embed)
 
-
                 # ─────────── Enregistrement dans le top 10 (solo uniquement) ───────────
                 if not multiplayer:
                     try:
                         await supabase.table(TABLE_NAME).insert({
-                            "user_id": player.id,  # Ajout de l'ID Discord
+                            "user_id": player.id,
                             "username": player.name,
                             "score": total
                         }).execute()
                     except Exception as e:
                         await send(f"⚠️ Impossible d'enregistrer le score : {e}")
 
+        finally:
+            if guild_id:
+                self.active_sessions.discard(guild_id)
 
     # ─────────── Affichage du classement ───────────
     async def show_leaderboard(self, ctx_or_interaction):
@@ -255,7 +257,7 @@ class EntrainementCerebral(commands.Cog):
         embed.add_field(name="Top 10", value=top_text, inline=False)
 
         if isinstance(ctx_or_interaction, discord.Interaction):
-            await ctx_or_interaction.response.send_message(embed=embed)
+            await ctx_or_interaction.followup.send(embed=embed)
         else:
             await ctx_or_interaction.send(embed=embed)
 
