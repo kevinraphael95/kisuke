@@ -39,12 +39,12 @@ class JoinRaceButton(Button):
 
         if not user_data or not user_data.get("voiture_choisie"):
             print(f"[DEBUG] {interaction.user} n'a pas de voiture choisie.")
-            # Pour tests — donner une voiture par défaut
+            # Pour tests — voiture par défaut
             user_data = {"voiture_choisie": "Ferrari Test"}
 
         voiture_choisie = user_data["voiture_choisie"]
 
-        # Récupérer stats voiture (robuste)
+        # Récupérer stats voiture
         try:
             car_res = supabase.table("voitures_data").select("*").eq("nom", voiture_choisie).execute()
             car_data = car_res.data[0] if car_res.data else None
@@ -57,7 +57,7 @@ class JoinRaceButton(Button):
         else:
             stats = car_data.get("stats", {"vitesse_max": 200, "acceleration_0_100": 5.0, "maniabilite": 70, "poids": 1300})
 
-        # Ajout du joueur (unique)
+        # Ajout du joueur
         if user_id not in [p["user_id"] for p in self.race["participants"]]:
             if not self.race["available_emojis"]:
                 return await interaction.response.send_message("❌ Course pleine.", ephemeral=True)
@@ -79,7 +79,7 @@ class JoinRaceButton(Button):
         except Exception:
             await interaction.response.send_message(embed=embed, ephemeral=True)
 
-        # Si 4 participants, désactiver les boutons et démarrer la course
+        # Si 4 participants, démarrer automatiquement
         if len(self.race["participants"]) >= 4:
             for child in self.view.children:
                 child.disabled = True
@@ -101,6 +101,7 @@ class JoinRaceButton(Button):
         return embed
 
     async def start_race(self, channel: discord.abc.Messageable):
+        # Ajouter des bots si moins de 4 joueurs
         bot_pool = ["Bot-Kenzo", "Bot-Ryo", "Bot-Mika", "Bot-Aya", "Bot-Luna"]
         while len(self.race["participants"]) < 4 and self.race["available_emojis"]:
             emoji = self.race["available_emojis"].pop(0)
@@ -123,18 +124,20 @@ class JoinRaceButton(Button):
             })
 
         start_msg = await safe_send(channel, "🏎️ **La course commence !** Préparez-vous...")
-        if not start_msg:
-            start_msg = await channel.send("🏎️ **La course commence !** Préparez-vous...")
-        await asyncio.sleep(1.2)
+        await asyncio.sleep(2.0)
         await self.run_race(channel, start_msg)
 
     async def run_race(self, channel: discord.abc.Messageable, message):
-        track_length = 30
+        track_length = 25  # plus court = plus lisible
         finished = False
         winner = None
 
+        # Tous les participants partent de 0
+        for p in self.race["participants"]:
+            p["position"] = 0
+
         while not finished:
-            await asyncio.sleep(0.7)
+            await asyncio.sleep(1.2)  # ⏳ rythme plus lent pour suspense
             for p in self.race["participants"]:
                 stats = p["stats"]
                 avance = self.calculate_advance(stats)
@@ -145,7 +148,6 @@ class JoinRaceButton(Button):
                     finished = True
 
             track_text = self.render_track(self.race["participants"], track_length)
-
             sorted_p = sorted(self.race["participants"], key=lambda x: -x["position"])
             leaderboard = "\n".join(
                 f"{i+1}. {p['emoji']} {p['username']} ({p['voiture']})"
@@ -176,8 +178,9 @@ class JoinRaceButton(Button):
         accel = stats.get("acceleration_0_100", 5)
         maniab = stats.get("maniabilite", 70)
         poids = stats.get("poids", 1300)
-        advance = (base / 100) * (10 / accel) * (maniab / 100) * (1200 / poids)
-        return max(1, int(advance * random.uniform(3.5, 6.0)))  # plus dynamique
+        # ⚙️ Avancement réduit pour créer du suspense
+        advance = (base / 250) * (10 / accel) * (maniab / 100) * (1200 / poids)
+        return max(1, round(advance * random.uniform(0.8, 2.0)))
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🧠 Cog principal
@@ -210,7 +213,7 @@ class CourseVoiture(commands.Cog):
                 msg = await interaction.original_response()
                 await msg.edit(content="❌ Course annulée, personne n'a rejoint.", embed=None, view=view)
 
-        view.on_timeout = on_timeout  # ✅ Discord gère le timeout
+        view.on_timeout = on_timeout
 
     @commands.command(name="course_voiture", aliases=["vcourse"])
     async def prefix_course_voiture(self, ctx: commands.Context):
