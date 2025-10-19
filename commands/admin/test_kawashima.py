@@ -1,30 +1,30 @@
 # ────────────────────────────────────────────────────────────────────────────────
-# 📌 test_kawashima_paginated.py — Tester un mini-jeu par numéro avec pagination
-# Objectif : Lister tous les mini-jeux par ordre alphabétique, paginer si besoin, et les tester
-# Catégorie : Autre
+# 📌 test_kawashima.py — Tester un mini-jeu par numéro avec pagination
+# Objectif : Lister tous les mini-jeux par ordre alphabétique, paginer si nécessaire et les tester facilement
+# Catégorie : Admin
 # Accès : Tous
+# Cooldown : 1 utilisation / 5 secondes / utilisateur
 # ────────────────────────────────────────────────────────────────────────────────
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 📦 Imports nécessaires
 # ────────────────────────────────────────────────────────────────────────────────
 import discord
+from discord import app_commands
 from discord.ext import commands
 import inspect
 from utils import kawashima_games
 import asyncio
 
 # ────────────────────────────────────────────────────────────────────────────────
-# Paramètres
+# 🧠 Cog principal
 # ────────────────────────────────────────────────────────────────────────────────
-PAGE_SIZE = 10  # nombre de jeux par page
+PAGE_SIZE = 10
 
-# ────────────────────────────────────────────────────────────────────────────────
-# 📦 Commandes
-# ────────────────────────────────────────────────────────────────────────────────
-class TestKawashimaPaginated(commands.Cog):
-    """Tester n’importe quel mini-jeu Kawashima via numéro avec pagination."""
-
+class TestKawashima(commands.Cog):
+    """
+    Commande /testgame et !testgame — Tester n’importe quel mini-jeu Kawashima via numéro avec pagination.
+    """
     def __init__(self, bot: commands.Bot):
         self.bot = bot
         self.games = {}
@@ -34,10 +34,23 @@ class TestKawashimaPaginated(commands.Cog):
                 self.games[title] = func
         self.sorted_titles = sorted(self.games.keys())
 
-    @commands.command(name="testgame", aliases=["tg"], help="Tester un mini-jeu par numéro")
-    async def testgame_cmd(self, ctx: commands.Context, choice: int = None):
+    # ─────────── Commande SLASH ───────────
+    @app_commands.command(
+        name="testgame",
+        description="Tester un mini-jeu Kawashima via son numéro ou afficher la liste."
+    )
+    @app_commands.checks.cooldown(1, 5.0, key=lambda i: i.user.id)
+    async def slash_testgame(self, interaction: discord.Interaction, choice: int = None):
+        await interaction.response.defer()
+        await self.run_game(interaction, choice)
+
+    # ─────────── Commande PREFIX ───────────
+    @commands.command(name="testgame", aliases=["tg"])
+    @commands.cooldown(1, 5.0, commands.BucketType.user)
+    async def prefix_testgame(self, ctx: commands.Context, choice: int = None):
         await self.run_game(ctx, choice)
 
+    # ─────────── Lancer le mini-jeu ───────────
     async def run_game(self, ctx_or_interaction, choice: int = None):
         if choice is None:
             # ─────────── Pagination ───────────
@@ -87,7 +100,7 @@ class TestKawashimaPaginated(commands.Cog):
                 page_view.message = await ctx_or_interaction.send(embed=embed, view=page_view)
             return
 
-        # ─────────── Vérification et lancement du jeu ───────────
+        # ─────────── Vérification du numéro ───────────
         if not 1 <= choice <= len(self.sorted_titles):
             msg = f"⚠️ Numéro invalide ! Choisis entre 1 et {len(self.sorted_titles)}"
             if isinstance(ctx_or_interaction, discord.Interaction):
@@ -125,14 +138,12 @@ class TestKawashimaPaginated(commands.Cog):
         )
         await send(embed=result_embed)
 
-
 # ────────────────────────────────────────────────────────────────────────────────
-# 🔌 Setup
+# 🔌 Setup du Cog
 # ────────────────────────────────────────────────────────────────────────────────
 async def setup(bot: commands.Bot):
-    cog = TestKawashimaPaginated(bot)
+    cog = TestKawashima(bot)
     for command in cog.get_commands():
         if not hasattr(command, "category"):
-            command.category = "Jeux"
+            command.category = "Admin"
     await bot.add_cog(cog)
-
