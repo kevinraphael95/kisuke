@@ -215,19 +215,18 @@ class EntrainementCerebral(commands.Cog):
                 )
                 await send(embed=final_embed)
 
+
                 # ─────────── Enregistrement dans le top 10 (solo uniquement) ───────────
                 if not multiplayer:
                     try:
                         await supabase.table(TABLE_NAME).insert({
+                            "user_id": player.id,  # Ajout de l'ID Discord
                             "username": player.name,
                             "score": total
                         }).execute()
                     except Exception as e:
                         await send(f"⚠️ Impossible d'enregistrer le score : {e}")
 
-        finally:
-            if guild_id:
-                self.active_sessions.discard(guild_id)
 
     # ─────────── Affichage du classement ───────────
     async def show_leaderboard(self, ctx_or_interaction):
