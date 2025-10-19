@@ -33,7 +33,7 @@ class EntrainementCerebral(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
         self.minijeux = []
-        self.active_sessions = set()  # IDs des serveurs où un entraînement est en cours
+        self.active_sessions = set()
         for name, func in inspect.getmembers(kawashima_games, inspect.iscoroutinefunction):
             if not name.startswith("_"):
                 emoji = getattr(func, "emoji", "🎮")
@@ -53,7 +53,7 @@ class EntrainementCerebral(commands.Cog):
     # ─────────── Commande slash ───────────
     @app_commands.command(name="cerebral", description="Mode arcade Entraînement cérébral ou Top 10.")
     async def cerebral_slash(self, interaction: discord.Interaction, arg: str = ""):
-        await interaction.response.defer()  # ✅ Débloque le slash command immédiatement
+        await interaction.response.defer()
         if arg.lower() == "top":
             await self.show_leaderboard(interaction)
         elif arg.lower() in ["m", "multi"]:
@@ -84,7 +84,6 @@ class EntrainementCerebral(commands.Cog):
             total_score = {}
             results = {}
 
-            # ─────────── Message d'introduction et bouton "Je suis prêt" ───────────
             title_mode = "Mode Multijoueur" if multiplayer else "Mode Arcade"
             ready_users = []
 
@@ -153,7 +152,7 @@ class EntrainementCerebral(commands.Cog):
                 )
                 return await msg_start.edit(embed=timeout_embed, view=None)
 
-            # ─────────── Sélection de 5 mini-jeux ───────────
+            # ─────────── Sélection des mini-jeux ───────────
             random.shuffle(self.minijeux)
             selected_games = self.minijeux[:5]
             active_players = ready_users if multiplayer else users
@@ -186,7 +185,7 @@ class EntrainementCerebral(commands.Cog):
                     await send(embed=result_embed)
                     await asyncio.sleep(1.5)
 
-            # ─────────── Embed final par joueur ───────────
+            # ─────────── Embed final par joueur et enregistrement solo ───────────
             for player in active_players:
                 player_results = results[player.id]
                 results_text = "\n".join(
@@ -215,13 +214,14 @@ class EntrainementCerebral(commands.Cog):
                 )
                 await send(embed=final_embed)
 
-                # ─────────── Enregistrement dans le top 10 (solo uniquement) ───────────
-                if not multiplayer:
+                # ─────────── Enregistrement Top 10 solo ───────────
+                if not multiplayer and getattr(player, "id", None):
                     try:
                         await supabase.table(TABLE_NAME).insert({
-                            "user_id": player.id,
+                            "user_id": str(player.id),
                             "username": player.name,
-                            "score": total
+                            "score": total,
+                            "timestamp": int(time.time())
                         }).execute()
                     except Exception as e:
                         await send(f"⚠️ Impossible d'enregistrer le score : {e}")
