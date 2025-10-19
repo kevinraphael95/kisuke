@@ -1,7 +1,7 @@
 # ────────────────────────────────────────────────────────────────────────────────
 # 📌 course_voiture.py — Mini-jeu de course de voitures avec stats dynamiques
 # Objectif : Course animée basée sur les voitures choisies par les joueurs
-# Catégorie : Jeux
+# Catégorie : Voiture
 # Accès : Tous
 # Cooldown : 0 (désactivé pour tests)
 # ────────────────────────────────────────────────────────────────────────────────
@@ -292,5 +292,5 @@ async def setup(bot: commands.Bot):
     cog = CourseVoiture(bot)
     for command in cog.get_commands():
         if not hasattr(command, "category"):
-            command.category = "Jeux"
+            command.category = "Voiture"
     await bot.add_cog(cog)
