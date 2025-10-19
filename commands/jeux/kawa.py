@@ -87,7 +87,11 @@ class EntrainementCerebral(commands.Cog):
             title_mode = "Mode Multijoueur" if multiplayer else "Mode Arcade"
             ready_users = []
 
-            description_text = f"{'🔹 Mode Multijoueur : au moins 2 joueurs requis.' if multiplayer else ''}\nAppuie sur le bouton ci-dessous quand tu es prêt à commencer."
+            description_text = (
+                f"{'🔹 Mode Multijoueur : au moins 2 joueurs requis.' if multiplayer else ''}\n"
+                "Tu vas affronter 5 mini-jeux rapides pour tester ton cerveau. "
+                "Appuie sur le bouton ci-dessous quand tu es prêt à commencer."
+            )
             start_embed = discord.Embed(
                 title=f"🧠 Entraînement cérébral — {title_mode}",
                 description=description_text,
@@ -210,6 +214,16 @@ class EntrainementCerebral(commands.Cog):
                     color=discord.Color.gold()
                 )
                 await send(embed=final_embed)
+
+                # ─────────── Enregistrement dans le top 10 (solo uniquement) ───────────
+                if not multiplayer:
+                    try:
+                        await supabase.table(TABLE_NAME).insert({
+                            "username": player.name,
+                            "score": total
+                        }).execute()
+                    except Exception as e:
+                        await send(f"⚠️ Impossible d'enregistrer le score : {e}")
 
         finally:
             if guild_id:
