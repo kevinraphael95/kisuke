@@ -340,3 +340,108 @@ async def datation(ctx, embed, get_user_id, bot):
         return False
 datation.title = "Datation"
 datation.emoji = "📅"
+
+
+# ────────────────────────────────────────────────────────────────────────────────
+# 🔹 🔢 Carré magique
+# ────────────────────────────────────────────────────────────────────────────────
+async def carre_magique(ctx, embed, get_user_id, bot):
+    n = random.randint(2, 9)
+    grid = [[n, n+1], [n+2, "?"]]
+    answer = n + 3
+
+    embed.clear_fields()
+    embed.add_field(name="🔢 Carré magique", value=f"{grid[0]}\n{grid[1]}\nQuel nombre remplace le ? ?", inline=False)
+    await ctx.edit(embed=embed)
+
+    try:
+        msg = await bot.wait_for("message", check=lambda m: m.author.id == get_user_id(), timeout=TIMEOUT)
+        return int(msg.content) == answer
+    except:
+        return False
+carre_magique.title = "Carré magique"
+carre_magique.emoji = "🔢"
+
+# ────────────────────────────────────────────────────────────────────────────────
+# 🔹 🔁 Symétrie
+# ────────────────────────────────────────────────────────────────────────────────
+async def symetrie(ctx, embed, get_user_id, bot):
+    symbols = [">", "<", "*", "#"]
+    seq = "".join(random.choices(symbols, k=5))
+    mirror = seq[::-1].translate(str.maketrans("><", "<>"))
+
+    embed.clear_fields()
+    embed.add_field(name="🔁 Symétrie", value=f"Séquence : {seq}\n➡️ Tape la version miroir :", inline=False)
+    await ctx.edit(embed=embed)
+
+    try:
+        msg = await bot.wait_for("message", check=lambda m: m.author.id == get_user_id(), timeout=TIMEOUT)
+        return msg.content.strip() == mirror
+    except:
+        return False
+symetrie.title = "Symétrie"
+symetrie.emoji = "🔁"
+
+# ────────────────────────────────────────────────────────────────────────────────
+# 🔹 🧩 Suite alphabétique
+# ────────────────────────────────────────────────────────────────────────────────
+async def suite_alpha(ctx, embed, get_user_id, bot):
+    start = random.randint(65, 70)
+    step = random.randint(1, 3)
+    serie = [chr(start + i * step) for i in range(4)]
+    answer = chr(start + 4 * step)
+
+    embed.clear_fields()
+    embed.add_field(name="🧩 Suite alphabétique", value=f"{', '.join(serie)} ... ?", inline=False)
+    await ctx.edit(embed=embed)
+
+    try:
+        msg = await bot.wait_for("message", check=lambda m: m.author.id == get_user_id(), timeout=TIMEOUT)
+        return msg.content.upper() == answer
+    except:
+        return False
+suite_alpha.title = "Suite alphabétique"
+suite_alpha.emoji = "🧩"
+
+# ────────────────────────────────────────────────────────────────────────────────
+# 🔹 👁️ Mémoire visuelle
+# ────────────────────────────────────────────────────────────────────────────────
+async def memoire_visuelle(ctx, embed, get_user_id, bot):
+    emojis = random.sample(["🍎", "🚗", "🐶", "🌟", "⚽", "🎲", "💎", "🎵"], 5)
+    embed.clear_fields()
+    embed.add_field(name="👁️ Mémoire visuelle", value=" ".join(emojis), inline=False)
+    await ctx.edit(embed=embed)
+    await asyncio.sleep(5)
+
+    missing = random.choice(emojis)
+    shown = [e for e in emojis if e != missing]
+    embed.clear_fields()
+    embed.add_field(name="👁️ Mémoire visuelle", value=f"Qu’est-ce qui manque ?\n{' '.join(shown)}", inline=False)
+    await ctx.edit(embed=embed)
+
+    try:
+        msg = await bot.wait_for("message", check=lambda m: m.author.id == get_user_id(), timeout=TIMEOUT)
+        return msg.content.strip() == missing
+    except:
+        return False
+memoire_visuelle.title = "Mémoire visuelle"
+memoire_visuelle.emoji = "👁️"
+
+# ────────────────────────────────────────────────────────────────────────────────
+# 🔹 ⚡ Rapidité
+# ────────────────────────────────────────────────────────────────────────────────
+async def rapidite(ctx, embed, get_user_id, bot):
+    nums = random.sample(range(10, 99), 5)
+    mode = random.choice(["grand", "petit"])
+    embed.clear_fields()
+    embed.add_field(name="⚡ Rapidité", value=f"Trouve le plus {mode} : {', '.join(map(str, nums))}", inline=False)
+    await ctx.edit(embed=embed)
+    correct = max(nums) if mode == "grand" else min(nums)
+
+    try:
+        msg = await bot.wait_for("message", check=lambda m: m.author.id == get_user_id(), timeout=TIMEOUT)
+        return int(msg.content) == correct
+    except:
+        return False
+rapidite.title = "Rapidité"
+rapidite.emoji = "⚡"
