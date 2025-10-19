@@ -44,6 +44,8 @@ class EntrainementCerebral(commands.Cog):
     async def cerebral_cmd(self, ctx: commands.Context, arg: str = ""):
         if arg.lower() == "top":
             await self.show_leaderboard(ctx)
+        elif arg.lower() in ["m", "multi"]:
+            await self.run_arcade(ctx, multiplayer=True)
         else:
             await self.run_arcade(ctx)
 
@@ -52,140 +54,149 @@ class EntrainementCerebral(commands.Cog):
     async def cerebral_slash(self, interaction: discord.Interaction, arg: str = ""):
         if arg.lower() == "top":
             await self.show_leaderboard(interaction)
+        elif arg.lower() in ["m", "multi"]:
+            await self.run_arcade(interaction, multiplayer=True)
         else:
             await self.run_arcade(interaction)
 
     # ─────────── Lancement du mode arcade ───────────
-    async def run_arcade(self, ctx_or_interaction):
+    async def run_arcade(self, ctx_or_interaction, multiplayer=False):
         # Gestion du contexte
         if isinstance(ctx_or_interaction, discord.Interaction):
-            user = ctx_or_interaction.user
             send = ctx_or_interaction.channel.send
+            users = [ctx_or_interaction.user]
         else:
-            user = ctx_or_interaction.author
             send = ctx_or_interaction.send
+            users = [ctx_or_interaction.author]
 
-        get_user_id = lambda: user.id
-        total_score = 0
-        results = []
+        total_score = {}
+        results = {}
 
-        # ─────────── Sélection de 5 mini-jeux différents ───────────
+        # ─────────── Message d'introduction et bouton "Je suis prêt" ───────────
+        start_embed = discord.Embed(
+            title="🧠 Entraînement cérébral — Mode Arcade",
+            description=(
+                "Bienvenue dans le **Mode Arcade Entraînement cérébral** ! 🧩\n\n"
+                "🧠 Tu vas affronter **5 mini-jeux** choisis au hasard.\n"
+                "Réponds **vite et bien** pour marquer un maximum de points !\n\n"
+                f"{'🔹 Mode Multijoueur : au moins 2 joueurs requis.' if multiplayer else ''}\n"
+                "Appuie sur le bouton ci-dessous quand tu es prêt à commencer."
+            ),
+            color=discord.Color.blurple(),
+        )
+
+        ready_users = []
+
+        class ReadyButton(discord.ui.View):
+            def __init__(self):
+                super().__init__(timeout=30)
+                self.ready_event = asyncio.Event()
+
+            @discord.ui.button(label="🟢 Je suis prêt !", style=discord.ButtonStyle.success)
+            async def ready(self, interaction: discord.Interaction, button: discord.ui.Button):
+                if multiplayer:
+                    if interaction.user in ready_users:
+                        return await interaction.response.send_message("✅ Tu es déjà prêt !", ephemeral=True)
+                    ready_users.append(interaction.user)
+                    await interaction.response.send_message(f"✅ {interaction.user.name} est prêt !", ephemeral=True)
+                    if len(ready_users) >= 2:
+                        button.disabled = True
+                        button.label = "✅ On y va !"
+                        self.ready_event.set()
+                else:
+                    if interaction.user != users[0]:
+                        return await interaction.response.send_message("🚫 Ce n’est pas ton entraînement.", ephemeral=True)
+                    button.disabled = True
+                    button.label = "✅ C’est parti !"
+                    self.ready_event.set()
+
+            async def on_timeout(self):
+                for child in self.children:
+                    child.disabled = True
+                    child.label = "⏰ Temps écoulé"
+                self.ready_event.set()
+
+        view = ReadyButton()
+        msg_start = await send(embed=start_embed, view=view)
+        await view.ready_event.wait()
+
+        if multiplayer and len(ready_users) < 2:
+            timeout_embed = discord.Embed(
+                title="⏰ Temps écoulé",
+                description="Au moins 2 joueurs n'ont pas cliqué à temps. Relancez la commande !",
+                color=discord.Color.red()
+            )
+            return await msg_start.edit(embed=timeout_embed, view=None)
+        if not multiplayer and not view.ready_event.is_set():
+            timeout_embed = discord.Embed(
+                title="⏰ Temps écoulé",
+                description="Tu n’as pas cliqué à temps. Relance la commande pour rejouer !",
+                color=discord.Color.red()
+            )
+            return await msg_start.edit(embed=timeout_embed, view=None)
+
+        # ─────────── Sélection de 5 mini-jeux ───────────
         random.shuffle(self.minijeux)
         selected_games = self.minijeux[:5]
 
+        active_players = ready_users if multiplayer else users
+
+        # ─────────── Boucle des mini-jeux ───────────
         for index, (name, game) in enumerate(selected_games, start=1):
-            # Crée un embed pour le mini-jeu
-            game_embed = discord.Embed(
-                title=f"🧩 Mini-jeu {index} — {name}",
-                description="Réponds rapidement !",
-                color=discord.Color.blurple()
-            )
-
-            # Envoie le message du mini-jeu
-            msg_game = await send(embed=game_embed)
-
-            # Lancement du mini-jeu avec cet embed et ce message
-            start = time.time()
-            success = await game(msg_game, game_embed, get_user_id, self.bot)
-            end = time.time()
-            elapsed = round(end - start, 2)
-
-            # Calcul du score
-            score = (1000 + max(0, 500 - int(elapsed * 25))) if success else 0
-            total_score += score
-            results.append((index, name, success, elapsed, score))
-
-            # Embed résultat
-            result_embed = discord.Embed(
-                title=f"🎯 Résultat — {name}",
-                description=(
-                    f"{'✅ Réussi' if success else '❌ Raté'}\n"
-                    f"⏱️ Temps : `{elapsed}s`\n"
-                    f"🏅 Score : `{score}` pts"
-                ),
-                color=discord.Color.green() if success else discord.Color.red()
-            )
-            await send(embed=result_embed)
-            await asyncio.sleep(1.5)
-
-        # ─────────── Calcul du rang ───────────
-        results_text = "\n".join(
-            f"**Jeu {i}** {'✅' if s else '❌'} {name}{f' — {t}s' if s else ''}"
-            for i, name, s, t, _ in results
-        )
-
-        if total_score >= 5000:
-            rank = "🧠 Génie cérébral"
-        elif total_score >= 3500:
-            rank = "🤓 Bonne forme mentale"
-        elif total_score >= 2000:
-            rank = "🙂 Correct"
-        else:
-            rank = "😴 En veille..."
-
-        # ─────────── Gestion du Top 10 ───────────
-        try:
-            leaderboard = (
-                supabase.table(TABLE_NAME)
-                .select("id, score")
-                .order("score", desc=True)
-                .limit(10)
-                .execute()
-            )
-            entries = leaderboard.data if leaderboard and leaderboard.data else []
-            top_scores = [entry["score"] for entry in entries]
-
-            if len(top_scores) < 10 or total_score > top_scores[-1]:
-                supabase.table(TABLE_NAME).insert({
-                    "user_id": str(user.id),
-                    "username": str(user.name),
-                    "score": total_score,
-                    "timestamp": int(time.time())
-                }).execute()
-
-                leaderboard_all = (
-                    supabase.table(TABLE_NAME)
-                    .select("id, score")
-                    .order("score", desc=True)
-                    .execute()
+            for player in active_players:
+                get_user_id = lambda p=player: p.id
+                game_embed = discord.Embed(
+                    title=f"🧩 Mini-jeu {index} — {name}",
+                    description=f"{player.mention}, réponds rapidement !",
+                    color=discord.Color.blurple()
                 )
-                all_entries = leaderboard_all.data if leaderboard_all and leaderboard_all.data else []
-                if len(all_entries) > 10:
-                    lowest_ids = [e["id"] for e in sorted(all_entries, key=lambda x: x["score"])[:len(all_entries)-10]]
-                    if lowest_ids:
-                        supabase.table(TABLE_NAME).delete().in_("id", lowest_ids).execute()
-        except Exception as e:
-            print(f"[Entraînement cérébral] Erreur Top 10 Supabase: {e}")
+                msg_game = await send(embed=game_embed)
+                start = time.time()
+                success = await game(msg_game, game_embed, get_user_id, self.bot)
+                elapsed = round(time.time() - start, 2)
+                score = (1000 + max(0, 500 - int(elapsed * 25))) if success else 0
+                total_score[player.id] = total_score.get(player.id, 0) + score
+                results.setdefault(player.id, []).append((index, name, success, elapsed, score))
+                result_embed = discord.Embed(
+                    title=f"🎯 Résultat — {name} ({player.name})",
+                    description=(
+                        f"{'✅ Réussi' if success else '❌ Raté'}\n"
+                        f"⏱️ Temps : `{elapsed}s`\n"
+                        f"🏅 Score : `{score}` pts"
+                    ),
+                    color=discord.Color.green() if success else discord.Color.red()
+                )
+                await send(embed=result_embed)
+                await asyncio.sleep(1.5)
 
-        # ─────────── Récupération du Top 10 final ───────────
-        try:
-            leaderboard = (
-                supabase.table(TABLE_NAME)
-                .select("username, score")
-                .order("score", desc=True)
-                .limit(10)
-                .execute()
+        # ─────────── Embed final par joueur ───────────
+        for player in active_players:
+            player_results = results[player.id]
+            results_text = "\n".join(
+                f"**Jeu {i}** {'✅' if s else '❌'} {name}{f' — {t}s' if s else ''}"
+                for i, name, s, t, _ in player_results
             )
-            entries = leaderboard.data if leaderboard and leaderboard.data else []
-            top_text = "\n".join(
-                f"**{i+1}.** {entry['username']} — `{entry['score']:,}` pts"
-                for i, entry in enumerate(entries)
-            ) or "*Aucun score enregistré pour le moment*"
-        except Exception as e:
-            top_text = f"⚠️ Erreur récupération classement : {e}"
+            total = total_score[player.id]
 
-        # ─────────── Embed final (nouveau message) ───────────
-        final_embed = discord.Embed(
-            title="🏁 Résultats — Entraînement cérébral",
-            description=(
-                f"**Résultats des 5 jeux :**\n{results_text}\n\n"
-                f"**Score total :** `{total_score:,}` pts\n"
-                f"**Niveau cérébral :** {rank}\n\n"
-                f"🏆 **Classement Global (Top 10)**\n{top_text}"
-            ),
-            color=discord.Color.gold()
-        )
-        await send(embed=final_embed)
+            if total >= 5000:
+                rank = "🧠 Génie cérébral"
+            elif total >= 3500:
+                rank = "🤓 Bonne forme mentale"
+            elif total >= 2000:
+                rank = "🙂 Correct"
+            else:
+                rank = "😴 En veille..."
+
+            final_embed = discord.Embed(
+                title=f"🏁 Résultats — {player.name}",
+                description=(
+                    f"**Résultats des 5 jeux :**\n{results_text}\n\n"
+                    f"**Score total :** `{total:,}` pts\n"
+                    f"**Niveau cérébral :** {rank}"
+                ),
+                color=discord.Color.gold()
+            )
+            await send(embed=final_embed)
 
     # ─────────── Affichage du classement ───────────
     async def show_leaderboard(self, ctx_or_interaction):
@@ -217,7 +228,6 @@ class EntrainementCerebral(commands.Cog):
             await ctx_or_interaction.response.send_message(embed=embed)
         else:
             await ctx_or_interaction.send(embed=embed)
-
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🔌 Setup
