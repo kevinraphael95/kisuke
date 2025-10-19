@@ -1,6 +1,6 @@
 # ────────────────────────────────────────────────────────────────────────────────
-# 📌 test_kawashima_menu.py — Commande /testgame et !testgame avec sélection interactive
-# Objectif : Tester un mini-jeu précis via menu déroulant paginé
+# 📌 test_kawashima_paginated.py — Tester un mini-jeu par numéro avec pagination
+# Objectif : Lister tous les mini-jeux par ordre alphabétique, paginer si besoin, et les tester
 # Catégorie : Autre
 # Accès : Tous
 # ────────────────────────────────────────────────────────────────────────────────
@@ -10,19 +10,20 @@
 # ────────────────────────────────────────────────────────────────────────────────
 import discord
 from discord.ext import commands
-from discord import app_commands
 import inspect
 from utils import kawashima_games
 import asyncio
-import math
 
 # ────────────────────────────────────────────────────────────────────────────────
-# Commande
+# Paramètres
 # ────────────────────────────────────────────────────────────────────────────────
-class TestKawashimaMenu(commands.Cog):
-    """Tester n’importe quel mini-jeu Kawashima via menu interactif paginé."""
+PAGE_SIZE = 10  # nombre de jeux par page
 
-    PAGE_SIZE = 10  # Nombre de jeux par page
+# ────────────────────────────────────────────────────────────────────────────────
+# 📦 Commandes
+# ────────────────────────────────────────────────────────────────────────────────
+class TestKawashimaPaginated(commands.Cog):
+    """Tester n’importe quel mini-jeu Kawashima via numéro avec pagination."""
 
     def __init__(self, bot: commands.Bot):
         self.bot = bot
@@ -31,98 +32,73 @@ class TestKawashimaMenu(commands.Cog):
             if not name.startswith("_"):
                 title = getattr(func, "title", func.__name__)
                 self.games[title] = func
+        self.sorted_titles = sorted(self.games.keys())
 
-    # ─────────── Commande texte ───────────
-    @commands.command(name="testgame", aliases=["tg"], help="Tester un mini-jeu via menu interactif")
-    async def testgame_cmd(self, ctx: commands.Context):
-        await self.launch_menu(ctx)
+    @commands.command(name="testgame", aliases=["tg"], help="Tester un mini-jeu par numéro")
+    async def testgame_cmd(self, ctx: commands.Context, choice: int = None):
+        await self.run_game(ctx, choice)
 
-    # ─────────── Commande slash ───────────
-    @app_commands.command(name="testgame", description="Tester un mini-jeu via menu interactif")
-    async def testgame_slash(self, interaction: discord.Interaction):
-        await interaction.response.defer()
-        await self.launch_menu(interaction)
+    async def run_game(self, ctx_or_interaction, choice: int = None):
+        if choice is None:
+            # ─────────── Pagination ───────────
+            pages = [
+                self.sorted_titles[i:i + PAGE_SIZE]
+                for i in range(0, len(self.sorted_titles), PAGE_SIZE)
+            ]
+            current_page = 0
 
-    # ─────────── Lancer le menu paginé ───────────
-    async def launch_menu(self, ctx_or_interaction):
-        titles = list(self.games.keys())
-        pages = [titles[i:i + self.PAGE_SIZE] for i in range(0, len(titles), self.PAGE_SIZE)]
-        page_index = 0
+            class PageView(discord.ui.View):
+                def __init__(self):
+                    super().__init__(timeout=60)
+                    self.page = current_page
+                    self.message = None
 
-        async def get_embed(page_idx):
+                @discord.ui.button(label="⬅️", style=discord.ButtonStyle.secondary)
+                async def prev(self, interaction: discord.Interaction, button: discord.ui.Button):
+                    self.page = (self.page - 1) % len(pages)
+                    await self.update(interaction)
+
+                @discord.ui.button(label="➡️", style=discord.ButtonStyle.secondary)
+                async def next(self, interaction: discord.Interaction, button: discord.ui.Button):
+                    self.page = (self.page + 1) % len(pages)
+                    await self.update(interaction)
+
+                async def update(self, interaction):
+                    page_text = "\n".join(
+                        f"{i + 1 + self.page*PAGE_SIZE}. {title}" for i, title in enumerate(pages[self.page])
+                    )
+                    embed = discord.Embed(
+                        title=f"🧪 Liste des mini-jeux — Page {self.page+1}/{len(pages)}",
+                        description=page_text,
+                        color=discord.Color.blurple()
+                    )
+                    await interaction.response.edit_message(embed=embed, view=self)
+
+            page_view = PageView()
+            page_text = "\n".join(f"{i+1}. {title}" for i, title in enumerate(pages[current_page]))
             embed = discord.Embed(
-                title="🧪 Testez un mini-jeu",
-                description=f"Page {page_idx + 1}/{len(pages)} — Sélectionne un mini-jeu",
+                title=f"🧪 Liste des mini-jeux — Page 1/{len(pages)}",
+                description=page_text,
                 color=discord.Color.blurple()
             )
-            embed.add_field(
-                name="Mini-jeux disponibles",
-                value="\n".join([f"{i+1}. {title}" for i, title in enumerate(pages[page_idx])]),
-                inline=False
-            )
-            return embed
-
-        class MenuView(discord.ui.View):
-            def __init__(self):
-                super().__init__(timeout=60)
-                self.selected_game = None
-                self.page_idx = page_index
-
-                # SelectMenu pour les mini-jeux
-                options = [discord.SelectOption(label=title, value=title) for title in pages[self.page_idx]]
-                self.select = discord.ui.Select(placeholder="Choisis un mini-jeu", options=options, row=0)
-                self.select.callback = self.select_callback
-                self.add_item(self.select)
-
-                # Boutons pour pagination
-                self.prev_btn = discord.ui.Button(label="◀️", style=discord.ButtonStyle.secondary)
-                self.prev_btn.callback = self.prev_page
-                self.next_btn = discord.ui.Button(label="▶️", style=discord.ButtonStyle.secondary)
-                self.next_btn.callback = self.next_page
-                self.add_item(self.prev_btn)
-                self.add_item(self.next_btn)
-
-                self.event = asyncio.Event()
-
-            async def select_callback(self, interaction: discord.Interaction):
-                self.selected_game = self.select.values[0]
-                self.event.set()
-                await interaction.response.defer()
-
-            async def prev_page(self, interaction: discord.Interaction):
-                if self.page_idx > 0:
-                    self.page_idx -= 1
-                    await self.update_page(interaction)
-
-            async def next_page(self, interaction: discord.Interaction):
-                if self.page_idx < len(pages) - 1:
-                    self.page_idx += 1
-                    await self.update_page(interaction)
-
-            async def update_page(self, interaction):
-                options = [discord.SelectOption(label=title, value=title) for title in pages[self.page_idx]]
-                self.select.options = options
-                embed = await get_embed(self.page_idx)
-                await interaction.response.edit_message(embed=embed, view=self)
-
-        view = MenuView()
-        embed = await get_embed(page_index)
-
-        if isinstance(ctx_or_interaction, discord.Interaction):
-            msg = await ctx_or_interaction.followup.send(embed=embed, view=view)
-        else:
-            msg = await ctx_or_interaction.send(embed=embed, view=view)
-
-        # Attente de la sélection
-        await view.event.wait()
-        await msg.edit(view=None)
-
-        game_name = view.selected_game
-        game = self.games.get(game_name)
-        if not game:
+            if isinstance(ctx_or_interaction, discord.Interaction):
+                page_view.message = await ctx_or_interaction.followup.send(embed=embed, view=page_view)
+            else:
+                page_view.message = await ctx_or_interaction.send(embed=embed, view=page_view)
             return
 
-        # ─────────── Lancer le jeu choisi ───────────
+        # ─────────── Vérification et lancement du jeu ───────────
+        if not 1 <= choice <= len(self.sorted_titles):
+            msg = f"⚠️ Numéro invalide ! Choisis entre 1 et {len(self.sorted_titles)}"
+            if isinstance(ctx_or_interaction, discord.Interaction):
+                await ctx_or_interaction.followup.send(msg)
+            else:
+                await ctx_or_interaction.send(msg)
+            return
+
+        game_name = self.sorted_titles[choice - 1]
+        game = self.games[game_name]
+
         if isinstance(ctx_or_interaction, discord.Interaction):
             send = ctx_or_interaction.followup.send
             user = ctx_or_interaction.user
@@ -154,8 +130,9 @@ class TestKawashimaMenu(commands.Cog):
 # 🔌 Setup
 # ────────────────────────────────────────────────────────────────────────────────
 async def setup(bot: commands.Bot):
-    cog = TestKawashimaMenu(bot)
+    cog = TestKawashimaPaginated(bot)
     for command in cog.get_commands():
         if not hasattr(command, "category"):
             command.category = "Jeux"
     await bot.add_cog(cog)
+
