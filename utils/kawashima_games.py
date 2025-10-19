@@ -343,24 +343,60 @@ datation.emoji = "📅"
 
 
 # ────────────────────────────────────────────────────────────────────────────────
-# 🔹 🔢 Carré magique
+# 🔹 🔢 Carré magique 3x3 aléatoire emoji
 # ────────────────────────────────────────────────────────────────────────────────
-async def carre_magique(ctx, embed, get_user_id, bot):
-    n = random.randint(2, 9)
-    grid = [[n, n+1], [n+2, "?"]]
-    answer = n + 3
+async def carre_magique_aleatoire_emoji(ctx, embed, get_user_id, bot):
+    import itertools
+
+    # Fonction pour vérifier si un carré est magique
+    def is_magic(square):
+        s = 15  # somme magique pour 3x3 avec 1..9
+        rows = all(sum(row) == s for row in square)
+        cols = all(sum(col) == s for col in zip(*square))
+        diags = sum(square[i][i] for i in range(3)) == s and sum(square[i][2-i] for i in range(3)) == s
+        return rows and cols and diags
+
+    # Générer aléatoirement un carré magique 3x3
+    nums = list(range(1, 10))
+    for _ in range(1000):  # essayer 1000 permutations max
+        random.shuffle(nums)
+        square = [nums[0:3], nums[3:6], nums[6:9]]
+        if is_magic(square):
+            break
+
+    # Cacher un nombre au hasard
+    row, col = random.randint(0, 2), random.randint(0, 2)
+    answer = square[row][col]
+    square[row][col] = "?"
+
+    # Conversion en emoji Discord
+    num_to_emoji = {
+        1: "1️⃣", 2: "2️⃣", 3: "3️⃣",
+        4: "4️⃣", 5: "5️⃣", 6: "6️⃣",
+        7: "7️⃣", 8: "8️⃣", 9: "9️⃣"
+    }
+
+    display = ""
+    for r in square:
+        display += " | ".join(num_to_emoji.get(x, x) for x in r) + "\n"
 
     embed.clear_fields()
-    embed.add_field(name="🔢 Carré magique", value=f"{grid[0]}\n{grid[1]}\nQuel nombre remplace le ? ?", inline=False)
+    embed.add_field(
+        name="🔢 Carré magique",
+        value=f"Complète le carré magique pour que toutes les lignes, colonnes et diagonales fassent 15 :\n{display}",
+        inline=False
+    )
     await ctx.edit(embed=embed)
 
+    # Attente de la réponse
     try:
         msg = await bot.wait_for("message", check=lambda m: m.author.id == get_user_id(), timeout=TIMEOUT)
         return int(msg.content) == answer
     except:
         return False
-carre_magique.title = "Carré magique"
-carre_magique.emoji = "🔢"
+
+carre_magique_aleatoire_emoji.title = "Carré magique 3x3"
+carre_magique_aleatoire_emoji.emoji = "🔢"
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🔹 🔁 Symétrie
