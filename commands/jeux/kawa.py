@@ -60,22 +60,65 @@ class Kawashima(commands.Cog):
         # Embed d’introduction
         start_embed = discord.Embed(
             title="🧠 Entraînement cérébral — Mode Arcade",
-            description="Réponds vite à chaque mini-jeu !\n5 épreuves t’attendent...",
+            description=(
+                "Bienvenue dans le **Mode Arcade Kawashima** ! 🧩\n\n"
+                "🧠 Tu vas affronter **5 mini-jeux** choisis au hasard.\n"
+                "Réponds **vite et bien** pour marquer un maximum de points !\n\n"
+                "Appuie sur le bouton ci-dessous quand tu es prêt à commencer."
+            ),
             color=discord.Color.blurple(),
         )
 
+        # Gestion du contexte
         if isinstance(ctx_or_interaction, discord.Interaction):
             await ctx_or_interaction.response.send_message(embed=start_embed)
-            send = ctx_or_interaction.followup.send
+            message = await ctx_or_interaction.original_response()
             user = ctx_or_interaction.user
         else:
-            await ctx_or_interaction.send(embed=start_embed)
-            send = ctx_or_interaction.send
+            message = await ctx_or_interaction.send(embed=start_embed)
             user = ctx_or_interaction.author
 
         get_user_id = lambda: user.id
         total_score = 0
         results = []
+
+        # ─────────── Bouton de démarrage ───────────
+        class ReadyButton(discord.ui.View):
+            def __init__(self):
+                super().__init__(timeout=30)
+                self.ready = asyncio.Event()
+
+            @discord.ui.button(label="🟢 Je suis prêt !", style=discord.ButtonStyle.success)
+            async def ready_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+                if interaction.user.id != user.id:
+                    return await interaction.response.send_message("🚫 Ce n’est pas ton entraînement.", ephemeral=True)
+                button.disabled = True
+                button.label = "✅ C’est parti !"
+                await interaction.response.edit_message(view=self)
+                self.ready.set()
+
+            async def on_timeout(self):
+                for child in self.children:
+                    child.disabled = True
+                    child.label = "⏰ Temps écoulé"
+                try:
+                    await message.edit(view=self)
+                except:
+                    pass
+                self.ready.set()
+
+        view = ReadyButton()
+        await message.edit(embed=start_embed, view=view)
+        await view.ready.wait()
+
+        # Si l'utilisateur n'a pas cliqué à temps
+        if all(child.disabled and "écoulé" in child.label for child in view.children):
+            timeout_embed = discord.Embed(
+                title="⏰ Temps écoulé",
+                description="Tu n’as pas appuyé à temps. Relance la commande pour rejouer !",
+                color=discord.Color.red()
+            )
+            return await message.edit(embed=timeout_embed, view=None)
 
         # ─────────── Sélection de 5 mini-jeux différents ───────────
         random.shuffle(self.minijeux)
@@ -88,14 +131,15 @@ class Kawashima(commands.Cog):
                 description="Prépare-toi...",
                 color=discord.Color.blurple()
             )
-            await send(embed=intro_embed)
+            await message.edit(embed=intro_embed, view=None)
             await asyncio.sleep(1)
 
             # Exécution du mini-jeu
             start = time.time()
-            success = await game(None, intro_embed, get_user_id, self.bot)
+            success = await game(message, intro_embed, get_user_id, self.bot)
             end = time.time()
             elapsed = round(end - start, 2)
+
             score = (1000 + max(0, 500 - int(elapsed * 25))) if success else 0
             total_score += score
             results.append((index, name, success, elapsed, score))
@@ -110,8 +154,8 @@ class Kawashima(commands.Cog):
                 ),
                 color=discord.Color.green() if success else discord.Color.red()
             )
-            await send(embed=result_embed)
-            await asyncio.sleep(1)
+            await message.edit(embed=result_embed)
+            await asyncio.sleep(1.5)
 
         # ─────────── Calcul du rang ───────────
         results_text = "\n".join(
@@ -190,7 +234,7 @@ class Kawashima(commands.Cog):
             ),
             color=discord.Color.gold()
         )
-        await send(embed=final_embed)
+        await message.edit(embed=final_embed)
 
     # ─────────── Affichage du classement ───────────
     async def show_leaderboard(self, ctx_or_interaction):
