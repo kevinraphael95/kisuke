@@ -6,6 +6,8 @@
 # ────────────────────────────────────────────────────────────────────────────────
 # 📦 Imports nécessaires
 # ────────────────────────────────────────────────────────────────────────────────
+import discord
+from discord.ui import View, Button
 import random
 import asyncio
 
@@ -157,24 +159,54 @@ carre_magique_fiable_emoji.title = "Carré magique 3x3"
 carre_magique_fiable_emoji.emoji = "🔢"
 
 # ────────────────────────────────────────────────────────────────────────────────
-# 🔹 🎨 Couleurs (effet Stroop)
+# 🔹 🎨 Couleurs (effet Stroop visuel avec boutons factices)
 # ────────────────────────────────────────────────────────────────────────────────
 async def couleurs(ctx, embed, get_user_id, bot):
-    mots = ["ROUGE", "BLEU", "JAUNE", "NOIR"]
-    couleurs = ["rouge", "bleu", "jaune", "noir"]
-    mot = random.choice(mots)
-    couleur_vraie = random.choice(couleurs)
+    couleurs = {
+        "rouge": discord.ButtonStyle.danger,
+        "bleu": discord.ButtonStyle.primary,
+        "jaune": discord.ButtonStyle.success,
+        "vert": discord.ButtonStyle.success,
+        "noir": discord.ButtonStyle.secondary
+    }
 
+    mots = list(couleurs.keys())
+    mot_affiche = random.choice(mots).upper()
+    couleur_vraie = random.choice(mots)
+
+    # 50% des cas : on demande le MOT / 50% : on demande la COULEUR
+    consigne_type = random.choice(["mot", "couleur"])
+    if consigne_type == "mot":
+        question = "➡️ Quel est le **mot ÉCRIT** ?"
+        reponse_attendue = mot_affiche.lower()
+    else:
+        question = "➡️ Quelle est la **COULEUR du mot** ?"
+        reponse_attendue = couleur_vraie.lower()
+
+    # Embed
     embed.clear_fields()
-    embed.add_field(name="🎨 Couleurs", value=f"Mot : **{mot}**\nCouleur du texte : (simulée) {couleur_vraie.upper()}\n➡️ Quelle est la COULEUR des lettres ?", inline=False)
-    await ctx.edit(embed=embed)
+    embed.title = "🎨 Couleurs"
+    embed.description = f"Mot affiché : **{mot_affiche}**\n{question}"
 
+    # Création d’un bouton unique pour représenter le mot coloré
+    bouton = Button(label=mot_affiche, style=couleurs[couleur_vraie], disabled=True)
+    view = View()
+    view.add_item(bouton)
+
+    await ctx.edit(embed=embed, view=view)
+
+    # Attente de la réponse
     try:
-        msg = await bot.wait_for("message", check=lambda m: m.author.id == get_user_id(), timeout=TIMEOUT)
-        return msg.content.lower() == couleur_vraie
-    except:
+        msg = await bot.wait_for(
+            "message",
+            check=lambda m: m.author.id == get_user_id(),
+            timeout=TIMEOUT
+        )
+        return msg.content.lower().strip() == reponse_attendue
+    except asyncio.TimeoutError:
         return False
-couleurs.title = "Couleurs"
+
+couleurs.title = "Couleurs (effet Stroop)"
 couleurs.emoji = "🎨"
 
 # ────────────────────────────────────────────────────────────────────────────────
