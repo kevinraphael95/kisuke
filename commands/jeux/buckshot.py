@@ -193,7 +193,9 @@ class Buckshot(commands.Cog):
             await safe_edit(msg, embed=discord.Embed(title="Fin de la demande", description=content, color=discord.Color.red()), view=None)
 
 
-    #sg
+    # ────────────────────────────────────────────────────────────────────────────
+    # ▶️ Core du jeu (tour par tour, objets, barillet)
+    # ────────────────────────────────────────────────────────────────────────────
 	async def _start_game(self, channel: discord.abc.Messageable, players: list, invite_msg: discord.Message, guild_id: Optional[int]):
 		"""
 		Lance la partie Buckshot Roulette (1v1). players = [joueur1, joueur2] (2e peut être bot).
@@ -368,24 +370,7 @@ class Buckshot(commands.Cog):
 			self.active_sessions.discard(guild_id)
 
 
-    # ────────────────────────────────────────────────────────────────────────────
-    # ▶️ Core du jeu (tour par tour, objets, barillet)
-    # ────────────────────────────────────────────────────────────────────────────
-    async def _start_game(self, channel, players: List[discord.abc.User], invite_msg, guild_id: Optional[int]):
-        """
-        Lance la partie. players = [joueur1, joueur2] (joueur2 peut être le bot).
-        Utilise Supabase pour enregistrer la session si nécessaire.
-        """
-        # TODO: Implémentation complète des tours, actions, barillet et objets
-        # On peut reprendre la logique détaillée de ton précédent code, avec:
-        # - make_barillet() pour le barillet
-        # - apply_item() pour objets
-        # - tour par tour avec buttons et embed
-        # - gestion solo vs bot
-        # - mise à jour Supabase session/players si voulu
-        await safe_send(channel, "🎲 Partie Buckshot Roulette lancée ! (fonctionnalité tour par tour à compléter)")
-        if guild_id:
-            self.active_sessions.discard(guild_id)
+
 
     # ────────────────────────────────────────────────────────────────────────────
     # Helper pour répondre selon type ctx_or_interaction
