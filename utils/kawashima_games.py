@@ -21,25 +21,25 @@ TIMEOUT = 60  # 1 minute pour répondre à chaque mini-jeu
 # ────────────────────────────────────────────────────────────────────────────────
 
 # ────────────────────────────────────────────────────────────────────────────────
-# 🔹 🧮 Addition cachée
+# 🔹 🧮 Addition à la suite
 # ────────────────────────────────────────────────────────────────────────────────
 async def addition_cachee(ctx, embed, get_user_id, bot):
     additions = [random.randint(-9, 9) for _ in range(6)]
     total = sum(additions)
 
     embed.clear_fields()
-    embed.add_field(name="🧮 Addition cachée", value="Observe bien les additions successives...", inline=False)
+    embed.add_field(name="🧮 Additions à la suite", value="Observe bien les additions successives...", inline=False)
     await ctx.edit(embed=embed)
-    await asyncio.sleep(2)
+    await asyncio.sleep(3)
 
     for add in additions:
         embed.clear_fields()
-        embed.add_field(name="🧮 Addition cachée", value=f"{add:+d}", inline=False)
+        embed.add_field(name="🧮 Additions à la suite", value=f"{add:+d}", inline=False)
         await ctx.edit(embed=embed)
-        await asyncio.sleep(1.2)
+        await asyncio.sleep(1.8)
 
     embed.clear_fields()
-    embed.add_field(name="🧮 Addition cachée", value="Quel est le total final ?", inline=False)
+    embed.add_field(name="🧮 Additions à la suite", value="Quel est le total final ?", inline=False)
     await ctx.edit(embed=embed)
 
     try:
@@ -47,45 +47,29 @@ async def addition_cachee(ctx, embed, get_user_id, bot):
         return int(msg.content) == total
     except:
         return False
-addition_cachee.title = "Addition cachée"
+addition_cachee.title = "Addition à la suite"
 addition_cachee.emoji = "➕"
-
-# ────────────────────────────────────────────────────────────────────────────────
-# 🔹 🧠 Calcul 2
-# ────────────────────────────────────────────────────────────────────────────────
-async def calcul_100(ctx, embed, get_user_id, bot):
-    score = 0
-    for _ in range(2):  # 5 calculs au lieu de 100 pour Discord (éviter la lourdeur)
-        a, b = random.randint(1, 50), random.randint(1, 50)
-        op = random.choice(["+", "-", "*", "/"])
-        if op == "/":
-            a = a * b
-        question = f"{a} {op} {b} = ?"
-        answer = int(eval(f"{a}{op}{b}"))
-
-        embed.clear_fields()
-        embed.add_field(name="🧠 Calcul 100", value=question, inline=False)
-        await ctx.edit(embed=embed)
-
-        try:
-            msg = await bot.wait_for("message", check=lambda m: m.author.id == get_user_id(), timeout=TIMEOUT)
-            if int(msg.content) == answer:
-                score += 1
-        except:
-            break
-    return score == 2
-calcul_100.title = "Calcul 100"
-calcul_100.emoji = "🧠"
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🔹 🧮 Calcul rapide
 # ────────────────────────────────────────────────────────────────────────────────
 async def calcul_rapide(ctx, embed, get_user_id, bot):
-    a = random.randint(20, 80)
-    b = random.randint(20, 80)
-    op = random.choice(["+", "-", "*"])
+    op = random.choice(["+", "-", "*", "/"])
+
+    if op == "*":
+        a = random.randint(1, 10)      # premier facteur
+        b = random.randint(1, 10)      # deuxième facteur limité
+        answer = a * b
+    elif op == "/":
+        b = random.randint(1, 10)      # diviseur limité
+        answer = random.randint(1, 10) # résultat final limité
+        a = b * answer                  # garantit que a / b est entier
+    else:  # + ou -
+        a = random.randint(10, 50)
+        b = random.randint(10, 50)
+        answer = eval(f"{a}{op}{b}")
+
     question = f"{a} {op} {b} = ?"
-    answer = eval(f"{a}{op}{b}")
 
     embed.clear_fields()
     embed.add_field(name="🧮 Calcul rapide", value=question, inline=False)
@@ -96,8 +80,10 @@ async def calcul_rapide(ctx, embed, get_user_id, bot):
         return int(msg.content) == answer
     except:
         return False
+
 calcul_rapide.title = "Calcul rapide"
 calcul_rapide.emoji = "🧮"
+
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🔹 🔢 Carré magique 3x3 fiable emoji
@@ -159,10 +145,10 @@ carre_magique_fiable_emoji.title = "Carré magique 3x3"
 carre_magique_fiable_emoji.emoji = "🔢"
 
 # ────────────────────────────────────────────────────────────────────────────────
-# 🔹 🎨 Couleurs (Stroop avec boutons réels)
+# 🎨 Couleurs (Stroop visuel, réponse dans le chat)
 # ────────────────────────────────────────────────────────────────────────────────
 async def couleurs(ctx, bot):
-    # Couleurs possibles sur Discord
+    # Couleurs possibles et styles Discord
     styles = {
         "bleu": discord.ButtonStyle.primary,
         "vert": discord.ButtonStyle.success,
@@ -170,11 +156,11 @@ async def couleurs(ctx, bot):
         "gris": discord.ButtonStyle.secondary
     }
 
-    # Choix aléatoire du mot et de la couleur du bouton
-    mot = random.choice(list(styles.keys())).upper()
-    couleur_vraie = random.choice(list(styles.keys()))
+    # Choix aléatoire du mot et de sa couleur
+    mot = random.choice(list(styles.keys())).upper()       # mot affiché
+    couleur_vraie = random.choice(list(styles.keys()))     # couleur du bouton
 
-    # Choix aléatoire de la question : mot ou couleur
+    # Choix du type de question
     question_type = random.choice(["mot", "couleur"])
     if question_type == "mot":
         question_text = "Quel **MOT** est écrit sur le bouton ?"
@@ -183,56 +169,68 @@ async def couleurs(ctx, bot):
         question_text = "Quelle est la **COULEUR** du bouton ?"
         bonne_reponse = couleur_vraie
 
-    # Création du bouton
-    button = Button(label=mot, style=styles[couleur_vraie])
+    # Création du bouton visuel (désactivé)
+    button = Button(label=mot, style=styles[couleur_vraie], disabled=True)
     view = View()
     view.add_item(button)
 
     # Création de l'embed
     embed = discord.Embed(
         title="🎨 Couleurs (Stroop)",
-        description=f"Regarde le bouton ci-dessous :\n➡️ {question_text}"
+        description=f"Regarde le bouton ci-dessous :\n➡️ {question_text}",
+        color=discord.Color.random()
     )
 
-    # Envoi du message avec embed + bouton
+    # Envoi du message avec embed + bouton visuel
     await ctx.send(embed=embed, view=view)
 
-    # Attente de la réponse texte
+    # Attente de la réponse dans le chat
     try:
         msg = await bot.wait_for(
             "message",
             check=lambda m: m.author.id == ctx.author.id,
-            timeout=60  # tu peux remplacer par TIMEOUT
+            timeout=60
         )
         return msg.content.lower().strip() == bonne_reponse
-    except:
+    except asyncio.TimeoutError:
         return False
 
-# Ajout de métadonnées pour ton système
+# Métadonnées pour ton système
 couleurs.title = "Couleurs"
 couleurs.emoji = "🎨"
 
 # ────────────────────────────────────────────────────────────────────────────────
-# 🔹 📅 Datation
+# 🔹 📅 Datation (limité à ±1 semaine)
 # ────────────────────────────────────────────────────────────────────────────────
 async def datation(ctx, embed, get_user_id, bot):
     import datetime
-    import calendar
-    year = random.randint(2020, 2030)
-    month = random.randint(1, 12)
-    day = random.randint(1, calendar.monthrange(year, month)[1])
-    date = datetime.date(year, month, day)
+
+    today = datetime.date.today()
+    # Décalage aléatoire entre -7 et +7 jours
+    delta_days = random.randint(-7, 7)
+    date = today + datetime.timedelta(days=delta_days)
+    
     jour = date.strftime("%A").lower()
+    day, month, year = date.day, date.month, date.year
 
     embed.clear_fields()
-    embed.add_field(name="📅 Datation", value=f"Quel jour de la semaine était le {day}/{month}/{year} ?", inline=False)
+    embed.add_field(
+        name="📅 Datation",
+        value=f"Quel jour de la semaine était le {day}/{month}/{year} ?",
+        inline=False
+    )
     await ctx.edit(embed=embed)
 
     try:
-        msg = await bot.wait_for("message", check=lambda m: m.author.id == get_user_id(), timeout=TIMEOUT)
-        return msg.content.lower().startswith(jour[:3])  # permet "lun", "lundi", etc.
+        msg = await bot.wait_for(
+            "message",
+            check=lambda m: m.author.id == get_user_id(),
+            timeout=TIMEOUT
+        )
+        return msg.content.lower().startswith(jour[:3])  # accepte "lun", "lundi", etc.
     except:
         return False
+
 datation.title = "Datation"
 datation.emoji = "📅"
 
@@ -320,26 +318,75 @@ memoire_numerique.title = "Mémoire numérique"
 memoire_numerique.emoji = "🔢"
 
 # ────────────────────────────────────────────────────────────────────────────────
-# 🔹 👁️ Mémoire visuelle
+# 🔹 👁️ Mémoire visuelle (version boutons avec TIMEOUT global)
 # ────────────────────────────────────────────────────────────────────────────────
 async def memoire_visuelle(ctx, embed, get_user_id, bot):
-    emojis = random.sample(["🍎", "🚗", "🐶", "🌟", "⚽", "🎲", "💎", "🎵"], 5)
-    embed.clear_fields()
-    embed.add_field(name="👁️ Mémoire visuelle", value=" ".join(emojis), inline=False)
-    await ctx.edit(embed=embed)
-    await asyncio.sleep(5)
+    # Ensemble d'emojis
+    base_emojis = ["🍎", "🚗", "🐶", "🌟", "⚽", "🎲", "💎", "🎵", "🍕", "🐱", "🚀", "🎁"]
 
-    missing = random.choice(emojis)
-    shown = [e for e in emojis if e != missing]
+    # Étape 1 : sélection des 4 emojis à mémoriser
+    shown_emojis = random.sample(base_emojis, 4)
     embed.clear_fields()
-    embed.add_field(name="👁️ Mémoire visuelle", value=f"Qu’est-ce qui manque ?\n{' '.join(shown)}", inline=False)
+    embed.add_field(
+        name="👁️ Mémoire visuelle",
+        value=f"Mémorise bien ces 4 emojis :\n{' '.join(shown_emojis)}",
+        inline=False
+    )
     await ctx.edit(embed=embed)
 
-    try:
-        msg = await bot.wait_for("message", check=lambda m: m.author.id == get_user_id(), timeout=TIMEOUT)
-        return msg.content.strip() == missing
-    except:
-        return False
+    # Temps pour mémoriser
+    await asyncio.sleep(4)
+
+    # Étape 2 : cacher la liste
+    embed.clear_fields()
+    embed.add_field(
+        name="👁️ Mémoire visuelle",
+        value="🔒 Les emojis ont disparu... retrouve celui qui **n'était PAS dans la liste !**",
+        inline=False
+    )
+    await ctx.edit(embed=embed)
+
+    # Petit délai aléatoire avant les boutons
+    await asyncio.sleep(random.uniform(0.5, 1.5))
+
+    # Étape 3 : préparation des boutons (les 4 + 1 intrus)
+    all_choices = shown_emojis.copy()
+    intrus = random.choice([e for e in base_emojis if e not in shown_emojis])
+    all_choices.append(intrus)
+    random.shuffle(all_choices)
+
+    # Création de la vue avec boutons
+    class EmojiView(discord.ui.View):
+        def __init__(self):
+            super().__init__(timeout=TIMEOUT)
+            self.selected = None
+
+    view = EmojiView()
+    for e in all_choices:
+        async def make_callback(emoji=e):
+            async def callback(interaction: discord.Interaction):
+                if interaction.user.id != get_user_id():
+                    await interaction.response.send_message("🚫 Pas ton tour.", ephemeral=True)
+                    return
+                view.selected = emoji
+                view.stop()
+                await interaction.response.defer()
+            return callback
+
+        button = discord.ui.Button(label=e, style=discord.ButtonStyle.secondary)
+        button.callback = await make_callback(e)
+        view.add_item(button)
+
+    msg = await ctx.edit(embed=embed, view=view)
+
+    # Attente de la réponse
+    await view.wait()
+
+    # Vérifie la bonne réponse
+    if not hasattr(view, "selected") or view.selected is None:
+        return False    
+    return view.selected == intrus
+    
 memoire_visuelle.title = "Mémoire visuelle"
 memoire_visuelle.emoji = "👁️"
 
@@ -360,6 +407,7 @@ async def monnaie(ctx, embed, get_user_id, bot):
         return abs(float(msg.content.replace(',', '.')) - rendu) < 0.01
     except:
         return False
+        
 monnaie.title = "Monnaie"
 monnaie.emoji = "💰"
 
