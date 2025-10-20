@@ -63,22 +63,47 @@ memoire_numerique.title = "Mémoire numérique"
 memoire_numerique.emoji = "🔢"
 
 # ────────────────────────────────────────────────────────────────────────────────
-# 🔹 🔍 Trouver l’intrus
+# 🔹 🔍 Trouver l’intrus (version améliorée)
 # ────────────────────────────────────────────────────────────────────────────────
 async def trouver_intrus(ctx, embed, get_user_id, bot):
-    mots = ["pomme", "banane", "orange", "voiture", "stylo", "livre"]
-    intrus = random.choice(mots)
-    affichage = random.sample(mots, len(mots))
+    # Groupes thématiques
+    animaux = ["chien", "chat", "lapin", "poisson", "cheval", "oiseau"]
+    fruits = ["pomme", "banane", "orange", "kiwi", "fraise", "raisin"]
+    objets = ["stylo", "chaise", "livre", "voiture", "table", "lampe"]
+    couleurs = ["rouge", "bleu", "vert", "jaune", "noir", "blanc"]
+    sports = ["foot", "tennis", "basket", "natation", "golf", "rugby"]
 
+    groupes = [animaux, fruits, objets, couleurs, sports]
+
+    # Choisir un groupe principal et un intrus d’un autre groupe
+    principal = random.choice(groupes)
+    autres = [g for g in groupes if g != principal]
+    intrus = random.choice(random.choice(autres))
+
+    # Construire la liste finale (3 du groupe principal + 1 intrus)
+    mots = random.sample(principal, 3) + [intrus]
+    random.shuffle(mots)
+
+    # Affichage
     embed.clear_fields()
-    embed.add_field(name="🔍 Trouver l’intrus", value=", ".join(affichage), inline=False)
+    embed.add_field(
+        name="🔍 Trouver l’intrus",
+        value=f"{', '.join(mots)}\n➡️ Quel mot ne correspond pas aux autres ?",
+        inline=False
+    )
     await ctx.edit(embed=embed)
 
+    # Attente de la réponse
     try:
-        msg = await bot.wait_for("message", check=lambda m: m.author.id == get_user_id(), timeout=TIMEOUT)
-        return msg.content.lower() == intrus
+        msg = await bot.wait_for(
+            "message",
+            check=lambda m: m.author.id == get_user_id(),
+            timeout=TIMEOUT
+        )
+        return msg.content.lower().strip() == intrus.lower()
     except:
         return False
+
 trouver_intrus.title = "Trouver l’intrus"
 trouver_intrus.emoji = "🔍"
 
@@ -104,23 +129,69 @@ trouver_difference.title = "Trouver la différence"
 trouver_difference.emoji = "🔎"
 
 # ────────────────────────────────────────────────────────────────────────────────
-# 🔹 ➗ Suite logique
+# 🔹 ➗ Suite logique (version enrichie)
 # ────────────────────────────────────────────────────────────────────────────────
 async def suite_logique(ctx, embed, get_user_id, bot):
-    start = random.randint(1, 5)
-    step = random.randint(2, 7)
-    serie = [start + i * step for i in range(4)]
-    answer = serie[-1] + step
+    type_suite = random.choice(["arithmétique", "géométrique", "alternée", "carrés", "fibonacci"])
+    question = ""
+    answer = None
 
+    if type_suite == "arithmétique":
+        start = random.randint(1, 10)
+        step = random.randint(2, 6)
+        serie = [start + i * step for i in range(4)]
+        answer = serie[-1] + step
+        question = f"{serie} ... ?"
+
+    elif type_suite == "géométrique":
+        start = random.randint(1, 5)
+        ratio = random.randint(2, 3)
+        serie = [start * (ratio ** i) for i in range(4)]
+        answer = serie[-1] * ratio
+        question = f"{serie} ... ?"
+
+    elif type_suite == "alternée":
+        start = random.randint(1, 10)
+        add, sub = random.randint(2, 5), random.randint(1, 4)
+        serie = [start]
+        for i in range(1, 4):
+            if i % 2 == 1:
+                serie.append(serie[-1] + add)
+            else:
+                serie.append(serie[-1] - sub)
+        answer = serie[-1] + (add if len(serie) % 2 == 1 else -sub)
+        question = f"{serie} ... ?"
+
+    elif type_suite == "carrés":
+        start = random.randint(1, 5)
+        serie = [i ** 2 for i in range(start, start + 4)]
+        answer = (start + 4) ** 2
+        question = f"{serie} ... ?"
+
+    elif type_suite == "fibonacci":
+        a, b = random.randint(1, 5), random.randint(1, 5)
+        serie = [a, b]
+        for _ in range(2, 4):
+            serie.append(serie[-1] + serie[-2])
+        answer = serie[-1] + serie[-2]
+        question = f"{serie} ... ?"
+
+    # Affichage
     embed.clear_fields()
-    embed.add_field(name="➗ Suite logique", value=f"{serie} ... ?", inline=False)
+    embed.add_field(name="➗ Suite logique", value=question, inline=False)
     await ctx.edit(embed=embed)
 
+    # Attente de la réponse
     try:
-        msg = await bot.wait_for("message", check=lambda m: m.author.id == get_user_id(), timeout=TIMEOUT)
+        msg = await bot.wait_for(
+            "message",
+            check=lambda m: m.author.id == get_user_id(),
+            timeout=TIMEOUT
+        )
         return int(msg.content) == answer
     except:
         return False
+
 suite_logique.title = "Suite logique"
 suite_logique.emoji = "➗"
 
@@ -128,31 +199,44 @@ suite_logique.emoji = "➗"
 # 🔹 ✏️ Typo trap
 # ────────────────────────────────────────────────────────────────────────────────
 async def typo_trap(ctx, embed, get_user_id, bot):
-    mot = random.choice(["chien", "maison", "voiture", "ordinateur"])
+    mot = random.choice(["chien", "maison", "voiture", "ordinateur", "banane", "chocolat"])
     typo_index = random.randint(0, len(mot) - 1)
     mot_mod = list(mot)
-    mot_mod[typo_index] = chr(random.randint(97, 122))
+
+    # Génère une lettre différente de la lettre originale
+    original = mot_mod[typo_index]
+    nouvelle_lettre = random.choice([chr(i) for i in range(97, 123) if chr(i) != original])
+    mot_mod[typo_index] = nouvelle_lettre
     mot_mod = "".join(mot_mod)
 
     embed.clear_fields()
-    embed.add_field(name="✏️ Typo trap", value=f"{mot_mod}\nQuelle lettre est fausse ? (1-{len(mot)})", inline=False)
+    embed.add_field(
+        name="✏️ Typo trap",
+        value=f"{mot_mod}\n➡️ Quelle lettre est fausse ? (ex: 'x')",
+        inline=False
+    )
     await ctx.edit(embed=embed)
 
+    # Attente de la réponse
     try:
-        msg = await bot.wait_for("message", check=lambda m: m.author.id == get_user_id(), timeout=TIMEOUT)
-        return int(msg.content) == typo_index + 1
+        msg = await bot.wait_for(
+            "message",
+            check=lambda m: m.author.id == get_user_id(),
+            timeout=TIMEOUT
+        )
+        return msg.content.lower().strip() == nouvelle_lettre
     except:
         return False
+
 typo_trap.title = "Typo trap"
 typo_trap.emoji = "✏️"
 
-
 # ────────────────────────────────────────────────────────────────────────────────
-# 🔹 🧠 Calcul 100
+# 🔹 🧠 Calcul 2
 # ────────────────────────────────────────────────────────────────────────────────
 async def calcul_100(ctx, embed, get_user_id, bot):
     score = 0
-    for _ in range(5):  # 5 calculs au lieu de 100 pour Discord (éviter la lourdeur)
+    for _ in range(2):  # 5 calculs au lieu de 100 pour Discord (éviter la lourdeur)
         a, b = random.randint(1, 50), random.randint(1, 50)
         op = random.choice(["+", "-", "*", "/"])
         if op == "/":
@@ -236,24 +320,63 @@ va_et_vient.title = "Va-et-vient"
 va_et_vient.emoji = "🚪"
 
 # ────────────────────────────────────────────────────────────────────────────────
-# 🔹 🕒 Heures
+# 🔹 🕒 Heures (version flexible)
 # ────────────────────────────────────────────────────────────────────────────────
 async def heures(ctx, embed, get_user_id, bot):
+    # Génération aléatoire de deux heures
     h1, m1 = random.randint(0, 23), random.randint(0, 59)
     h2, m2 = random.randint(0, 23), random.randint(0, 59)
+
+    # Calcul de la différence absolue en minutes
     diff = abs((h1 * 60 + m1) - (h2 * 60 + m2))
     hours, mins = divmod(diff, 60)
 
+    # Formatage des heures en texte
+    heure_1 = f"{h1:02d}:{m1:02d}"
+    heure_2 = f"{h2:02d}:{m2:02d}"
+
+    # Choix aléatoire du type d’énoncé
+    question_type = random.choice([
+        f"Quelle est la différence entre {heure_1} et {heure_2} ?",
+        f"Combien de temps s’écoule entre {heure_1} et {heure_2} ?",
+        f"De {heure_1} à {heure_2}, combien d’heures et de minutes passent ?",
+        f"🕒 {heure_1} → {heure_2} = ?"
+    ])
+
+    # Petit bonus : parfois forcer l’ordre chronologique (pour un défi logique)
+    if random.random() < 0.3 and h2 * 60 + m2 < h1 * 60 + m1:
+        question_type += " (⚠️ passe par minuit)"
+
     embed.clear_fields()
-    embed.add_field(name="🕒 Heures", value=f"Différence entre {h1:02d}:{m1:02d} et {h2:02d}:{m2:02d} ?", inline=False)
+    embed.add_field(name="🕒 Heures", value=question_type, inline=False)
     await ctx.edit(embed=embed)
 
+    # Attente de la réponse
     try:
-        msg = await bot.wait_for("message", check=lambda m: m.author.id == get_user_id(), timeout=TIMEOUT)
-        user_hours, user_mins = map(int, msg.content.replace("h", " ").replace(":", " ").split())
-        return user_hours == hours and user_mins == mins
+        msg = await bot.wait_for(
+            "message",
+            check=lambda m: m.author.id == get_user_id(),
+            timeout=TIMEOUT
+        )
+        rep = msg.content.lower().replace("h", " ").replace(":", " ").replace("min", " ").replace("m", " ")
+        nums = [int(x) for x in rep.split() if x.isdigit()]
+
+        if len(nums) == 1:
+            # Si l'utilisateur écrit seulement "90" → 90 minutes
+            user_hours, user_mins = divmod(nums[0], 60)
+        elif len(nums) >= 2:
+            user_hours, user_mins = nums[0], nums[1]
+        else:
+            return False
+
+        # Tolérance : accepter une marge d’erreur de ±1 minute
+        diff_user = user_hours * 60 + user_mins
+        diff_real = hours * 60 + mins
+        return abs(diff_user - diff_real) <= 1
+
     except:
         return False
+
 heures.title = "Heures"
 heures.emoji = "🕒"
 
