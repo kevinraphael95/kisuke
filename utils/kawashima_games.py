@@ -36,7 +36,7 @@ async def addition_cachee(ctx, embed, get_user_id, bot):
         await ctx.edit(embed=embed)
         await asyncio.sleep(1.2)
 
-    embed.clear_fielads()
+    embed.clear_fields()
     embed.add_field(name="🧮 Addition cachée", value="Quel est le total final ?", inline=False)
     await ctx.edit(embed=embed)
 
@@ -71,7 +71,7 @@ async def calcul_100(ctx, embed, get_user_id, bot):
                 score += 1
         except:
             break
-    return score >= 4
+    return score == 2
 calcul_100.title = "Calcul 100"
 calcul_100.emoji = "🧠"
 
