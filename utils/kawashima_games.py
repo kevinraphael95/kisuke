@@ -159,11 +159,7 @@ carre_magique_fiable_emoji.emoji = "🔢"
 # ────────────────────────────────────────────────────────────────────────────────
 # 🔹 🎨 Couleurs (Stroop avec boutons réels)
 # ────────────────────────────────────────────────────────────────────────────────
-import discord
-from discord.ui import Button, View
-import random
-
-async def couleurs(ctx, embed, get_user_id, bot):
+async def couleurs(ctx, bot):
     # Couleurs possibles sur Discord
     styles = {
         "bleu": discord.ButtonStyle.primary,
@@ -185,35 +181,34 @@ async def couleurs(ctx, embed, get_user_id, bot):
         question_text = "Quelle est la **COULEUR** du bouton ?"
         bonne_reponse = couleur_vraie
 
-    # Préparation de l'embed (le mot affiché seulement)
-    embed.clear_fields()
-    embed.add_field(
-        name="🎨 Couleurs",
-        value=f"Mot affiché : **{mot}**\n➡️ {question_text}",
-        inline=False
-    )
-    await ctx.edit(embed=embed)
-
-    # Création du bouton avec la couleur choisie
+    # Création du bouton
     button = Button(label=mot, style=styles[couleur_vraie])
     view = View()
     view.add_item(button)
-    await ctx.send("Regarde le bouton ci-dessous :", view=view)
+
+    # Création de l'embed
+    embed = discord.Embed(
+        title="🎨 Couleurs (Stroop)",
+        description=f"Regarde le bouton ci-dessous :\n➡️ {question_text}"
+    )
+
+    # Envoi du message avec embed + bouton
+    await ctx.send(embed=embed, view=view)
 
     # Attente de la réponse texte
     try:
         msg = await bot.wait_for(
             "message",
-            check=lambda m: m.author.id == get_user_id(),
-            timeout=TIMEOUT
+            check=lambda m: m.author.id == ctx.author.id,
+            timeout=60  # tu peux remplacer par TIMEOUT
         )
         return msg.content.lower().strip() == bonne_reponse
     except:
         return False
 
+# Ajout de métadonnées pour ton système
 couleurs.title = "Couleurs"
 couleurs.emoji = "🎨"
-
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🔹 📅 Datation
