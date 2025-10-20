@@ -508,6 +508,70 @@ rapidite.title = "Rapidité"
 rapidite.emoji = "⚡"
 
 # ────────────────────────────────────────────────────────────────────────────────
+# 🔹 ⚡ Réflexe couleur (cliquer quand le bouton devient vert)
+# ────────────────────────────────────────────────────────────────────────────────
+async def reflexe_couleur(ctx, embed, get_user_id, bot):
+    embed.clear_fields()
+    embed.add_field(
+        name="⚡ Réflexe couleur",
+        value="Appuie sur le bouton **dès qu'il devient vert**.\nMais pas avant 👀",
+        inline=False
+    )
+    await ctx.edit(embed=embed)
+
+    class ReflexeView(discord.ui.View):
+        def __init__(self):
+            super().__init__(timeout=7)
+            self.clicked = False
+            self.start_time = None
+            self.reaction_time = None
+            self.too_early = False
+
+        @discord.ui.button(label="🔴 ATTENDS...", style=discord.ButtonStyle.danger)
+        async def reflexe(self, interaction: discord.Interaction, button: discord.ui.Button):
+            if interaction.user.id != get_user_id():
+                await interaction.response.send_message("🚫 Ce n’est pas ton jeu.", ephemeral=True)
+                return
+            if button.style == discord.ButtonStyle.danger:
+                self.too_early = True
+                self.clicked = True
+                self.stop()
+                await interaction.response.send_message("❌ Trop tôt !", ephemeral=True)
+            elif button.style == discord.ButtonStyle.success:
+                self.reaction_time = round(asyncio.get_event_loop().time() - self.start_time, 3)
+                self.clicked = True
+                self.stop()
+                await interaction.response.send_message(f"✅ Réflexe en {self.reaction_time}s !", ephemeral=True)
+
+    view = ReflexeView()
+    msg = await ctx.edit(view=view)
+
+    # Attente aléatoire avant passage au vert
+    await asyncio.sleep(random.uniform(2, 5))
+    if view.is_finished():
+        return False  # déjà cliqué trop tôt
+
+    # Passage au vert
+    button = view.children[0]
+    button.label = "🟢 CLIQUE !"
+    button.style = discord.ButtonStyle.success
+    await msg.edit(view=view)
+    view.start_time = asyncio.get_event_loop().time()
+
+    # Attente du clic
+    await view.wait()
+
+    if view.too_early or not view.clicked or view.reaction_time is None:
+        return False
+
+    # Réussite si temps < 1.2s
+    return view.reaction_time < 1.2
+
+# Métadonnées pour ton système
+reflexe_couleur.title = "Réflexe couleur"
+reflexe_couleur.emoji = "🟢"
+
+# ────────────────────────────────────────────────────────────────────────────────
 # 🔹 🧩 Suite alphabétique
 # ────────────────────────────────────────────────────────────────────────────────
 async def suite_alpha(ctx, embed, get_user_id, bot):
