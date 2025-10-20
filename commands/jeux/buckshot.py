@@ -196,178 +196,178 @@ class Buckshot(commands.Cog):
     # ────────────────────────────────────────────────────────────────────────────
     # ▶️ Core du jeu (tour par tour, objets, barillet)
     # ────────────────────────────────────────────────────────────────────────────
-	async def _start_game(self, channel: discord.abc.Messageable, players: list, invite_msg: discord.Message, guild_id: Optional[int]):
-		"""
-		Lance la partie Buckshot Roulette (1v1). players = [joueur1, joueur2] (2e peut être bot).
-		"""
-		# Initialisation
-		p1, p2 = players
-		state = {
-			"players": {
-				p1.id: {"user": p1, "hp": self.START_HP, "items": [], "alive": True},
-				p2.id: {"user": p2, "hp": self.START_HP, "items": [], "alive": True},
-			},
-			"current_player": p1.id,
-			"turn": 0,
-			"history": [],
-			"winner": None,
-			"menotte_until": None,
-			"scie_flags": {},
-			"adrenaline_flags": {}
-		}
+    async def _start_game(self, channel: discord.abc.Messageable, players: list, invite_msg: discord.Message, guild_id: Optional[int]):
+        """
+        Lance la partie Buckshot Roulette (1v1). players = [joueur1, joueur2] (2e peut être bot).
+        """
+        # Initialisation
+        p1, p2 = players
+        state = {
+            "players": {
+                p1.id: {"user": p1, "hp": self.START_HP, "items": [], "alive": True},
+                p2.id: {"user": p2, "hp": self.START_HP, "items": [], "alive": True},
+            },
+            "current_player": p1.id,
+            "turn": 0,
+            "history": [],
+            "winner": None,
+            "menotte_until": None,
+            "scie_flags": {},
+            "adrenaline_flags": {}
+        }
 
-		ITEM_POOL = ["cigarette", "biere", "loupe", "menottes", "scie", "adrenaline"]
-		for pid in state["players"]:
-			n_items = random.choice([1, 1, 2])
-			state["players"][pid]["items"] = random.sample(ITEM_POOL, k=n_items)
+        ITEM_POOL = ["cigarette", "biere", "loupe", "menottes", "scie", "adrenaline"]
+        for pid in state["players"]:
+            n_items = random.choice([1, 1, 2])
+            state["players"][pid]["items"] = random.sample(ITEM_POOL, k=n_items)
 
-		# Fonction helper pour créer embed du tour
-		async def make_game_embed(note: str = ""):
-			lines = []
-			for pid, pdata in state["players"].items():
-				u = pdata["user"]
-				hp = pdata["hp"]
-				items = ", ".join(pdata["items"]) or "—"
-				lines.append(f"**{u.display_name}** — ❤️ {hp} — 🧰 {items}")
-			desc = ("\n".join(lines))
-			if note:
-				desc = note + "\n\n" + desc
-			return discord.Embed(title="🎲 Buckshot Roulette", description=desc, color=discord.Color.dark_gold()).set_footer(text="Actions : Tirer / Passer / Utiliser un objet")
+        # Fonction helper pour créer embed du tour
+        async def make_game_embed(note: str = ""):
+            lines = []
+            for pid, pdata in state["players"].items():
+                u = pdata["user"]
+                hp = pdata["hp"]
+                items = ", ".join(pdata["items"]) or "—"
+                lines.append(f"**{u.display_name}** — ❤️ {hp} — 🧰 {items}")
+            desc = ("\n".join(lines))
+            if note:
+                desc = note + "\n\n" + desc
+            return discord.Embed(title="🎲 Buckshot Roulette", description=desc, color=discord.Color.dark_gold()).set_footer(text="Actions : Tirer / Passer / Utiliser un objet")
 
-		# Barillet aléatoire
-		def make_barillet():
-			bullets = random.randint(self.MIN_BULLETS, self.MAX_BULLETS)
-			arr = [True]*bullets + [False]*(self.CHAMBRE_COUNT - bullets)
-			random.shuffle(arr)
-			return arr
+        # Barillet aléatoire
+        def make_barillet():
+            bullets = random.randint(self.MIN_BULLETS, self.MAX_BULLETS)
+            arr = [True]*bullets + [False]*(self.CHAMBRE_COUNT - bullets)
+            random.shuffle(arr)
+            return arr
 
-		# Appliquer effet d’un objet
-		def apply_item_effect(player_id: int, item: str, state_local: dict, barillet: list):
-			note = ""
-			alter = False
-			if item == "cigarette":
-				state_local["players"][player_id]["hp"] = min(5, state_local["players"][player_id]["hp"] + 1)
-				note = f"{state_local['players'][player_id]['user'].display_name} fume une cigarette et récupère ❤️1."
-			elif item == "biere":
-				if True in barillet:
-					barillet[barillet.index(True)] = False
-					note = f"{state_local['players'][player_id]['user'].display_name} boit une bière et retire une balle du barillet."
-					alter = True
-			elif item == "loupe":
-				note = f"{state_local['players'][player_id]['user'].display_name} regarde avec une loupe."
-				alter = "peek"
-			elif item == "menottes":
-				note = f"{state_local['players'][player_id]['user'].display_name} menotte l'adversaire (il perd son prochain tour)."
-				alter = "menotte"
-			elif item == "scie":
-				note = f"{state_local['players'][player_id]['user'].display_name} prépare la scie (prochain tir inflige +1 dégât)."
-				state_local["scie_flags"][player_id] = True
-			elif item == "adrenaline":
-				note = f"{state_local['players'][player_id]['user'].display_name} prend de l'adrénaline (action supplémentaire)."
-				state_local["adrenaline_flags"][player_id] = True
-			else:
-				note = f"{state_local['players'][player_id]['user'].display_name} a tenté d'utiliser un objet inconnu."
-			return note, alter
+        # Appliquer effet d’un objet
+        def apply_item_effect(player_id: int, item: str, state_local: dict, barillet: list):
+            note = ""
+            alter = False
+            if item == "cigarette":
+                state_local["players"][player_id]["hp"] = min(5, state_local["players"][player_id]["hp"] + 1)
+                note = f"{state_local['players'][player_id]['user'].display_name} fume une cigarette et récupère ❤️1."
+            elif item == "biere":
+                if True in barillet:
+                    barillet[barillet.index(True)] = False
+                    note = f"{state_local['players'][player_id]['user'].display_name} boit une bière et retire une balle du barillet."
+                    alter = True
+            elif item == "loupe":
+                note = f"{state_local['players'][player_id]['user'].display_name} regarde avec une loupe."
+                alter = "peek"
+            elif item == "menottes":
+                note = f"{state_local['players'][player_id]['user'].display_name} menotte l'adversaire (il perd son prochain tour)."
+                alter = "menotte"
+            elif item == "scie":
+                note = f"{state_local['players'][player_id]['user'].display_name} prépare la scie (prochain tir inflige +1 dégât)."
+                state_local["scie_flags"][player_id] = True
+            elif item == "adrenaline":
+                note = f"{state_local['players'][player_id]['user'].display_name} prend de l'adrénaline (action supplémentaire)."
+                state_local["adrenaline_flags"][player_id] = True
+            else:
+                note = f"{state_local['players'][player_id]['user'].display_name} a tenté d'utiliser un objet inconnu."
+            return note, alter
 
-		last_embed = await make_game_embed("Début de la partie")
-		game_msg = await safe_send(channel, embed=last_embed)
-		finished = False
+        last_embed = await make_game_embed("Début de la partie")
+        game_msg = await safe_send(channel, embed=last_embed)
+        finished = False
 
-		while not finished:
-			state["turn"] += 1
-			cur_id = state["current_player"]
-			cur_data = state["players"][cur_id]
-			cur_user = cur_data["user"]
-			opp_id = [k for k in state["players"] if k != cur_id][0]
+        while not finished:
+            state["turn"] += 1
+            cur_id = state["current_player"]
+            cur_data = state["players"][cur_id]
+            cur_user = cur_data["user"]
+            opp_id = [k for k in state["players"] if k != cur_id][0]
 
-			# Gestion menottes
-			if state.get("menotte_until") == cur_id:
-				note = f"🔒 {cur_user.display_name} est menotté et perd ce tour."
-				state["menotte_until"] = None
-				state["current_player"] = opp_id
-				await safe_edit(game_msg, embed=await make_game_embed(note))
-				await asyncio.sleep(1.2)
-				continue
+            # Gestion menottes
+            if state.get("menotte_until") == cur_id:
+                note = f"🔒 {cur_user.display_name} est menotté et perd ce tour."
+                state["menotte_until"] = None
+                state["current_player"] = opp_id
+                await safe_edit(game_msg, embed=await make_game_embed(note))
+                await asyncio.sleep(1.2)
+                continue
 
-			# Barillet
-			barillet = make_barillet()
+            # Barillet
+            barillet = make_barillet()
 
-			# View pour boutons actions
-			class ActionView(discord.ui.View):
-				def __init__(self, players_ids: list, timeout=40):
-					super().__init__(timeout=timeout)
-					self.players_ids = players_ids
-					self.msg = None
-					self.action = None
-				def _is_current(self, interaction):
-					return interaction.user.id == state["current_player"]
+            # View pour boutons actions
+            class ActionView(discord.ui.View):
+                def __init__(self, players_ids: list, timeout=40):
+                    super().__init__(timeout=timeout)
+                    self.players_ids = players_ids
+                    self.msg = None
+                    self.action = None
+                def _is_current(self, interaction):
+                    return interaction.user.id == state["current_player"]
 
-				@discord.ui.button(label="🔫 Tirer", style=discord.ButtonStyle.danger)
-				async def shoot(self, interaction, button):
-					if not self._is_current(interaction):
-						return await interaction.response.send_message("🔒 Ce n'est pas ton tour.", ephemeral=True)
-					self.action = ("shoot", None)
-					await interaction.response.defer()
-					self.stop()
+                @discord.ui.button(label="🔫 Tirer", style=discord.ButtonStyle.danger)
+                async def shoot(self, interaction, button):
+                    if not self._is_current(interaction):
+                        return await interaction.response.send_message("🔒 Ce n'est pas ton tour.", ephemeral=True)
+                    self.action = ("shoot", None)
+                    await interaction.response.defer()
+                    self.stop()
 
-				@discord.ui.button(label="⏭️ Passer", style=discord.ButtonStyle.secondary)
-				async def passer(self, interaction, button):
-					if not self._is_current(interaction):
-						return await interaction.response.send_message("🔒 Ce n'est pas ton tour.", ephemeral=True)
-					self.action = ("pass", None)
-					await interaction.response.defer()
-					self.stop()
+                @discord.ui.button(label="⏭️ Passer", style=discord.ButtonStyle.secondary)
+                async def passer(self, interaction, button):
+                    if not self._is_current(interaction):
+                        return await interaction.response.send_message("🔒 Ce n'est pas ton tour.", ephemeral=True)
+                    self.action = ("pass", None)
+                    await interaction.response.defer()
+                    self.stop()
 
-			view = ActionView(players_ids=list(state["players"].keys()))
-			view.msg = game_msg
+            view = ActionView(players_ids=list(state["players"].keys()))
+            view.msg = game_msg
 
-			# Embed tour
-			note = f"Tour {state['turn']} — Au tour de {cur_user.display_name}."
-			await safe_edit(game_msg, embed=await make_game_embed(note), view=view)
+            # Embed tour
+            note = f"Tour {state['turn']} — Au tour de {cur_user.display_name}."
+            await safe_edit(game_msg, embed=await make_game_embed(note), view=view)
 
-			# Action du bot
-			if cur_user.bot:
-				await asyncio.sleep(1.0)
-				action = "shoot" if random.random() < 0.8 else "pass"
-				view.action = (action, None)
-			else:
-				await view.wait()
+            # Action du bot
+            if cur_user.bot:
+                await asyncio.sleep(1.0)
+                action = "shoot" if random.random() < 0.8 else "pass"
+                view.action = (action, None)
+            else:
+                await view.wait()
 
-			act_name, _ = view.action or ("pass", None)
+            act_name, _ = view.action or ("pass", None)
 
-			# Actions
-			if act_name == "shoot":
-				chamber = barillet.pop(0)
-				if chamber:
-					dmg = 1
-					if state["scie_flags"].get(cur_id):
-						dmg += 1
-						state["scie_flags"][cur_id] = False
-					state["players"][cur_id]["hp"] -= dmg
-					await safe_send(channel, f"💥 BANG! {cur_user.display_name} s'est tiré dessus et perd {dmg} ❤️.")
-					if state["players"][cur_id]["hp"] <= 0:
-						state["players"][cur_id]["alive"] = False
-						state["winner"] = opp_id
-						finished = True
-						await safe_send(channel, f"💀 {cur_user.display_name} est éliminé! {state['players'][opp_id]['user'].display_name} gagne.")
-						break
-				else:
-					await safe_send(channel, f"🔫 *Click* — {cur_user.display_name} est sauf.")
-			else:
-				await safe_send(channel, f"⏭️ {cur_user.display_name} passe.")
+            # Actions
+            if act_name == "shoot":
+                chamber = barillet.pop(0)
+                if chamber:
+                    dmg = 1
+                    if state["scie_flags"].get(cur_id):
+                        dmg += 1
+                        state["scie_flags"][cur_id] = False
+                    state["players"][cur_id]["hp"] -= dmg
+                    await safe_send(channel, f"💥 BANG! {cur_user.display_name} s'est tiré dessus et perd {dmg} ❤️.")
+                    if state["players"][cur_id]["hp"] <= 0:
+                        state["players"][cur_id]["alive"] = False
+                        state["winner"] = opp_id
+                        finished = True
+                        await safe_send(channel, f"💀 {cur_user.display_name} est éliminé! {state['players'][opp_id]['user'].display_name} gagne.")
+                        break
+                else:
+                    await safe_send(channel, f"🔫 *Click* — {cur_user.display_name} est sauf.")
+            else:
+                await safe_send(channel, f"⏭️ {cur_user.display_name} passe.")
 
-			# Swap joueur
-			state["current_player"] = opp_id
-			await asyncio.sleep(1.0)
+            # Swap joueur
+            state["current_player"] = opp_id
+            await asyncio.sleep(1.0)
 
-		# Fin de partie
-		summary = "\n".join([f"**{p['user'].display_name}** — ❤️ {p['hp']} — {'Vivant' if p['alive'] else 'Éliminé'}" for p in state["players"].values()])
-		final_embed = discord.Embed(title="🏁 Fin de la partie — Buckshot Roulette", description=summary, color=discord.Color.gold())
-		await safe_edit(game_msg, embed=final_embed, view=None)
+        # Fin de partie
+        summary = "\n".join([f"**{p['user'].display_name}** — ❤️ {p['hp']} — {'Vivant' if p['alive'] else 'Éliminé'}" for p in state["players"].values()])
+        final_embed = discord.Embed(title="🏁 Fin de la partie — Buckshot Roulette", description=summary, color=discord.Color.gold())
+        await safe_edit(game_msg, embed=final_embed, view=None)
 
-		# Nettoyer session
-		if guild_id:
-			self.active_sessions.discard(guild_id)
+        # Nettoyer session
+        if guild_id:
+            self.active_sessions.discard(guild_id)
 
 
 
