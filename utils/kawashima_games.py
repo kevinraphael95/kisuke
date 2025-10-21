@@ -145,7 +145,7 @@ carre_magique_fiable_emoji.title = "Carré magique 3x3"
 carre_magique_fiable_emoji.emoji = "🔢"
 
 # ────────────────────────────────────────────────────────────────────────────────
-# 🎨 Couleurs (Stroop complet avec boutons interactifs)
+# 🎨 Couleurs (Stroop complet équilibré)
 # ────────────────────────────────────────────────────────────────────────────────
 async def couleurs(ctx, embed, get_user_id, bot):
     styles = {
@@ -155,52 +155,55 @@ async def couleurs(ctx, embed, get_user_id, bot):
         "gris": discord.ButtonStyle.secondary
     }
 
-    # Liste des couleurs et création des boutons
     couleurs = list(styles.keys())
-    random.shuffle(couleurs)
+    mots = couleurs.copy()
+    random.shuffle(mots)  # mélange pour ne pas correspondre aux couleurs
 
-    # On crée 4 boutons avec des styles et labels mélangés
+    # Création d'un bouton pour chaque couleur avec un mot aléatoire unique
     buttons = []
-    for couleur in couleurs:
-        label = random.choice(list(styles.keys())).upper()  # le mot écrit dessus
-        button = Button(label=label, style=styles[couleur])
+    for couleur, mot in zip(couleurs, mots):
+        button = Button(label=mot.upper(), style=styles[couleur])
         buttons.append(button)
 
-    # On choisit aléatoirement le type de question
+    # Choix aléatoire du type de question
     question_type = random.choice(["mot", "couleur"])
 
     if question_type == "mot":
-        cible = random.choice(list(styles.keys()))
+        cible = random.choice(mots)
         question = f"Appuie sur le bouton où est écrit le **MOT** `{cible.upper()}` !"
-        # bonne réponse : le bouton dont label == cible.upper()
         condition = lambda b: b.label.lower() == cible
     else:
-        cible = random.choice(list(styles.keys()))
+        cible = random.choice(couleurs)
         question = f"Appuie sur le bouton de **COULEUR** `{cible.upper()}` !"
-        # bonne réponse : le bouton dont style == styles[cible]
         condition = lambda b: b.style == styles[cible]
 
-    # Création de la vue
+    # Création de la vue avec callback unique
     view = View(timeout=TIMEOUT)
     for button in buttons:
         async def callback(interaction, b=button):
             if interaction.user.id != get_user_id():
-                await interaction.response.send_message("Ce jeu n'est pas pour toi !", ephemeral=True)
+                await interaction.response.send_message("🚫 Ce jeu n’est pas pour toi !", ephemeral=True)
                 return
-            view.stop()
             view.value = condition(b)
+            view.stop()
             await interaction.response.defer()
 
         button.callback = callback
         view.add_item(button)
 
-    # Affichage de l'embed
+    # Affichage
     embed.clear_fields()
     embed.add_field(name="🎨 Couleurs (Stroop)", value=question, inline=False)
     await ctx.edit(embed=embed, view=view)
 
-    # Attente de la fin ou du timeout
+    # Attente du clic ou du timeout
     await view.wait()
+
+    # Désactive les boutons après réponse
+    for child in view.children:
+        child.disabled = True
+    await ctx.edit(view=view)
+
     return getattr(view, "value", False)
 
 couleurs.title = "Couleurs"
@@ -301,7 +304,7 @@ async def equation_trou(ctx, embed, get_user_id, bot):
     except:
         return False
 
-equation_trou.title = "Équation à trou"
+equation_trou.title = "Equation à trou"
 equation_trou.emoji = "➗"
 
 # ────────────────────────────────────────────────────────────────────────────────
