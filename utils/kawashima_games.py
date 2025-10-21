@@ -795,7 +795,7 @@ trouver_intrus.emoji = "🔍"
 
 
 # ────────────────────────────────────────────────────────────────────────────────
-# 🔹 ✏️ Typo trap
+# 🔹 ✏️ Typographie erreur
 # ────────────────────────────────────────────────────────────────────────────────
 async def typo_trap(ctx, embed, get_user_id, bot):
     mot = random.choice(["chien", "maison", "voiture", "ordinateur", "banane", "chocolat"])
@@ -810,7 +810,7 @@ async def typo_trap(ctx, embed, get_user_id, bot):
 
     embed.clear_fields()
     embed.add_field(
-        name="✏️ Typo trap",
+        name="✏️ Typographie erreur",
         value=f"{mot_mod}\n➡️ Quelle lettre est fausse ? (ex: 'x')",
         inline=False
     )
@@ -827,39 +827,10 @@ async def typo_trap(ctx, embed, get_user_id, bot):
     except:
         return False
 
-typo_trap.title = "Typo trap"
+typo_trap.title = "Typographie erreur"
 typo_trap.emoji = "✏️"
 
-# ────────────────────────────────────────────────────────────────────────────────
-# 🔹 🚪 Va-et-vient
-# ────────────────────────────────────────────────────────────────────────────────
-async def va_et_vient(ctx, embed, get_user_id, bot):
-    inside = 0
-    for _ in range(5):
-        action = random.choice(["entrent", "sortent"])
-        n = random.randint(1, 4)
-        if action == "entrent":
-            inside += n
-        else:
-            inside = max(0, inside - n)
 
-        phrase = f"{n} personnes {action} dans la maison."
-        embed.clear_fields()
-        embed.add_field(name="🚪 Va-et-vient", value=phrase, inline=False)
-        await ctx.edit(embed=embed)
-        await asyncio.sleep(1.5)
-
-    embed.clear_fields()
-    embed.add_field(name="🚪 Va-et-vient", value="Combien de personnes restent dans la maison ?", inline=False)
-    await ctx.edit(embed=embed)
-
-    try:
-        msg = await bot.wait_for("message", check=lambda m: m.author.id == get_user_id(), timeout=TIMEOUT)
-        return int(msg.content) == inside
-    except:
-        return False
-va_et_vient.title = "Va-et-vient"
-va_et_vient.emoji = "🚪"
 
 
 # the end
