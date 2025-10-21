@@ -620,23 +620,41 @@ reflexe_couleur.title = "Réflexe couleur"
 reflexe_couleur.emoji = "🟢"
 
 # ────────────────────────────────────────────────────────────────────────────────
-# 🔹 🧩 Suite alphabétique
+# 🔹 🧩 Suite alphabétique (sens aléatoire)
 # ────────────────────────────────────────────────────────────────────────────────
 async def suite_alpha(ctx, embed, get_user_id, bot):
-    start = random.randint(65, 70)
-    step = random.randint(1, 3)
-    serie = [chr(start + i * step) for i in range(4)]
-    answer = chr(start + 4 * step)
+    # Détermine le sens : normal (True) ou inverse (False)
+    sens_normal = random.choice([True, False])
+
+    if sens_normal:
+        start = random.randint(65, 70)  # A-F
+        step = random.randint(1, 3)
+        serie = [chr(start + i * step) for i in range(4)]
+        answer = chr(start + 4 * step)
+    else:
+        start = random.randint(90, 85)  # Z-U
+        step = random.randint(1, 3)
+        serie = [chr(start - i * step) for i in range(4)]
+        answer = chr(start - 4 * step)
 
     embed.clear_fields()
-    embed.add_field(name="🧩 Suite alphabétique", value=f"{', '.join(serie)} ... ?", inline=False)
+    embed.add_field(
+        name="🧩 Suite alphabétique",
+        value=f"{', '.join(serie)} ... ?",
+        inline=False
+    )
     await ctx.edit(embed=embed)
 
     try:
-        msg = await bot.wait_for("message", check=lambda m: m.author.id == get_user_id(), timeout=TIMEOUT)
+        msg = await bot.wait_for(
+            "message",
+            check=lambda m: m.author.id == get_user_id(),
+            timeout=TIMEOUT
+        )
         return msg.content.upper() == answer
     except:
         return False
+
 suite_alpha.title = "Suite alphabétique"
 suite_alpha.emoji = "🧩"
 
@@ -645,52 +663,54 @@ suite_alpha.emoji = "🧩"
 # ────────────────────────────────────────────────────────────────────────────────
 async def suite_logique(ctx, embed, get_user_id, bot):
     type_suite = random.choice(["arithmétique", "géométrique", "alternée", "carrés", "fibonacci"])
-    question = ""
+    serie = []
+    answer_index = None
     answer = None
 
+    # Génération de la série selon le type
     if type_suite == "arithmétique":
         start = random.randint(1, 10)
         step = random.randint(2, 6)
-        serie = [start + i * step for i in range(4)]
-        answer = serie[-1] + step
-        question = f"{serie} ... ?"
+        serie = [start + i * step for i in range(5)]
 
     elif type_suite == "géométrique":
         start = random.randint(1, 5)
         ratio = random.randint(2, 3)
-        serie = [start * (ratio ** i) for i in range(4)]
-        answer = serie[-1] * ratio
-        question = f"{serie} ... ?"
+        serie = [start * (ratio ** i) for i in range(5)]
 
     elif type_suite == "alternée":
         start = random.randint(1, 10)
         add, sub = random.randint(2, 5), random.randint(1, 4)
         serie = [start]
-        for i in range(1, 4):
+        for i in range(1, 5):
             if i % 2 == 1:
                 serie.append(serie[-1] + add)
             else:
                 serie.append(serie[-1] - sub)
-        answer = serie[-1] + (add if len(serie) % 2 == 1 else -sub)
-        question = f"{serie} ... ?"
 
     elif type_suite == "carrés":
         start = random.randint(1, 5)
-        serie = [i ** 2 for i in range(start, start + 4)]
-        answer = (start + 4) ** 2
-        question = f"{serie} ... ?"
+        serie = [i ** 2 for i in range(start, start + 5)]
 
     elif type_suite == "fibonacci":
         a, b = random.randint(1, 5), random.randint(1, 5)
         serie = [a, b]
-        for _ in range(2, 4):
+        for _ in range(3):
             serie.append(serie[-1] + serie[-2])
-        answer = serie[-1] + serie[-2]
-        question = f"{serie} ... ?"
+
+    # Choisir une position aléatoire à remplacer par "?"
+    answer_index = random.randint(0, len(serie) - 1)
+    answer = serie[answer_index]
+    display_serie = serie.copy()
+    display_serie[answer_index] = "?"
 
     # Affichage
     embed.clear_fields()
-    embed.add_field(name="➗ Suite logique", value=question, inline=False)
+    embed.add_field(
+        name="➗ Suite logique",
+        value=f"{display_serie} ... ?",
+        inline=False
+    )
     await ctx.edit(embed=embed)
 
     # Attente de la réponse
@@ -811,7 +831,7 @@ async def typo_trap(ctx, embed, get_user_id, bot):
     embed.clear_fields()
     embed.add_field(
         name="✏️ Typographie erreur",
-        value=f"{mot_mod}\n➡️ Quelle lettre est fausse ? (ex: 'x')",
+        value=f"{mot_mod}\n➡️ Quelle lettre est incorrecte dans ce mot ? (ex: 'x')",
         inline=False
     )
     await ctx.edit(embed=embed)
