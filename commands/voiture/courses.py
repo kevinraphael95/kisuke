@@ -1,22 +1,25 @@
 # ────────────────────────────────────────────────────────────────────────────────
-# 📌 course_voiture.py — Mini-jeu de course avec virages et pentes réalistes
-# Objectif : Course animée entre voitures selon leurs stats
+# 📌 course_voiture.py — Mini-jeu de course de voitures avec stats dynamiques
+# Objectif : Course animée basée sur les voitures choisies par les joueurs
 # Catégorie : Voiture
 # Accès : Tous
 # Cooldown : 0 (désactivé pour tests)
 # ────────────────────────────────────────────────────────────────────────────────
 
+# ────────────────────────────────────────────────────────────────────────────────
+# 📦 Imports nécessaires
+# ────────────────────────────────────────────────────────────────────────────────
 import discord
 from discord import app_commands
 from discord.ext import commands
 from discord.ui import View, Button
 import random
 import asyncio
-from utils.discord_utils import safe_send, safe_edit
+from utils.discord_utils import safe_send, safe_respond, safe_edit
 from utils.supabase_client import supabase
 
 # ────────────────────────────────────────────────────────────────────────────────
-# 🎮 Bouton de participation à la course
+# 🎮 Classe du bouton pour rejoindre la course
 # ────────────────────────────────────────────────────────────────────────────────
 class JoinRaceButton(Button):
     def __init__(self, race):
@@ -25,6 +28,8 @@ class JoinRaceButton(Button):
 
     async def callback(self, interaction: discord.Interaction):
         user_id = str(interaction.user.id)
+
+        # Récupération sûre des données utilisateur (Supabase)
         try:
             res = supabase.table("voitures_users").select("*").eq("user_id", user_id).execute()
             user_data = res.data[0] if res.data else None
@@ -33,9 +38,13 @@ class JoinRaceButton(Button):
             return await interaction.response.send_message("⚠️ Erreur base de données.", ephemeral=True)
 
         if not user_data or not user_data.get("voiture_choisie"):
+            print(f"[DEBUG] {interaction.user} n'a pas de voiture choisie.")
+            # Pour tests — voiture par défaut
             user_data = {"voiture_choisie": "Ferrari Test"}
 
         voiture_choisie = user_data["voiture_choisie"]
+
+        # Récupérer stats voiture
         try:
             car_res = supabase.table("voitures_data").select("*").eq("nom", voiture_choisie).execute()
             car_data = car_res.data[0] if car_res.data else None
@@ -44,9 +53,9 @@ class JoinRaceButton(Button):
             car_data = None
 
         if not car_data:
-            stats = {"vitesse_max": 220, "acceleration_0_100": 5.0, "maniabilite": 70, "poids": 1300}
+            stats = {"vitesse_max": 200, "acceleration_0_100": 5.0, "maniabilite": 70, "poids": 1300}
         else:
-            stats = car_data.get("stats", {"vitesse_max": 220, "acceleration_0_100": 5.0, "maniabilite": 70, "poids": 1300})
+            stats = car_data.get("stats", {"vitesse_max": 200, "acceleration_0_100": 5.0, "maniabilite": 70, "poids": 1300})
 
         # Ajout du joueur
         if user_id not in [p["user_id"] for p in self.race["participants"]]:
@@ -63,10 +72,14 @@ class JoinRaceButton(Button):
                 "is_bot": False
             })
 
+        # Mettre à jour l'embed
         embed = self.generate_embed()
-        await interaction.response.edit_message(embed=embed, view=self.view)
+        try:
+            await interaction.response.edit_message(embed=embed, view=self.view)
+        except Exception:
+            await interaction.response.send_message(embed=embed, ephemeral=True)
 
-        # Démarrage auto si 4 joueurs
+        # Si 4 participants, démarrer automatiquement
         if len(self.race["participants"]) >= 4:
             for child in self.view.children:
                 child.disabled = True
@@ -75,33 +88,34 @@ class JoinRaceButton(Button):
 
     def generate_embed(self):
         embed = discord.Embed(
-            title="🏁 Course en préparation",
-            description=f"Hôte : **{self.race.get('host', 'inconnu')}** — Clique sur 🚗 pour participer !",
+            title="🏁 Course de voitures en préparation",
+            description=f"Hôte : **{self.race.get('host', 'inconnu')}** — Clique sur **🚗 Rejoindre la course** pour participer !",
             color=discord.Color.blue()
         )
-        participants = "\n".join(f"{p['emoji']} {p['username']} — {p['voiture']}" for p in self.race["participants"]) or "Aucun participant pour l’instant..."
-        embed.add_field(name="Participants", value=participants, inline=False)
+        if self.race["participants"]:
+            desc = "\n".join(f"{p['emoji']} {p['username']} — {p['voiture']}" for p in self.race["participants"])
+        else:
+            desc = "Aucun participant pour l’instant..."
+        embed.add_field(name="Participants", value=desc, inline=False)
         embed.set_footer(text="Max 4 participants — la course démarre automatiquement.")
         return embed
 
-    # ────────────────────────────────────────────────────────────────────────────
-    # 🚦 Lancement de la course
-    # ────────────────────────────────────────────────────────────────────────────
     async def start_race(self, channel: discord.abc.Messageable):
-        # Ajouter des bots si nécessaire
-        bot_pool = ["Bot-Kenzo", "Bot-Ryo", "Bot-Mika", "Bot-Luna"]
+        # Ajouter des bots si moins de 4 joueurs
+        bot_pool = ["Bot-Kenzo", "Bot-Ryo", "Bot-Mika", "Bot-Aya", "Bot-Luna"]
         while len(self.race["participants"]) < 4 and self.race["available_emojis"]:
             emoji = self.race["available_emojis"].pop(0)
+            bot_name = bot_pool.pop(0) if bot_pool else f"Bot{random.randint(1,99)}"
             voiture = random.choice(["Ferrari F40", "McLaren F1", "Peugeot Oxia"])
             stats = {
-                "vitesse_max": random.randint(230, 360),
+                "vitesse_max": random.randint(220, 360),
                 "acceleration_0_100": random.uniform(2.5, 5.0),
-                "maniabilite": random.randint(65, 90),
+                "maniabilite": random.randint(60, 90),
                 "poids": random.randint(1100, 1600)
             }
             self.race["participants"].append({
                 "user_id": f"bot_{emoji}",
-                "username": bot_pool.pop(0) if bot_pool else f"Bot{random.randint(1,99)}",
+                "username": bot_name,
                 "voiture": voiture,
                 "stats": stats,
                 "emoji": emoji,
@@ -109,122 +123,106 @@ class JoinRaceButton(Button):
                 "is_bot": True
             })
 
-        # Génération du circuit
-        self.race["track"] = self.generate_track()
-        msg = await safe_send(channel, "🏎️ **La course commence !** 🚦")
-        await asyncio.sleep(2)
-        await self.run_race(channel, msg)
+        start_msg = await safe_send(channel, "🏎️ **La course commence !** Préparez-vous...")
+        await asyncio.sleep(2.0)
+        await self.run_race(channel, start_msg)
 
-    # ────────────────────────────────────────────────────────────────────────────
-    # 🛣️ Génération du circuit
-    # ────────────────────────────────────────────────────────────────────────────
-    def generate_track(self):
-        base_length = 25
-        track = []
-        specials = ["~", "~~", "⬆️", "⬇️"]
-        num_special = random.randint(2, 4)
-
-        while len(track) < base_length:
-            if num_special > 0 and random.random() < 0.25 and (not track or track[-1] == "─"):
-                track.append(random.choice(specials))
-                num_special -= 1
-                track.append("─")  # toujours un segment droit après un spécial
-            else:
-                track.append("─")
-
-        return track[:base_length]
-
-    # ────────────────────────────────────────────────────────────────────────────
-    # 🏎️ Simulation de la course
-    # ────────────────────────────────────────────────────────────────────────────
-    async def run_race(self, channel, message):
-        track = self.race["track"]
-        track_length = len(track)
+    async def run_race(self, channel: discord.abc.Messageable, message):
+        track_length = 25  # plus court = plus lisible
         finished = False
         winner = None
 
+        # Tous les participants partent de 0
         for p in self.race["participants"]:
             p["position"] = 0
 
         while not finished:
-            await asyncio.sleep(1.1)
+            await asyncio.sleep(1.2)  # ⏳ rythme plus lent pour suspense
             for p in self.race["participants"]:
-                pos = min(int(p["position"]), track_length - 1)
-                segment = track[pos]
-                avance = self.calculate_advance(p["stats"], segment)
+                stats = p["stats"]
+                avance = self.calculate_advance(stats)
                 p["position"] += avance
                 if p["position"] >= track_length and not winner:
                     p["position"] = track_length
                     winner = p
                     finished = True
 
-            track_text = self.render_track(self.race["participants"], track)
-            classement = sorted(self.race["participants"], key=lambda x: -x["position"])
-            leaderboard = "\n".join(f"{i+1}. {p['emoji']} {p['username']} ({p['voiture']})" for i, p in enumerate(classement))
-            await safe_edit(message, f"🏎️ **Course en cours...**\n{track_text}\n\n**Classement provisoire :**\n{leaderboard}")
+            track_text = self.render_track(self.race["participants"], track_length)
+            sorted_p = sorted(self.race["participants"], key=lambda x: -x["position"])
+            leaderboard = "\n".join(
+                f"{i+1}. {p['emoji']} {p['username']} ({p['voiture']})"
+                for i, p in enumerate(sorted_p)
+            )
 
-        await safe_edit(message, f"🏁 **Course terminée !**\nLe gagnant est 🏆 **{winner['emoji']} {winner['username']}** avec sa **{winner['voiture']}** ! 🎉")
+            try:
+                await safe_edit(message, f"🏎️ **Course en cours...**\n{track_text}\n\n**Classement provisoire :**\n{leaderboard}")
+            except Exception as e:
+                print("[EDIT ERR]", e)
 
-    # ────────────────────────────────────────────────────────────────────────────
-    # ⚙️ Calcul de l’avancée
-    # ────────────────────────────────────────────────────────────────────────────
-    def calculate_advance(self, stats, segment):
-        base = stats["vitesse_max"]
-        accel = stats["acceleration_0_100"]
-        maniab = stats["maniabilite"]
-        poids = stats["poids"]
+        final = f"🏆 **Course terminée !**\nLe gagnant est **{winner['emoji']} {winner['username']}** avec sa **{winner['voiture']}** ! 🎉"
+        try:
+            await safe_edit(message, final)
+        except Exception:
+            await message.edit(content=final)
 
-        # Influence du segment
-        if segment == "~":
-            modif = 0.85  # petit virage
-        elif segment == "~~":
-            modif = 0.7   # grand virage
-        elif segment == "⬆️":
-            modif = 0.8   # montée
-        elif segment == "⬇️":
-            modif = 1.25  # descente
-        else:
-            modif = 1.0   # ligne droite
-
-        # Calcul réaliste
-        perf = (base / 280) * (12 / accel) * (maniab / 100) * (1200 / poids)
-        avance = perf * modif * random.uniform(0.9, 1.1)
-        return max(0.8, round(avance, 2))
-
-    # ────────────────────────────────────────────────────────────────────────────
-    # 🏁 Affichage de la piste
-    # ────────────────────────────────────────────────────────────────────────────
-    def render_track(self, participants, track):
+    def render_track(self, participants, track_length):
         lines = []
         for p in participants:
-            pos = min(int(p["position"]), len(track) - 1)
-            route = "".join(track[:pos]) + "🚗" + "".join(track[pos+1:]) + " |🏁"
-            lines.append(f"{p['emoji']} {route}")
+            pos = min(int(p["position"]), track_length)
+            track = f"{p['emoji']} " + "─" * pos + "🚗" + "─" * (track_length - pos) + " |🏁"
+            lines.append(track)
         return "\n".join(lines)
+
+    def calculate_advance(self, stats):
+        base = stats.get("vitesse_max", 200)
+        accel = stats.get("acceleration_0_100", 5)
+        maniab = stats.get("maniabilite", 70)
+        poids = stats.get("poids", 1300)
+        # ⚙️ Avancement réduit pour créer du suspense
+        advance = (base / 250) * (10 / accel) * (maniab / 100) * (1200 / poids)
+        return max(1, round(advance * random.uniform(0.8, 2.0)))
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🧠 Cog principal
 # ────────────────────────────────────────────────────────────────────────────────
 class CourseVoiture(commands.Cog):
-    def __init__(self, bot):
+    """Commande /course_voiture et !course_voiture — Course entre joueurs selon leurs voitures."""
+    def __init__(self, bot: commands.Bot):
         self.bot = bot
 
-    @app_commands.command(name="course_voiture", description="Lance une course réaliste avec virages et pentes.")
+    @app_commands.command(name="course_voiture", description="Lance une course animée entre 4 voitures selon leurs stats.")
+    @app_commands.checks.cooldown(1, 0.0, key=lambda i: (i.user.id))
     async def slash_course_voiture(self, interaction: discord.Interaction):
         race = {"host": interaction.user.display_name, "participants": [], "available_emojis": ["🇦", "🇧", "🇨", "🇩"]}
         view = View(timeout=60)
         button = JoinRaceButton(race)
         view.add_item(button)
+
         await interaction.response.send_message(embed=button.generate_embed(), view=view)
 
+        async def on_timeout():
+            for child in view.children:
+                child.disabled = True
+            if len(race["participants"]) >= 1:
+                jb = next((c for c in view.children if isinstance(c, JoinRaceButton)), None)
+                if jb:
+                    await jb.start_race(interaction.channel)
+                else:
+                    await safe_send(interaction.channel, "⚠️ Impossible de démarrer automatiquement la course (internal).")
+            else:
+                msg = await interaction.original_response()
+                await msg.edit(content="❌ Course annulée, personne n'a rejoint.", embed=None, view=view)
+
+        view.on_timeout = on_timeout
+
     @commands.command(name="course_voiture", aliases=["vcourse"])
-    async def prefix_course_voiture(self, ctx):
+    async def prefix_course_voiture(self, ctx: commands.Context):
         race = {"host": ctx.author.display_name, "participants": [], "available_emojis": ["🇦", "🇧", "🇨", "🇩"]}
         view = View(timeout=60)
         button = JoinRaceButton(race)
         view.add_item(button)
         await safe_send(ctx.channel, embed=button.generate_embed(), view=view)
-
+        view.on_timeout = lambda: button.start_race(ctx.channel) if len(race["participants"]) >= 1 else safe_send(ctx.channel, "Course annulée.")
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🔌 Setup du Cog
