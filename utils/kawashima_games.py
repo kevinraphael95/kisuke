@@ -623,7 +623,6 @@ reflexe_couleur.emoji = "🟢"
 # 🔹 🧩 Suite alphabétique (sens aléatoire)
 # ────────────────────────────────────────────────────────────────────────────────
 async def suite_alpha(ctx, embed, get_user_id, bot):
-    # Détermine le sens : normal (True) ou inverse (False)
     sens_normal = random.choice([True, False])
 
     if sens_normal:
@@ -632,7 +631,7 @@ async def suite_alpha(ctx, embed, get_user_id, bot):
         serie = [chr(start + i * step) for i in range(4)]
         answer = chr(start + 4 * step)
     else:
-        start = random.randint(90, 85)  # Z-U
+        start = random.randint(85, 90)  # U-Z
         step = random.randint(1, 3)
         serie = [chr(start - i * step) for i in range(4)]
         answer = chr(start - 4 * step)
@@ -651,7 +650,7 @@ async def suite_alpha(ctx, embed, get_user_id, bot):
             check=lambda m: m.author.id == get_user_id(),
             timeout=TIMEOUT
         )
-        return msg.content.upper() == answer
+        return msg.content.strip().upper() == answer
     except:
         return False
 
