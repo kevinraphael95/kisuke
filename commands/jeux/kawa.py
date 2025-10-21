@@ -29,12 +29,10 @@ TABLE_NAME = "kawashima_scores"
 # ────────────────────────────────────────────────────────────────────────────────
 class EntrainementCerebral(commands.Cog):
     """Mode arcade — Entraînement cérébral avec classement global."""
-
     def __init__(self, bot: commands.Bot):
         self.bot = bot
         self.minijeux = []
         self.active_sessions = set()  # IDs des serveurs où un entraînement est en cours
-
         for name, func in inspect.getmembers(kawashima_games, inspect.iscoroutinefunction):
             if not name.startswith("_"):
                 emoji = getattr(func, "emoji", "🎮")
@@ -66,15 +64,12 @@ class EntrainementCerebral(commands.Cog):
     async def run_arcade(self, ctx_or_interaction, multiplayer=False):
         guild = getattr(ctx_or_interaction, "guild", None)
         guild_id = guild.id if guild else None
-
         if guild_id and guild_id in self.active_sessions:
             return await (ctx_or_interaction.send if not isinstance(ctx_or_interaction, discord.Interaction) else ctx_or_interaction.followup.send)(
                 "⚠️ Un entraînement cérébral est déjà en cours sur ce serveur.", ephemeral=True
             )
-
         if guild_id:
             self.active_sessions.add(guild_id)
-
         try:
             # Gestion du contexte
             if isinstance(ctx_or_interaction, discord.Interaction):
@@ -105,61 +100,52 @@ class EntrainementCerebral(commands.Cog):
 
             class ReadyButton(discord.ui.View):
                 def __init__(self):
-                    super().__init__(timeout=45)
+                    super().__init__(timeout=30)  # 30 secondes pour rejoindre
                     self.ready_event = asyncio.Event()
                     self.clicked = False
 
                 @discord.ui.button(label="🟢 Je suis prêt !", style=discord.ButtonStyle.success)
                 async def ready(self, interaction: discord.Interaction, button: discord.ui.Button):
+                    # Mode multijoueur
                     if multiplayer:
                         if interaction.user in ready_users:
                             await interaction.response.send_message("✅ Tu es déjà prêt !", ephemeral=True)
                             return
-
                         if len(ready_users) >= 10:
                             await interaction.response.send_message("🚫 Le maximum de 10 joueurs est atteint.", ephemeral=True)
                             return
-
                         ready_users.append(interaction.user)
                         participants = ", ".join([u.name for u in ready_users])
-
                         embed = discord.Embed(
                             title=f"🧠 Entraînement cérébral — {title_mode}",
-                            description=f"Participants prêts : {participants}\n\nAppuyez sur le bouton quand vous êtes prêts !",
+                            description=f"Participants prêts : {participants}\n\n⏳ Début dans quelques secondes...",
                             color=discord.Color.blurple()
                         )
-
                         await interaction.response.edit_message(embed=embed, view=self)
-
-                        if len(ready_users) >= 2:
-                            button.disabled = True
-                            button.label = "✅ On y va !"
-                            await interaction.message.edit(view=self)
-                            self.clicked = True
-                            self.ready_event.set()
-
+                    # Mode solo
                     else:
                         if interaction.user != users[0]:
                             await interaction.response.send_message("🚫 Ce n’est pas ton entraînement.", ephemeral=True)
                             return
                         button.disabled = True
                         button.label = "✅ C’est parti !"
-                        await interaction.message.edit(view=self)
+                        await interaction.response.edit_message(view=self)
                         self.clicked = True
                         self.ready_event.set()
 
                 async def on_timeout(self):
-                    if not self.clicked:
-                        for child in self.children:
-                            child.disabled = True
-                            child.label = "⏰ Temps écoulé"
-                        self.ready_event.set()
+                    if multiplayer and len(ready_users) >= 2:
+                        self.clicked = True
+                    for child in self.children:
+                        child.disabled = True
+                        child.label = "⏰ Temps écoulé"
+                    self.ready_event.set()
 
             view = ReadyButton()
             msg_start = await send(embed=start_embed, view=view)
             await view.ready_event.wait()
 
-            if not view.clicked:
+            if not multiplayer and not view.clicked:
                 timeout_embed = discord.Embed(
                     title="⏰ Temps écoulé",
                     description="Personne n’a cliqué à temps. Relance la commande pour rejouer !",
@@ -174,42 +160,66 @@ class EntrainementCerebral(commands.Cog):
 
             # ─────────── Boucle des mini-jeux ───────────
             for index, (name, game) in enumerate(selected_games, start=1):
-                for player in active_players:
-                    get_user_id = lambda p=player: p.id
-                    game_embed = discord.Embed(
-                        title=f"🧩 Mini-jeu {index} — {name}",
-                        description=f"{player.mention}, réponds rapidement !",
-                        color=discord.Color.blurple()
-                    )
-                    msg_game = await send(embed=game_embed)
-                    start = time.time()
-                    success = await game(msg_game, game_embed, get_user_id, self.bot)
-                    elapsed = round(time.time() - start, 2)
-                    score = (1000 + max(0, 500 - int(elapsed * 25))) if success else 0
-                    total_score[player.id] = total_score.get(player.id, 0) + score
-                    results.setdefault(player.id, []).append((index, name, success, elapsed, score))
+                game_embed = discord.Embed(
+                    title=f"🧩 Mini-jeu {index} — {name}",
+                    description="Répondez le plus vite possible !",
+                    color=discord.Color.blurple()
+                )
+                msg_game = await send(embed=game_embed)
 
-                    result_embed = discord.Embed(
-                        title=f"🎯 Résultat — {name} ({player.name})",
-                        description=(
-                            f"{'✅ Réussi' if success else '❌ Raté'}\n"
-                            f"⏱️ Temps : `{elapsed}s`\n"
-                            f"🏅 Score : `{score}` pts"
-                        ),
-                        color=discord.Color.green() if success else discord.Color.red()
-                    )
-                    await send(embed=result_embed)
-                    await asyncio.sleep(1.5)
+                start = time.time()
+                winner = None
+                success = False
+                TIMEOUT = 20
+
+                if multiplayer:
+                    # Tous les joueurs peuvent répondre, on prend le premier correct
+                    def check(m):
+                        return m.author in active_players and m.channel == msg_game.channel
+
+                    while not winner:
+                        try:
+                            msg = await self.bot.wait_for("message", check=check, timeout=TIMEOUT)
+                            user_answer = msg.content
+                            success = await game(msg_game, game_embed, lambda: msg.author.id, self.bot, answer=user_answer)
+                            if success:
+                                winner = msg.author
+                        except asyncio.TimeoutError:
+                            break
+                else:
+                    # Mode solo classique
+                    get_user_id = lambda: active_players[0].id
+                    success = await game(msg_game, game_embed, get_user_id, self.bot)
+                    winner = active_players[0] if success else None
+
+                elapsed = round(time.time() - start, 2)
+                score = (1000 + max(0, 500 - int(elapsed * 25))) if success else 0
+
+                if winner:
+                    total_score[winner.id] = total_score.get(winner.id, 0) + score
+                    results.setdefault(winner.id, []).append((index, name, True, elapsed, score))
+                    result_text = f"🏆 {winner.mention} a trouvé la bonne réponse !\n⏱️ Temps : `{elapsed}s`\n🏅 Score : `{score}` pts"
+                else:
+                    result_text = "❌ Personne n’a trouvé la bonne réponse à temps !"
+
+                result_embed = discord.Embed(
+                    title=f"🎯 Résultat — {name}",
+                    description=result_text,
+                    color=discord.Color.green() if success else discord.Color.red()
+                )
+                await send(embed=result_embed)
+                await asyncio.sleep(1.5)
 
             # ─────────── Embed final par joueur ───────────
             for player in active_players:
-                player_results = results[player.id]
+                player_results = results.get(player.id, [])
+                if not player_results:
+                    continue
                 results_text = "\n".join(
                     f"**Jeu {i}** {'✅' if s else '❌'} {name}{f' — {t}s' if s else ''}"
                     for i, name, s, t, _ in player_results
                 )
                 total = total_score[player.id]
-
                 if total >= 5000:
                     rank = "🧠 Génie cérébral"
                 elif total >= 3500:
@@ -230,8 +240,8 @@ class EntrainementCerebral(commands.Cog):
                 )
                 await send(embed=final_embed)
 
-                # ─────────── Enregistrement dans le top 10 (solo uniquement) ───────────
-                if not multiplayer and getattr(player, "id", None):
+                # ─────────── Enregistrement score solo ───────────
+                if not multiplayer:
                     try:
                         supabase.table(TABLE_NAME).insert({
                             "user_id": str(player.id),
@@ -253,7 +263,6 @@ class EntrainementCerebral(commands.Cog):
             description="Voici le classement global des meilleurs scores !",
             color=discord.Color.gold()
         )
-
         try:
             leaderboard = (
                 supabase.table(TABLE_NAME)
@@ -269,14 +278,11 @@ class EntrainementCerebral(commands.Cog):
             ) or "*Aucun score enregistré pour le moment*"
         except Exception as e:
             top_text = f"⚠️ Erreur récupération classement : {e}"
-
         embed.add_field(name="Top 10", value=top_text, inline=False)
-
         if isinstance(ctx_or_interaction, discord.Interaction):
             await ctx_or_interaction.followup.send(embed=embed)
         else:
             await ctx_or_interaction.send(embed=embed)
-
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🔌 Setup
@@ -287,5 +293,4 @@ async def setup(bot: commands.Bot):
         if not hasattr(command, "category"):
             command.category = "Jeux"
     await bot.add_cog(cog)
-
 
