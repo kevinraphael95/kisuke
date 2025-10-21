@@ -469,6 +469,39 @@ pagaille.emoji = "🔤"
 pagaille.prep_time = 2
 
 # ────────────────────────────────────────────────────────────────────────────────
+# 🔹 ⚖️ Pair ou impair
+# ────────────────────────────────────────────────────────────────────────────────
+async def pair_ou_impair(ctx, embed, get_user_id, bot):
+    prep_time = 1.5
+    nombre = random.randint(10, 99)
+
+    embed.clear_fields()
+    embed.add_field(
+        name="⚖️ Pair ou impair",
+        value=f"Le nombre est **{nombre}**.\n➡️ Tape `pair` ou `impair` !",
+        inline=False
+    )
+    await ctx.edit(embed=embed)
+    await asyncio.sleep(prep_time)
+
+    try:
+        msg = await bot.wait_for(
+            "message",
+            check=lambda m: m.author.id == get_user_id(),
+            timeout=TIMEOUT
+        )
+        reponse = msg.content.lower().strip()
+        if reponse not in ["pair", "impair"]:
+            return False
+        return (nombre % 2 == 0 and reponse == "pair") or (nombre % 2 == 1 and reponse == "impair")
+    except:
+        return False
+
+pair_ou_impair.title = "Pair ou impair"
+pair_ou_impair.emoji = "⚖️"
+pair_ou_impair.prep_time = 1.5
+
+# ────────────────────────────────────────────────────────────────────────────────
 # 🔹 ⚡ Rapidité
 # ────────────────────────────────────────────────────────────────────────────────
 async def rapidite(ctx, embed, get_user_id, bot):
@@ -638,30 +671,6 @@ async def suite_logique(ctx, embed, get_user_id, bot):
 suite_logique.title = "Suite logique"
 suite_logique.emoji = "➗"
 suite_logique.prep_time = 2
-
-# ────────────────────────────────────────────────────────────────────────────────
-# 🔹 🔁 Symétrie
-# ────────────────────────────────────────────────────────────────────────────────
-async def symetrie(ctx, embed, get_user_id, bot):
-    prep_time = 1
-    symbols = [">", "<", "*", "#"]
-    seq = "".join(random.choices(symbols, k=5))
-    mirror = seq[::-1].translate(str.maketrans("><", "<>"))
-
-    embed.clear_fields()
-    embed.add_field(name="🔁 Symétrie", value=f"Séquence : {seq}\n➡️ Tape la version miroir :", inline=False)
-    await ctx.edit(embed=embed)
-    await asyncio.sleep(prep_time)
-
-    try:
-        msg = await bot.wait_for("message", check=lambda m: m.author.id == get_user_id(), timeout=TIMEOUT)
-        return msg.content.strip() == mirror
-    except:
-        return False
-
-symetrie.title = "Symétrie"
-symetrie.emoji = "🔁"
-symetrie.prep_time = 1
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🔹 🔎 Trouver la différence
