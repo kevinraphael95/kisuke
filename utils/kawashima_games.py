@@ -130,6 +130,44 @@ carre_magique_fiable_emoji.emoji = "🔢"
 carre_magique_fiable_emoji.prep_time = 0
 
 # ────────────────────────────────────────────────────────────────────────────────
+# 🔹 👀 Compter les emojis
+# ────────────────────────────────────────────────────────────────────────────────
+async def compter_emojis(ctx, embed, get_user_id, bot):
+    import random
+
+    emojis = ["🍎", "🍌", "🍒", "🍇", "🍊"]
+    cible = random.choice(emojis)
+
+    # Génère une grille 4x4
+    grille = [[random.choice(emojis) for _ in range(4)] for _ in range(4)]
+    texte_grille = "\n".join("".join(ligne) for ligne in grille)
+
+    # Compte combien de fois l'emoji cible apparaît
+    total = sum(ligne.count(cible) for ligne in grille)
+
+    embed.clear_fields()
+    embed.add_field(
+        name="👀 Compter les emojis",
+        value=f"{texte_grille}\n\n➡️ Combien de {cible} dans cette grille ?",
+        inline=False
+    )
+    await ctx.edit(embed=embed)
+
+    try:
+        msg = await bot.wait_for(
+            "message",
+            check=lambda m: m.author.id == get_user_id(),
+            timeout=TIMEOUT
+        )
+        return msg.content.isdigit() and int(msg.content) == total
+    except:
+        return False
+
+compter_emojis.title = "Compter les emojis"
+compter_emojis.emoji = "👀"
+compter_emojis.prep_time = 1.5
+
+# ────────────────────────────────────────────────────────────────────────────────
 # 🎨 Couleurs (Stroop complet)
 # ────────────────────────────────────────────────────────────────────────────────
 async def couleurs(ctx, embed, get_user_id, bot):
@@ -232,6 +270,59 @@ async def datation(ctx, embed, get_user_id, bot):
 datation.title = "Datation"
 datation.emoji = "📅"
 datation.prep_time = 0
+
+# ────────────────────────────────────────────────────────────────────────────────
+# 🔹 🧭 Directions opposées
+# ────────────────────────────────────────────────────────────────────────────────
+async def directions_opposees(ctx, embed, get_user_id, bot):
+    import random
+    from discord import ButtonStyle
+    from discord.ui import View, Button
+
+    # Flèches et opposés simples
+    arrows = ["⬆️", "⬇️", "⬅️", "➡️"]
+    opposites = {
+        "⬆️": "⬇️",
+        "⬇️": "⬆️",
+        "⬅️": "➡️",
+        "➡️": "⬅️"
+    }
+
+    # Choix aléatoire de la flèche
+    arrow = random.choice(arrows)
+    correct = opposites[arrow]
+
+    # Affichage de la consigne
+    embed.clear_fields()
+    embed.add_field(
+        name="🧭 Directions opposées",
+        value=f"Flèche affichée : {arrow}\n➡️ Clique sur **la direction opposée** le plus vite possible !",
+        inline=False
+    )
+    await ctx.edit(embed=embed)
+
+    # Vue avec les boutons
+    view = View(timeout=TIMEOUT)
+    for symbol in arrows:
+        async def button_callback(interaction, s=symbol):
+            if interaction.user.id != get_user_id():
+                return
+            view.stop()
+            view.result = (s == correct)
+            await interaction.response.defer()
+
+        btn = Button(label=symbol, style=ButtonStyle.secondary)
+        btn.callback = button_callback
+        view.add_item(btn)
+
+    msg = await ctx.send(view=view)
+    await view.wait()
+    await msg.edit(view=None)
+    return getattr(view, "result", False)
+
+directions_opposees.title = "Directions opposées"
+directions_opposees.emoji = "🧭"
+directions_opposees.prep_time = 1
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🔹 ➗ Équation à trou
