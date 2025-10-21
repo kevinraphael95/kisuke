@@ -247,6 +247,57 @@ datation.title = "Datation"
 datation.emoji = "📅"
 
 # ────────────────────────────────────────────────────────────────────────────────
+# 🔹 ➗ Équation à trou
+# ────────────────────────────────────────────────────────────────────────────────
+async def equation_trou(ctx, embed, get_user_id, bot):
+    # Choix de l'opération
+    op = random.choice(["+", "-", "*"])
+    
+    # Génération de nombres
+    if op == "+":
+        a = random.randint(1, 20)
+        b = random.randint(1, 20)
+        answer = random.choice([a, b])
+        if answer == a:
+            question = f"? + {b} = {a + b}"
+        else:
+            question = f"{a} + ? = {a + b}"
+    elif op == "-":
+        a = random.randint(10, 30)
+        b = random.randint(1, 10)
+        answer = random.choice([a, b])
+        if answer == a:
+            question = f"? - {b} = {a - b}"
+        else:
+            question = f"{a} - ? = {a - b}"
+    else:  # multiplication
+        a = random.randint(1, 10)
+        b = random.randint(1, 10)
+        answer = random.choice([a, b])
+        if answer == a:
+            question = f"? × {b} = {a * b}"
+        else:
+            question = f"{a} × ? = {a * b}"
+
+    # Affichage
+    embed.clear_fields()
+    embed.add_field(name="➗ Équation à trou", value=question, inline=False)
+    await ctx.edit(embed=embed)
+
+    try:
+        msg = await bot.wait_for(
+            "message",
+            check=lambda m: m.author.id == get_user_id(),
+            timeout=TIMEOUT
+        )
+        return int(msg.content) == answer
+    except:
+        return False
+
+equation_trou.title = "Équation à trou"
+equation_trou.emoji = "➗"
+
+# ────────────────────────────────────────────────────────────────────────────────
 # 🔹 🕒 Heures (version flexible)
 # ────────────────────────────────────────────────────────────────────────────────
 async def heures(ctx, embed, get_user_id, bot):
@@ -422,6 +473,35 @@ async def monnaie(ctx, embed, get_user_id, bot):
         
 monnaie.title = "Monnaie"
 monnaie.emoji = "💰"
+
+# ────────────────────────────────────────────────────────────────────────────────
+# 🔹 🔁 Mot miroir
+# ────────────────────────────────────────────────────────────────────────────────
+async def mot_miroir(ctx, embed, get_user_id, bot):
+    mots = ["maison", "cerveau", "banane", "ordinateur", "voiture"]
+    mot = random.choice(mots)
+    mot_inverse = mot[::-1]
+
+    embed.clear_fields()
+    embed.add_field(
+        name="🔁 Mot miroir",
+        value=f"Tape ce mot à l'envers : {mot}",
+        inline=False
+    )
+    await ctx.edit(embed=embed)
+
+    try:
+        msg = await bot.wait_for(
+            "message",
+            check=lambda m: m.author.id == get_user_id(),
+            timeout=TIMEOUT
+        )
+        return msg.content.lower() == mot_inverse
+    except:
+        return False
+
+mot_miroir.title = "Mot miroir"
+mot_miroir.emoji = "🔁"
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🔹 🔤 Pagaille
