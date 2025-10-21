@@ -145,10 +145,9 @@ carre_magique_fiable_emoji.title = "Carré magique 3x3"
 carre_magique_fiable_emoji.emoji = "🔢"
 
 # ────────────────────────────────────────────────────────────────────────────────
-# 🎨 Couleurs (Stroop visuel, réponse dans le chat)
+# 🎨 Couleurs (Stroop complet avec boutons interactifs)
 # ────────────────────────────────────────────────────────────────────────────────
-async def couleurs(ctx, bot):
-    # Couleurs possibles et styles Discord
+async def couleurs(ctx, embed, get_user_id, bot):
     styles = {
         "bleu": discord.ButtonStyle.primary,
         "vert": discord.ButtonStyle.success,
@@ -156,46 +155,54 @@ async def couleurs(ctx, bot):
         "gris": discord.ButtonStyle.secondary
     }
 
-    # Choix aléatoire du mot et de sa couleur
-    mot = random.choice(list(styles.keys())).upper()       # mot affiché
-    couleur_vraie = random.choice(list(styles.keys()))     # couleur du bouton
+    # Liste des couleurs et création des boutons
+    couleurs = list(styles.keys())
+    random.shuffle(couleurs)
 
-    # Choix du type de question
+    # On crée 4 boutons avec des styles et labels mélangés
+    buttons = []
+    for couleur in couleurs:
+        label = random.choice(list(styles.keys())).upper()  # le mot écrit dessus
+        button = Button(label=label, style=styles[couleur])
+        buttons.append(button)
+
+    # On choisit aléatoirement le type de question
     question_type = random.choice(["mot", "couleur"])
+
     if question_type == "mot":
-        question_text = "Quel **MOT** est écrit sur le bouton ?"
-        bonne_reponse = mot.lower()
+        cible = random.choice(list(styles.keys()))
+        question = f"Appuie sur le bouton où est écrit le **MOT** `{cible.upper()}` !"
+        # bonne réponse : le bouton dont label == cible.upper()
+        condition = lambda b: b.label.lower() == cible
     else:
-        question_text = "Quelle est la **COULEUR** du bouton ?"
-        bonne_reponse = couleur_vraie
+        cible = random.choice(list(styles.keys()))
+        question = f"Appuie sur le bouton de **COULEUR** `{cible.upper()}` !"
+        # bonne réponse : le bouton dont style == styles[cible]
+        condition = lambda b: b.style == styles[cible]
 
-    # Création du bouton visuel (désactivé)
-    button = Button(label=mot, style=styles[couleur_vraie], disabled=True)
-    view = View()
-    view.add_item(button)
+    # Création de la vue
+    view = View(timeout=TIMEOUT)
+    for button in buttons:
+        async def callback(interaction, b=button):
+            if interaction.user.id != get_user_id():
+                await interaction.response.send_message("Ce jeu n'est pas pour toi !", ephemeral=True)
+                return
+            view.stop()
+            view.value = condition(b)
+            await interaction.response.defer()
 
-    # Création de l'embed
-    embed = discord.Embed(
-        title="🎨 Couleurs (Stroop)",
-        description=f"Regarde le bouton ci-dessous :\n➡️ {question_text}",
-        color=discord.Color.random()
-    )
+        button.callback = callback
+        view.add_item(button)
 
-    # Envoi du message avec embed + bouton visuel
-    await ctx.send(embed=embed, view=view)
+    # Affichage de l'embed
+    embed.clear_fields()
+    embed.add_field(name="🎨 Couleurs (Stroop)", value=question, inline=False)
+    await ctx.edit(embed=embed, view=view)
 
-    # Attente de la réponse dans le chat
-    try:
-        msg = await bot.wait_for(
-            "message",
-            check=lambda m: m.author.id == ctx.author.id,
-            timeout=60
-        )
-        return msg.content.lower().strip() == bonne_reponse
-    except asyncio.TimeoutError:
-        return False
+    # Attente de la fin ou du timeout
+    await view.wait()
+    return getattr(view, "value", False)
 
-# Métadonnées pour ton système
 couleurs.title = "Couleurs"
 couleurs.emoji = "🎨"
 
