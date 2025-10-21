@@ -12,6 +12,7 @@
 import discord
 from discord import app_commands
 from discord.ext import commands
+from utils.discord_utils import safe_send, safe_respond  # ✅ Utilitaires sécurisés
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🧠 Cog principal
@@ -32,8 +33,8 @@ class NomDeLaCommande(commands.Cog):
     )
     @app_commands.checks.cooldown(1, 5.0, key=lambda i: i.user.id)
     async def slash_nom_de_la_commande(self, interaction: discord.Interaction):
-        """Commande slash simple."""
-        await interaction.response.send_message("✅ Réponse de la commande **slash** !")
+        """Commande slash simple sécurisée"""
+        await safe_respond(interaction, "✅ Réponse de la commande **slash** !")
 
     # ────────────────────────────────────────────────────────────────────────────
     # 🔹 Commande PREFIX
@@ -41,8 +42,8 @@ class NomDeLaCommande(commands.Cog):
     @commands.command(name="nom_de_la_commande")
     @commands.cooldown(1, 5.0, commands.BucketType.user)
     async def prefix_nom_de_la_commande(self, ctx: commands.Context):
-        """Commande préfixe simple."""
-        await ctx.send("✅ Réponse de la commande **préfixe** !")
+        """Commande préfixe simple sécurisée"""
+        await safe_send(ctx.channel, "✅ Réponse de la commande **préfixe** !")
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🔌 Setup du Cog
@@ -52,4 +53,6 @@ async def setup(bot: commands.Bot):
     for command in cog.get_commands():
         if not hasattr(command, "category"):
             command.category = "Autre"
-    await bot.add_cog(cog)
+    await bot.add_cog
+(cog)
+
