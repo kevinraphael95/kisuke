@@ -86,7 +86,7 @@ class MemoryGame(commands.Cog):
     # 🔹 Commande SLASH
     # ────────────────────────────────────────────────────────────────────────────
     @discord.app_commands.command(
-        name="memory",
+        name="paires",
         description="Jouer au Memory Game (paires)"
     )
     async def slash_memory(self, interaction: discord.Interaction, theme: str = "fruits"):
@@ -97,7 +97,7 @@ class MemoryGame(commands.Cog):
     # ────────────────────────────────────────────────────────────────────────────
     # 🔹 Commande PREFIX
     # ────────────────────────────────────────────────────────────────────────────
-    @commands.command(name="memory")
+    @commands.command(name="paires")
     async def prefix_memory(self, ctx: commands.Context, theme: str = "fruits"):
         view = MemoryGameView(ctx, theme=theme, size=4)
         view.message = await safe_send(ctx.channel, f"🧩 Memory Game — Thème : {theme}", view=view)
