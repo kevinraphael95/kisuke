@@ -206,12 +206,23 @@ async def datation(ctx, embed, get_user_id, bot):
     import datetime
 
     today = datetime.date.today()
-    # Décalage aléatoire entre -7 et +7 jours
     delta_days = random.randint(-7, 7)
     date = today + datetime.timedelta(days=delta_days)
     
-    jour = date.strftime("%A").lower()
     day, month, year = date.day, date.month, date.year
+
+    # Mapping anglais → français
+    jours_fr = {
+        "Monday": "lundi",
+        "Tuesday": "mardi",
+        "Wednesday": "mercredi",
+        "Thursday": "jeudi",
+        "Friday": "vendredi",
+        "Saturday": "samedi",
+        "Sunday": "dimanche"
+    }
+    jour_complet = jours_fr[date.strftime("%A")]
+    jour_abr = jour_complet[:3]
 
     embed.clear_fields()
     embed.add_field(
@@ -227,7 +238,8 @@ async def datation(ctx, embed, get_user_id, bot):
             check=lambda m: m.author.id == get_user_id(),
             timeout=TIMEOUT
         )
-        return msg.content.lower().startswith(jour[:3])  # accepte "lun", "lundi", etc.
+        reponse = msg.content.lower().strip()
+        return reponse == jour_complet or reponse == jour_abr
     except:
         return False
 
