@@ -691,36 +691,44 @@ trouver_difference.emoji = "🔎"
 trouver_difference.prep_time = 1
 
 # ────────────────────────────────────────────────────────────────────────────────
-# 🔹 ✍️ Typographie erreur
+# 🔹 ✏️ Typographie erreur
 # ────────────────────────────────────────────────────────────────────────────────
-async def typographie_erreur(ctx, embed, get_user_id, bot):
-    prep_time = 2
-    phrases = [
-        "Le chat est sur le toit.",
-        "Il fait beau aujourd'hui.",
-        "J'aime les pommes rouges."
-    ]
-    phrase = random.choice(phrases)
-    erreur_index = random.randint(0, len(phrase) - 1)
-    correct_char = phrase[erreur_index]
-    phrase_err = list(phrase)
-    phrase_err[erreur_index] = random.choice("abcdefghijklmnopqrstuvwxyz.,' ") 
-    phrase_err = "".join(phrase_err)
+async def typo_trap(ctx, embed, get_user_id, bot):
+    prep_time = 2  # Temps pour observer le mot avant de répondre
+
+    mot = random.choice(["chien", "maison", "voiture", "ordinateur", "banane", "chocolat"])
+    typo_index = random.randint(0, len(mot) - 1)
+    mot_mod = list(mot)
+    
+    # Génère une lettre différente de la lettre originale
+    original = mot_mod[typo_index]
+    nouvelle_lettre = random.choice([chr(i) for i in range(97, 123) if chr(i) != original])
+    mot_mod[typo_index] = nouvelle_lettre
+    mot_mod = "".join(mot_mod)
 
     embed.clear_fields()
-    embed.add_field(name="✍️ Typographie erreur", value=f"Trouvez le caractère incorrect :\n{phrase_err}", inline=False)
+    embed.add_field(
+        name="✏️ Typographie erreur",
+        value=f"{mot_mod}\n➡️ Quelle lettre est incorrecte dans ce mot ? (ex: 'x')",
+        inline=False
+    )
     await ctx.edit(embed=embed)
-    await asyncio.sleep(prep_time)
+    await asyncio.sleep(prep_time)  # temps d'observation
 
+    # Attente de la réponse
     try:
-        msg = await bot.wait_for("message", check=lambda m: m.author.id == get_user_id(), timeout=TIMEOUT)
-        return msg.content == correct_char
+        msg = await bot.wait_for(
+            "message",
+            check=lambda m: m.author.id == get_user_id(),
+            timeout=TIMEOUT
+        )
+        return msg.content.lower().strip() == nouvelle_lettre
     except:
         return False
 
-typographie_erreur.title = "Typographie erreur"
-typographie_erreur.emoji = "✍️"
-typographie_erreur.prep_time = 2
+typo_trap.title = "Typographie erreur"
+typo_trap.emoji = "✏️"
+typo_trap.prep_time = 2
 
 
 #the end
