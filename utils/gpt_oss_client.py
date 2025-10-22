@@ -35,3 +35,29 @@ def get_story_continuation(history: list[dict]) -> str:
     except Exception as e:
         print(f"[Erreur GPT-OSS] {e}")
         return "⚠️ Le narrateur se tait... (*erreur du modèle*)"
+
+
+# ────────────────────────────────────────────────────────────────────────────────
+# 💬 Fonction secondaire — simple réponse de chat (pas de RPG)
+# ────────────────────────────────────────────────────────────────────────────────
+def get_simple_response(prompt: str) -> str:
+    """
+    Envoie un simple prompt texte à GPT-OSS NVIDIA et renvoie la réponse directe.
+    Utilisé pour la commande !!gpt.
+    """
+    try:
+        response = client.chat.completions.create(
+            model="openai/gpt-oss-120b",
+            messages=[
+                {"role": "system", "content": "Tu es un assistant conversationnel précis et bienveillant. Réponds toujours en français."},
+                {"role": "user", "content": prompt}
+            ],
+            temperature=0.8,
+            top_p=0.7,
+            max_tokens=512
+        )
+        return response.choices[0].message.content.strip()
+    except Exception as e:
+        print(f"[Erreur GPT-OSS Simple] {e}")
+        return "⚠️ Le modèle est silencieux pour le moment..."
+        
