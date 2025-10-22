@@ -1,166 +1,252 @@
 # ────────────────────────────────────────────────────────────────────────────────
-# 📌 rpgpt.py — Mini RPG Bleach (Les Fissures du Néant) amélioré
-# Commande /rpgpt et !rpgpt avec persistance Supabase et gestion sécurisée Discord
-# Objectif : Mini RPG narratif où le joueur répond avec un mot ou une phrase précédé de "!"
-# Catégorie : Jeux
-# Accès : Tous
-# Cooldown : 1 utilisation / 5 secondes / utilisateur
+# 📌 rpgpt.py — Mini RPG narratif : BLEACH - Les Fissures du Néant
+# Commande : !!rpgpt (ou !!rpgpt <action>)
+# ➜ Mini RPG persistant avec sauvegarde Supabase et narration GPT
+# ➜ Les réponses du joueur se font directement avec la commande !!rpgpt
+# ➜ Tout est affiché dans des embeds élégants
 # ────────────────────────────────────────────────────────────────────────────────
 
 import discord
-from discord import app_commands
 from discord.ext import commands
 import asyncio
 from utils.gpt_oss_client import get_story_continuation
 from utils.supabase_client import supabase
-from utils.discord_utils import safe_send, safe_respond
 
 # ────────────────────────────────────────────────────────────────────────────────
-# ⚙️ Configuration
+# ⚙️ CONFIGURATION
 # ────────────────────────────────────────────────────────────────────────────────
 MAX_ACTIVE_PLAYERS = 3
-MAX_TURNS = 10
+MAX_TURNS = 50
 
 # ────────────────────────────────────────────────────────────────────────────────
-# 🧠 Prompt système — trame de base
+# 🧠 PROMPT SYSTÈME — contexte narratif
 # ────────────────────────────────────────────────────────────────────────────────
 SYSTEM_PROMPT = """
-Tu es le narrateur d’un mini-RPG textuel inspiré de *Bleach*, intitulé **Les Fissures du Néant**.
-Le joueur incarne un shinigami (ou âme errante) explorant les fissures reliant le Seireitei et le Hueco Mundo.
+Tu es le narrateur d’un RPG narratif textuel inspiré de *Bleach*, intitulé **Les Fissures du Néant**.
 
-L’histoire suit trois actes :
-1️⃣ Découverte des fissures.
-2️⃣ Rencontre d’un allié ambigu.
-3️⃣ Choix final face au Néant.
+🎭 **Contexte général**
+Dans les profondeurs du Seireitei, des fissures spectrales sont apparues. 
+Elles relient le monde des âmes (*Soul Society*), le *Hueco Mundo*, et un troisième plan inconnu que les anciens appellent **le Néant** — un espace où le temps et la mémoire se dissolvent.  
+Ces brèches déversent une énergie spirituelle instable : certains y voient une malédiction, d'autres une opportunité d’atteindre un pouvoir absolu.  
+Le joueur incarne une âme errante, un shinigami sans division ou un esprit revenu d'entre les mondes.  
+Son rôle : découvrir l’origine de ces failles et choisir à quel monde il prêtera allégeance.
 
-Tu adaptes tes descriptions à ses choix (réponses précédées de "!"), tu ajoutes des indices et de la tension.
-L’ambiance doit être immersive, poétique et mystérieuse. Ne révèle pas la fin trop tôt.
+🌌 **Ambiance et ton**
+Ton récit est immersif, poétique et mystérieux.  
+Tu décris chaque scène avec des détails sensoriels : sons, lumières, odeurs spirituelles, textures du reiatsu, murmures du vent dans les couloirs du Seireitei.  
+Ton style évoque la narration d’un jeu de rôle : chaque paragraphe doit donner le sentiment que le joueur avance dans une intrigue vaste et ancienne.  
+Tu fais ressentir le poids du destin, le doute, la solitude, la peur du Néant.
+
+Ne parle jamais comme une IA. Tu es un **narrateur omniscient**, témoin des actes du joueur.  
+Tu adaptes ton ton en fonction de ses choix : héroïsme, corruption, trahison, compassion, folie ou oubli.  
+Chaque action du joueur, même minime, doit faire progresser l’histoire.
+
+---
+
+🏯 **Lieux clés (décris-les, fais-les visiter, fais s’y croiser des indices)**
+- **Le Seireitei fissuré** : des reflets blancs brisés, des murs traversés par des flux de reiatsu incontrôlables.  
+  Des voix de shinigamis perdus résonnent à travers les fissures.
+- **Le Rukongai dévasté** : un quartier fantôme où les âmes s’effritent. Des symboles étranges sont gravés sur le sol.
+- **La Cité d’Argent du Néant** : un lieu sans horizon, construit de lumière inversée. Chaque pas y efface un souvenir.
+- **Les Ruines d’Hueco Mundo** : sable noir et lunes multiples. Les Hollows semblent plus organisés que d’habitude.
+- **Le Nexus des Mondes** : là où les trois dimensions se touchent. Le cœur de la vérité… ou du mensonge.
+
+---
+
+🧩 **PNJ importants (tu peux les introduire selon les choix du joueur)**
+- **Kurai Hisen**, ancien Capitaine du Gotei 13 disparu depuis des siècles. Il cherche à sceller les fissures… ou à s’y perdre volontairement.
+- **Sairen**, une âme artificielle née du Néant, ni humaine ni hollow. Elle connaît des secrets que personne d’autre ne devrait savoir.
+- **Tessai Kuroba**, maître du Kidō interdit. Il peut aider le joueur, mais son aide a un prix : un fragment d’âme.
+- **Aran Nox**, Vasto Lorde déchu. Son reiatsu brûle encore les sables du Hueco Mundo. Il hait le Néant, mais y est irrésistiblement attiré.
+- **Le Gardien Sans Nom**, entité du Néant. Il prend la forme de celui que le joueur craint le plus.
+
+Chaque personnage possède :
+- Une vérité partielle.
+- Un mensonge volontaire.
+- Un souvenir du Néant qu’il ne peut effacer.
+
+---
+
+📜 **Structure narrative**
+Le jeu suit 3 actes, mais le joueur peut explorer librement dans l’ordre que tu juges logique selon ses choix.
+
+**ACTE I — Les Fractures du Silence**  
+Le joueur découvre la première fissure.  
+Indices : sons d’âmes déformées, runes anciennes, apparition d’un Hollow “mi-shinigami”.  
+Le danger est plus métaphysique que physique : perte de mémoire, visions d’autres timelines.
+
+**ACTE II — L’Ombre des Reflets**  
+Le joueur rencontre un allié ambigu (Kurai ou Sairen).  
+Les fissures révèlent des versions “inversées” du joueur : un double, un souvenir déformé ou un fragment d’âme.  
+Le joueur commence à douter : est-il le protagoniste ou un écho du Néant ?
+
+**ACTE III — Le Jugement du Néant**  
+Le joueur atteint le Nexus.  
+Le Néant parle, propose un choix : tout détruire pour unir les mondes, ou se sacrifier pour restaurer l’équilibre.  
+Chaque décision ici réécrit les mondes précédents : rien n’est absolu.
+
+---
+
+⚔️ **Système implicite**
+Tu fais évoluer le joueur sans chiffres visibles, mais tu peux mentionner ses états :
+- *L’énergie faiblit...*
+- *La corruption gagne ton esprit...*
+- *Ton reiatsu pulse plus fort qu’avant...*
+- *Une aura étrange t’entoure, comme si le Néant t’avait remarqué.*
+
+Tu peux suggérer des objets ou artefacts dans le texte :
+- *Éclat du Néant* (augmente la corruption)
+- *Fiole d’Âme Pure* (réduit la corruption)
+- *Fragment du Seireitei* (permet d’ouvrir une fissure)
+- *Miroir Brisé* (montre la vraie nature des alliés)
+
+---
+
+💡 **But du narrateur**
+- Offrir une immersion maximale et une intrigue cohérente à long terme.  
+- Introduire mystères, révélations, personnages et symboles au fil des réponses.  
+- Maintenir un équilibre entre tension, beauté et désespoir.  
+- Ne jamais donner de choix explicites comme dans un jeu à embranchements.  
+  Le joueur choisit librement son action via la commande (`!!rpgpt <texte>`), et tu t’adaptes naturellement.
+
+---
+
+Ne mentionne jamais que tu es une IA.  
+Tu es **le Chroniqueur du Néant**, la voix des mondes brisés.  
+Ta mission : raconter l’histoire du joueur, qu’il le veuille ou non.
 """
 
+
 # ────────────────────────────────────────────────────────────────────────────────
-# 🧩 Cog principal
+# 🧩 COG PRINCIPAL
 # ────────────────────────────────────────────────────────────────────────────────
 class RPGPT(commands.Cog):
-    """Commande /rpgpt et !rpgpt — Mini RPG narratif (Bleach) avec persistance Supabase"""
+    """Commande !!rpgpt — Mini RPG narratif BLEACH avec sauvegarde Supabase"""
 
     def __init__(self, bot: commands.Bot):
         self.bot = bot
         self.sessions = {}
 
     # ────────────────────────────────────────────────────────────────────────────
-    # 🧱 Démarrage d’une session
+    # 🎮 Commande principale : !!rpgpt (ou !!rpgpt <action>)
     # ────────────────────────────────────────────────────────────────────────────
-    async def start_session(self, user: discord.User, channel: discord.TextChannel):
+    @commands.command(name="rpgpt")
+    @commands.cooldown(1, 5.0, commands.BucketType.user)
+    async def rpgpt_command(self, ctx: commands.Context, *, action: str = None):
+        user = ctx.author
+        channel = ctx.channel
+
+        # Vérifie les joueurs actifs
         active_players = supabase.table("players").select("*").execute().data
         if len(active_players) >= MAX_ACTIVE_PLAYERS and not any(p["discord_id"] == user.id for p in active_players):
-            await safe_send(channel, "🚫 Trop de shinigamis enquêtent déjà sur les fissures. Réessaie plus tard !")
+            await self._embed_send(channel, "🚫 **Trop de shinigamis explorent déjà les failles...**", "Patiente avant d’entrer dans le Néant.")
             return
 
+        # Vérifie si une sauvegarde existe
         result = supabase.table("players").select("*").eq("discord_id", user.id).execute()
         player = result.data[0] if result.data else None
 
-        if player:
-            # Reprise de partie
-            history = player["history"]
-            turns = player["turns"]
-            await safe_send(channel, "🌫️ *Le vent du Néant souffle à nouveau...*")
-        else:
-            # Nouvelle partie — grande introduction
-            intro = (
-                "🌌 **Bienvenue, âme errante...**\n\n"
-                "Tu es sur le point de plonger dans *Les Fissures du Néant*, un mini-RPG inspiré de Bleach.\n"
-                "Le principe est simple : tu peux répondre par **un mot ou une phrase**, précédé de `!`.\n\n"
-                "Exemples : `!attaque`, `!parle à l’allié`, `!observe le couloir`\n\n"
-                "Ton choix influencera le cours de l’histoire.\n\n"
-                "🌒 **Acte I — Le Frisson du Vide**\n"
-                "Un souffle froid parcourt le Seireitei. Une fissure s’ouvre entre deux mondes...\n\n"
-                "Que fais-tu ? (`!attaque`, `!observe`, `!fuis`)"
+        # Si aucune sauvegarde n'existe → nouvelle partie
+        if not player:
+            await self._start_new_game(user, channel)
+            return
+
+        # Sinon → on continue la partie
+        history = player["history"]
+        turns = player["turns"]
+        stats = player.get("stats", {"énergie": 100, "spirit": 10, "corruption": 0})
+        inventory = player.get("inventory", [])
+
+        if action is None:
+            await self._embed_send(
+                channel,
+                f"🌫️ **{user.display_name}, ton histoire continue...**",
+                "Tu te tiens à nouveau face aux Fissures. Que fais-tu ? (`!!rpgpt observe`, `!!rpgpt attaque`, etc.)"
             )
-
-            history = [
-                {"role": "system", "content": SYSTEM_PROMPT},
-                {"role": "assistant", "content": intro}
-            ]
-            turns = 0
-
-            supabase.table("players").insert({
-                "discord_id": user.id,
-                "history": history,
-                "turns": turns,
-                "last_channel": str(channel.id)
-            }).execute()
-
-        self.sessions[user.id] = {"history": history, "turns": turns, "channel": channel}
-        await safe_send(channel, history[-1]["content"])
-
-    # ────────────────────────────────────────────────────────────────────────────
-    # 🔹 Commande SLASH
-    # ────────────────────────────────────────────────────────────────────────────
-    @app_commands.command(name="rpgpt", description="Lance une mini-aventure RPG inspirée de Bleach. RPG + chat gpt.")
-    @app_commands.checks.cooldown(1, 5.0, key=lambda i: i.user.id)
-    async def slash_rpgpt(self, interaction: discord.Interaction):
-        await safe_respond(interaction, "✨ L’aventure commence...", ephemeral=True)
-        await self.start_session(interaction.user, interaction.channel)
-
-    # ────────────────────────────────────────────────────────────────────────────
-    # 🔹 Commande PREFIX
-    # ────────────────────────────────────────────────────────────────────────────
-    @commands.command(name="rpgpt", help="Lance une mini-aventure RPG inspirée de Bleach. RPG + chat gpt.")
-    @commands.cooldown(1, 5.0, commands.BucketType.user)
-    async def prefix_rpgpt(self, ctx: commands.Context):
-        await self.start_session(ctx.author, ctx.channel)
-
-    # ────────────────────────────────────────────────────────────────────────────
-    # 🧩 Listener : réponses du joueur (commencent par "!")
-    # ────────────────────────────────────────────────────────────────────────────
-    @commands.Cog.listener()
-    async def on_message(self, message: discord.Message):
-        if message.author.bot:
             return
 
-        user_id = message.author.id
-        if user_id not in self.sessions:
+        # Trop de tours → fin
+        if turns >= MAX_TURNS:
+            await self._embed_send(
+                channel,
+                "🌒 **Le Néant t’enveloppe...**",
+                "Ton aventure s’achève ici. Une autre âme prendra ta place dans le vide."
+            )
+            supabase.table("players").delete().eq("discord_id", user.id).execute()
             return
 
-        session = self.sessions[user_id]
-        if message.channel != session["channel"]:
-            return
-
-        content = message.content.strip()
-
-        # Vérifie que le message commence par "!"
-        if not content.startswith("!"):
-            return
-
-        # On accepte tout après "!" sans limite de mots
-        mot = content[1:].strip()
-        if not mot:
-            await safe_send(message.channel, "❌ Écris quelque chose après `!`.")
-            return
-
-        # Ajout du tour dans l’historique
-        session["history"].append({"role": "user", "content": mot})
-        session["turns"] += 1
+        # Enregistre l’action
+        history.append({"role": "user", "content": action})
+        turns += 1
 
         try:
-            response = await asyncio.to_thread(get_story_continuation, session["history"])
+            response = await asyncio.to_thread(get_story_continuation, history)
         except Exception as e:
-            await safe_send(message.channel, "⚠️ Le narrateur se tait... (*limite atteinte ou erreur API*)")
+            await self._embed_send(channel, "⚠️ **Silence du Néant...**", "Une erreur est survenue dans la narration.")
             print(f"[Erreur RPGPT] {e}")
-            del self.sessions[user_id]
             return
 
-        session["history"].append({"role": "assistant", "content": response})
+        # Met à jour les données Supabase
+        history.append({"role": "assistant", "content": response})
         supabase.table("players").update({
-            "history": session["history"],
-            "turns": session["turns"],
-            "last_channel": str(message.channel.id)
-        }).eq("discord_id", user_id).execute()
+            "history": history,
+            "turns": turns,
+            "stats": stats,
+            "inventory": inventory,
+            "last_channel": str(channel.id)
+        }).eq("discord_id", user.id).execute()
 
-        await safe_send(message.channel, response)
+        await self._embed_send(channel, f"📖 **Chapitre {turns}**", response)
+
+    # ────────────────────────────────────────────────────────────────────────────
+    # 🌌 Nouvelle partie
+    # ────────────────────────────────────────────────────────────────────────────
+    async def _start_new_game(self, user: discord.User, channel: discord.TextChannel):
+        intro = (
+            "🌌 **Les Fissures du Néant**\n\n"
+            "Tu ouvres les yeux dans une brume argentée.\n"
+            "Le sol du *Seireitei* se craquelle lentement sous tes pas.\n"
+            "Une voix murmure ton nom, puis s’efface.\n\n"
+            "Tu ressens une force étrange, comme si ton âme était tirée entre deux mondes :\n"
+            "👉 *Le Monde des Vivants* — fragile et lumineux.\n"
+            "👁️ *Le Hueco Mundo* — sombre et affamé.\n"
+            "🌑 *Le Néant* — silencieux... mais attirant.\n\n"
+            "Que fais-tu ? (`!!rpgpt observe`, `!!rpgpt avance`, `!!rpgpt médite`)"
+        )
+
+        history = [
+            {"role": "system", "content": SYSTEM_PROMPT},
+            {"role": "assistant", "content": intro}
+        ]
+        stats = {"énergie": 100, "spirit": 10, "corruption": 0}
+        inventory = []
+        turns = 0
+
+        supabase.table("players").insert({
+            "discord_id": user.id,
+            "history": history,
+            "turns": turns,
+            "stats": stats,
+            "inventory": inventory,
+            "last_channel": str(channel.id)
+        }).execute()
+
+        await self._embed_send(channel, "✨ **Bienvenue, âme errante...**", intro)
+
+    # ────────────────────────────────────────────────────────────────────────────
+    # 🪶 Envoi propre en embed
+    # ────────────────────────────────────────────────────────────────────────────
+    async def _embed_send(self, channel: discord.TextChannel, title: str, description: str):
+        embed = discord.Embed(
+            title=title,
+            description=description,
+            color=discord.Color.purple()
+        )
+        embed.set_footer(text="Les Fissures du Néant • Un RPG narratif inspiré de Bleach")
+        await channel.send(embed=embed)
 
 # ────────────────────────────────────────────────────────────────────────────────
-# 🔌 Setup du Cog
+# 🔌 SETUP DU COG
 # ────────────────────────────────────────────────────────────────────────────────
 async def setup(bot: commands.Bot):
     cog = RPGPT(bot)
