@@ -293,9 +293,8 @@ async def directions_opposees(ctx, embed, get_user_id, bot):
         value=f"Flèche affichée : {arrow}\n➡️ Clique sur **la direction opposée** !",
         inline=False
     )
-    await ctx.edit(embed=embed)
 
-    # Création de la vue avec les 4 boutons
+    # Création de la vue avec les boutons
     class ArrowView(View):
         def __init__(self):
             super().__init__(timeout=TIMEOUT)
@@ -316,10 +315,14 @@ async def directions_opposees(ctx, embed, get_user_id, bot):
         btn.callback = callback
         view.add_item(btn)
 
-    msg = await ctx.send(view=view)
+    # ENVOI DU MESSAGE AVEC LA VUE
+    msg = await ctx.send(embed=embed, view=view)
+
+    # Attente du choix
     await view.wait()
     await msg.edit(view=None)  # Supprime les boutons après le choix
     return view.result
+
 
 directions_opposees.title = "Directions opposées"
 directions_opposees.emoji = "🧭"
@@ -734,38 +737,61 @@ reflexe_couleur.emoji = "🟢"
 reflexe_couleur.prep_time = 2
 
 # ────────────────────────────────────────────────────────────────────────────────
-# 🔹 🧩 Séquence de symboles
+# 🔹 🧩 Séquence de symboles (version boutons)
 # ────────────────────────────────────────────────────────────────────────────────
 async def sequence_symboles(ctx, embed, get_user_id, bot):
     symbols = ["⭐", "🍎", "🐍", "⚡", "🎲", "🍀", "🐱", "🔥"]
     seq = random.sample(symbols, 4)
 
+    # Affichage initial
     embed.clear_fields()
-    embed.add_field(name="🧩 Séquence de symboles", value="Observe bien la séquence suivante :", inline=False)
-    embed.add_field(name="Séquence :", value=" ".join(seq), inline=False)
+    embed.add_field(
+        name="🧩 Séquence de symboles",
+        value="Observe bien la séquence suivante :\n" + " ".join(seq),
+        inline=False
+    )
     await ctx.edit(embed=embed)
-    await asyncio.sleep(4)  # prep_time
+    await asyncio.sleep(sequence_symboles.prep_time)
 
     # On cache la séquence
     embed.clear_fields()
-    question_type = random.choice(["position", "complete"])
-
-    if question_type == "position":
-        index = random.randint(0, len(seq) - 1)
-        embed.add_field(name="🧩 Séquence de symboles", value=f"Quel était le **{index+1}ᵉ** emoji ?", inline=False)
-        correct_answer = seq[index]
-    else:
-        embed.add_field(name="🧩 Séquence de symboles", value="Réécris la séquence complète !", inline=False)
-        correct_answer = "".join(seq)
-
+    question_type = "position"  # Pour version bouton, on fait juste "position"
+    index = random.randint(0, len(seq) - 1)
+    embed.add_field(
+        name="🧩 Séquence de symboles",
+        value=f"Quel était le **{index+1}ᵉ** emoji ?",
+        inline=False
+    )
     await ctx.edit(embed=embed)
 
-    try:
-        msg = await bot.wait_for("message", check=lambda m: m.author.id == get_user_id(), timeout=TIMEOUT)
-        user_input = msg.content.replace(" ", "")
-        return user_input == correct_answer or user_input == "".join(correct_answer)
-    except:
-        return False
+    # Création des boutons
+    class SymbolView(discord.ui.View):
+        def __init__(self):
+            super().__init__(timeout=TIMEOUT)
+            self.selected = None
+
+    view = SymbolView()
+    for s in symbols:
+        async def make_callback(symbol=s):
+            async def callback(interaction: discord.Interaction):
+                if interaction.user.id != get_user_id():
+                    await interaction.response.send_message("🚫 Pas ton tour !", ephemeral=True)
+                    return
+                view.selected = symbol
+                view.stop()
+                await interaction.response.defer()
+            return callback
+
+        btn = Button(label=s, style=discord.ButtonStyle.secondary)
+        btn.callback = await make_callback(s)
+        view.add_item(btn)
+
+    # Envoi et attente
+    msg = await ctx.send(embed=embed, view=view)
+    await view.wait()
+    await msg.edit(view=None)
+
+    return getattr(view, "selected", None) == seq[index]
 
 sequence_symboles.title = "Séquence de symboles"
 sequence_symboles.emoji = "🧩"
@@ -863,24 +889,49 @@ suite_logique.prep_time = 2
 # 🔹 🔎 Trouver la différence
 # ────────────────────────────────────────────────────────────────────────────────
 async def trouver_difference(ctx, embed, get_user_id, bot):
-    prep_time = 1
+    # Préparation
     liste1 = [random.randint(1, 9) for _ in range(6)]
     liste2 = liste1.copy()
     diff_index = random.randint(0, 5)
-    liste2[diff_index] = random.randint(1, 9)
-    while liste2[diff_index] == liste1[diff_index]:
-        liste2[diff_index] = random.randint(1, 9)
 
+    # S'assure que la valeur diffère vraiment
+    while True:
+        new_val = random.randint(1, 9)
+        if new_val != liste1[diff_index]:
+            liste2[diff_index] = new_val
+            break
+
+    # Affichage dans l'embed
     embed.clear_fields()
-    embed.add_field(name="🔎 Trouver la différence", value=f"{liste1} vs {liste2}", inline=False)
+    embed.add_field(
+        name="🔎 Trouver la différence",
+        value=(
+            f"Voici deux suites de nombres :\n"
+            f"**1️⃣** {', '.join(map(str, liste1))}\n"
+            f"**2️⃣** {', '.join(map(str, liste2))}\n\n"
+            f"➡️ Quelle **position (1 à 6)** est différente dans la deuxième suite ?"
+        ),
+        inline=False
+    )
     await ctx.edit(embed=embed)
-    await asyncio.sleep(prep_time)
 
+    # Petit temps de préparation
+    await asyncio.sleep(trouver_difference.prep_time)
+
+    # Attente de la réponse du joueur
     try:
-        msg = await bot.wait_for("message", check=lambda m: m.author.id == get_user_id(), timeout=TIMEOUT)
-        return int(msg.content) == diff_index + 1
+        msg = await bot.wait_for(
+            "message",
+            check=lambda m: m.author.id == get_user_id(),
+            timeout=TIMEOUT
+        )
+        # Vérifie si la réponse est bien un chiffre correct
+        if not msg.content.isdigit():
+            return False
+        return int(msg.content.strip()) == diff_index + 1
     except:
         return False
+
 
 trouver_difference.title = "Trouver la différence"
 trouver_difference.emoji = "🔎"
