@@ -537,6 +537,68 @@ mot_miroir.emoji = "🔁"
 mot_miroir.prep_time = 2
 
 # ────────────────────────────────────────────────────────────────────────────────
+# 🔹 🧊 Ombre
+# ────────────────────────────────────────────────────────────────────────────────
+async def ombre(ctx, embed, get_user_id, bot):
+    prep_time = 2
+    emojis = ["◼️", "◾", "▪️", "⬛"]  # du plus gros au plus petit environ
+
+    # On choisit aléatoirement s’il faut trouver le plus grand ou le plus petit
+    mode = random.choice(["grand", "petit"])
+    base = random.choice(emojis[1:3])  # symbole de base moyen
+    grid_size = 4
+
+    # On construit une grille de base
+    grid = [[base for _ in range(grid_size)] for _ in range(grid_size)]
+
+    # On remplace une case par une taille différente
+    if mode == "grand":
+        special = emojis[0]  # plus gros
+    else:
+        special = emojis[-1]  # plus petit
+    special_pos = (random.randint(0, grid_size - 1), random.randint(0, grid_size - 1))
+    grid[special_pos[0]][special_pos[1]] = special
+
+    # Affichage de la grille dans l'embed
+    grid_display = "\n".join(" ".join(row) for row in grid)
+    embed.clear_fields()
+    embed.add_field(name="🧊 Ombre", value=f"Trouve le carré **le plus {mode}** !", inline=False)
+    embed.add_field(name="Grille :", value=grid_display, inline=False)
+    await ctx.edit(embed=embed)
+    await asyncio.sleep(prep_time)
+
+    # Création des boutons (4x4)
+    class GridView(discord.ui.View):
+        def __init__(self):
+            super().__init__(timeout=TIMEOUT)
+            self.correct = False
+
+    view = GridView()
+    for i in range(grid_size):
+        for j in range(grid_size):
+            emoji = grid[i][j]
+            async def make_callback(x=i, y=j):
+                async def callback(interaction: discord.Interaction):
+                    if interaction.user.id != get_user_id():
+                        await interaction.response.send_message("🚫 Pas ton tour.", ephemeral=True)
+                        return
+                    view.correct = (x, y) == special_pos
+                    view.stop()
+                    await interaction.response.defer()
+                return callback
+            button = discord.ui.Button(label=emoji, style=discord.ButtonStyle.secondary)
+            button.callback = await make_callback()
+            view.add_item(button)
+
+    await ctx.edit(embed=embed, view=view)
+    await view.wait()
+    return getattr(view, "correct", False)
+
+ombre.title = "Ombre"
+ombre.emoji = "🧊"
+ombre.prep_time = 2
+
+# ────────────────────────────────────────────────────────────────────────────────
 # 🔹 🔤 Pagaille
 # ────────────────────────────────────────────────────────────────────────────────
 async def pagaille(ctx, embed, get_user_id, bot):
@@ -674,6 +736,44 @@ async def reflexe_couleur(ctx, embed, get_user_id, bot):
 reflexe_couleur.title = "Réflexe couleur"
 reflexe_couleur.emoji = "🟢"
 reflexe_couleur.prep_time = 2
+
+# ────────────────────────────────────────────────────────────────────────────────
+# 🔹 🧩 Séquence de symboles
+# ────────────────────────────────────────────────────────────────────────────────
+async def sequence_symboles(ctx, embed, get_user_id, bot):
+    symbols = ["⭐", "🍎", "🐍", "⚡", "🎲", "🍀", "🐱", "🔥"]
+    seq = random.sample(symbols, 4)
+
+    embed.clear_fields()
+    embed.add_field(name="🧩 Séquence de symboles", value="Observe bien la séquence suivante :", inline=False)
+    embed.add_field(name="Séquence :", value=" ".join(seq), inline=False)
+    await ctx.edit(embed=embed)
+    await asyncio.sleep(4)  # prep_time
+
+    # On cache la séquence
+    embed.clear_fields()
+    question_type = random.choice(["position", "complete"])
+
+    if question_type == "position":
+        index = random.randint(0, len(seq) - 1)
+        embed.add_field(name="🧩 Séquence de symboles", value=f"Quel était le **{index+1}ᵉ** emoji ?", inline=False)
+        correct_answer = seq[index]
+    else:
+        embed.add_field(name="🧩 Séquence de symboles", value="Réécris la séquence complète !", inline=False)
+        correct_answer = "".join(seq)
+
+    await ctx.edit(embed=embed)
+
+    try:
+        msg = await bot.wait_for("message", check=lambda m: m.author.id == get_user_id(), timeout=TIMEOUT)
+        user_input = msg.content.replace(" ", "")
+        return user_input == correct_answer or user_input == "".join(correct_answer)
+    except:
+        return False
+
+sequence_symboles.title = "Séquence de symboles"
+sequence_symboles.emoji = "🧩"
+sequence_symboles.prep_time = 4
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🔹 🧩 Suite alphabétique
