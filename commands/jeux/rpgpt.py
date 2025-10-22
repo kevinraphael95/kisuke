@@ -134,17 +134,13 @@ class RPGPT(commands.Cog):
 
         mot = content[1:].strip()
 
-        # Vérifie qu’il y a bien un mot et qu’il est unique
-        if not mot or len(mot.split()) > 1:
-            await safe_send(message.channel, "❌ Réponds avec **un seul mot**, précédé de `!`.")
+
+        # ⚡ Nouvelle version : on accepte tout ce qui commence par "!"
+        mot = content[1:].strip()
+        if not mot:
+            await safe_send(message.channel, "❌ Écris quelque chose après `!`.")
             return
 
-        # Limite de tours
-        if session["turns"] >= MAX_TURNS:
-            await safe_send(message.channel, "🌙 *Ton aventure touche à sa fin...* Le Néant se referme.")
-            del self.sessions[user_id]
-            supabase.table("players").delete().eq("discord_id", user_id).execute()
-            return
 
         session["history"].append({"role": "user", "content": mot})
         session["turns"] += 1
