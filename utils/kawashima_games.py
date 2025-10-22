@@ -274,7 +274,7 @@ datation.prep_time = 0
 # ────────────────────────────────────────────────────────────────────────────────
 # 🔹 🧭 Directions opposées
 # ────────────────────────────────────────────────────────────────────────────────
-async def directions_opposees(ctx_or_interaction, embed, get_user_id, bot):
+async def directions_opposees(ctx, embed, get_user_id, bot):
     import random
     from discord.ui import View, Button
     from discord import ButtonStyle
@@ -312,15 +312,17 @@ async def directions_opposees(ctx_or_interaction, embed, get_user_id, bot):
         btn.callback = callback
         view.add_item(btn)
 
-    # Envoie selon le type
-    if hasattr(ctx_or_interaction, "send"):  # Context
-        msg = await ctx_or_interaction.send(embed=embed, view=view)
-    else:  # Interaction
-        msg = await ctx_or_interaction.followup.send(embed=embed, view=view)
+    # ctx est un Message → on édite le message existant
+    await ctx.edit(embed=embed, view=view)
 
     await view.wait()
-    await msg.edit(view=None)
+    await ctx.edit(view=None)  # Supprime les boutons
     return view.result
+
+
+directions_opposees.title = "Directions opposées"
+directions_opposees.emoji = "🧭"
+directions_opposees.prep_time = 1
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🔹 ➗ Équation à trou
@@ -538,38 +540,50 @@ mot_miroir.prep_time = 2
 # 🔹 🧊 Ombre
 # ────────────────────────────────────────────────────────────────────────────────
 async def ombre(ctx, embed, get_user_id, bot):
-    prep_time = 2
-    emojis = ["◼️", "◾", "▪️", "⬛"]  # du plus gros au plus petit
-    mode = random.choice(["grand", "petit"])
-    base = random.choice(emojis[1:3])  # symbole de base moyen
-    grid_size = 4
+    import random
+    from discord.ui import View, Button
+    from discord import ButtonStyle
 
-    # Construction de la grille
-    grid = [[base for _ in range(grid_size)] for _ in range(grid_size)]
+    prep_time = 2
+    grid_size = 4
+    emojis = ["◼️", "◾", "▪️", "⬛"]  # du plus grand au plus petit visuellement
+
+    # Mode : trouver le plus grand ou le plus petit
+    mode = random.choice(["grand", "petit"])
+
+    # Génération d’une grille aléatoire
+    grid = [[random.choice(emojis[1:3]) for _ in range(grid_size)] for _ in range(grid_size)]
+
+    # On place une seule case spéciale (unique)
     special = emojis[0] if mode == "grand" else emojis[-1]
     special_pos = (random.randint(0, grid_size - 1), random.randint(0, grid_size - 1))
     grid[special_pos[0]][special_pos[1]] = special
 
-    # Embed seulement avec consigne
+    # Embed de consigne
     embed.clear_fields()
-    embed.add_field(name="🧊 Ombre", value=f"Trouve le carré **le plus {mode}** !", inline=False)
+    embed.add_field(
+        name="🧊 Ombre",
+        value=f"Trouve le carré **le plus {mode}** parmi ceux affichés ci-dessous !",
+        inline=False
+    )
     await ctx.edit(embed=embed)
     await asyncio.sleep(prep_time)
 
-    # Création de la grid avec boutons
-    class GridView(discord.ui.View):
+    # Vue des boutons
+    class GridView(View):
         def __init__(self):
             super().__init__(timeout=TIMEOUT)
             self.correct = False
 
     view = GridView()
 
+    # Création des boutons de la grille 4x4
     for i in range(grid_size):
         for j in range(grid_size):
             emoji = grid[i][j]
 
             async def make_callback(x=i, y=j):
-                async def callback(interaction: discord.Interaction):
+                async def callback(interaction):
                     if interaction.user.id != get_user_id():
                         await interaction.response.send_message("🚫 Pas ton tour.", ephemeral=True)
                         return
@@ -578,14 +592,17 @@ async def ombre(ctx, embed, get_user_id, bot):
                     await interaction.response.defer()
                 return callback
 
-            # Boutons clairs pour bien voir les emojis
-            button = discord.ui.Button(label=emoji, style=discord.ButtonStyle.primary)
+            button = Button(label=emoji, style=ButtonStyle.secondary)
             button.callback = await make_callback()
             view.add_item(button)
 
-    await ctx.edit(embed=embed, view=view)
+    # Affichage de la grille (pas dans l’embed)
+    msg = await ctx.channel.send(view=view)
     await view.wait()
+    await msg.edit(view=None)
+
     return getattr(view, "correct", False)
+
 
 ombre.title = "Ombre"
 ombre.emoji = "🧊"
@@ -731,9 +748,13 @@ reflexe_couleur.emoji = "🟢"
 reflexe_couleur.prep_time = 2
 
 # ────────────────────────────────────────────────────────────────────────────────
-# 🔹 🧩 Séquence de symboles (version boutons)
+# 🔹 🧩 Séquence de symboles (version avec boutons)
 # ────────────────────────────────────────────────────────────────────────────────
 async def sequence_symboles(ctx, embed, get_user_id, bot):
+    import random, asyncio
+    from discord.ui import View, Button
+    from discord import ButtonStyle
+
     symbols = ["⭐", "🍎", "🐍", "⚡", "🎲", "🍀", "🐱", "🔥"]
     seq = random.sample(symbols, 4)
 
@@ -741,55 +762,84 @@ async def sequence_symboles(ctx, embed, get_user_id, bot):
     embed.clear_fields()
     embed.add_field(
         name="🧩 Séquence de symboles",
-        value="Observe bien la séquence suivante :\n" + " ".join(seq),
+        value="Observe bien la séquence suivante :",
         inline=False
     )
+    embed.add_field(name="Séquence :", value=" ".join(seq), inline=False)
     await ctx.edit(embed=embed)
     await asyncio.sleep(sequence_symboles.prep_time)
 
     # On cache la séquence
+    question_type = random.choice(["position", "complete"])
     embed.clear_fields()
-    question_type = "position"  # Pour version bouton, on fait juste "position"
-    index = random.randint(0, len(seq) - 1)
-    embed.add_field(
-        name="🧩 Séquence de symboles",
-        value=f"Quel était le **{index+1}ᵉ** emoji ?",
-        inline=False
-    )
-    await ctx.edit(embed=embed)
 
-    # Création des boutons
-    class SymbolView(discord.ui.View):
+    if question_type == "position":
+        index = random.randint(0, len(seq) - 1)
+        embed.add_field(
+            name="🧩 Séquence de symboles",
+            value=f"Quel était le **{index+1}ᵉ** emoji ?",
+            inline=False
+        )
+        correct_answer = seq[index]
+        multiple_clicks = False
+    else:
+        embed.add_field(
+            name="🧩 Séquence de symboles",
+            value="Clique sur les 4 emojis dans **le bon ordre** !",
+            inline=False
+        )
+        correct_answer = seq
+        multiple_clicks = True
+
+    # ────────────── Création de la vue ──────────────
+    class SequenceView(View):
         def __init__(self):
             super().__init__(timeout=TIMEOUT)
-            self.selected = None
+            self.result = False
+            self.selected = []
 
-    view = SymbolView()
-    for s in symbols:
-        async def make_callback(symbol=s):
-            async def callback(interaction: discord.Interaction):
-                if interaction.user.id != get_user_id():
-                    await interaction.response.send_message("🚫 Pas ton tour !", ephemeral=True)
-                    return
-                view.selected = symbol
+    view = SequenceView()
+
+    # ────────────── Création des boutons ──────────────
+    for symbol in symbols:
+        async def callback(interaction, s=symbol):
+            if interaction.user.id != get_user_id():
+                await interaction.response.send_message("🚫 Pas ton tour !", ephemeral=True)
+                return
+
+            if multiple_clicks:
+                view.selected.append(s)
+                # met à jour le bouton (désactivé après clic)
+                for btn in view.children:
+                    if btn.label == s:
+                        btn.disabled = True
+                        break
+                await interaction.response.edit_message(view=view)
+
+                # si 4 choix faits, on vérifie
+                if len(view.selected) == len(correct_answer):
+                    view.result = view.selected == correct_answer
+                    view.stop()
+            else:
+                view.result = (s == correct_answer)
                 view.stop()
                 await interaction.response.defer()
-            return callback
 
-        btn = Button(label=s, style=discord.ButtonStyle.secondary)
-        btn.callback = await make_callback(s)
+        btn = Button(label=symbol, style=ButtonStyle.secondary)
+        btn.callback = callback
         view.add_item(btn)
 
-    # Envoi et attente
-    msg = await ctx.send(embed=embed, view=view)
+    await ctx.edit(embed=embed, view=view)
     await view.wait()
-    await msg.edit(view=None)
 
-    return getattr(view, "selected", None) == seq[index]
+    # Nettoyage
+    await ctx.edit(view=None)
+    return view.result
+
 
 sequence_symboles.title = "Séquence de symboles"
 sequence_symboles.emoji = "🧩"
-sequence_symboles.prep_time = 4
+sequence_symboles.prep_time = 3
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🔹 🧩 Suite alphabétique
@@ -882,7 +932,7 @@ suite_logique.prep_time = 2
 # ────────────────────────────────────────────────────────────────────────────────
 # 🔹 🔎 Trouver la différence
 # ────────────────────────────────────────────────────────────────────────────────
-async def trouver_difference(ctx_or_interaction, embed, get_user_id, bot):
+async def trouver_difference(ctx, embed, get_user_id, bot):
     import random, asyncio
 
     liste1 = [random.randint(1, 9) for _ in range(6)]
@@ -907,14 +957,7 @@ async def trouver_difference(ctx_or_interaction, embed, get_user_id, bot):
         inline=False
     )
 
-    # Envoie selon le type
-    if hasattr(ctx_or_interaction, "edit"):  # ctx.edit pour embed existant
-        await ctx_or_interaction.edit(embed=embed)
-    elif hasattr(ctx_or_interaction, "send"):  # Context classique
-        await ctx_or_interaction.send(embed=embed)
-    else:  # Interaction
-        await ctx_or_interaction.followup.send(embed=embed)
-
+    await ctx.edit(embed=embed)
     await asyncio.sleep(trouver_difference.prep_time)
 
     try:
@@ -928,6 +971,11 @@ async def trouver_difference(ctx_or_interaction, embed, get_user_id, bot):
         return int(msg.content.strip()) == diff_index + 1
     except:
         return False
+
+
+trouver_difference.title = "Trouver la différence"
+trouver_difference.emoji = "🔎"
+trouver_difference.prep_time = 1
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🔹 ✏️ Typographie erreur
