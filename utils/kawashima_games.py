@@ -323,8 +323,7 @@ async def directions_opposees(ctx, embed, get_user_id, bot):
 
 directions_opposees.title = "Directions opposées"
 directions_opposees.emoji = "🧭"
-directions_opposees.prep
-_time = 1
+directions_opposees.prep_time = 1
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🔹 ➗ Équation à trou
@@ -593,8 +592,7 @@ async def ombre(ctx, embed, get_user_id, bot):
 
 ombre.title = "Ombre"
 ombre.emoji = "🧊"
-ombre.prep
-_time = 2
+ombre.prep_time = 2
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🔹 🔤 Pagaille
