@@ -40,20 +40,20 @@ class TestKawashima(commands.Cog):
         description="Tester un mini-jeu de l'entraînement cérébral via son numéro ou afficher la liste."
     )
     @app_commands.checks.cooldown(1, 5.0, key=lambda i: i.user.id)
-    async def slash_testgame(self, interaction: discord.Interaction, choice: int = None):
+    async def slash_testgame(self, interaction: discord.Interaction, choice: str = None):
         await interaction.response.defer()
         await self.run_game(interaction, choice)
 
     # ─────────── Commande PREFIX ───────────
     @commands.command(name="testgame", aliases=["tg"], help="Tester un mini-jeu de l'entraînement cérébral via son numéro ou afficher la liste.")
     @commands.cooldown(1, 5.0, commands.BucketType.user)
-    async def prefix_testgame(self, ctx: commands.Context, choice: int = None):
+    async def prefix_testgame(self, ctx: commands.Context, choice: str = None):
         await self.run_game(ctx, choice)
 
     # ─────────── Lancer le mini-jeu ───────────
-    async def run_game(self, ctx_or_interaction, choice: int = None):
+    async def run_game(self, ctx_or_interaction, choice: str | int = None):
+        # ─────────── Pagination si aucun choix ───────────
         if choice is None:
-            # ─────────── Pagination ───────────
             pages = [
                 self.sorted_titles[i:i + PAGE_SIZE]
                 for i in range(0, len(self.sorted_titles), PAGE_SIZE)
@@ -100,8 +100,39 @@ class TestKawashima(commands.Cog):
                 page_view.message = await ctx_or_interaction.send(embed=embed, view=page_view)
             return
 
+        # ─────────── Tester tous les jeux si "all" ───────────
+        if isinstance(choice, str) and choice.lower() == "all":
+            for i, game_name in enumerate(self.sorted_titles, start=1):
+                game = self.games[game_name]
+                if isinstance(ctx_or_interaction, discord.Interaction):
+                    send = ctx_or_interaction.followup.send
+                    user = ctx_or_interaction.user
+                else:
+                    send = ctx_or_interaction.send
+                    user = ctx_or_interaction.author
+
+                game_embed = discord.Embed(
+                    title=f"🧪 Mini-jeu {i}/{len(self.sorted_titles)} : {game_name}",
+                    description="Réponds dans le chat pour jouer !",
+                    color=discord.Color.blurple()
+                )
+                game_msg = await send(embed=game_embed)
+                try:
+                    success = await game(game_msg, game_embed, lambda: user.id, self.bot)
+                    result_text = "✅ Bien joué !" if success else "❌ Raté !"
+                except Exception as e:
+                    result_text = f"⚠️ Erreur lors du test : {e}"
+
+                result_embed = discord.Embed(
+                    title=f"Résultat — {game_name}",
+                    description=result_text,
+                    color=discord.Color.green() if success else discord.Color.red()
+                )
+                await send(embed=result_embed)
+            return
+
         # ─────────── Vérification du numéro ───────────
-        if not 1 <= choice <= len(self.sorted_titles):
+        if not 1 <= int(choice) <= len(self.sorted_titles):
             msg = f"⚠️ Numéro invalide ! Choisis entre 1 et {len(self.sorted_titles)}"
             if isinstance(ctx_or_interaction, discord.Interaction):
                 await ctx_or_interaction.followup.send(msg)
@@ -109,7 +140,7 @@ class TestKawashima(commands.Cog):
                 await ctx_or_interaction.send(msg)
             return
 
-        game_name = self.sorted_titles[choice - 1]
+        game_name = self.sorted_titles[int(choice) - 1]
         game = self.games[game_name]
 
         if isinstance(ctx_or_interaction, discord.Interaction):
