@@ -274,7 +274,7 @@ datation.prep_time = 0
 # ────────────────────────────────────────────────────────────────────────────────
 # 🔹 🧭 Directions opposées
 # ────────────────────────────────────────────────────────────────────────────────
-async def directions_opposees(ctx, embed, get_user_id, bot):
+async def directions_opposees(ctx_or_interaction, embed, get_user_id, bot):
     import random
     from discord.ui import View, Button
     from discord import ButtonStyle
@@ -282,11 +282,9 @@ async def directions_opposees(ctx, embed, get_user_id, bot):
     arrows = ["⬆️", "⬇️", "⬅️", "➡️"]
     opposites = {"⬆️": "⬇️", "⬇️": "⬆️", "⬅️": "➡️", "➡️": "⬅️"}
 
-    # Flèche affichée
     arrow = random.choice(arrows)
     correct = opposites[arrow]
 
-    # Embed avec consigne
     embed.clear_fields()
     embed.add_field(
         name="🧭 Directions opposées",
@@ -294,7 +292,6 @@ async def directions_opposees(ctx, embed, get_user_id, bot):
         inline=False
     )
 
-    # Création de la vue avec les boutons
     class ArrowView(View):
         def __init__(self):
             super().__init__(timeout=TIMEOUT)
@@ -315,18 +312,15 @@ async def directions_opposees(ctx, embed, get_user_id, bot):
         btn.callback = callback
         view.add_item(btn)
 
-    # ENVOI DU MESSAGE AVEC LA VUE
-    msg = await ctx.send(embed=embed, view=view)
+    # Envoie selon le type
+    if hasattr(ctx_or_interaction, "send"):  # Context
+        msg = await ctx_or_interaction.send(embed=embed, view=view)
+    else:  # Interaction
+        msg = await ctx_or_interaction.followup.send(embed=embed, view=view)
 
-    # Attente du choix
     await view.wait()
-    await msg.edit(view=None)  # Supprime les boutons après le choix
+    await msg.edit(view=None)
     return view.result
-
-
-directions_opposees.title = "Directions opposées"
-directions_opposees.emoji = "🧭"
-directions_opposees.prep_time = 1
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🔹 ➗ Équation à trou
@@ -888,20 +882,19 @@ suite_logique.prep_time = 2
 # ────────────────────────────────────────────────────────────────────────────────
 # 🔹 🔎 Trouver la différence
 # ────────────────────────────────────────────────────────────────────────────────
-async def trouver_difference(ctx, embed, get_user_id, bot):
-    # Préparation
+async def trouver_difference(ctx_or_interaction, embed, get_user_id, bot):
+    import random, asyncio
+
     liste1 = [random.randint(1, 9) for _ in range(6)]
     liste2 = liste1.copy()
     diff_index = random.randint(0, 5)
 
-    # S'assure que la valeur diffère vraiment
     while True:
         new_val = random.randint(1, 9)
         if new_val != liste1[diff_index]:
             liste2[diff_index] = new_val
             break
 
-    # Affichage dans l'embed
     embed.clear_fields()
     embed.add_field(
         name="🔎 Trouver la différence",
@@ -913,29 +906,28 @@ async def trouver_difference(ctx, embed, get_user_id, bot):
         ),
         inline=False
     )
-    await ctx.edit(embed=embed)
 
-    # Petit temps de préparation
+    # Envoie selon le type
+    if hasattr(ctx_or_interaction, "edit"):  # ctx.edit pour embed existant
+        await ctx_or_interaction.edit(embed=embed)
+    elif hasattr(ctx_or_interaction, "send"):  # Context classique
+        await ctx_or_interaction.send(embed=embed)
+    else:  # Interaction
+        await ctx_or_interaction.followup.send(embed=embed)
+
     await asyncio.sleep(trouver_difference.prep_time)
 
-    # Attente de la réponse du joueur
     try:
         msg = await bot.wait_for(
             "message",
             check=lambda m: m.author.id == get_user_id(),
             timeout=TIMEOUT
         )
-        # Vérifie si la réponse est bien un chiffre correct
         if not msg.content.isdigit():
             return False
         return int(msg.content.strip()) == diff_index + 1
     except:
         return False
-
-
-trouver_difference.title = "Trouver la différence"
-trouver_difference.emoji = "🔎"
-trouver_difference.prep_time = 1
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🔹 ✏️ Typographie erreur
