@@ -4,7 +4,7 @@
 import discord
 from discord.ext import commands
 import asyncio
-from utils.gpt_oss_client import get_story_continuation
+from utils.gpt_oss_client import get_simple_response
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🧩 COG PRINCIPAL
@@ -40,7 +40,7 @@ class GPTChat(commands.Cog):
         ]
 
         try:
-            response = await asyncio.to_thread(get_story_continuation, history)
+            response = await asyncio.to_thread(get_simple_response, history)
         except Exception as e:
             print(f"[Erreur GPT Commande] {e}")
             await self._embed_send(channel, "⚠️ **Erreur :**", "Impossible de contacter le modèle pour le moment.")
