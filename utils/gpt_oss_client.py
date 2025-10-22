@@ -3,6 +3,7 @@
 # ────────────────────────────────────────────────────────────────────────────────
 import os
 from openai import OpenAI
+import requests
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🔑 Clé NVIDIA (cloud)
@@ -64,3 +65,28 @@ def get_story_continuation(history: list[dict]) -> str:
     except Exception as e:
         print(f"[Erreur GPT-OSS Histoire] {type(e)} — {e}")
         return "⚠️ Le narrateur se tait... (*erreur du modèle ou limite atteinte*)"
+
+# --------------------------------------------------------------------- #
+# Fonction pour récupérer le quota restant
+# --------------------------------------------------------------------- #
+def remaining_tokens() -> int:
+    """
+    Retourne le nombre de tokens restants dans le quota mensuel NVIDIA GPT-OSS.
+    Approximation : 100 000 tokens par mois (free-tier)
+    """
+    try:
+        resp = requests.get(
+            f"{BASE_URL}/usage",
+            headers={"Authorization": f"Bearer {API_KEY}"},
+            timeout=5
+        )
+        resp.raise_for_status()
+        data = resp.json()
+        used = data.get("token_used", 0)
+        quota = data.get("token_quota", 100_000)
+        return quota - used
+    except Exception as e:
+        print(f"[Erreur remaining_tokens] {e}")
+        # fallback si l'API usage n'est pas dispo
+        return 100_000
+
