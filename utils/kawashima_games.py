@@ -276,53 +276,55 @@ datation.prep_time = 0
 # ────────────────────────────────────────────────────────────────────────────────
 async def directions_opposees(ctx, embed, get_user_id, bot):
     import random
-    from discord import ButtonStyle
     from discord.ui import View, Button
+    from discord import ButtonStyle
 
-    # Flèches et opposés simples
     arrows = ["⬆️", "⬇️", "⬅️", "➡️"]
-    opposites = {
-        "⬆️": "⬇️",
-        "⬇️": "⬆️",
-        "⬅️": "➡️",
-        "➡️": "⬅️"
-    }
+    opposites = {"⬆️": "⬇️", "⬇️": "⬆️", "⬅️": "➡️", "➡️": "⬅️"}
 
-    # Choix aléatoire de la flèche
+    # Flèche affichée
     arrow = random.choice(arrows)
     correct = opposites[arrow]
 
-    # Affichage de la consigne
+    # Embed avec consigne
     embed.clear_fields()
     embed.add_field(
         name="🧭 Directions opposées",
-        value=f"Flèche affichée : {arrow}\n➡️ Clique sur **la direction opposée** le plus vite possible !",
+        value=f"Flèche affichée : {arrow}\n➡️ Clique sur **la direction opposée** !",
         inline=False
     )
     await ctx.edit(embed=embed)
 
-    # Vue avec les boutons
-    view = View(timeout=TIMEOUT)
+    # Création de la vue avec les 4 boutons
+    class ArrowView(View):
+        def __init__(self):
+            super().__init__(timeout=TIMEOUT)
+            self.result = False
+
+    view = ArrowView()
+
     for symbol in arrows:
-        async def button_callback(interaction, s=symbol):
+        async def callback(interaction, s=symbol):
             if interaction.user.id != get_user_id():
+                await interaction.response.send_message("🚫 Pas ton tour !", ephemeral=True)
                 return
-            view.stop()
             view.result = (s == correct)
+            view.stop()
             await interaction.response.defer()
 
-        btn = Button(label=symbol, style=ButtonStyle.secondary)
-        btn.callback = button_callback
+        btn = Button(label=symbol, style=ButtonStyle.primary)
+        btn.callback = callback
         view.add_item(btn)
 
     msg = await ctx.send(view=view)
     await view.wait()
-    await msg.edit(view=None)
-    return getattr(view, "result", False)
+    await msg.edit(view=None)  # Supprime les boutons après le choix
+    return view.result
 
 directions_opposees.title = "Directions opposées"
 directions_opposees.emoji = "🧭"
-directions_opposees.prep_time = 1
+directions_opposees.prep
+_time = 1
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🔹 ➗ Équation à trou
