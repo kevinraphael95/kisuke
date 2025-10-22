@@ -4,7 +4,7 @@
 import discord
 from discord.ext import commands
 import asyncio
-from utils.gpt_oss_client import get_simple_response
+from utils.gpt_oss_client import get_simple_response, remaining_tokens
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🧩 COG PRINCIPAL
@@ -12,13 +12,16 @@ from utils.gpt_oss_client import get_simple_response
 class GPTChat(commands.Cog):
     """Commande !!gpt — conversation libre avec le modèle GPT-OSS (Cloud NVIDIA)"""
 
+    MAX_PROMPT_LENGTH = 60
+    MAX_RESPONSE_LENGTH = 90
+
     def __init__(self, bot: commands.Bot):
         self.bot = bot
 
     # ────────────────────────────────────────────────────────────────────────────
     # 💬 Commande principale : !!gpt <message>
     # ────────────────────────────────────────────────────────────────────────────
-    @commands.command(name="gpt")
+    @commands.command(name="gpt", help="ChatGPT")
     @commands.cooldown(1, 4.0, commands.BucketType.user)
     async def gpt_command(self, ctx: commands.Context, *, prompt: str = None):
         user = ctx.author
@@ -33,26 +36,39 @@ class GPTChat(commands.Cog):
             )
             return
 
+        # ──────────────── Vérification du prompt ────────────────
+        if len(prompt) > self.MAX_PROMPT_LENGTH:
+            await self._embed_send(
+                channel,
+                "⚠️ Prompt trop long",
+                f"Ton message fait {len(prompt)} caractères, la limite est {self.MAX_PROMPT_LENGTH}."
+            )
+            return
+
+        # ──────────────── Appel au modèle ────────────────
         try:
-            # Appel au modèle NVIDIA GPT-OSS (cloud)
-            response = await asyncio.to_thread(get_simple_response, prompt)
+            response = await asyncio.to_thread(get_simple_response, prompt, self.MAX_RESPONSE_LENGTH)
         except Exception as e:
             print(f"[Erreur GPT Commande] {e}")
             await self._embed_send(channel, "⚠️ **Erreur :**", "Impossible de contacter le modèle pour le moment.")
             return
 
-        await self._embed_send(channel, f"💬 **Réponse à {user.display_name} :**", response)
+        # ──────────────── Footer avec quota ────────────────
+        used = 100_000 - remaining_tokens()
+        footer_text = f"GPT-OSS NVIDIA • Cloud • Quota utilisé : {used}/100000"
+
+        await self._embed_send(channel, f"💬 Réponse à {user.display_name} :", response, footer_text)
 
     # ────────────────────────────────────────────────────────────────────────────
     # 🪶 Envoi propre en embed
     # ────────────────────────────────────────────────────────────────────────────
-    async def _embed_send(self, channel: discord.TextChannel, title: str, description: str):
+    async def _embed_send(self, channel: discord.TextChannel, title: str, description: str, footer: str = None):
         embed = discord.Embed(
             title=title,
             description=description,
             color=discord.Color.blurple()
         )
-        embed.set_footer(text="GPT-OSS NVIDIA • Cloud")
+        embed.set_footer(text=footer or "GPT-OSS NVIDIA • Cloud")
         await channel.send(embed=embed)
 
 # ────────────────────────────────────────────────────────────────────────────────
