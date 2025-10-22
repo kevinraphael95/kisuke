@@ -1,8 +1,7 @@
 # ────────────────────────────────────────────────────────────────────────────────
-# 📌 rpgpt.py — Mini RPG Bleach (Les Fissures du Néant) v7 corrigé
-# Commande /rpgpt et !rpgpt avec persistance Supabase et JDR complet
+# 📌 rpgpt.py — Mini RPG Bleach (Les Fissures du Néant) amélioré
+# Commande /rpgpt et !rpgpt avec persistance Supabase et gestion sécurisée Discord
 # Objectif : Mini RPG narratif où le joueur répond avec un seul mot précédé de "!"
-# Tout mot est reconnu et reçoit toujours une réponse
 # Catégorie : Jeux
 # Accès : Tous
 # Cooldown : 1 utilisation / 5 secondes / utilisateur
@@ -12,33 +11,37 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 import asyncio
-from datetime import datetime
 from utils.gpt_oss_client import get_story_continuation
 from utils.supabase_client import supabase
 from utils.discord_utils import safe_send, safe_respond
-import random
 
 # ────────────────────────────────────────────────────────────────────────────────
 # ⚙️ Configuration
 # ────────────────────────────────────────────────────────────────────────────────
 MAX_ACTIVE_PLAYERS = 3
-SESSION_TIMEOUT = 600  # 10 minutes d’inactivité
+MAX_TURNS = 10
 
 # ────────────────────────────────────────────────────────────────────────────────
-# 🧠 Prompt système
+# 🧠 Prompt système — trame de base
 # ────────────────────────────────────────────────────────────────────────────────
 SYSTEM_PROMPT = """
-Tu es le narrateur d’un mini-RPG textuel inspiré de Bleach, intitulé Les Fissures du Néant.
-Le joueur incarne un shinigami explorant les fissures Seireitei ↔ Hueco Mundo.
-Adapte tes descriptions à ses choix, stats et inventaire.
-Chaque action doit influencer le récit et l’univers.
+Tu es le narrateur d’un mini-RPG textuel inspiré de *Bleach*, intitulé **Les Fissures du Néant**.
+Le joueur incarne un shinigami (ou âme errante) explorant les fissures reliant le Seireitei et le Hueco Mundo.
+
+L’histoire suit trois actes :
+1️⃣ Découverte des fissures.
+2️⃣ Rencontre d’un allié ambigu.
+3️⃣ Choix final face au Néant.
+
+Tu adaptes tes descriptions à ses choix (réponses d’un seul mot précédé de "!"), tu ajoutes des indices et de la tension.
+L’ambiance doit être immersive, poétique et mystérieuse. Ne révèle pas la fin trop tôt.
 """
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🧩 Cog principal
 # ────────────────────────────────────────────────────────────────────────────────
 class RPGPT(commands.Cog):
-    """Commande /rpgpt et !rpgpt — RPG narratif avec stats, inventaire et JDR complet."""
+    """Commande /rpgpt et !rpgpt — Mini RPG narratif (Bleach) avec persistance Supabase"""
 
     def __init__(self, bot: commands.Bot):
         self.bot = bot
@@ -59,48 +62,41 @@ class RPGPT(commands.Cog):
         if player:
             # Reprise de partie
             history = player["history"]
-            stats = player.get("stats", {"pv": 100, "force": 10, "agilite": 8, "reiatsu": 15, "chance": 5})
-            inventory = player.get("inventory", [{"nom": "Zanpakuto", "effet": "attaque +5"}])
-            save_state = player.get("save_state", {"acte": 1, "choix_importants": []})
+            turns = player["turns"]
             await safe_send(channel, "🌫️ *Le vent du Néant souffle à nouveau...*")
         else:
-            # Nouvelle partie
+            # Nouvelle partie — grande introduction
             intro = (
                 "🌌 **Bienvenue, âme errante...**\n\n"
-                "Tu es sur le point de plonger dans *Les Fissures du Néant*.\n"
-                "Réponds avec **un seul mot** précédé de `!`.\n\n"
-                "Exemples : `!attaque`, `!observe`, `!parle`\n\n"
+                "Tu es sur le point de plonger dans *Les Fissures du Néant*, un mini-RPG inspiré de Bleach.\n"
+                "Le principe est simple : tu ne peux répondre qu’avec **un seul mot**, précédé de `!`.\n\n"
+                "Exemples : `!attaque`, `!parle`, `!observe`\n\n"
+                "Ton choix influencera le cours de l’histoire.\n\n"
                 "🌒 **Acte I — Le Frisson du Vide**\n"
-                "Une fissure s’ouvre entre deux mondes... Que fais-tu ? (`!attaque`, `!observe`, `!fuis`)"
+                "Un souffle froid parcourt le Seireitei. Une fissure s’ouvre entre deux mondes...\n\n"
+                "Que fais-tu ? (`!attaque`, `!observe`, `!fuis`)"
             )
-            history = [{"role": "system", "content": SYSTEM_PROMPT}, {"role": "assistant", "content": intro}]
-            stats = {"pv": 100, "force": 10, "agilite": 8, "reiatsu": 15, "chance": 5}
-            inventory = [{"nom": "Zanpakuto", "effet": "attaque +5"}]
-            save_state = {"acte": 1, "choix_importants": []}
+
+            history = [
+                {"role": "system", "content": SYSTEM_PROMPT},
+                {"role": "assistant", "content": intro}
+            ]
+            turns = 0
 
             supabase.table("players").insert({
                 "discord_id": user.id,
                 "history": history,
-                "stats": stats,
-                "inventory": inventory,
-                "save_state": save_state,
+                "turns": turns,
                 "last_channel": str(channel.id)
             }).execute()
-            await safe_send(channel, history[-1]["content"])
 
-        self.sessions[user.id] = {
-            "history": history,
-            "stats": stats,
-            "inventory": inventory,
-            "save_state": save_state,
-            "channel": channel,
-            "last_activity": datetime.utcnow()
-        }
+        self.sessions[user.id] = {"history": history, "turns": turns, "channel": channel}
+        await safe_send(channel, history[-1]["content"])
 
     # ────────────────────────────────────────────────────────────────────────────
     # 🔹 Commande SLASH
     # ────────────────────────────────────────────────────────────────────────────
-    @app_commands.command(name="rpgpt", description="Lance une mini-aventure RPG.")
+    @app_commands.command(name="rpgpt", description="Lance une mini-aventure RPG inspirée de Bleach.")
     @app_commands.checks.cooldown(1, 5.0, key=lambda i: i.user.id)
     async def slash_rpgpt(self, interaction: discord.Interaction):
         await safe_respond(interaction, "✨ L’aventure commence...", ephemeral=True)
@@ -115,65 +111,58 @@ class RPGPT(commands.Cog):
         await self.start_session(ctx.author, ctx.channel)
 
     # ────────────────────────────────────────────────────────────────────────────
-    # 🧩 Listener : réponses du joueur
+    # 🧩 Listener : réponses du joueur (uniquement avec "!")
     # ────────────────────────────────────────────────────────────────────────────
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message):
-        if message.author.bot: return
-        user_id = message.author.id
-        if user_id not in self.sessions: return
-
-        session = self.sessions[user_id]
-        if message.channel != session["channel"]: return
-
-        content = message.content.strip()
-        if not content.startswith("!"): return
-
-        mot = content[1:].strip()
-        if not mot or len(mot.split()) > 1:
-            await safe_send(message.channel, "❌ Un seul mot précédé de `!` !")
+        if message.author.bot:
             return
 
-        # ⚡ Ajout à l’historique
+        user_id = message.author.id
+        if user_id not in self.sessions:
+            return
+
+        session = self.sessions[user_id]
+        if message.channel != session["channel"]:
+            return
+
+        content = message.content.strip()
+
+        # Vérifie que le message commence par "!"
+        if not content.startswith("!"):
+            return  # ignore tout autre message
+
+        mot = content[1:].strip()
+
+        # Vérifie qu’il y a bien un mot et qu’il est unique
+        if not mot or len(mot.split()) > 1:
+            await safe_send(message.channel, "❌ Réponds avec **un seul mot**, précédé de `!`.")
+            return
+
+        # Limite de tours
+        if session["turns"] >= MAX_TURNS:
+            await safe_send(message.channel, "🌙 *Ton aventure touche à sa fin...* Le Néant se referme.")
+            del self.sessions[user_id]
+            supabase.table("players").delete().eq("discord_id", user_id).execute()
+            return
+
         session["history"].append({"role": "user", "content": mot})
-        session["last_activity"] = datetime.utcnow()
+        session["turns"] += 1
 
-        # ⚔️ Gestion simple d’actions pour stats et inventaire
-        if mot.lower() == "attaque":
-            degats = random.randint(5, 15) + session["stats"]["force"]
-            session["stats"]["pv"] = max(0, session["stats"]["pv"] - degats//2)
-            session["save_state"]["choix_importants"].append("attaque")
-        elif mot.lower() == "fuis":
-            session["stats"]["agilite"] += 2
-            session["save_state"]["choix_importants"].append("fuis")
-        elif mot.lower() == "observe":
-            session["stats"]["chance"] += 1
-            session["save_state"]["choix_importants"].append("observe")
-        elif mot.lower() == "utilise" and session["inventory"]:
-            item = session["inventory"].pop(0)
-            session["stats"]["pv"] = min(100, session["stats"]["pv"] + 20)
-            session["save_state"]["choix_importants"].append(f"utilisé {item['nom']}")
-
-        # ⚡ Appel GPT pour générer la suite
         try:
-            context = session["history"] + [{"role": "system", "content": f"Stats: {session['stats']}, Inventory: {session['inventory']}"}]
-            response = await asyncio.to_thread(get_story_continuation, context)
+            response = await asyncio.to_thread(get_story_continuation, session["history"])
         except Exception as e:
-            await safe_send(message.channel, "⚠️ Le narrateur se tait...")
+            await safe_send(message.channel, "⚠️ Le narrateur se tait... (*limite atteinte ou erreur API*)")
             print(f"[Erreur RPGPT] {e}")
+            del self.sessions[user_id]
             return
 
         session["history"].append({"role": "assistant", "content": response})
-
-        # ⚡ Mise à jour Supabase
-        supabase.table("players").upsert({
-            "discord_id": user_id,
+        supabase.table("players").update({
             "history": session["history"],
-            "stats": session["stats"],
-            "inventory": session["inventory"],
-            "save_state": session["save_state"],
+            "turns": session["turns"],
             "last_channel": str(message.channel.id)
-        }).execute()
+        }).eq("discord_id", user_id).execute()
 
         await safe_send(message.channel, response)
 
