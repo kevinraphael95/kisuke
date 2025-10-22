@@ -1,7 +1,7 @@
 # ────────────────────────────────────────────────────────────────────────────────
 # 📌 rpgpt.py — Mini RPG Bleach (Les Fissures du Néant) amélioré
 # Commande /rpgpt et !rpgpt avec persistance Supabase et gestion sécurisée Discord
-# Objectif : Mini RPG narratif où le joueur répond avec un seul mot précédé de "!"
+# Objectif : Mini RPG narratif où le joueur répond avec un mot ou une phrase précédé de "!"
 # Catégorie : Jeux
 # Accès : Tous
 # Cooldown : 1 utilisation / 5 secondes / utilisateur
@@ -33,7 +33,7 @@ L’histoire suit trois actes :
 2️⃣ Rencontre d’un allié ambigu.
 3️⃣ Choix final face au Néant.
 
-Tu adaptes tes descriptions à ses choix (réponses d’un seul mot précédé de "!"), tu ajoutes des indices et de la tension.
+Tu adaptes tes descriptions à ses choix (réponses précédées de "!"), tu ajoutes des indices et de la tension.
 L’ambiance doit être immersive, poétique et mystérieuse. Ne révèle pas la fin trop tôt.
 """
 
@@ -69,8 +69,8 @@ class RPGPT(commands.Cog):
             intro = (
                 "🌌 **Bienvenue, âme errante...**\n\n"
                 "Tu es sur le point de plonger dans *Les Fissures du Néant*, un mini-RPG inspiré de Bleach.\n"
-                "Le principe est simple : tu ne peux répondre qu’avec **un seul mot**, précédé de `!`.\n\n"
-                "Exemples : `!attaque`, `!parle`, `!observe`\n\n"
+                "Le principe est simple : tu peux répondre par **un mot ou une phrase**, précédé de `!`.\n\n"
+                "Exemples : `!attaque`, `!parle à l’allié`, `!observe le couloir`\n\n"
                 "Ton choix influencera le cours de l’histoire.\n\n"
                 "🌒 **Acte I — Le Frisson du Vide**\n"
                 "Un souffle froid parcourt le Seireitei. Une fissure s’ouvre entre deux mondes...\n\n"
@@ -96,7 +96,7 @@ class RPGPT(commands.Cog):
     # ────────────────────────────────────────────────────────────────────────────
     # 🔹 Commande SLASH
     # ────────────────────────────────────────────────────────────────────────────
-    @app_commands.command(name="rpgpt", description="Lance une mini-aventure RPG inspirée de Bleach.")
+    @app_commands.command(name="rpgpt", description="Lance une mini-aventure RPG inspirée de Bleach. RPG + chat gpt.")
     @app_commands.checks.cooldown(1, 5.0, key=lambda i: i.user.id)
     async def slash_rpgpt(self, interaction: discord.Interaction):
         await safe_respond(interaction, "✨ L’aventure commence...", ephemeral=True)
@@ -105,13 +105,13 @@ class RPGPT(commands.Cog):
     # ────────────────────────────────────────────────────────────────────────────
     # 🔹 Commande PREFIX
     # ────────────────────────────────────────────────────────────────────────────
-    @commands.command(name="rpgpt")
+    @commands.command(name="rpgpt", help="Lance une mini-aventure RPG inspirée de Bleach. RPG + chat gpt.")
     @commands.cooldown(1, 5.0, commands.BucketType.user)
     async def prefix_rpgpt(self, ctx: commands.Context):
         await self.start_session(ctx.author, ctx.channel)
 
     # ────────────────────────────────────────────────────────────────────────────
-    # 🧩 Listener : réponses du joueur (uniquement avec "!")
+    # 🧩 Listener : réponses du joueur (commencent par "!")
     # ────────────────────────────────────────────────────────────────────────────
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message):
@@ -130,18 +130,15 @@ class RPGPT(commands.Cog):
 
         # Vérifie que le message commence par "!"
         if not content.startswith("!"):
-            return  # ignore tout autre message
+            return
 
-        mot = content[1:].strip()
-
-
-        # ⚡ Nouvelle version : on accepte tout ce qui commence par "!"
+        # On accepte tout après "!" sans limite de mots
         mot = content[1:].strip()
         if not mot:
             await safe_send(message.channel, "❌ Écris quelque chose après `!`.")
             return
 
-
+        # Ajout du tour dans l’historique
         session["history"].append({"role": "user", "content": mot})
         session["turns"] += 1
 
