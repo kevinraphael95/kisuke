@@ -1,5 +1,5 @@
 # ────────────────────────────────────────────────────────────────────────────────
-# 📌 gpt.py — Commande !!gpt : Chat libre avec GPT-OSS (NVIDIA)
+# 📌 gpt.py — Commande !!gpt : Chat libre avec GPT-OSS (Cloud NVIDIA)
 # ────────────────────────────────────────────────────────────────────────────────
 import discord
 from discord.ext import commands
@@ -10,7 +10,7 @@ from utils.gpt_oss_client import get_simple_response
 # 🧩 COG PRINCIPAL
 # ────────────────────────────────────────────────────────────────────────────────
 class GPTChat(commands.Cog):
-    """Commande !!gpt — conversation libre avec le modèle GPT-OSS"""
+    """Commande !!gpt — conversation libre avec le modèle GPT-OSS (Cloud NVIDIA)"""
 
     def __init__(self, bot: commands.Bot):
         self.bot = bot
@@ -29,18 +29,13 @@ class GPTChat(commands.Cog):
                 channel,
                 "💭 **Utilisation :**",
                 "Tape simplement `!!gpt <ton message>` pour discuter avec le modèle.\n"
-                "Exemple : `!!gpt explique moi le Bankai d’Ichigo`"
+                "Exemple : `!!gpt explique-moi le Bankai d’Ichigo`"
             )
             return
 
-        # Historique minimal (pas de contexte long ici)
-        history = [
-            {"role": "system", "content": "Tu es un assistant utile, précis et immersif. Réponds toujours en français."},
-            {"role": "user", "content": prompt}
-        ]
-
         try:
-            response = await asyncio.to_thread(get_simple_response, history)
+            # Appel au modèle NVIDIA GPT-OSS (cloud)
+            response = await asyncio.to_thread(get_simple_response, prompt)
         except Exception as e:
             print(f"[Erreur GPT Commande] {e}")
             await self._embed_send(channel, "⚠️ **Erreur :**", "Impossible de contacter le modèle pour le moment.")
@@ -57,9 +52,8 @@ class GPTChat(commands.Cog):
             description=description,
             color=discord.Color.blurple()
         )
-        embed.set_footer(text="GPT-OSS NVIDIA • Chat libre")
+        embed.set_footer(text="GPT-OSS NVIDIA • Cloud")
         await channel.send(embed=embed)
-
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🔌 SETUP DU COG
