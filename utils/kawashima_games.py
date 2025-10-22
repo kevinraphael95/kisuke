@@ -541,42 +541,35 @@ mot_miroir.prep_time = 2
 # ────────────────────────────────────────────────────────────────────────────────
 async def ombre(ctx, embed, get_user_id, bot):
     prep_time = 2
-    emojis = ["◼️", "◾", "▪️", "⬛"]  # du plus gros au plus petit environ
-
-    # On choisit aléatoirement s’il faut trouver le plus grand ou le plus petit
+    emojis = ["◼️", "◾", "▪️", "⬛"]  # du plus gros au plus petit
     mode = random.choice(["grand", "petit"])
     base = random.choice(emojis[1:3])  # symbole de base moyen
     grid_size = 4
 
-    # On construit une grille de base
+    # Construction de la grille
     grid = [[base for _ in range(grid_size)] for _ in range(grid_size)]
-
-    # On remplace une case par une taille différente
-    if mode == "grand":
-        special = emojis[0]  # plus gros
-    else:
-        special = emojis[-1]  # plus petit
+    special = emojis[0] if mode == "grand" else emojis[-1]
     special_pos = (random.randint(0, grid_size - 1), random.randint(0, grid_size - 1))
     grid[special_pos[0]][special_pos[1]] = special
 
-    # Affichage de la grille dans l'embed
-    grid_display = "\n".join(" ".join(row) for row in grid)
+    # Embed seulement avec consigne
     embed.clear_fields()
     embed.add_field(name="🧊 Ombre", value=f"Trouve le carré **le plus {mode}** !", inline=False)
-    embed.add_field(name="Grille :", value=grid_display, inline=False)
     await ctx.edit(embed=embed)
     await asyncio.sleep(prep_time)
 
-    # Création des boutons (4x4)
+    # Création de la grid avec boutons
     class GridView(discord.ui.View):
         def __init__(self):
             super().__init__(timeout=TIMEOUT)
             self.correct = False
 
     view = GridView()
+
     for i in range(grid_size):
         for j in range(grid_size):
             emoji = grid[i][j]
+
             async def make_callback(x=i, y=j):
                 async def callback(interaction: discord.Interaction):
                     if interaction.user.id != get_user_id():
@@ -586,7 +579,9 @@ async def ombre(ctx, embed, get_user_id, bot):
                     view.stop()
                     await interaction.response.defer()
                 return callback
-            button = discord.ui.Button(label=emoji, style=discord.ButtonStyle.secondary)
+
+            # Boutons clairs pour bien voir les emojis
+            button = discord.ui.Button(label=emoji, style=discord.ButtonStyle.primary)
             button.callback = await make_callback()
             view.add_item(button)
 
@@ -596,7 +591,8 @@ async def ombre(ctx, embed, get_user_id, bot):
 
 ombre.title = "Ombre"
 ombre.emoji = "🧊"
-ombre.prep_time = 2
+ombre.prep
+_time = 2
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🔹 🔤 Pagaille
