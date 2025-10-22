@@ -1,5 +1,5 @@
 # ────────────────────────────────────────────────────────────────────────────────
-# 📌 gpt_oss_client.py — Connexion cloud NVIDIA GPT-OSS (pour !!gpt)
+# 📌 gpt_oss_client.py — Connexion cloud NVIDIA GPT-OSS (pour !!gpt et /rpgpt)
 # ────────────────────────────────────────────────────────────────────────────────
 import os
 from openai import OpenAI
@@ -24,39 +24,51 @@ client = OpenAI(base_url=BASE_URL, api_key=API_KEY)
 # ────────────────────────────────────────────────────────────────────────────────
 # 💬 Réponse simple (commande !!gpt)
 # ────────────────────────────────────────────────────────────────────────────────
-def get_simple_response(prompt: str, max_response_chars: int = 90) -> str:
+def get_simple_response(prompt: str) -> str:
     """
-    Envoie un prompt texte à GPT-OSS NVIDIA (cloud) et renvoie la réponse directe.
-    Limite la réponse à `max_response_chars` caractères.
+    Envoie un simple prompt texte à GPT-OSS NVIDIA (cloud) et renvoie la réponse directe.
+    Utilisé pour la commande !!gpt.
     """
     try:
-        # Ajout d'une consigne explicite dans le prompt pour guider la longueur
-        full_prompt = f"{prompt}\nRéponds en français et fais une réponse concise, max {max_response_chars} caractères."
-
         response = client.chat.completions.create(
             model="openai/gpt-oss-120b",
             messages=[
-                {"role": "system", "content": "Tu es un assistant conversationnel précis, immersif et bienveillant."},
-                {"role": "user", "content": full_prompt}
+                {"role": "system", "content": "Tu es un assistant conversationnel précis, immersif et bienveillant. Réponds toujours en français."},
+                {"role": "user", "content": prompt}
             ],
             temperature=0.8,
             top_p=0.7,
             max_tokens=512
         )
-        text = response.choices[0].message.content.strip()
-
-        # Sécurité : tronquer si le modèle dépasse encore la limite
-        if len(text) > max_response_chars:
-            text = text[:max_response_chars]
-        return text
-
+        return response.choices[0].message.content.strip()
     except Exception as e:
         print(f"[Erreur GPT-OSS Simple] {type(e)} — {e}")
         return "⚠️ Le modèle est silencieux pour le moment..."
 
 # ────────────────────────────────────────────────────────────────────────────────
-# Fonction pour récupérer le quota restant
+# 💬 Continuation d’histoire (utilisée par RPGPT)
 # ────────────────────────────────────────────────────────────────────────────────
+def get_story_continuation(history: list[dict]) -> str:
+    """
+    Envoie l'historique du RPG à GPT-OSS NVIDIA (cloud) et renvoie la suite de l'histoire.
+    Chaque élément de 'history' est une dict : {role: 'user'/'assistant'/'system', content: str}
+    """
+    try:
+        response = client.chat.completions.create(
+            model="openai/gpt-oss-120b",
+            messages=history,
+            temperature=0.95,
+            top_p=0.7,
+            max_tokens=1024
+        )
+        return response.choices[0].message.content.strip()
+    except Exception as e:
+        print(f"[Erreur GPT-OSS Histoire] {type(e)} — {e}")
+        return "⚠️ Le narrateur se tait... (*erreur du modèle ou limite atteinte*)"
+
+# --------------------------------------------------------------------- #
+# Fonction pour récupérer le quota restant
+# --------------------------------------------------------------------- #
 def remaining_tokens() -> int:
     """
     Retourne le nombre de tokens restants dans le quota mensuel NVIDIA GPT-OSS.
@@ -75,4 +87,5 @@ def remaining_tokens() -> int:
         return quota - used
     except Exception as e:
         print(f"[Erreur remaining_tokens] {e}")
+        # fallback si l'API usage n'est pas dispo
         return 100_000
