@@ -15,7 +15,7 @@ import json
 from pathlib import Path
 import unicodedata
 
-ENIGMES_PATH = Path("utils/enigmes_portes.json")
+ENIGMES_PATH = Path("data/enigmes_portes.json")
 with ENIGMES_PATH.open("r", encoding="utf-8") as f:
     ENIGMES = json.load(f)
 
