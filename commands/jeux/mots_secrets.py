@@ -90,7 +90,7 @@ class MotsSecretsGame(commands.Cog):
     # ────────────────────────────────────────────────────────────
     @app_commands.command(
         name="motssecrets",
-        description="Propose un mot secret pour gagner du Reiatsu !"
+        description="Trouve un mot secret pour gagner du Reiatsu !"
     )
     @app_commands.checks.cooldown(1, 5.0, key=lambda i: i.user.id)
     async def slash_motssecrets(self, interaction: discord.Interaction):
@@ -98,7 +98,7 @@ class MotsSecretsGame(commands.Cog):
         await self.send_modal(interaction.user, interaction.channel)
 
     # ────────────────────────────────────────────────────────────
-    @commands.command(name="motssecrets")
+    @commands.command(name="motssecrets", aliases=["ms"], help="Trouve un mot secret pour gagner du Reiatsu !")
     @commands.cooldown(1, 5.0, commands.BucketType.user)
     async def prefix_motssecrets(self, ctx: commands.Context):
         await safe_send(ctx.channel, f"📝 {ctx.author.mention}, lance ton mot secret !")
