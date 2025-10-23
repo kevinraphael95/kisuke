@@ -61,26 +61,36 @@ class ReponseModal(discord.ui.Modal):
             # ── Récupère la progression
             data = supabase.table("reiatsu_portes").select("*").eq("user_id", self.user.id).execute()
             current_door = data.data[0]["current_door"] if data.data else 1
+            points = data.data[0]["points"] if data.data else 0
             next_door = current_door + 1
+
+            # ── Récompense spéciale si c’est la dernière porte
+            reward_message = ""
+            if current_door == 100:
+                points += 500
+                reward_message = "🎉 Félicitations ! Tu as terminé toutes les portes et gagné **500 Reiatsu** !"
 
             # ── Met à jour ou insère la porte
             if data.data:
                 supabase.table("reiatsu_portes").update({
-                    "current_door": next_door
+                    "current_door": next_door,
+                    "points": points
                 }).eq("user_id", self.user.id).execute()
             else:
                 supabase.table("reiatsu_portes").insert({
                     "user_id": self.user.id,
                     "username": self.user.name,
-                    "current_door": next_door
+                    "current_door": next_door,
+                    "points": points
                 }).execute()
 
             await interaction.response.send_message(
-                f"✅ Bonne réponse ! Tu passes à la porte {next_door} 🚪", ephemeral=True
+                f"✅ Bonne réponse ! Tu passes à la porte {next_door} 🚪\n{reward_message}", ephemeral=True
             )
 
+            # ── Envoi de la prochaine énigme si elle existe
             next_enigme = self.cog.get_enigme(next_door)
-            if next_enigme:
+            if next_enigme and next_door <= 100:
                 await self.cog.send_enigme_embed(self.user, interaction.channel, next_enigme)
         else:
             await interaction.response.send_message(
@@ -110,7 +120,7 @@ class PortesGame(commands.Cog):
         )
         embed.set_footer(text=f"Porte {enigme['id']}/{len(ENIGMES)} — Clique sur le bouton pour répondre.")
 
-        view = discord.ui.View()
+        view = discord.ui.View(timeout=None)
         button = discord.ui.Button(label="💬 Répondre", style=discord.ButtonStyle.primary)
 
         async def on_click(interaction: discord.Interaction):
@@ -122,7 +132,7 @@ class PortesGame(commands.Cog):
         button.callback = on_click
         view.add_item(button)
 
-        await safe_send(channel, embed=embed, view=view)
+        await channel.send(embed=embed, view=view)
 
     # ────────────────────────────────────────────────────────────
     @app_commands.command(
