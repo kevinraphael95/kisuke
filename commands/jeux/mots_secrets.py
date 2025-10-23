@@ -7,106 +7,81 @@
 # ────────────────────────────────────────────────────────────────────────────────
 
 import discord
-from discord import app_commands
-from discord.ext import commands
-from utils.discord_utils import safe_send, safe_respond
+from discord.ext import commands, tasks
 from utils.supabase_client import supabase
+from utils.discord_utils import safe_send
 import json
 from pathlib import Path
+import asyncio
 
 MOTS_PATH = Path("data/motssecrets.json")
 with MOTS_PATH.open("r", encoding="utf-8") as f:
     MOTS = json.load(f)
 
 # ────────────────────────────────────────────────────────────────────────────────
-# 🔘 Modal de réponse privée
+# 🧠 Cog principal
 # ────────────────────────────────────────────────────────────────────────────────
-class MotSecretModal(discord.ui.Modal):
-    def __init__(self, cog, user):
-        super().__init__(title="🔑 Propose ton mot secret")
-        self.cog = cog
-        self.user = user
+class MotsSecretsGame(commands.Cog):
+    """
+    🎮 Jeu des Mots Secrets — Multijoueur, propose un mot avec !mot <mot>
+    """
+    def __init__(self, bot: commands.Bot):
+        self.bot = bot
+        self.active_channels = {}  # channel_id: end_time
 
-        self.mot_input = discord.ui.TextInput(
-            label="Ton mot",
-            placeholder="Entre un mot à deviner...",
-            style=discord.TextStyle.short,
-            required=True
-        )
-        self.add_item(self.mot_input)
+    # ────────────────────────────────────────────────────────────
+    @commands.command(name="motssecrets", aliases=["ms"], help="Lance une session de 3 minutes pour trouver des mots secrets !")
+    async def start_session(self, ctx: commands.Context):
+        if ctx.channel.id in self.active_channels:
+            await safe_send(ctx.channel, "⚠️ Une session est déjà en cours ici !")
+            return
 
-    async def on_submit(self, interaction: discord.Interaction):
-        mot = self.mot_input.value.strip().lower()
+        # ── Active la session pour 3 minutes
+        self.active_channels[ctx.channel.id] = asyncio.get_event_loop().time() + 180
+        await safe_send(ctx.channel, "📝 Session de Mots Secrets lancée ! Tout le monde peut proposer un mot avec `!mot <mot>` pendant 3 minutes !")
 
-        # ── Vérifie si le mot existe
-        mot_data = [m for m in MOTS if m["mot"].lower() == mot]
+        await asyncio.sleep(180)
+        self.active_channels.pop(ctx.channel.id, None)
+        await safe_send(ctx.channel, "⏰ La session de Mots Secrets est terminée !")
+
+    # ────────────────────────────────────────────────────────────
+    @commands.command(name="mot", help="Propose un mot secret pour gagner du Reiatsu")
+    async def propose_mot(self, ctx: commands.Context, *, mot: str):
+        channel_id = ctx.channel.id
+        if channel_id not in self.active_channels:
+            await safe_send(ctx.channel, "⚠️ Il n'y a pas de session active ici. Lance une session avec `!motssecrets` !")
+            return
+
+        mot_clean = mot.strip().lower()
+        mot_data = [m for m in MOTS if m["mot"].lower() == mot_clean]
         if not mot_data:
-            await interaction.response.send_message("❌ Ce mot n'existe pas dans la liste.", ephemeral=True)
+            await safe_send(ctx.channel, f"❌ `{mot}` n'existe pas dans la liste.")
             return
 
         mot_id = mot_data[0]["id"]
 
         # ── Vérifie si l'utilisateur a déjà trouvé ce mot
-        found = supabase.table("mots_trouves").select("*").eq("user_id", self.user.id).eq("mot_id", mot_id).execute()
+        found = supabase.table("mots_trouves").select("*").eq("user_id", ctx.author.id).eq("mot_id", mot_id).execute()
         if found.data:
-            await interaction.response.send_message("⚠️ Tu as déjà trouvé ce mot !", ephemeral=True)
+            await safe_send(ctx.channel, f"⚠️ {ctx.author.mention}, tu as déjà trouvé ce mot !")
             return
 
         # ── Ajoute dans mots_trouves
-        supabase.table("mots_trouves").insert({"user_id": self.user.id, "mot_id": mot_id}).execute()
+        supabase.table("mots_trouves").insert({"user_id": ctx.author.id, "mot_id": mot_id}).execute()
 
         # ── Donne 10 Reiatsu
-        user_data = supabase.table("reiatsu").select("points").eq("user_id", self.user.id).execute()
+        user_data = supabase.table("reiatsu").select("points").eq("user_id", ctx.author.id).execute()
         points = user_data.data[0]["points"] if user_data.data else 0
-        supabase.table("reiatsu").update({"points": points + 10}).eq("user_id", self.user.id).execute()
+        if user_data.data:
+            supabase.table("reiatsu").update({"points": points + 10}).eq("user_id", ctx.author.id).execute()
+        else:
+            supabase.table("reiatsu").insert({"user_id": ctx.author.id, "points": 10}).execute()
 
-        await interaction.response.send_message("✅ Bravo ! +10 Reiatsu !", ephemeral=True)
-
-# ────────────────────────────────────────────────────────────────────────────────
-# 🧠 Cog principal
-# ────────────────────────────────────────────────────────────────────────────────
-class MotsSecretsGame(commands.Cog):
-    """
-    🎮 Jeu des Mots Secrets — Trouve les mots pour gagner du Reiatsu
-    """
-    def __init__(self, bot: commands.Bot):
-        self.bot = bot
-
-    async def send_modal(self, user, channel):
-        view = discord.ui.View()
-        button = discord.ui.Button(label="💬 Proposer un mot", style=discord.ButtonStyle.primary)
-
-        async def on_click(interaction: discord.Interaction):
-            if interaction.user.id != user.id:
-                await interaction.response.send_message("⛔ Ce n’est pas ton tour.", ephemeral=True)
-                return
-            await interaction.response.send_modal(MotSecretModal(self, user))
-
-        button.callback = on_click
-        view.add_item(button)
-
-        await safe_send(channel, f"📝 {user.mention}, clique sur le bouton pour proposer un mot secret.", view=view)
-
-    # ────────────────────────────────────────────────────────────
-    @app_commands.command(
-        name="motssecrets",
-        description="Trouve un mot secret pour gagner du Reiatsu !"
-    )
-    @app_commands.checks.cooldown(1, 5.0, key=lambda i: i.user.id)
-    async def slash_motssecrets(self, interaction: discord.Interaction):
-        await safe_respond(interaction, "📝 Lance ton mot secret !")
-        await self.send_modal(interaction.user, interaction.channel)
-
-    # ────────────────────────────────────────────────────────────
-    @commands.command(name="motssecrets", aliases=["ms"], help="Trouve un mot secret pour gagner du Reiatsu !")
-    @commands.cooldown(1, 5.0, commands.BucketType.user)
-    async def prefix_motssecrets(self, ctx: commands.Context):
-        await safe_send(ctx.channel, f"📝 {ctx.author.mention}, lance ton mot secret !")
-        await self.send_modal(ctx.author, ctx.channel)
+        await safe_send(ctx.channel, f"✅ {ctx.author.mention} a trouvé `{mot_clean}` ! +10 Reiatsu 🎉")
 
 # ────────────────────────────────────────────────────────────────
 # 🔌 Setup du Cog
-# ───────────────────────────────────────────────────────────────
+# ────────────────────────────────────────────────────────────────
 async def setup(bot: commands.Bot):
     cog = MotsSecretsGame(bot)
     for command in cog.get_commands():
