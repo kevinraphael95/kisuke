@@ -47,11 +47,11 @@ class GPTChat(commands.Cog):
             # Appel au modèle NVIDIA GPT-OSS (cloud)
             response = await asyncio.to_thread(get_simple_response, prompt)
 
-            # ──────────────── Limite de longueur de la réponse ────────────────
-            if not response:
+            # ──────────────── Vérifications et ajustements ────────────────
+            if not response or response.startswith("⚠️"):
                 response = "⚠️ Réponse vide ou erreur du modèle."
-            elif len(response) > 250:
-                response = response[:250].rstrip() + "…"
+            elif len(response) > 500:
+                response = response[:500].rstrip() + "…"
 
         except Exception as e:
             print(f"[Erreur GPT Commande] {e}")
@@ -84,5 +84,5 @@ async def setup(bot: commands.Bot):
     cog = GPTChat(bot)
     for command in cog.get_commands():
         if not hasattr(command, "category"):
-            command.category = "Fun&Random"
+            command.category = "Jeux"
     await bot.add_cog(cog)
