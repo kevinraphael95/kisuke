@@ -41,7 +41,7 @@ os.chdir(os.path.dirname(os.path.abspath(__file__)))
 load_dotenv()
 
 TOKEN = os.getenv("DISCORD_TOKEN")
-COMMAND_PREFIX = os.getenv("COMMAND_PREFIX", "!")
+COMMAND_PREFIX = os.getenv("COMMAND_PREFIX", "!!")
 INSTANCE_ID = str(uuid.uuid4())
 
 with open("instance_id.txt", "w") as f:
@@ -201,3 +201,4 @@ if __name__ == "__main__":
         await bot.start(TOKEN)
 
     asyncio.run(start())
+
