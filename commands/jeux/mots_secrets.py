@@ -65,7 +65,7 @@ class MotsSecretsMulti(commands.Cog):
         asyncio.create_task(stop_later())
 
     # ────────────────────────────────────────────────────────────
-    @commands.command(name="startmots", help="Lance le jeu des mots secrets multijoueur pendant 3 minutes")
+    @commands.command(name="motsecret", aliases=["motssecrets", "ms"], help="Lance le jeu des mots secrets multijoueur pendant 3 minutes")
     async def start_mots_command(self, ctx: commands.Context):
         await self.start_game(ctx.channel)
 
