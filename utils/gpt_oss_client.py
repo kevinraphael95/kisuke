@@ -30,27 +30,39 @@ def get_simple_response(prompt: str) -> str:
     Utilisé pour la commande !!gpt.
     """
     try:
-        # On ajoute automatiquement une consigne au prompt sans compter dans la limite utilisateur
+        # Consigne ajoutée automatiquement sans compter dans la limite utilisateur
         full_prompt = (
             prompt.strip()
-            + "\n\nRéponds de la façon la plus concise, courte et précise possible."
+            + "\n\nRéponds brièvement et clairement, en français, en 1 à 3 phrases maximum."
         )
 
         response = client.chat.completions.create(
             model="openai/gpt-oss-120b",
             messages=[
-                {"role": "system", "content": "Tu es un assistant conversationnel précis et bienveillant. Réponds toujours en français."},
-                {"role": "user", "content": full_prompt}
+                {
+                    "role": "system",
+                    "content": (
+                        "Tu es un assistant conversationnel précis, bienveillant et toujours francophone. "
+                        "Réponds de manière naturelle et fluide."
+                    ),
+                },
+                {"role": "user", "content": full_prompt},
             ],
-            temperature=0.6,
-            top_p=0.7,
-            max_tokens=256  # réponse courte (≈250 caractères)
+            temperature=0.8,   # un peu plus libre pour éviter les non-réponses
+            top_p=0.8,
+            max_tokens=512,    # limite interne confortable (pas coupée brutalement)
         )
 
         msg = response.choices[0].message.content
-        if not msg:
+        if not msg or not msg.strip():
             return "⚠️ Le modèle n’a rien répondu."
-        return msg.strip()
+        msg = msg.strip()
+
+        # Tronquer à 500 caractères maximum
+        if len(msg) > 500:
+            msg = msg[:500].rstrip() + "…"
+
+        return msg
 
     except Exception as e:
         print(f"[Erreur GPT-OSS Simple] {type(e)} — {e}")
