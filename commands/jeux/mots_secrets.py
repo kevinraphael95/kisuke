@@ -50,8 +50,8 @@ class MotsSecretsMulti(commands.Cog):
         embed = discord.Embed(
             title="📝 Jeu des Mots Secrets !",
             description=(
-                "💡 Pendant **3 minutes**, proposez vos mots secrets en commençant par `!`.\n"
-                "Exemple : `!prout`\n\n"
+                "💡 Pendant **3 minutes**, proposez vos mots secrets en commençant par `?`.\n"
+                "Exemple : `?exemple`\n\n"
                 "🎯 Chaque mot correct vous fera gagner **10 Reiatsu** !\n"
                 "⚠️ Si vous avez déjà trouvé le mot, le bot vous le signalera.\n"
                 "Bonne chance !"
@@ -86,8 +86,8 @@ class MotsSecretsMulti(commands.Cog):
         if message.channel.id not in self.active_games:
             return
 
-        # Vérifie si le message commence par "!" (proposition de mot)
-        if not message.content.startswith("!"):
+        # Vérifie si le message commence par "?" (proposition de mot)
+        if not message.content.startswith("?"):
             return
 
         mot_propose = self.normalize(message.content[1:])
