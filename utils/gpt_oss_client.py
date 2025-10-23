@@ -30,17 +30,28 @@ def get_simple_response(prompt: str) -> str:
     Utilisé pour la commande !!gpt.
     """
     try:
+        # On ajoute automatiquement une consigne au prompt sans compter dans la limite utilisateur
+        full_prompt = (
+            prompt.strip()
+            + "\n\nRéponds de la façon la plus concise, courte et précise possible."
+        )
+
         response = client.chat.completions.create(
             model="openai/gpt-oss-120b",
             messages=[
-                {"role": "system", "content": "Tu es un assistant conversationnel précis, immersif et bienveillant. Réponds toujours en français."},
-                {"role": "user", "content": prompt}
+                {"role": "system", "content": "Tu es un assistant conversationnel précis et bienveillant. Réponds toujours en français."},
+                {"role": "user", "content": full_prompt}
             ],
-            temperature=0.8,
+            temperature=0.6,
             top_p=0.7,
-            max_tokens=512
+            max_tokens=256  # réponse courte (≈250 caractères)
         )
-        return response.choices[0].message.content.strip()
+
+        msg = response.choices[0].message.content
+        if not msg:
+            return "⚠️ Le modèle n’a rien répondu."
+        return msg.strip()
+
     except Exception as e:
         print(f"[Erreur GPT-OSS Simple] {type(e)} — {e}")
         return "⚠️ Le modèle est silencieux pour le moment..."
@@ -61,7 +72,10 @@ def get_story_continuation(history: list[dict]) -> str:
             top_p=0.7,
             max_tokens=1024
         )
-        return response.choices[0].message.content.strip()
+        msg = response.choices[0].message.content
+        if not msg:
+            return "⚠️ Le narrateur se tait..."
+        return msg.strip()
     except Exception as e:
         print(f"[Erreur GPT-OSS Histoire] {type(e)} — {e}")
         return "⚠️ Le narrateur se tait... (*erreur du modèle ou limite atteinte*)"
@@ -72,7 +86,7 @@ def get_story_continuation(history: list[dict]) -> str:
 def remaining_tokens() -> int:
     """
     Retourne le nombre de tokens restants dans le quota mensuel NVIDIA GPT-OSS.
-    Approximation : 100 000 tokens par mois (free-tier)
+    Approximation : 100 000 tokens par mois (free-tier)
     """
     try:
         resp = requests.get(
@@ -87,5 +101,4 @@ def remaining_tokens() -> int:
         return quota - used
     except Exception as e:
         print(f"[Erreur remaining_tokens] {e}")
-        # fallback si l'API usage n'est pas dispo
         return 100_000
