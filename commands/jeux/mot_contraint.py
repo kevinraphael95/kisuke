@@ -172,7 +172,7 @@ class MotContraint(commands.Cog):
     # ────────────────────────────────────────────────────────────────────────────
     # 🔹 Commande PREFIX
     # ────────────────────────────────────────────────────────────────────────────
-    @commands.command(name="mot_contraint", aliases="mc", help="Jeu : trouve un mot qui commence et finit par des lettres données.")
+    @commands.command(name="mot_contraint", aliases=["mc"], help="Jeu : trouve un mot qui commence et finit par des lettres données.")
     @commands.cooldown(1, 5.0, commands.BucketType.user)
     async def prefix_mot_contraint(self, ctx: commands.Context):
         await self._start_game(ctx.channel, ctx.author.id)
