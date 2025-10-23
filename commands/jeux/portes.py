@@ -13,10 +13,23 @@ from utils.discord_utils import safe_send, safe_respond
 from utils.supabase_client import supabase
 import json
 from pathlib import Path
+import unicodedata
 
 ENIGMES_PATH = Path("utils/enigmes_portes.json")
 with ENIGMES_PATH.open("r", encoding="utf-8") as f:
     ENIGMES = json.load(f)
+
+# ────────────────────────────────────────────────────────────────────────────────
+# 🔧 Fonction utilitaire pour normaliser les réponses
+# ────────────────────────────────────────────────────────────────────────────────
+def normalize(text: str) -> str:
+    """Met en minuscules, enlève accents et espaces inutiles."""
+    text = text.strip().lower()
+    text = ''.join(
+        c for c in unicodedata.normalize('NFD', text)
+        if unicodedata.category(c) != 'Mn'
+    )
+    return text
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🔘 Modal de réponse privée
@@ -37,12 +50,19 @@ class ReponseModal(discord.ui.Modal):
         self.add_item(self.answer)
 
     async def on_submit(self, interaction: discord.Interaction):
-        response = self.answer.value.strip().lower()
-        if response == self.enigme["reponse"].lower():
+        user_answer = normalize(self.answer.value)
+
+        # ── Prépare les réponses valides
+        correct_answers = self.enigme["reponse"]
+        if isinstance(correct_answers, str):
+            correct_answers = [correct_answers]
+        correct_answers = [normalize(ans) for ans in correct_answers]
+
+        # ── Vérifie la réponse
+        if user_answer in correct_answers:
             # ── Récupère la progression
             data = supabase.table("reiatsu_portes").select("*").eq("user_id", self.user.id).execute()
             current_door = data.data[0]["current_door"] if data.data else 1
-
             next_door = current_door + 1
 
             # ── Porte 100 : récompense 500 Reiatsu
@@ -68,14 +88,18 @@ class ReponseModal(discord.ui.Modal):
                         "points": 0
                     }).execute()
 
-            await interaction.response.send_message(f"✅ Bonne réponse ! La porte s’ouvre... 🚪{gain_message}", ephemeral=True)
+            await interaction.response.send_message(
+                f"✅ Bonne réponse ! La porte s’ouvre... 🚪{gain_message}", ephemeral=True
+            )
 
             # ── Envoi de la prochaine énigme si pas la 100ᵉ
             next_enigme = self.cog.get_enigme(next_door)
             if next_enigme:
                 await self.cog.send_enigme_embed(self.user, interaction.channel, next_enigme)
         else:
-            await interaction.response.send_message("❌ Mauvaise réponse... Essaie encore !", ephemeral=True)
+            await interaction.response.send_message(
+                "❌ Mauvaise réponse... Essaie encore !", ephemeral=True
+            )
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🧠 Cog principal
@@ -124,7 +148,6 @@ class PortesGame(commands.Cog):
     @app_commands.checks.cooldown(1, 5.0, key=lambda i: i.user.id)
     async def slash_portes(self, interaction: discord.Interaction):
         user = interaction.user
-        # ── Récupère la porte actuelle
         data = supabase.table("reiatsu_portes").select("*").eq("user_id", user.id).execute()
         current_door = data.data[0]["current_door"] if data.data else 1
         enigme = self.get_enigme(current_door)
