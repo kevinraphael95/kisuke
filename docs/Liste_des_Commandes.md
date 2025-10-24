@@ -25,6 +25,7 @@ Usage: !say_as <mention|id|pseudo> <message>
 - **calc :** Pas de description.
 - **couleur :** 🎨 Affiche une couleur aléatoire avec ses codes HEX et RGB.
 - **gay :** 🌈 Calcule ton taux de gaytitude.
+- **gpt :** ChatGPT mais en nul et qui ne fonctionne presque pas.
 - **pizza :** Génère une pizza aléatoire.
 
 ### 📂 Général
@@ -36,20 +37,24 @@ Usage: !say_as <mention|id|pseudo> <message>
 
 ### 📂 Jeux
 - **anagramme :** Lance une partie d'Anagramme. anagramme multi ou m pour jouer en multi.
+- **buckshot :** Pas de description.
 - **capitales :** Pas de description.
 - **compte_est_bon :** Pas de description.
 - **cook :** Commande préfixe : !cook <recette>
 - **course_animal :** Pas de description.
 - **devinelenombre :** Devine un nombre entre 0 et 100 (multi = plusieurs joueurs)
 - **drapeaux :** Pas de description.
-- **entrainementcerebral :** Entraînement cérébral composé de 5 minijeux.
+- **entrainementcerebral :** Entraînement cérébral composé de 5 mini-jeux.
 - **jardin :** Affiche ton jardin ou celui d'un autre utilisateur 🌱
 - **jardin2 :** Pas de description.
 - **lightsout :** Joue au jeu des lumières à éteindre (solo ou multi).
 - **mastermind :** Jouer au Mastermind interactif.
+- **mot_contraint :** Jeu : trouve un mot qui commence et finit par des lettres données.
+- **motsecret :** Pendant 3 minutes, cherchez l'un des 100 mots secrets pour gagner 10 Reiatsu.
 - **motus :** Lance une partie de Motus. motus multi ou m pour jouer en multi.
+- **paires :** Pas de description.
 - **pendu :** Démarre une partie du jeu du pendu.
-- **rpgpt :** Pas de description.
+- **portes :** Pas de description.
 
 ### 📂 Reiatsu
 - **classe :** Choisir sa classe Reiatsu
