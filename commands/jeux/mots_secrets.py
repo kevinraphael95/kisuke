@@ -155,9 +155,13 @@ class MotsSecretsMulti(commands.Cog):
             return
         if message.channel.id not in self.active_games:
             return
-        if not message.content.startswith("?"):
+        if not (message.content.startswith("?") or message.content.startswith("*")):
             return
+        mot_propose = message.content[1:]
+        if not mot_propose.strip():
+            return  # ignore les messages comme "?" ou "*"
         await self.handle_guess(message)
+
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🔌 Setup du Cog
