@@ -767,7 +767,7 @@ async def sequence_symboles(ctx, embed, get_user_id, bot):
 
 sequence_symboles.title = "Séquence de symboles"
 sequence_symboles.emoji = "🧩"
-sequence_symboles.prep_time = 3
+sequence_symboles.prep_time = 8
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🔹 🧩 Suite alphabétique
