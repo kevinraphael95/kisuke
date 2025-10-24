@@ -41,7 +41,6 @@ class CouleurView(discord.ui.View):
             color=code_hex
         )
         embed.set_image(url=image_url)
-        embed.set_footer(text="🔁 Appuie sur le bouton pour générer une nouvelle couleur.")
         return embed
 
     @discord.ui.button(label="🔁 Nouvelle couleur", style=discord.ButtonStyle.primary)
