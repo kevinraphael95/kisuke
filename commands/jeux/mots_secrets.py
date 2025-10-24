@@ -1,17 +1,18 @@
 # ────────────────────────────────────────────────────────────────────────────────
-# 📌 motssecrets_multijoueur.py — Jeu des Mots Secrets multijoueur
-# Objectif : Tout le monde peut proposer un mot secret pendant 3 minutes pour gagner du Reiatsu
+# 📌 motssecrets.py — Jeu des Mots Secrets multijoueur
+# Objectif : Pendant 3 minutes, tout le monde peut proposer un mot secret pour gagner du Reiatsu
 # Catégorie : Jeux / Fun
 # Accès : Tous
-# Cooldown : 1 lancement / 5 secondes
+# Cooldown : 1 utilisation / 5 secondes / utilisateur
 # ────────────────────────────────────────────────────────────────────────────────
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 📦 Imports nécessaires
 # ────────────────────────────────────────────────────────────────────────────────
 import discord
+from discord import app_commands
 from discord.ext import commands
-from utils.discord_utils import safe_send
+from utils.discord_utils import safe_send, safe_respond
 from utils.supabase_client import supabase
 import json
 from pathlib import Path
@@ -19,7 +20,7 @@ from datetime import datetime, timedelta
 import asyncio
 
 # ────────────────────────────────────────────────────────────────────────────────
-# 📂 Chargement des données JSON (exemple)
+# 📂 Chargement des données JSON
 # ────────────────────────────────────────────────────────────────────────────────
 MOTS_PATH = Path("data/motssecrets.json")
 with MOTS_PATH.open("r", encoding="utf-8") as f:
@@ -30,12 +31,15 @@ with MOTS_PATH.open("r", encoding="utf-8") as f:
 # ────────────────────────────────────────────────────────────────────────────────
 class MotsSecretsMulti(commands.Cog):
     """
-    🎮 Jeu des Mots Secrets Multijoueur — Tout le monde peut proposer un mot secret pendant 3 minutes
+    🎮 Jeu des Mots Secrets Multijoueur — Pendant 3 minutes, proposez des mots pour gagner du Reiatsu !
     """
     def __init__(self, bot: commands.Bot):
         self.bot = bot
         self.active_games = {}  # channel_id : end_time
 
+    # ────────────────────────────────────────────────────────────
+    # 🔧 Méthodes internes
+    # ────────────────────────────────────────────────────────────
     def normalize(self, text: str) -> str:
         return text.strip().lower()
 
@@ -52,44 +56,26 @@ class MotsSecretsMulti(commands.Cog):
             description=(
                 "💡 Pendant **3 minutes**, proposez vos mots secrets en commençant par `?`.\n"
                 "Exemple : `?exemple`\n\n"
-                "🎯 Chaque mot correct vous fera gagner **10 Reiatsu** !\n"
-                "⚠️ Si vous avez déjà trouvé le mot, le bot vous le signalera.\n"
+                "🎯 Chaque mot correct vous rapporte **10 Reiatsu** !\n"
+                "⚠️ Si vous avez déjà trouvé un mot, le bot vous le signalera.\n"
                 "Bonne chance !"
             ),
             color=discord.Color.green()
         )
-        embed.set_footer(text="Le jeu se terminera automatiquement au bout de 3 minutes.")
+        embed.set_footer(text="⏳ Le jeu se terminera automatiquement dans 3 minutes.")
         await safe_send(channel, embed=embed)
 
-        # ── Lance une tâche pour arrêter le jeu automatiquement
+        # Fin automatique après 3 minutes
         async def stop_later():
-            await asyncio.sleep(180)  # 3 minutes
+            await asyncio.sleep(180)
             if channel.id in self.active_games:
                 await safe_send(channel, "⏰ Le jeu des mots secrets est terminé !")
                 del self.active_games[channel.id]
 
         asyncio.create_task(stop_later())
 
-    # ────────────────────────────────────────────────────────────
-    @commands.command(name="motsecret", aliases=["motssecrets", "ms"], help="Lance le jeu des mots secrets multijoueur pendant 3 minutes")
-    async def start_mots_command(self, ctx: commands.Context):
-        await self.start_game(ctx.channel)
-
-    # ────────────────────────────────────────────────────────────
-    @commands.Cog.listener()
-    async def on_message(self, message: discord.Message):
-        # Ignore les messages des bots
-        if message.author.bot:
-            return
-
-        # Vérifie si le jeu est actif dans ce channel
-        if message.channel.id not in self.active_games:
-            return
-
-        # Vérifie si le message commence par "?" (proposition de mot)
-        if not message.content.startswith("?"):
-            return
-
+    async def handle_guess(self, message: discord.Message):
+        """Gère la vérification d’un mot proposé."""
         mot_propose = self.normalize(message.content[1:])
         mot_data = [m for m in MOTS if self.normalize(m["mot"]) == mot_propose]
         if not mot_data:
@@ -99,7 +85,7 @@ class MotsSecretsMulti(commands.Cog):
         user_id = message.author.id
         username = str(message.author)
 
-        # ── Récupère ou crée l'utilisateur dans mots_trouves
+        # Récupère les mots déjà trouvés
         user_data = supabase.table("mots_trouves").select("*").eq("user_id", user_id).execute()
         if user_data.data:
             mots_trouves = user_data.data[0].get("mots") or []
@@ -112,7 +98,7 @@ class MotsSecretsMulti(commands.Cog):
             await message.reply(f"⚠️ {message.author.mention}, tu as déjà trouvé ce mot secret !")
             return
 
-        # ── Ajoute le mot trouvé
+        # Ajoute le mot trouvé
         mots_trouves.append(mot_id)
         if user_data.data:
             supabase.table("mots_trouves").update({
@@ -126,7 +112,7 @@ class MotsSecretsMulti(commands.Cog):
                 "mots": mots_trouves
             }).execute()
 
-        # ── Donne 10 Reiatsu
+        # Donne 10 Reiatsu
         reiatsu_data = supabase.table("reiatsu").select("*").eq("user_id", user_id).execute()
         if reiatsu_data.data:
             points = reiatsu_data.data[0].get("points") or 0
@@ -138,11 +124,44 @@ class MotsSecretsMulti(commands.Cog):
                 "points": 10
             }).execute()
 
-        await message.reply(f"✅ Bravo {message.author.mention} ! Tu as trouvé un mot secret et gagnes **10 Reiatsu** !")
+        await message.reply(f"✅ Bravo {message.author.mention} ! Tu as trouvé un mot secret et gagnes **10 Reiatsu** 🎉")
 
-# ────────────────────────────────────────────────────────────────
+    # ────────────────────────────────────────────────────────────
+    # 🔹 Commande SLASH
+    # ────────────────────────────────────────────────────────────
+    @app_commands.command(
+        name="motsecret",
+        description="Lance le jeu des mots secrets multijoueur pendant 3 minutes."
+    )
+    @app_commands.checks.cooldown(1, 5.0, key=lambda i: i.user.id)
+    async def slash_motsecret(self, interaction: discord.Interaction):
+        await self.start_game(interaction.channel)
+        await safe_respond(interaction, "✅ Jeu des mots secrets lancé dans ce salon !")
+
+    # ────────────────────────────────────────────────────────────
+    # 🔹 Commande PREFIX
+    # ────────────────────────────────────────────────────────────
+    @commands.command(name="motsecret", aliases=["motssecrets", "ms"])
+    @commands.cooldown(1, 5.0, commands.BucketType.user)
+    async def prefix_motsecret(self, ctx: commands.Context):
+        await self.start_game(ctx.channel)
+
+    # ────────────────────────────────────────────────────────────
+    # 🎧 Événement : Proposition de mot
+    # ────────────────────────────────────────────────────────────
+    @commands.Cog.listener()
+    async def on_message(self, message: discord.Message):
+        if message.author.bot:
+            return
+        if message.channel.id not in self.active_games:
+            return
+        if not message.content.startswith("?"):
+            return
+        await self.handle_guess(message)
+
+# ────────────────────────────────────────────────────────────────────────────────
 # 🔌 Setup du Cog
-# ───────────────────────────────────────────────────────────────
+# ────────────────────────────────────────────────────────────────────────────────
 async def setup(bot: commands.Bot):
     cog = MotsSecretsMulti(bot)
     for command in cog.get_commands():
