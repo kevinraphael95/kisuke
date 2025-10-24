@@ -54,8 +54,8 @@ class MotsSecretsMulti(commands.Cog):
         embed = discord.Embed(
             title="📝 Jeu des Mots Secrets !",
             description=(
-                "💡 Pendant **3 minutes**, proposez vos mots secrets en commençant par `?`.\n"
-                "Exemple : `?exemple`\n\n"
+                "💡 Pendant **3 minutes**, proposez vos mots secrets en commençant par `?` ou `*`.\n"
+                "Exemple : `?exemple` ou `*exemple`\n\n"
                 "🎯 Chaque mot correct vous rapporte **10 Reiatsu** !\n"
                 "⚠️ Si vous avez déjà trouvé un mot, le bot vous le signalera.\n"
                 "Bonne chance !"
@@ -131,7 +131,7 @@ class MotsSecretsMulti(commands.Cog):
     # ────────────────────────────────────────────────────────────
     @app_commands.command(
         name="motsecret",
-        description="Lance le jeu des mots secrets multijoueur pendant 3 minutes."
+        description="Pendant 3 minutes, cherchez l'un des 100 mots secrets pour gagner 10 Reiatsu."
     )
     @app_commands.checks.cooldown(1, 5.0, key=lambda i: i.user.id)
     async def slash_motsecret(self, interaction: discord.Interaction):
@@ -141,7 +141,7 @@ class MotsSecretsMulti(commands.Cog):
     # ────────────────────────────────────────────────────────────
     # 🔹 Commande PREFIX
     # ────────────────────────────────────────────────────────────
-    @commands.command(name="motsecret", aliases=["motssecrets", "ms"])
+    @commands.command(name="motsecret", aliases=["motssecrets", "ms"], help="Pendant 3 minutes, cherchez l'un des 100 mots secrets pour gagner 10 Reiatsu.")
     @commands.cooldown(1, 5.0, commands.BucketType.user)
     async def prefix_motsecret(self, ctx: commands.Context):
         await self.start_game(ctx.channel)
