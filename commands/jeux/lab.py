@@ -28,24 +28,22 @@ class Labyrinthe(commands.Cog):
         self.size = 7  # Taille du labyrinthe
 
     # ────────────────────────────────────────────────────────────────────────────
-    # 🔹 Fonction interne : générer le labyrinthe
+    # 🔹 Générer le labyrinthe
     # ────────────────────────────────────────────────────────────────────────────
     def generate_maze(self):
         maze = [['⬜' for _ in range(self.size)] for _ in range(self.size)]
         # Murs extérieurs
         for i in range(self.size):
-            maze[0][i] = '⬛'
-            maze[self.size-1][i] = '⬛'
-            maze[i][0] = '⬛'
-            maze[i][self.size-1] = '⬛'
+            maze[0][i] = maze[self.size-1][i] = '⬛'
+            maze[i][0] = maze[i][self.size-1] = '⬛'
 
-        # Ajouter des murs aléatoires
+        # Murs aléatoires
         for _ in range(self.size*2):
             x, y = random.randint(1,self.size-2), random.randint(1,self.size-2)
             maze[y][x] = '⬛'
 
         # Trésor, piège, sortie
-        positions = [(x, y) for x in range(1,self.size-1) for y in range(1,self.size-1) if maze[y][x]=='⬜']
+        positions = [(x,y) for x in range(1,self.size-1) for y in range(1,self.size-1) if maze[y][x]=='⬜']
         treasure = random.choice(positions); positions.remove(treasure)
         trap = random.choice(positions); positions.remove(trap)
         exit_ = random.choice(positions)
@@ -60,7 +58,7 @@ class Labyrinthe(commands.Cog):
         return maze, start
 
     # ────────────────────────────────────────────────────────────────────────────
-    # 🔹 Fonction interne : afficher le labyrinthe avec vision limitée
+    # 🔹 Affichage du labyrinthe avec vision limitée
     # ────────────────────────────────────────────────────────────────────────────
     def render_maze(self, maze, player_pos, vision=1):
         rendered = ""
@@ -75,7 +73,7 @@ class Labyrinthe(commands.Cog):
         return rendered
 
     # ────────────────────────────────────────────────────────────────────────────
-    # 🔹 Classe View pour les boutons directionnels
+    # 🔹 Classe View pour les boutons
     # ────────────────────────────────────────────────────────────────────────────
     class MazeView(View):
         def __init__(self, maze, player_pos, cog):
@@ -84,10 +82,10 @@ class Labyrinthe(commands.Cog):
             self.player_pos = player_pos
             self.cog = cog
             self.finished = False
+            self.interaction_done = False  # Pour éviter les followup avant réponse initiale
 
         async def update(self, interaction):
-            if self.finished:
-                return
+            if self.finished: return
             content = self.cog.render_maze(self.maze, self.player_pos)
             await interaction.message.edit(content=content, view=self)
 
@@ -105,40 +103,11 @@ class Labyrinthe(commands.Cog):
             x, y = self.player_pos
             nx, ny = x+dx, y+dy
             if self.maze[ny][nx] != '⬛':
-                # Déplacer joueur
                 self.maze[y][x] = '⬜'
                 self.player_pos = (nx, ny)
                 self.maze[ny][nx] = '🟦'
                 return self.check_cell(nx, ny)
             return "mur"
-
-        @discord.ui.button(label='⬆️', style=discord.ButtonStyle.primary)
-        async def up(self, button: Button, interaction: discord.Interaction):
-            result = self.move_player(0,-1)
-            if result != "mur":
-                await self.update(interaction)
-                await self.handle_result(interaction, result)
-
-        @discord.ui.button(label='⬇️', style=discord.ButtonStyle.primary)
-        async def down(self, button: Button, interaction: discord.Interaction):
-            result = self.move_player(0,1)
-            if result != "mur":
-                await self.update(interaction)
-                await self.handle_result(interaction, result)
-
-        @discord.ui.button(label='⬅️', style=discord.ButtonStyle.primary)
-        async def left(self, button: Button, interaction: discord.Interaction):
-            result = self.move_player(-1,0)
-            if result != "mur":
-                await self.update(interaction)
-                await self.handle_result(interaction, result)
-
-        @discord.ui.button(label='➡️', style=discord.ButtonStyle.primary)
-        async def right(self, button: Button, interaction: discord.Interaction):
-            result = self.move_player(1,0)
-            if result != "mur":
-                await self.update(interaction)
-                await self.handle_result(interaction, result)
 
         async def handle_result(self, interaction, result):
             if result == "trésor":
@@ -154,29 +123,63 @@ class Labyrinthe(commands.Cog):
                 await interaction.followup.send("🏁 Bravo ! Tu as trouvé la sortie !", ephemeral=True)
                 self.stop()
 
+        async def on_timeout(self):
+            self.finished = True
+
+        # ── Boutons directionnels
+        @discord.ui.button(label='⬆️', style=discord.ButtonStyle.primary)
+        async def up(self, button: Button, interaction: discord.Interaction):
+            result = self.move_player(0,-1)
+            if not self.interaction_done:
+                await interaction.response.edit_message(content=self.cog.render_maze(self.maze, self.player_pos), view=self)
+                self.interaction_done = True
+            else:
+                await self.update(interaction)
+            if result != "mur": await self.handle_result(interaction, result)
+
+        @discord.ui.button(label='⬇️', style=discord.ButtonStyle.primary)
+        async def down(self, button: Button, interaction: discord.Interaction):
+            result = self.move_player(0,1)
+            if not self.interaction_done:
+                await interaction.response.edit_message(content=self.cog.render_maze(self.maze, self.player_pos), view=self)
+                self.interaction_done = True
+            else:
+                await self.update(interaction)
+            if result != "mur": await self.handle_result(interaction, result)
+
+        @discord.ui.button(label='⬅️', style=discord.ButtonStyle.primary)
+        async def left(self, button: Button, interaction: discord.Interaction):
+            result = self.move_player(-1,0)
+            if not self.interaction_done:
+                await interaction.response.edit_message(content=self.cog.render_maze(self.maze, self.player_pos), view=self)
+                self.interaction_done = True
+            else:
+                await self.update(interaction)
+            if result != "mur": await self.handle_result(interaction, result)
+
+        @discord.ui.button(label='➡️', style=discord.ButtonStyle.primary)
+        async def right(self, button: Button, interaction: discord.Interaction):
+            result = self.move_player(1,0)
+            if not self.interaction_done:
+                await interaction.response.edit_message(content=self.cog.render_maze(self.maze, self.player_pos), view=self)
+                self.interaction_done = True
+            else:
+                await self.update(interaction)
+            if result != "mur": await self.handle_result(interaction, result)
+
     # ────────────────────────────────────────────────────────────────────────────
-    # 🔹 Commande SLASH /labyrinthe
+    # 🔹 Commande SLASH
     # ────────────────────────────────────────────────────────────────────────────
-    @app_commands.command(
+    @commands.hybrid_command(
         name="labyrinthe",
         description="🕹️ Joue au mini labyrinthe interactif"
     )
-    async def slash_labyrinthe(self, interaction: discord.Interaction):
+    @commands.cooldown(1, 10, commands.BucketType.user)
+    async def labyrinthe_cmd(self, ctx):
         maze, start = self.generate_maze()
         view = self.MazeView(copy.deepcopy(maze), start, self)
         content = self.render_maze(maze, start)
-        await safe_respond(interaction, content, view=view)
-
-    # ────────────────────────────────────────────────────────────────────────────
-    # 🔹 Commande PREFIX !labyrinthe
-    # ────────────────────────────────────────────────────────────────────────────
-    @commands.command(name="labyrinthe")
-    @commands.cooldown(1, 10.0, commands.BucketType.user)
-    async def prefix_labyrinthe(self, ctx: commands.Context):
-        maze, start = self.generate_maze()
-        view = self.MazeView(copy.deepcopy(maze), start, self)
-        content = self.render_maze(maze, start)
-        await safe_send(ctx.channel, content, view=view)
+        await safe_send(ctx, content, view=view)
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🔌 Setup du Cog
