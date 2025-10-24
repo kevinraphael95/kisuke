@@ -54,10 +54,11 @@ class MotsSecretsMulti(commands.Cog):
         embed = discord.Embed(
             title="📝 Jeu des Mots Secrets !",
             description=(
-                "💡 Pendant **3 minutes**, proposez vos mots secrets en commençant par `?` ou `*`.\n"
+                "💡 Il y a 100 mots secret à trouver, un mot trouvé rapporte 10 reiatsu une fois par personne."
+                "Pendant **3 minutes**, proposez autant de mots que vous voulez en mettant`?` ou `*` devant.\n"
                 "Exemple : `?exemple` ou `*exemple`\n\n"
-                "🎯 Chaque mot correct vous rapporte **10 Reiatsu** !\n"
-                "⚠️ Si vous avez déjà trouvé un mot, le bot vous le signalera.\n"
+                "🎯 Si le mot proposé n'est pas un mot secret le bot ne répond pas.!\n"
+                "⚠️ Si c'est un mot que vous aviez déjà trouvé, le bot vous le signalera.\n"
                 "Bonne chance !"
             ),
             color=discord.Color.green()
