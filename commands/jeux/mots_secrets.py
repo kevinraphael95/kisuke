@@ -55,8 +55,8 @@ class MotsSecretsMulti(commands.Cog):
             title="📝 Jeu des Mots Secrets !",
             description=(
                 "💡 Il y a 100 mots secret à trouver, un mot trouvé rapporte 10 reiatsu une fois par personne."
-                "Pendant **3 minutes**, proposez autant de mots que vous voulez en mettant`?` ou `*` devant.\n"
-                "Exemple : `?exemple` ou `*exemple`\n\n"
+                "Pendant **3 minutes**, proposez autant de mots que vous voulez en mettant`.` ou `*` devant.\n"
+                "Exemple : `.exemple` ou `*exemple`\n\n"
                 "🎯 Si le mot proposé n'est pas un mot secret le bot ne répond pas.!\n"
                 "⚠️ Si c'est un mot que vous aviez déjà trouvé, le bot vous le signalera.\n"
                 "Bonne chance !"
@@ -156,11 +156,11 @@ class MotsSecretsMulti(commands.Cog):
             return
         if message.channel.id not in self.active_games:
             return
-        if not (message.content.startswith("?") or message.content.startswith("*")):
+        if not (message.content.startswith(".") or message.content.startswith("*")):
             return
         mot_propose = message.content[1:]
         if not mot_propose.strip():
-            return  # ignore les messages comme "?" ou "*"
+            return  # ignore les messages comme "." ou "*"
         await self.handle_guess(message)
 
 
