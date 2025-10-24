@@ -1,53 +1,84 @@
 # ────────────────────────────────────────────────────────────────────────────────
-# 📌 gpt.py — Commande !!gpt : Chat libre avec GPT-OSS (Cloud NVIDIA)
+# 📌 gpt.py — Commande /gpt et !!gpt : Chat libre avec GPT-OSS (Cloud NVIDIA)
+# Objectif : Permettre une conversation libre avec le modèle GPT-OSS hébergé sur le cloud NVIDIA.
+# Catégorie : Fun&Random
+# Accès : Tous
+# Cooldown : 1 utilisation / 4 secondes / utilisateur
+# ────────────────────────────────────────────────────────────────────────────────
+
+# ────────────────────────────────────────────────────────────────────────────────
+# 📦 Imports nécessaires
 # ────────────────────────────────────────────────────────────────────────────────
 import discord
+from discord import app_commands
 from discord.ext import commands
 import asyncio
-from utils.gpt_oss_client import get_simple_response
+from utils.discord_utils import safe_send, safe_respond  # ✅ Utilitaires sécurisés
+from utils.gpt_oss_client import get_simple_response     # 🔗 Client GPT-OSS
 
 # ────────────────────────────────────────────────────────────────────────────────
-# 🧩 COG PRINCIPAL
+# 🧠 Cog principal
 # ────────────────────────────────────────────────────────────────────────────────
 class GPTChat(commands.Cog):
-    """Commande !!gpt — conversation libre avec le modèle GPT-OSS (Cloud NVIDIA)"""
-
+    """
+    Commande /gpt et !!gpt — conversation libre avec le modèle GPT-OSS (Cloud NVIDIA)
+    """
     def __init__(self, bot: commands.Bot):
         self.bot = bot
 
     # ────────────────────────────────────────────────────────────────────────────
-    # 💬 Commande principale : !!gpt <message>
+    # 🔹 Commande SLASH : /gpt <message>
     # ────────────────────────────────────────────────────────────────────────────
-    @commands.command(name="gpt")
-    @commands.cooldown(1, 4.0, commands.BucketType.user)
-    async def gpt_command(self, ctx: commands.Context, *, prompt: str = None):
-        user = ctx.author
-        channel = ctx.channel
+    @app_commands.command(
+        name="gpt",
+        description="Chat libre avec le modèle GPT-OSS (Cloud NVIDIA)"
+    )
+    @app_commands.describe(prompt="Message ou question à envoyer au modèle.")
+    @app_commands.checks.cooldown(1, 4.0, key=lambda i: i.user.id)
+    async def slash_gpt(self, interaction: discord.Interaction, prompt: str):
+        """Commande slash — conversation libre avec GPT-OSS"""
+        await self._handle_gpt_request(interaction=interaction, prompt=prompt)
 
+    # ────────────────────────────────────────────────────────────────────────────
+    # 🔹 Commande PREFIX : !!gpt <message>
+    # ────────────────────────────────────────────────────────────────────────────
+    @commands.command(name="gpt", help="ChatGPT mais en nul et qui ne fonctionne presque pas.")
+    @commands.cooldown(1, 4.0, commands.BucketType.user)
+    async def prefix_gpt(self, ctx: commands.Context, *, prompt: str = None):
+        """Commande préfixe — conversation libre avec GPT-OSS"""
         if not prompt:
-            await self._embed_send(
-                channel,
-                "💭 **Utilisation :**",
-                "Tape simplement `!!gpt <ton message>` pour discuter avec le modèle.\n"
-                "Exemple : `!!gpt explique-moi le Bankai d’Ichigo`"
+            await safe_send(
+                ctx.channel,
+                embed=self._build_embed(
+                    "💭 **Utilisation :**",
+                    "Tape simplement `!!gpt <ton message>` pour discuter avec le modèle.\n"
+                    "Exemple : `!!gpt explique-moi le Bankai d’Ichigo`"
+                )
             )
             return
+        await self._handle_gpt_request(ctx=ctx, prompt=prompt)
 
-        # ──────────────── Limite de longueur du prompt ────────────────
+    # ────────────────────────────────────────────────────────────────────────────
+    # ⚙️ Traitement principal de la requête GPT
+    # ────────────────────────────────────────────────────────────────────────────
+    async def _handle_gpt_request(self, ctx: commands.Context = None, interaction: discord.Interaction = None, prompt: str = None):
+        """Gère la logique commune entre la commande slash et préfixe"""
+        user = (ctx.author if ctx else interaction.user)
+
+        # ─────────────── Limite de longueur du prompt ───────────────
         if len(prompt) > 90:
-            await self._embed_send(
-                channel,
-                "⚠️ **Trop long !**",
-                f"Ton message dépasse la limite de **90 caractères**.\n"
+            msg = (
+                f"⚠️ Ton message dépasse la limite de **90 caractères**.\n"
                 f"({len(prompt)} actuellement)"
             )
+            await self._send(ctx, interaction, "⚠️ **Trop long !**", msg)
             return
 
         try:
-            # Appel au modèle NVIDIA GPT-OSS (cloud)
+            # 🔄 Exécution du modèle sur un thread asynchrone
             response = await asyncio.to_thread(get_simple_response, prompt)
 
-            # ──────────────── Vérifications et ajustements ────────────────
+            # ─────────────── Vérifications de sécurité ───────────────
             if not response or response.startswith("⚠️"):
                 response = "⚠️ Réponse vide ou erreur du modèle."
             elif len(response) > 500:
@@ -55,15 +86,30 @@ class GPTChat(commands.Cog):
 
         except Exception as e:
             print(f"[Erreur GPT Commande] {e}")
-            await self._embed_send(channel, "⚠️ **Erreur :**", "Impossible de contacter le modèle pour le moment.")
+            await self._send(ctx, interaction, "⚠️ **Erreur :**", "Impossible de contacter le modèle pour le moment.")
             return
 
-        await self._embed_send(channel, f"💬 **Réponse à {user.display_name} :**", response)
+        # ✅ Envoi de la réponse finale
+        await self._send(
+            ctx,
+            interaction,
+            f"💬 **Réponse à {user.display_name} :**",
+            response
+        )
 
     # ────────────────────────────────────────────────────────────────────────────
-    # 🪶 Envoi propre en embed
+    # 🪶 Méthodes utilitaires internes
     # ────────────────────────────────────────────────────────────────────────────
-    async def _embed_send(self, channel: discord.TextChannel, title: str, description: str):
+    async def _send(self, ctx: commands.Context, interaction: discord.Interaction, title: str, description: str):
+        """Envoi automatique selon le type d’appel (slash ou prefix)"""
+        embed = self._build_embed(title, description)
+        if interaction:
+            await safe_respond(interaction, embed=embed)
+        elif ctx:
+            await safe_send(ctx.channel, embed=embed)
+
+    def _build_embed(self, title: str, description: str) -> discord.Embed:
+        """Construit un embed propre et uniforme"""
         if not description:
             description = "⚠️ Aucune donnée à afficher."
         elif len(description) > 4000:
@@ -75,14 +121,14 @@ class GPTChat(commands.Cog):
             color=discord.Color.blurple()
         )
         embed.set_footer(text="GPT-OSS NVIDIA • Cloud")
-        await channel.send(embed=embed)
+        return embed
 
 # ────────────────────────────────────────────────────────────────────────────────
-# 🔌 SETUP DU COG
+# 🔌 Setup du Cog
 # ────────────────────────────────────────────────────────────────────────────────
 async def setup(bot: commands.Bot):
     cog = GPTChat(bot)
     for command in cog.get_commands():
         if not hasattr(command, "category"):
-            command.category = "Jeux"
+            command.category = "Fun&Random"
     await bot.add_cog(cog)
