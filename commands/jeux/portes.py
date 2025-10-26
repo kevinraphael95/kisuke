@@ -1,11 +1,14 @@
-# ────────────────────────────────────────────────────────────────────────────────
+# ───────────────────────────────────────────────────────────────────────────────
 # 📌 portes.py — Jeu des Portes interactif avec Supabase
 # Objectif : Résoudre des énigmes et avancer dans les portes pour gagner du Reiatsu
 # Catégorie : Jeux / Fun
 # Accès : Tous
 # Cooldown : 1 utilisation / 5 secondes / utilisateur
-# ────────────────────────────────────────────────────────────────────────────────
+# ───────────────────────────────────────────────────────────────────────────────
 
+# ────────────────────────────────────────────────────────────────────────────────
+# 📦 Imports nécessaires
+# ────────────────────────────────────────────────────────────────────────────────
 import discord
 from discord import app_commands
 from discord.ext import commands
@@ -15,6 +18,9 @@ import json
 from pathlib import Path
 import unicodedata
 
+# ────────────────────────────────────────────────────────────────────────────────
+# 📦 Load the json
+# ────────────────────────────────────────────────────────────────────────────────
 ENIGMES_PATH = Path("data/enigmes_portes.json")
 with ENIGMES_PATH.open("r", encoding="utf-8") as f:
     ENIGMES = json.load(f)
@@ -120,18 +126,22 @@ class PortesGame(commands.Cog):
         )
         embed.set_footer(text=f"Porte {enigme['id']}/{len(ENIGMES)} — Clique sur le bouton pour répondre.")
 
-        view = discord.ui.View(timeout=None)
-        button = discord.ui.Button(label="💬 Répondre", style=discord.ButtonStyle.primary)
+        # ── View dédiée pour gérer le bouton correctement
+        class ReponseView(discord.ui.View):
+            def __init__(self, user, cog, enigme):
+                super().__init__(timeout=None)
+                self.user = user
+                self.cog = cog
+                self.enigme = enigme
 
-        async def on_click(interaction: discord.Interaction):
-            if interaction.user.id != user.id:
-                await interaction.response.send_message("⛔ Ce n’est pas ton tour.", ephemeral=True)
-                return
-            await interaction.response.send_modal(ReponseModal(self, user, enigme))
+            @discord.ui.button(label="💬 Répondre", style=discord.ButtonStyle.primary)
+            async def respond_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+                if interaction.user.id != self.user.id:
+                    await interaction.response.send_message("⛔ Ce n’est pas ton tour.", ephemeral=True)
+                    return
+                await interaction.response.send_modal(ReponseModal(self.cog, self.user, self.enigme))
 
-        button.callback = on_click
-        view.add_item(button)
-
+        view = ReponseView(user, self, enigme)
         await channel.send(embed=embed, view=view)
 
     # ────────────────────────────────────────────────────────────
