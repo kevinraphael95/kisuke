@@ -1,10 +1,10 @@
-# ───────────────────────────────────────────────────────────────────────────────
+# ────────────────────────────────────────────────────────────────────────────────
 # 📌 portes.py — Jeu des Portes interactif avec Supabase
 # Objectif : Résoudre des énigmes et avancer dans les portes pour gagner du Reiatsu
 # Catégorie : Jeux / Fun
 # Accès : Tous
 # Cooldown : 1 utilisation / 5 secondes / utilisateur
-# ───────────────────────────────────────────────────────────────────────────────
+# ────────────────────────────────────────────────────────────────────────────────
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 📦 Imports nécessaires
@@ -12,24 +12,23 @@
 import discord
 from discord import app_commands
 from discord.ext import commands
-from utils.discord_utils import safe_send, safe_respond
+from discord.ui import View, Modal, TextInput, Button
+from utils.discord_utils import safe_send, safe_respond, safe_edit
 from utils.supabase_client import supabase
-import json
 from pathlib import Path
-import unicodedata
+import json, unicodedata
 
 # ────────────────────────────────────────────────────────────────────────────────
-# 📦 Load the json
+# 📦 Chargement des énigmes
 # ────────────────────────────────────────────────────────────────────────────────
 ENIGMES_PATH = Path("data/enigmes_portes.json")
 with ENIGMES_PATH.open("r", encoding="utf-8") as f:
     ENIGMES = json.load(f)
 
-# ───────────────────────────────────────────────────────────────────────────────
-# 🔧 Fonction utilitaire pour normaliser les réponses
-# ───────────────────────────────────────────────────────────────────────────────
+# ────────────────────────────────────────────────────────────────────────────────
+# 🔧 Fonction utilitaire : normalisation du texte
+# ────────────────────────────────────────────────────────────────────────────────
 def normalize(text: str) -> str:
-    """Met en minuscules, enlève accents et espaces inutiles."""
     text = text.strip().lower()
     text = ''.join(
         c for c in unicodedata.normalize('NFD', text)
@@ -37,46 +36,66 @@ def normalize(text: str) -> str:
     )
     return text
 
-# ───────────────────────────────────────────────────────────────────────────────
-# 🔘 Modal de réponse privée
-# ───────────────────────────────────────────────────────────────────────────────
-class ReponseModal(discord.ui.Modal):
-    def __init__(self, cog, user, enigme):
-        super().__init__(title=f"🔑 Réponse - {enigme['titre']}")
-        self.cog = cog
-        self.user = user
-        self.enigme = enigme
-
-        self.answer = discord.ui.TextInput(
+# ────────────────────────────────────────────────────────────────────────────────
+# 🎛️ Modal de réponse à une énigme
+# ────────────────────────────────────────────────────────────────────────────────
+class ReponseModal(Modal):
+    def __init__(self, parent_view):
+        super().__init__(title=f"🔑 Réponse - {parent_view.enigme['titre']}")
+        self.parent_view = parent_view
+        self.answer_input = TextInput(
             label="Ta réponse",
             placeholder="Entre ta réponse ici...",
-            style=discord.TextStyle.short,
             required=True
         )
-        self.add_item(self.answer)
+        self.add_item(self.answer_input)
 
     async def on_submit(self, interaction: discord.Interaction):
-        user_answer = normalize(self.answer.value)
+        await self.parent_view.check_answer(interaction, self.answer_input.value.strip())
 
-        correct_answers = self.enigme["reponse"]
-        if isinstance(correct_answers, str):
-            correct_answers = [correct_answers]
-        correct_answers = [normalize(ans) for ans in correct_answers]
+# ────────────────────────────────────────────────────────────────────────────────
+# 🎮 Vue principale du jeu des portes
+# ────────────────────────────────────────────────────────────────────────────────
+class PortesView(View):
+    def __init__(self, user: discord.User, enigme: dict, cog):
+        super().__init__(timeout=None)
+        self.user = user
+        self.enigme = enigme
+        self.cog = cog
+        self.add_item(RepondreButton(self))
 
-        if user_answer in correct_answers:
-            # ── Récupère la progression
+    def build_embed(self) -> discord.Embed:
+        embed = discord.Embed(
+            title=self.enigme["titre"],
+            description=f"**Énigme :**\n{self.enigme['enigme']}",
+            color=discord.Color.blurple()
+        )
+        embed.set_footer(
+            text=f"Porte {self.enigme['id']}/{len(ENIGMES)} — Clique sur le bouton pour répondre."
+        )
+        return embed
+
+    async def check_answer(self, interaction: discord.Interaction, answer: str):
+        if interaction.user.id != self.user.id:
+            return await safe_respond(interaction, "⛔ Ce n’est pas ton tour.", ephemeral=True)
+
+        user_answer = normalize(answer)
+        correct = self.enigme["reponse"]
+        if isinstance(correct, str):
+            correct = [correct]
+        correct = [normalize(ans) for ans in correct]
+
+        if user_answer in correct:
             data = supabase.table("reiatsu_portes").select("*").eq("user_id", self.user.id).execute()
             current_door = data.data[0]["current_door"] if data.data else 1
             points = data.data[0]["points"] if data.data else 0
             next_door = current_door + 1
 
-            # ── Récompense spéciale si c’est la dernière porte
             reward_message = ""
             if current_door == 100:
                 points += 500
                 reward_message = "🎉 Félicitations ! Tu as terminé toutes les portes et gagné **500 Reiatsu** !"
 
-            # ── Met à jour ou insère la porte
             if data.data:
                 supabase.table("reiatsu_portes").update({
                     "current_door": next_door,
@@ -90,24 +109,36 @@ class ReponseModal(discord.ui.Modal):
                     "points": points
                 }).execute()
 
-            await interaction.response.send_message(
-                f"✅ Bonne réponse ! Tu passes à la porte {next_door} 🚪\n{reward_message}", ephemeral=True
+            await safe_respond(
+                interaction,
+                f"✅ Bonne réponse ! Tu passes à la porte {next_door} 🚪\n{reward_message}",
+                ephemeral=True
             )
 
-            # ── Envoi de la prochaine énigme si elle existe
             next_enigme = self.cog.get_enigme(next_door)
             if next_enigme and next_door <= 100:
-                await self.cog.send_enigme_embed(self.user, interaction.channel, next_enigme)
+                await self.cog.send_enigme(interaction.channel, self.user, next_enigme)
         else:
-            await interaction.response.send_message(
-                "❌ Mauvaise réponse... Essaie encore !", ephemeral=True
-            )
+            await safe_respond(interaction, "❌ Mauvaise réponse... Essaie encore !", ephemeral=True)
 
-# ───────────────────────────────────────────────────────────────────────────────
+# ────────────────────────────────────────────────────────────────────────────────
+# 🎛️ Bouton "Répondre"
+# ────────────────────────────────────────────────────────────────────────────────
+class RepondreButton(Button):
+    def __init__(self, parent_view):
+        super().__init__(label="💬 Répondre", style=discord.ButtonStyle.primary)
+        self.parent_view = parent_view
+
+    async def callback(self, interaction: discord.Interaction):
+        if interaction.user.id != self.parent_view.user.id:
+            return await safe_respond(interaction, "⛔ Ce n’est pas ton tour.", ephemeral=True)
+        await interaction.response.send_modal(ReponseModal(self.parent_view))
+
+# ────────────────────────────────────────────────────────────────────────────────
 # 🧠 Cog principal
-# ───────────────────────────────────────────────────────────────────────────────
+# ────────────────────────────────────────────────────────────────────────────────
 class PortesGame(commands.Cog):
-    """🎮 Jeu des Portes — Progression minimale"""
+    """🎮 Jeu des Portes interactif — Résous les énigmes et avance dans ta progression !"""
 
     def __init__(self, bot: commands.Bot):
         self.bot = bot
@@ -118,49 +149,17 @@ class PortesGame(commands.Cog):
                 return e
         return None
 
-    # ────────────────────────────────────────────────────────────
-    # 📦 Envoi d'une énigme avec bouton de réponse
-    # ────────────────────────────────────────────────────────────
-    async def send_enigme_embed(self, user: discord.User, channel, enigme):
-        embed = discord.Embed(
-            title=enigme["titre"],
-            description=f"**Énigme :**\n{enigme['enigme']}",
-            color=discord.Color.blurple()
-        )
-        embed.set_footer(text=f"Porte {enigme['id']}/{len(ENIGMES)} — Clique sur le bouton pour répondre.")
-
-        # ── Vue principale (comme dans mot_contraint)
-        class ReponseView(discord.ui.View):
-            def __init__(self, user, cog, enigme):
-                super().__init__(timeout=None)
-                self.user = user
-                self.cog = cog
-                self.enigme = enigme
-                self.add_item(RepondreButton(self))
-
-        # ── Bouton de réponse
-        class RepondreButton(discord.ui.Button):
-            def __init__(self, parent_view):
-                super().__init__(label="💬 Répondre", style=discord.ButtonStyle.primary)
-                self.parent_view = parent_view
-
-            async def callback(self, interaction: discord.Interaction):
-                if interaction.user.id != self.parent_view.user.id:
-                    return await interaction.response.send_message("⛔ Ce n’est pas ton tour.", ephemeral=True)
-                await interaction.response.send_modal(
-                    ReponseModal(self.parent_view.cog, self.parent_view.user, self.parent_view.enigme)
-                )
-
-        view = ReponseView(user, self, enigme)
-        message = await channel.send(embed=embed, view=view)
-        view.message = message  # ← garde la référence comme dans mot_contraint
+    async def send_enigme(self, channel, user, enigme):
+        view = PortesView(user, enigme, self)
+        embed = view.build_embed()
+        view.message = await safe_send(channel, embed=embed, view=view)
 
     # ────────────────────────────────────────────────────────────
     # 🔹 Commande SLASH
     # ────────────────────────────────────────────────────────────
     @app_commands.command(
         name="portes",
-        description="Voir ou reprendre ta progression dans les portes"
+        description="Jeu : résous des énigmes et passe les portes pour gagner du Reiatsu."
     )
     @app_commands.checks.cooldown(1, 5.0, key=lambda i: i.user.id)
     async def slash_portes(self, interaction: discord.Interaction):
@@ -170,12 +169,12 @@ class PortesGame(commands.Cog):
         enigme = self.get_enigme(current_door)
         await safe_respond(interaction, f"🚪 {user.mention} commence ou reprend le Jeu des Portes !")
         if enigme:
-            await self.send_enigme_embed(user, interaction.channel, enigme)
+            await self.send_enigme(interaction.channel, user, enigme)
 
     # ────────────────────────────────────────────────────────────
     # 🔹 Commande PREFIX
     # ────────────────────────────────────────────────────────────
-    @commands.command(name="portes")
+    @commands.command(name="portes", help="Jeu : résous des énigmes et avance dans les portes.")
     @commands.cooldown(1, 5.0, commands.BucketType.user)
     async def prefix_portes(self, ctx: commands.Context):
         user = ctx.author
@@ -184,11 +183,11 @@ class PortesGame(commands.Cog):
         enigme = self.get_enigme(current_door)
         await safe_send(ctx.channel, f"🚪 {user.mention} commence ou reprend le Jeu des Portes !")
         if enigme:
-            await self.send_enigme_embed(user, ctx.channel, enigme)
+            await self.send_enigme(ctx.channel, user, enigme)
 
-# ───────────────────────────────────────────────────────────────
+# ────────────────────────────────────────────────────────────────────────────────
 # 🔌 Setup du Cog
-# ───────────────────────────────────────────────────────────────
+# ────────────────────────────────────────────────────────────────────────────────
 async def setup(bot: commands.Bot):
     cog = PortesGame(bot)
     for command in cog.get_commands():
