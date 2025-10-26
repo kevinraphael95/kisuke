@@ -118,6 +118,9 @@ class PortesGame(commands.Cog):
                 return e
         return None
 
+    # ────────────────────────────────────────────────────────────
+    # 📦 Envoi d'une énigme avec bouton de réponse
+    # ────────────────────────────────────────────────────────────
     async def send_enigme_embed(self, user: discord.User, channel, enigme):
         embed = discord.Embed(
             title=enigme["titre"],
@@ -126,24 +129,34 @@ class PortesGame(commands.Cog):
         )
         embed.set_footer(text=f"Porte {enigme['id']}/{len(ENIGMES)} — Clique sur le bouton pour répondre.")
 
-        # ── View dédiée pour gérer le bouton correctement
+        # ── Vue principale (comme dans mot_contraint)
         class ReponseView(discord.ui.View):
             def __init__(self, user, cog, enigme):
                 super().__init__(timeout=None)
                 self.user = user
                 self.cog = cog
                 self.enigme = enigme
+                self.add_item(RepondreButton(self))
 
-            @discord.ui.button(label="💬 Répondre", style=discord.ButtonStyle.primary)
-            async def respond_button(self, interaction: discord.Interaction, button: discord.ui.Button):
-                if interaction.user.id != self.user.id:
-                    await interaction.response.send_message("⛔ Ce n’est pas ton tour.", ephemeral=True)
-                    return
-                await interaction.response.send_modal(ReponseModal(self.cog, self.user, self.enigme))
+        # ── Bouton de réponse
+        class RepondreButton(discord.ui.Button):
+            def __init__(self, parent_view):
+                super().__init__(label="💬 Répondre", style=discord.ButtonStyle.primary)
+                self.parent_view = parent_view
+
+            async def callback(self, interaction: discord.Interaction):
+                if interaction.user.id != self.parent_view.user.id:
+                    return await interaction.response.send_message("⛔ Ce n’est pas ton tour.", ephemeral=True)
+                await interaction.response.send_modal(
+                    ReponseModal(self.parent_view.cog, self.parent_view.user, self.parent_view.enigme)
+                )
 
         view = ReponseView(user, self, enigme)
-        await channel.send(embed=embed, view=view)
+        message = await channel.send(embed=embed, view=view)
+        view.message = message  # ← garde la référence comme dans mot_contraint
 
+    # ────────────────────────────────────────────────────────────
+    # 🔹 Commande SLASH
     # ────────────────────────────────────────────────────────────
     @app_commands.command(
         name="portes",
@@ -159,6 +172,8 @@ class PortesGame(commands.Cog):
         if enigme:
             await self.send_enigme_embed(user, interaction.channel, enigme)
 
+    # ────────────────────────────────────────────────────────────
+    # 🔹 Commande PREFIX
     # ────────────────────────────────────────────────────────────
     @commands.command(name="portes")
     @commands.cooldown(1, 5.0, commands.BucketType.user)
