@@ -1,480 +1,381 @@
 {
   "questions": [
     {
-      "question": "Un tram fonce sur cinq personnes. Tu peux tirer un levier pour le détourner sur une seule. Que fais-tu ?",
+      "question": "Le tram fonce sur cinq personnes. Tu peux tirer le levier pour le détourner sur une seule. Que fais-tu ?",
       "options": ["Tirer le levier", "Ne rien faire"],
       "results": {
         "Tirer le levier": "Tu as sauvé cinq vies, mais tu n’oublieras jamais ce visage.",
         "Ne rien faire": "Tu regardes le tram passer. La morale t’observe."
-      },
-      "scores": {"Tirer le levier": 2, "Ne rien faire": 1},
-      "folie": {"Tirer le levier": 5, "Ne rien faire": 2}
+      }
     },
     {
-      "question": "Tu peux détourner le tram pour écraser un criminel condamné à mort à la place de cinq passants innocents.",
-      "options": ["Le détourner", "Laisser faire"],
+      "question": "Le tram fonce sur cinq criminels condamnés à mort. Tu peux tirer le levier pour le détourner sur un innocent. Que fais-tu ?",
+      "options": ["Tirer le levier", "Ne rien faire"],
       "results": {
-        "Le détourner": "Tu choisis la justice utilitariste.",
-        "Laisser faire": "Tu crois encore aux tribunaux, pas aux rails."
-      },
-      "scores": {"Le détourner": 3, "Laisser faire": 1},
-      "folie": {"Le détourner": 6, "Laisser faire": 3}
+        "Tirer le levier": "Tu choisis la justice utilitariste.",
+        "Ne rien faire": "Tu crois encore aux tribunaux, pas aux rails."
+      }
     },
     {
-      "question": "Le tram fonce sur cinq robots dotés d’IA. Sur la voie alternative : un humain. Qui sacrifies-tu ?",
-      "options": ["Les robots", "L’humain"],
+      "question": "Le tram fonce sur cinq robots dotés d’IA. Tu peux tirer le levier pour le détourner sur un humain. Que fais-tu ?",
+      "options": ["Tirer le levier", "Ne rien faire"],
       "results": {
-        "Les robots": "Les circuits pleurent, mais l’humanité te remercie.",
-        "L’humain": "Tu valorises l’avenir. Et les machines prennent note."
-      },
-      "scores": {"Les robots": 2, "L’humain": 3},
-      "folie": {"Les robots": 4, "L’humain": 6}
+        "Tirer le levier": "Les circuits pleurent, mais l’humanité te remercie.",
+        "Ne rien faire": "Tu valorises l’avenir. Et les machines prennent note."
+      }
     },
     {
-      "question": "Le tram peut écraser cinq influenceurs ou un développeur open-source. Ton choix ?",
-      "options": ["Les influenceurs", "Le développeur"],
+      "question": "Le tram fonce sur cinq influenceurs. Tu peux tirer le levier pour le détourner sur un développeur open-source. Que fais-tu ?",
+      "options": ["Tirer le levier", "Ne rien faire"],
       "results": {
-        "Les influenceurs": "Internet t’applaudit.",
-        "Le développeur": "GitHub te bannit, mais Instagram t’adore."
-      },
-      "scores": {"Les influenceurs": 3, "Le développeur": 2},
-      "folie": {"Les influenceurs": 5, "Le développeur": 4}
+        "Tirer le levier": "Internet t’applaudit.",
+        "Ne rien faire": "GitHub te bannit, mais Instagram t’adore."
+      }
     },
     {
-      "question": "Cinq politiciens ou un clown triste sont sur les rails.",
-      "options": ["Les politiciens", "Le clown"],
+      "question": "Le tram fonce sur cinq politiciens. Tu peux tirer le levier pour le détourner sur un clown triste. Que fais-tu ?",
+      "options": ["Tirer le levier", "Ne rien faire"],
       "results": {
-        "Les politiciens": "Tu gagnes 10 points de karma.",
-        "Le clown": "La fête est finie, mais la démocratie continue."
-      },
-      "scores": {"Les politiciens": 3, "Le clown": 1},
-      "folie": {"Les politiciens": 6, "Le clown": 3}
+        "Tirer le levier": "Tu gagnes 10 points de karma.",
+        "Ne rien faire": "La fête est finie, mais la démocratie continue."
+      }
     },
     {
-      "question": "Tu peux sauver cinq chats ou un chien héroïque de cinéma.",
-      "options": ["Les chats", "Le chien"],
+      "question": "Le tram fonce sur cinq chats. Tu peux tirer le levier pour le détourner sur un chien héroïque de cinéma. Que fais-tu ?",
+      "options": ["Tirer le levier", "Ne rien faire"],
       "results": {
-        "Les chats": "Tu seras leur dieu. Ou leur esclave.",
-        "Le chien": "Hollywood te déteste, mais ton cœur fond."
-      },
-      "scores": {"Les chats": 2, "Le chien": 3},
-      "folie": {"Les chats": 4, "Le chien": 5}
+        "Tirer le levier": "Tu seras leur dieu. Ou leur esclave.",
+        "Ne rien faire": "Hollywood te déteste, mais ton cœur fond."
+      }
     },
     {
-      "question": "Le tram fonce sur cinq gens pressés. Tu peux le détourner sur un homme qui lit tranquillement.",
-      "options": ["Tirer le levier", "Laisser faire"],
+      "question": "Le tram fonce sur cinq gens pressés. Tu peux tirer le levier pour le détourner sur un homme qui lit tranquillement. Que fais-tu ?",
+      "options": ["Tirer le levier", "Ne rien faire"],
       "results": {
         "Tirer le levier": "Le calme a un prix.",
-        "Laisser faire": "Les gens pressés ne l’étaient pas assez."
-      },
-      "scores": {"Tirer le levier": 2, "Laisser faire": 2},
-      "folie": {"Tirer le levier": 5, "Laisser faire": 5}
+        "Ne rien faire": "Les gens pressés ne l’étaient pas assez."
+      }
     },
     {
-      "question": "Cinq chercheurs contre un mime qui fait semblant d’être sur les rails. Le tram ne sait pas faire la différence.",
-      "options": ["Les chercheurs", "Le mime"],
+      "question": "Le tram fonce sur cinq chercheurs. Tu peux tirer le levier pour le détourner sur un mime. Que fais-tu ?",
+      "options": ["Tirer le levier", "Ne rien faire"],
       "results": {
-        "Les chercheurs": "La science avance, le mime s’en sort.",
-        "Le mime": "Il a mimé sa dernière fuite."
-      },
-      "scores": {"Les chercheurs": 3, "Le mime": 1},
-      "folie": {"Les chercheurs": 5, "Le mime": 7}
+        "Tirer le levier": "La science avance, le mime s’en sort.",
+        "Ne rien faire": "Il a mimé sa dernière fuite."
+      }
     },
     {
-      "question": "Tu peux sauver cinq enfants ou un vieil homme qui connaît tous les secrets du gouvernement.",
-      "options": ["Les enfants", "Le vieil homme"],
+      "question": "Le tram fonce sur cinq enfants. Tu peux tirer le levier pour le détourner sur un vieil homme connaissant tous les secrets du gouvernement. Que fais-tu ?",
+      "options": ["Tirer le levier", "Ne rien faire"],
       "results": {
-        "Les enfants": "L’avenir est sauf.",
-        "Le vieil homme": "Tu viens peut-être d’éviter un complot."
-      },
-      "scores": {"Les enfants": 3, "Le vieil homme": 2},
-      "folie": {"Les enfants": 4, "Le vieil homme": 6}
+        "Tirer le levier": "L’avenir est sauf.",
+        "Ne rien faire": "Tu viens peut-être d’éviter un complot."
+      }
     },
     {
-      "question": "Le tram fonce, mais tu peux le détourner sur un autre tram. Personne ne sait ce qu’il y a dedans.",
-      "options": ["Le détourner", "Ne rien faire"],
+      "question": "Le tram fonce sur cinq trams. Tu peux tirer le levier pour le détourner sur un autre tram dont le contenu est inconnu. Que fais-tu ?",
+      "options": ["Tirer le levier", "Ne rien faire"],
       "results": {
-        "Le détourner": "Le mystère reste entier, mais les cris continuent.",
+        "Tirer le levier": "Le mystère reste entier, mais les cris continuent.",
         "Ne rien faire": "Ignorer le problème, c’est aussi un choix."
-      },
-      "scores": {"Le détourner": 2, "Ne rien faire": 2},
-      "folie": {"Le détourner": 6, "Ne rien faire": 4}
+      }
     },
     {
-      "question": "Cinq stagiaires dorment sur les rails. Tu peux les sauver, mais cela détruirait le café de la machine à l’étage.",
-      "options": ["Sauver les stagiaires", "Sauver le café"],
+      "question": "Le tram fonce sur cinq stagiaires. Tu peux tirer le levier pour le détourner sur le café de la machine à l’étage. Que fais-tu ?",
+      "options": ["Tirer le levier", "Ne rien faire"],
       "results": {
-        "Sauver les stagiaires": "L’humanité triomphe.",
-        "Sauver le café": "Productivité maximale atteinte."
-      },
-      "scores": {"Sauver les stagiaires": 3, "Sauver le café": 2},
-      "folie": {"Sauver les stagiaires": 5, "Sauver le café": 8}
+        "Tirer le levier": "L’humanité triomphe.",
+        "Ne rien faire": "Productivité maximale atteinte."
+      }
     },
     {
-      "question": "Le tram fonce sur cinq clones de toi. Tu peux le détourner sur ton toi original.",
-      "options": ["Les clones", "Moi"],
+      "question": "Le tram fonce sur cinq clones de toi. Tu peux tirer le levier pour le détourner sur ton toi original. Que fais-tu ?",
+      "options": ["Tirer le levier", "Ne rien faire"],
       "results": {
-        "Les clones": "Tu restes unique, mais seul.",
-        "Moi": "Tes clones t’applaudissent. Puis héritent."
-      },
-      "scores": {"Les clones": 2, "Moi": 4},
-      "folie": {"Les clones": 7, "Moi": 10}
+        "Tirer le levier": "Tu restes unique, mais seul.",
+        "Ne rien faire": "Tes clones t’applaudissent. Puis héritent."
+      }
     },
     {
-      "question": "Cinq poulets ou un œuf d’or sont sur la voie.",
-      "options": ["Les poulets", "L’œuf"],
+      "question": "Le tram fonce sur cinq poulets. Tu peux tirer le levier pour le détourner sur un œuf d’or. Que fais-tu ?",
+      "options": ["Tirer le levier", "Ne rien faire"],
       "results": {
-        "Les poulets": "Tu sauves des vies simples.",
-        "L’œuf": "Tu choisis l’économie avant la volaille."
-      },
-      "scores": {"Les poulets": 2, "L’œuf": 3},
-      "folie": {"Les poulets": 5, "L’œuf": 8}
+        "Tirer le levier": "Tu sauves des vies simples.",
+        "Ne rien faire": "Tu choisis l’économie avant la volaille."
+      }
     },
     {
-      "question": "Tu peux détourner le tram pour qu’il écrase un panneau “Attention au tramway”.",
-      "options": ["Le détourner", "Laisser faire"],
+      "question": "Le tram fonce sur un panneau “Attention au tramway”. Tu peux tirer le levier pour l’éviter. Que fais-tu ?",
+      "options": ["Tirer le levier", "Ne rien faire"],
       "results": {
-        "Le détourner": "Tu as gagné la bataille symbolique.",
-        "Laisser faire": "Tu respectes les panneaux. Ironique."
-      },
-      "scores": {"Le détourner": 3, "Laisser faire": 2},
-      "folie": {"Le détourner": 6, "Laisser faire": 4}
+        "Tirer le levier": "Tu as gagné la bataille symbolique.",
+        "Ne rien faire": "Tu respectes les panneaux. Ironique."
+      }
     },
     {
-      "question": "Le tram t’écoute. Il demande : 'Dois-je continuer ?'",
-      "options": ["Oui", "Non"],
+      "question": "Le tram te demande : 'Dois-je continuer ?' Tu peux tirer le levier pour décider. Que fais-tu ?",
+      "options": ["Tirer le levier", "Ne rien faire"],
       "results": {
-        "Oui": "Le tram rit. C’est un son métallique.",
-        "Non": "Le tram te remercie... puis repart tout seul."
-      },
-      "scores": {"Oui": 2, "Non": 3},
-      "folie": {"Oui": 9, "Non": 10}
+        "Tirer le levier": "Le tram rit. C’est un son métallique.",
+        "Ne rien faire": "Le tram te remercie... puis repart tout seul."
+      }
     },
     {
-      "question": "Tu réalises que tu es toi-même sur les rails. Le levier te tue dans tous les cas.",
-      "options": ["Tirer quand même", "Fermer les yeux"],
+      "question": "Le tram fonce sur toi-même sur les rails. Tu peux tirer le levier pour te sauver. Que fais-tu ?",
+      "options": ["Tirer le levier", "Ne rien faire"],
       "results": {
-        "Tirer quand même": "Tu refuses la fatalité.",
-        "Fermer les yeux": "Le tram respecte ton courage aveugle."
-      },
-      "scores": {"Tirer quand même": 4, "Fermer les yeux": 3},
-      "folie": {"Tirer quand même": 12, "Fermer les yeux": 9}
+        "Tirer le levier": "Tu refuses la fatalité.",
+        "Ne rien faire": "Le tram respecte ton courage aveugle."
+      }
     },
     {
-      "question": "Le tram est conscient et refuse d’écraser qui que ce soit. Il te demande : 'Puis-je me sacrifier ?'",
-      "options": ["Oui", "Non"],
+      "question": "Le tram est conscient et refuse d’écraser qui que ce soit. Tu peux tirer le levier pour qu’il se sacrifie. Que fais-tu ?",
+      "options": ["Tirer le levier", "Ne rien faire"],
       "results": {
-        "Oui": "Le tram explose de gratitude.",
-        "Non": "Tu viens de créer le premier tram dépressif."
-      },
-      "scores": {"Oui": 3, "Non": 2},
-      "folie": {"Oui": 12, "Non": 14}
+        "Tirer le levier": "Le tram explose de gratitude.",
+        "Ne rien faire": "Tu viens de créer le premier tram dépressif."
+      }
     },
     {
-      "question": "Le tram est arrêté. Tu peux le relancer juste pour voir ce qui se passe.",
-      "options": ["Le relancer", "Partir"],
+      "question": "Le tram est arrêté. Tu peux tirer le levier pour le relancer. Que fais-tu ?",
+      "options": ["Tirer le levier", "Ne rien faire"],
       "results": {
-        "Le relancer": "Tu aimes les expériences sociales.",
-        "Partir": "Tu as survécu à ton instinct de curiosité."
-      },
-      "scores": {"Le relancer": 3, "Partir": 2},
-      "folie": {"Le relancer": 15, "Partir": 8}
+        "Tirer le levier": "Tu aimes les expériences sociales.",
+        "Ne rien faire": "Tu as survécu à ton instinct de curiosité."
+      }
     },
     {
-      "question": "Cinq cornichons parlants ou un pot de mayonnaise en détresse.",
-      "options": ["Les cornichons", "La mayo"],
+      "question": "Le tram fonce sur cinq cornichons parlants. Tu peux tirer le levier pour le détourner sur un pot de mayonnaise. Que fais-tu ?",
+      "options": ["Tirer le levier", "Ne rien faire"],
       "results": {
-        "Les cornichons": "Ils te remercient en chœur.",
-        "La mayo": "Elle t’a supplié. Tu l’as entendue."
-      },
-      "scores": {"Les cornichons": 3, "La mayo": 2},
-      "folie": {"Les cornichons": 14, "La mayo": 16}
+        "Tirer le levier": "Ils te remercient en chœur.",
+        "Ne rien faire": "Elle t’a supplié. Tu l’as entendue."
+      }
     },
     {
-      "question": "Le tram devient toi. Tu deviens le tram. Qui tires-tu ?",
-      "options": ["Moi", "Lui"],
+      "question": "Le tram devient toi. Tu peux tirer le levier pour décider qui écrasera. Que fais-tu ?",
+      "options": ["Tirer le levier", "Ne rien faire"],
       "results": {
-        "Moi": "Le cycle continue.",
-        "Lui": "Tu viens de casser la simulation."
-      },
-      "scores": {"Moi": 4, "Lui": 5},
-      "folie": {"Moi": 20, "Lui": 25}
-    },
-
-
-    {
-      "question": "Le tram fonce sur cinq versions de toi dans des réalités parallèles. Sur la voie annexe, un unique toi parfait et accompli.",
-      "options": ["Les réalités", "Le moi parfait"],
-      "results": {
-        "Les réalités": "Les autres timelines s’effondrent.",
-        "Le moi parfait": "Tu choisis le chaos constructif."
-      },
-      "scores": {"Les réalités": 3, "Le moi parfait": 4},
-      "folie": {"Les réalités": 18, "Le moi parfait": 22}
+        "Tirer le levier": "Le cycle continue.",
+        "Ne rien faire": "Tu viens de casser la simulation."
+      }
     },
     {
-      "question": "Le tram est en grève. Il veut des meilleures conditions de rail.",
-      "options": ["Le soutenir", "L’écraser"],
+      "question": "Le tram fonce sur cinq versions de toi dans des réalités parallèles. Tu peux tirer le levier pour le détourner sur ton moi parfait. Que fais-tu ?",
+      "options": ["Tirer le levier", "Ne rien faire"],
       "results": {
-        "Le soutenir": "Solidarité ferroviaire. Tu es syndiqué maintenant.",
-        "L’écraser": "Tu as créé le premier martyr de l’acier."
-      },
-      "scores": {"Le soutenir": 2, "L’écraser": 3},
-      "folie": {"Le soutenir": 12, "L’écraser": 16}
+        "Tirer le levier": "Les autres timelines s’effondrent.",
+        "Ne rien faire": "Tu choisis le chaos constructif."
+      }
     },
     {
-      "question": "Le tram fonce sur cinq joueurs de Monopoly. L’autre voie mène à un seul joueur de Uno.",
-      "options": ["Les Monopoly", "Le Uno"],
+      "question": "Le tram est en grève. Tu peux tirer le levier pour le soutenir ou le laisser. Que fais-tu ?",
+      "options": ["Tirer le levier", "Ne rien faire"],
       "results": {
-        "Les Monopoly": "Tu hais les longues parties.",
-        "Le Uno": "Tu as peur du +4 final."
-      },
-      "scores": {"Les Monopoly": 3, "Le Uno": 3},
-      "folie": {"Les Monopoly": 10, "Le Uno": 9}
+        "Tirer le levier": "Solidarité ferroviaire. Tu es syndiqué maintenant.",
+        "Ne rien faire": "Tu as créé le premier martyr de l’acier."
+      }
     },
     {
-      "question": "Tu peux détourner le tram sur un scientifique qui affirme que le tramway n’existe pas.",
-      "options": ["Le détourner", "Le laisser tranquille"],
+      "question": "Le tram fonce sur cinq joueurs de Monopoly. Tu peux tirer le levier pour le détourner sur un joueur de Uno. Que fais-tu ?",
+      "options": ["Tirer le levier", "Ne rien faire"],
       "results": {
-        "Le détourner": "Tu confirmes son hypothèse.",
-        "Le laisser tranquille": "Il continue à nier ton existence."
-      },
-      "scores": {"Le détourner": 3, "Le laisser tranquille": 2},
-      "folie": {"Le détourner": 14, "Le laisser tranquille": 12}
+        "Tirer le levier": "Tu hais les longues parties.",
+        "Ne rien faire": "Tu as peur du +4 final."
+      }
     },
     {
-      "question": "Le tram fonce sur cinq philosophes. L’autre voie contient un seul influenceur crypto.",
-      "options": ["Les philosophes", "L’influenceur"],
+      "question": "Le tram fonce sur un scientifique niant l’existence du tram. Tu peux tirer le levier pour l’éviter. Que fais-tu ?",
+      "options": ["Tirer le levier", "Ne rien faire"],
       "results": {
-        "Les philosophes": "La sagesse s’éteint, mais la hype s’éteint aussi.",
-        "L’influenceur": "Tu perds en NFT mais gagnes en morale."
-      },
-      "scores": {"Les philosophes": 2, "L’influenceur": 3},
-      "folie": {"Les philosophes": 8, "L’influenceur": 10}
+        "Tirer le levier": "Tu confirmes son hypothèse.",
+        "Ne rien faire": "Il continue à nier ton existence."
+      }
     },
     {
-      "question": "Le tram fonce sur cinq mannequins en plastique. L’autre voie mène à un vrai humain, immobile.",
-      "options": ["Les mannequins", "L’humain"],
+      "question": "Le tram fonce sur cinq philosophes. Tu peux tirer le levier pour le détourner sur un influenceur crypto. Que fais-tu ?",
+      "options": ["Tirer le levier", "Ne rien faire"],
       "results": {
-        "Les mannequins": "Le plastique fond, mais ton âme aussi.",
-        "L’humain": "Le réalisme t’a piégé."
-      },
-      "scores": {"Les mannequins": 3, "L’humain": 2},
-      "folie": {"Les mannequins": 9, "L’humain": 13}
+        "Tirer le levier": "La sagesse s’éteint, mais la hype s’éteint aussi.",
+        "Ne rien faire": "Tu perds en NFT mais gagnes en morale."
+      }
     },
     {
-      "question": "Tu peux sauver cinq bébés trams fraîchement sortis d’usine, ou un vieux tram rouillé qui te dit ‘papa’.",
-      "options": ["Les bébés trams", "Le vieux tram"],
+      "question": "Le tram fonce sur cinq mannequins en plastique. Tu peux tirer le levier pour le détourner sur un humain. Que fais-tu ?",
+      "options": ["Tirer le levier", "Ne rien faire"],
       "results": {
-        "Les bébés trams": "L’industrie renaît.",
-        "Le vieux tram": "Il t’appelle encore, dans tes rêves..."
-      },
-      "scores": {"Les bébés trams": 3, "Le vieux tram": 4},
-      "folie": {"Les bébés trams": 16, "Le vieux tram": 20}
+        "Tirer le levier": "Le plastique fond, mais ton âme aussi.",
+        "Ne rien faire": "Le réalisme t’a piégé."
+      }
     },
     {
-      "question": "Le tram fonce sur cinq serveurs contenant des memes. Sur l’autre voie, un seul serveur contenant toutes les recettes de grand-mère.",
-      "options": ["Les memes", "Les recettes"],
+      "question": "Le tram fonce sur cinq bébés trams. Tu peux tirer le levier pour le détourner sur un vieux tram. Que fais-tu ?",
+      "options": ["Tirer le levier", "Ne rien faire"],
       "results": {
-        "Les memes": "L’humour meurt, mais la sauce survit.",
-        "Les recettes": "Tu as choisi la dopamine. Court terme, mais savoureux."
-      },
-      "scores": {"Les memes": 2, "Les recettes": 3},
-      "folie": {"Les memes": 9, "Les recettes": 12}
+        "Tirer le levier": "L’industrie renaît.",
+        "Ne rien faire": "Il t’appelle encore, dans tes rêves..."
+      }
     },
     {
-      "question": "Le tram fonce sur cinq utilisateurs de Discord AFK. Sur l’autre voie, un modérateur éveillé.",
-      "options": ["Les AFK", "Le modo"],
+      "question": "Le tram fonce sur cinq serveurs de memes. Tu peux tirer le levier pour le détourner sur un serveur de recettes. Que fais-tu ?",
+      "options": ["Tirer le levier", "Ne rien faire"],
       "results": {
-        "Les AFK": "Personne ne remarque rien.",
-        "Le modo": "Tu déclenches une guerre de serveurs."
-      },
-      "scores": {"Les AFK": 2, "Le modo": 3},
-      "folie": {"Les AFK": 10, "Le modo": 14}
+        "Tirer le levier": "L’humour meurt, mais la sauce survit.",
+        "Ne rien faire": "Tu as choisi la dopamine. Court terme, mais savoureux."
+      }
+    },  
+    {
+      "question": "Le tram fonce sur cinq utilisateurs de Discord AFK. Tu peux tirer le levier pour le détourner sur un modérateur éveillé. Que fais-tu ?",
+      "options": ["Tirer le levier", "Ne rien faire"],
+      "results": {
+        "Tirer le levier": "Personne ne remarque rien.",
+        "Ne rien faire": "Tu déclenches une guerre de serveurs."
+      }
     },
     {
-      "question": "Le tram te demande de résoudre une équation morale : 5x - 1y = éthique.",
-      "options": ["Résoudre", "Tricher"],
+      "question": "Le tram te demande de résoudre une équation morale : 5x - 1y = éthique. Tu peux tirer le levier pour résoudre ou tricher. Que fais-tu ?",
+      "options": ["Tirer le levier", "Ne rien faire"],
       "results": {
-        "Résoudre": "Tu as obtenu un diplôme en philosophie appliquée.",
-        "Tricher": "Tu gagnes le test, mais perds ta conscience."
-      },
-      "scores": {"Résoudre": 4, "Tricher": 3},
-      "folie": {"Résoudre": 11, "Tricher": 13}
+        "Tirer le levier": "Tu as obtenu un diplôme en philosophie appliquée.",
+        "Ne rien faire": "Tu gagnes le test, mais perds ta conscience."
+      }
     },
     {
-      "question": "Cinq bougies sur un gâteau d’anniversaire ou une seule bougie allumée dans une église vide.",
-      "options": ["Le gâteau", "L’église"],
+      "question": "Le tram fonce sur cinq bougies sur un gâteau d’anniversaire. Tu peux tirer le levier pour le détourner sur une bougie dans une église vide. Que fais-tu ?",
+      "options": ["Tirer le levier", "Ne rien faire"],
       "results": {
-        "Le gâteau": "Tu choisis la vie. Et le sucre.",
-        "L’église": "Le tram se signe avant d’accélérer."
-      },
-      "scores": {"Le gâteau": 3, "L’église": 3},
-      "folie": {"Le gâteau": 8, "L’église": 12}
+        "Tirer le levier": "Tu choisis la vie. Et le sucre.",
+        "Ne rien faire": "Le tram se signe avant d’accélérer."
+      }
     },
     {
-      "question": "Le tram t’annonce que tu es un PNJ dans sa simulation.",
-      "options": ["Accepter", "Refuser"],
+      "question": "Le tram t’annonce que tu es un PNJ dans sa simulation. Tu peux tirer le levier pour accepter ou refuser. Que fais-tu ?",
+      "options": ["Tirer le levier", "Ne rien faire"],
       "results": {
-        "Accepter": "La paix t’envahit. Tu brilles brièvement.",
-        "Refuser": "Le code s’effondre. Bravo, héros."
-      },
-      "scores": {"Accepter": 4, "Refuser": 5},
-      "folie": {"Accepter": 20, "Refuser": 25}
+        "Tirer le levier": "La paix t’envahit. Tu brilles brièvement.",
+        "Ne rien faire": "Le code s’effondre. Bravo, héros."
+      }
     },
     {
-      "question": "Le tram fonce sur cinq trams miniatures. Sur la voie parallèle : un gigantesque tram cosmique.",
-      "options": ["Les miniatures", "Le cosmique"],
+      "question": "Le tram fonce sur cinq trams miniatures. Tu peux tirer le levier pour le détourner sur un gigantesque tram cosmique. Que fais-tu ?",
+      "options": ["Tirer le levier", "Ne rien faire"],
       "results": {
-        "Les miniatures": "Le multivers applaudit.",
-        "Le cosmique": "Tu viens de provoquer une éclipse morale."
-      },
-      "scores": {"Les miniatures": 4, "Le cosmique": 5},
-      "folie": {"Les miniatures": 18, "Le cosmique": 28}
+        "Tirer le levier": "Le multivers applaudit.",
+        "Ne rien faire": "Tu viens de provoquer une éclipse morale."
+      }
     },
     {
-      "question": "Tu réalises que chaque choix inverse la réalité d’un autre joueur quelque part.",
-      "options": ["Continuer", "Arrêter"],
+      "question": "Le tram fonce sur cinq réalités inversées. Tu peux tirer le levier pour arrêter la boucle. Que fais-tu ?",
+      "options": ["Tirer le levier", "Ne rien faire"],
       "results": {
-        "Continuer": "Tu sens un autre toi tirer aussi.",
-        "Arrêter": "Tu brises la boucle. Pour cette fois."
-      },
-      "scores": {"Continuer": 3, "Arrêter": 4},
-      "folie": {"Continuer": 22, "Arrêter": 18}
+        "Tirer le levier": "Tu sens un autre toi tirer aussi.",
+        "Ne rien faire": "Tu brises la boucle. Pour cette fois."
+      }
     },
     {
-      "question": "Le tram fonce sur cinq IA génératives. Sur l’autre voie : une seule idée originale.",
-      "options": ["Les IA", "L’idée"],
+      "question": "Le tram fonce sur cinq IA génératives. Tu peux tirer le levier pour le détourner sur une idée originale. Que fais-tu ?",
+      "options": ["Tirer le levier", "Ne rien faire"],
       "results": {
-        "Les IA": "La créativité renaît. Pour une minute.",
-        "L’idée": "Tu sacrifies la muse pour la machine."
-      },
-      "scores": {"Les IA": 4, "L’idée": 3},
-      "folie": {"Les IA": 21, "L’idée": 24}
+        "Tirer le levier": "La créativité renaît. Pour une minute.",
+        "Ne rien faire": "Tu sacrifies la muse pour la machine."
+      }
     },
     {
-      "question": "Tu peux détourner le tram pour qu’il écrase la question elle-même.",
-      "options": ["Oui", "Non"],
+      "question": "Le tram fonce sur la question elle-même. Tu peux tirer le levier pour la supprimer. Que fais-tu ?",
+      "options": ["Tirer le levier", "Ne rien faire"],
       "results": {
-        "Oui": "Tu refuses le cadre. Tu es libre.",
-        "Non": "Tu joues encore, et le tram sourit."
-      },
-      "scores": {"Oui": 5, "Non": 3},
-      "folie": {"Oui": 30, "Non": 25}
+        "Tirer le levier": "Tu refuses le cadre. Tu es libre.",
+        "Ne rien faire": "Tu joues encore, et le tram sourit."
+      }
     },
     {
-      "question": "Le tram devient intangible et passe à travers tout. Il demande : 'Suis-je encore coupable ?'",
-      "options": ["Oui", "Non"],
+      "question": "Le tram devient intangible et passe à travers tout. Tu peux tirer le levier pour décider s’il est encore coupable. Que fais-tu ?",
+      "options": ["Tirer le levier", "Ne rien faire"],
       "results": {
-        "Oui": "Tu crois en la responsabilité métaphysique.",
-        "Non": "Tu viens d’absoudre l’univers."
-      },
-      "scores": {"Oui": 3, "Non": 3},
-      "folie": {"Oui": 26, "Non": 27}
+        "Tirer le levier": "Tu crois en la responsabilité métaphysique.",
+        "Ne rien faire": "Tu viens d’absoudre l’univers."
+      }
     },
     {
-      "question": "Tu peux sauver cinq pixels sur un écran ou un seul souvenir heureux.",
-      "options": ["Les pixels", "Le souvenir"],
+      "question": "Le tram fonce sur cinq pixels sur un écran. Tu peux tirer le levier pour le détourner sur un souvenir heureux. Que fais-tu ?",
+      "options": ["Tirer le levier", "Ne rien faire"],
       "results": {
-        "Les pixels": "Tu préserves la HD, pas ton humanité.",
-        "Le souvenir": "Tu pleures, mais c’est beau."
-      },
-      "scores": {"Les pixels": 2, "Le souvenir": 4},
-      "folie": {"Les pixels": 16, "Le souvenir": 20}
+        "Tirer le levier": "Tu préserves la HD, pas ton humanité.",
+        "Ne rien faire": "Tu pleures, mais c’est beau."
+      }
     },
     {
-      "question": "Le tram t’offre un levier doré. Il promet que tout redeviendra normal si tu le tires.",
-      "options": ["Tirer", "Refuser"],
+      "question": "Le tram t’offre un levier doré promettant de tout remettre à zéro. Tu peux tirer le levier ou refuser. Que fais-tu ?",
+      "options": ["Tirer le levier", "Ne rien faire"],
       "results": {
-        "Tirer": "Rien ne change. Le tram rit.",
-        "Refuser": "Tu as vaincu la tentation. Pour rien."
-      },
-      "scores": {"Tirer": 3, "Refuser": 3},
-      "folie": {"Tirer": 28, "Refuser": 24}
+        "Tirer le levier": "Rien ne change. Le tram rit.",
+        "Ne rien faire": "Tu as vaincu la tentation. Pour rien."
+      }
     },
     {
-      "question": "Le tram fonce, mais le rail devient une spirale infinie. Tu peux sauter ou rester.",
-      "options": ["Sauter", "Rester"],
+      "question": "Le tram fonce mais le rail devient une spirale infinie. Tu peux tirer le levier pour sauter ou rester. Que fais-tu ?",
+      "options": ["Tirer le levier", "Ne rien faire"],
       "results": {
-        "Sauter": "Tu tombes éternellement, avec élégance.",
-        "Rester": "Tu comprends enfin le sens du rail."
-      },
-      "scores": {"Sauter": 5, "Rester": 4},
-      "folie": {"Sauter": 35, "Rester": 30}
+        "Tirer le levier": "Tu tombes éternellement, avec élégance.",
+        "Ne rien faire": "Tu comprends enfin le sens du rail."
+      }
     },
     {
-      "question": "Le tram s’arrête devant toi et demande calmement : 'Qui tirera quand je ne serai plus là ?'",
-      "options": ["Toi", "Personne"],
+      "question": "Le tram s’arrête devant toi et demande qui tirera quand il ne sera plus là. Tu peux tirer le levier ou ne rien faire. Que fais-tu ?",
+      "options": ["Tirer le levier", "Ne rien faire"],
       "results": {
-        "Toi": "Tu acceptes ton destin de conducteur éthique.",
-        "Personne": "Le silence est une réponse."
-      },
-      "scores": {"Toi": 4, "Personne": 3},
-      "folie": {"Toi": 36, "Personne": 28}
+        "Tirer le levier": "Tu acceptes ton destin de conducteur éthique.",
+        "Ne rien faire": "Le silence est une réponse."
+      }
     },
     {
-      "question": "Le tram fonce sur cinq concepts abstraits : Amour, Haine, Espoir, Peur et Temps. L’autre voie contient ‘L’Utilisateur Discord’.",
-      "options": ["Les concepts", "L’utilisateur"],
+      "question": "Le tram fonce sur cinq concepts abstraits : Amour, Haine, Espoir, Peur et Temps. Tu peux tirer le levier pour le détourner sur l’utilisateur Discord. Que fais-tu ?",
+      "options": ["Tirer le levier", "Ne rien faire"],
       "results": {
-        "Les concepts": "Tu redéfinis la réalité.",
-        "L’utilisateur": "Tu crois encore aux gens."
-      },
-      "scores": {"Les concepts": 4, "L’utilisateur": 3},
-      "folie": {"Les concepts": 40, "L’utilisateur": 35}
+        "Tirer le levier": "Tu redéfinis la réalité.",
+        "Ne rien faire": "Tu crois encore aux gens."
+      }
     },
     {
-      "question": "Le tram n’a plus de rails. Il flotte, libre, et te regarde avec ses phares-lunes.",
-      "options": ["Le suivre", "Le fuir"],
+      "question": "Le tram n’a plus de rails et flotte librement. Tu peux tirer le levier pour le suivre ou le fuir. Que fais-tu ?",
+      "options": ["Tirer le levier", "Ne rien faire"],
       "results": {
-        "Le suivre": "Tu montes. L’univers s’incline.",
-        "Le fuir": "Le bruit du frein te hante."
-      },
-      "scores": {"Le suivre": 5, "Le fuir": 4},
-      "folie": {"Le suivre": 45, "Le fuir": 38}
+        "Tirer le levier": "Tu montes. L’univers s’incline.",
+        "Ne rien faire": "Le bruit du frein te hante."
+      }
     },
     {
-      "question": "Le tram murmure : 'Je suis toi.'",
-      "options": ["Accepter", "Hurler"],
+      "question": "Le tram murmure : 'Je suis toi.' Tu peux tirer le levier pour accepter ou hurler. Que fais-tu ?",
+      "options": ["Tirer le levier", "Ne rien faire"],
       "results": {
-        "Accepter": "Tu es devenu un avec le métal.",
-        "Hurler": "Le son résonne dans l’éternité."
-      },
-      "scores": {"Accepter": 5, "Hurler": 5},
-      "folie": {"Accepter": 50, "Hurler": 55}
+        "Tirer le levier": "Tu es devenu un avec le métal.",
+        "Ne rien faire": "Le son résonne dans l’éternité."
+      }
     },
     {
-      "question": "Tu n’es plus sur les rails. Les rails sont en toi.",
-      "options": ["Avancer", "S’arrêter"],
+      "question": "Tu n’es plus sur les rails, les rails sont en toi. Tu peux tirer le levier pour avancer ou t’arrêter. Que fais-tu ?",
+      "options": ["Tirer le levier", "Ne rien faire"],
       "results": {
-        "Avancer": "Les roues tournent. Le monde aussi.",
-        "S’arrêter": "Tout se fige, sauf ton souffle."
-      },
-      "scores": {"Avancer": 5, "S’arrêter": 4},
-      "folie": {"Avancer": 60, "S’arrêter": 58}
+        "Tirer le levier": "Les roues tournent. Le monde aussi.",
+        "Ne rien faire": "Tout se fige, sauf ton souffle."
+      }
     },
     {
-      "question": "Le tram s’incline et te demande doucement : 'As-tu compris la leçon ?'",
-      "options": ["Oui", "Non"],
+      "question": "Le tram s’incline et te demande : 'As-tu compris la leçon ?' Tu peux tirer le levier pour dire oui ou non. Que fais-tu ?",
+      "options": ["Tirer le levier", "Ne rien faire"],
       "results": {
-        "Oui": "Il s’éteint paisiblement. Tu pleures.",
-        "Non": "Il te sourit. Et redémarre."
-      },
-      "scores": {"Oui": 5, "Non": 4},
-      "folie": {"Oui": 65, "Non": 70}
+        "Tirer le levier": "Il s’éteint paisiblement. Tu pleures.",
+        "Ne rien faire": "Il te sourit. Et redémarre."
+      }
     },
     {
-      "question": "Tu ouvres les yeux. Il n’y a jamais eu de tram. Seulement toi, le levier, et le choix.",
-      "options": ["Tirer", "Partir"],
+      "question": "Tu ouvres les yeux. Il n’y a jamais eu de tram. Tu peux tirer le levier ou partir. Que fais-tu ?",
+      "options": ["Tirer le levier", "Ne rien faire"],
       "results": {
-        "Tirer": "Tu entends à nouveau le bruit des roues.",
-        "Partir": "Le silence est ton salut."
-      },
-      "scores": {"Tirer": 5, "Partir": 4},
-      "folie": {"Tirer": 80, "Partir": 75}
+        "Tirer le levier": "Tu entends à nouveau le bruit des roues.",
+        "Ne rien faire": "Le silence est ton salut."
+      }
+      
     }
-
   ]
 }
-
-  
-
