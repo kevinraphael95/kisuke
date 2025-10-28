@@ -24,7 +24,6 @@ class TramProbleme(commands.Cog):
     """
     Commande /tram_probleme et !tram_probleme — Quiz du dilemme du tramway
     """
-
     def __init__(self, bot: commands.Bot):
         self.bot = bot
         self.questions_path = os.path.join("data", "tram_questions.json")
@@ -48,7 +47,7 @@ class TramProbleme(commands.Cog):
         name="tram_probleme",
         description="Teste ta morale dans un quiz absurde du dilemme du tramway."
     )
-    @app_commands.describe(story="Active le mode histoire complète (toutes les questions enchaînées).")
+    @app_commands.describe(story="Active le mode histoire complète (toutes les questions enchaînées dans l'ordre).")
     @app_commands.checks.cooldown(1, 5.0, key=lambda i: i.user.id)
     async def slash_tram_probleme(self, interaction: discord.Interaction, story: bool = False):
         """Commande slash interactive"""
@@ -76,15 +75,18 @@ class TramProbleme(commands.Cog):
             await send(ctx_or_inter, "❌ Aucune question trouvée dans le JSON.")
             return
 
-        random.shuffle(questions)
+        # Mélange seulement si le mode story n’est pas activé
+        if not story:
+            random.shuffle(questions)
+
         score = 0
         folie = 0
 
         await send(
             ctx_or_inter,
-            "🚋 **Bienvenue dans le Dilemme du Tramway : le Quiz Moralo-Absurde !**\n"
+            "🚋 **Bienvenue dans le Dilemme du Tramway !**\n"
             "Prépare-toi à remettre ton éthique en question...\n"
-            f"🧩 Mode story : {'✅ Activé' if story else '❌ Désactivé'}"
+            f"🧩 Mode story : {'✅ Activé (ordre fixe)' if story else '❌ Désactivé (ordre aléatoire)'}"
         )
 
         # Nombre de questions à poser
@@ -99,6 +101,7 @@ class TramProbleme(commands.Cog):
             embed.set_footer(text="Fais ton choix moral... ou pas 😈")
 
             view = discord.ui.View(timeout=60)
+
             for option in question["options"]:
                 button = discord.ui.Button(label=option, style=discord.ButtonStyle.primary)
 
@@ -107,6 +110,7 @@ class TramProbleme(commands.Cog):
                     result = question.get("results", {}).get(choice, "🤔 Choix étrange...")
                     score += question.get("scores", {}).get(choice, 0)
                     folie += question.get("folie", {}).get(choice, 0)
+
                     await interaction.response.send_message(
                         f"🧠 Tu as choisi : **{choice}**\n{result}",
                         ephemeral=True
@@ -121,7 +125,7 @@ class TramProbleme(commands.Cog):
 
             # En mode story : petite pause entre les questions
             if story and i < total_q:
-                await send(ctx_or_inter, "🚋 Le tramway continue sa route...")
+                await send(ctx_or_inter, "🚋 Le tramway continue sa route...\n")
 
         # ────────────────────────────────────────────────────────────────────
         # 📊 Résultats finaux
@@ -153,5 +157,6 @@ async def setup(bot: commands.Bot):
         if not hasattr(command, "category"):
             command.category = "Jeux"
     await bot.add_cog(cog)
+
 
 
