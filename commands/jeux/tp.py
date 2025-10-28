@@ -64,7 +64,7 @@ class TramProbleme(commands.Cog):
         await self.run_tram_quiz(ctx, story)
 
     # ────────────────────────────────────────────────────────────────────────────
-    # 🎮 Fonction principale du quiz
+    # 🎮 Fonction principale du quiz (améliorée)
     # ────────────────────────────────────────────────────────────────────────────
     async def run_tram_quiz(self, ctx_or_inter, story: bool = False):
         is_interaction = isinstance(ctx_or_inter, discord.Interaction)
@@ -75,12 +75,13 @@ class TramProbleme(commands.Cog):
             await send(ctx_or_inter, "❌ Aucune question trouvée dans le JSON.")
             return
 
-        # Mélange seulement si le mode story n’est pas activé
         if not story:
             random.shuffle(questions)
 
         score = 0
         folie = 0
+        utilitarisme_count = 0
+        deontologie_count = 0
 
         await send(
             ctx_or_inter,
@@ -89,7 +90,6 @@ class TramProbleme(commands.Cog):
             f"🧩 Mode story : {'✅ Activé (ordre fixe)' if story else '❌ Désactivé (ordre aléatoire)'}"
         )
 
-        # Nombre de questions à poser
         total_q = len(questions) if story else min(5, len(questions))
 
         for i, question in enumerate(questions[:total_q], start=1):
@@ -101,18 +101,26 @@ class TramProbleme(commands.Cog):
             embed.set_footer(text="Fais ton choix moral... ou pas 😈")
 
             view = discord.ui.View(timeout=60)
+            answered = False
 
             for option in question["options"]:
-                button = discord.ui.Button(label=option, style=discord.ButtonStyle.primary)
+                button = discord.ui.Button(label=option["text"], style=discord.ButtonStyle.primary)
 
                 async def button_callback(interaction, choice=option):
-                    nonlocal score, folie
-                    result = question.get("results", {}).get(choice, "🤔 Choix étrange...")
-                    score += question.get("scores", {}).get(choice, 0)
-                    folie += question.get("folie", {}).get(choice, 0)
+                    nonlocal score, folie, utilitarisme_count, deontologie_count, answered
+                    answered = True
+                    result = choice.get("result", "🤔 Choix étrange...")
+                    score += choice.get("score", 0)
+                    folie += choice.get("folie", 0)
+
+                    ethics_type = choice.get("ethics")
+                    if ethics_type == "utilitarisme":
+                        utilitarisme_count += 1
+                    elif ethics_type == "déontologie":
+                        deontologie_count += 1
 
                     await interaction.response.send_message(
-                        f"🧠 Tu as choisi : **{choice}**\n{result}",
+                        f"🧠 Tu as choisi : **{choice['text']}**\n{result}",
                         ephemeral=True
                     )
                     view.stop()
@@ -121,21 +129,38 @@ class TramProbleme(commands.Cog):
                 view.add_item(button)
 
             await send(ctx_or_inter, embed=embed, view=view)
-            await view.wait()
+            timeout = await view.wait()
 
-            # En mode story : petite pause entre les questions
+            if story and not answered:
+                await send(ctx_or_inter, "⛔ Le tram s’arrête. Tu n’as pas répondu à temps.")
+                return
+
             if story and i < total_q:
                 await send(ctx_or_inter, "🚋 Le tramway continue sa route...\n")
 
-        # ────────────────────────────────────────────────────────────────────
-        # 📊 Résultats finaux
-        # ────────────────────────────────────────────────────────────────────
+        # ───────────────────────────────────────────────
+        # Résultats finaux avec profil moral
+        # ───────────────────────────────────────────────
         embed_result = discord.Embed(
             title="🎉 Résultats du Dilemme du Tramway",
             color=discord.Color.green()
         )
         embed_result.add_field(name="🧾 Score moral", value=f"{score} points", inline=False)
         embed_result.add_field(name="🤪 Niveau de folie", value=f"{folie}/100", inline=False)
+        embed_result.add_field(
+            name="⚖️ Équilibre éthique",
+            value=f"Utilitarisme : {utilitarisme_count}\nDéontologie : {deontologie_count}",
+            inline=False
+        )
+
+        if utilitarisme_count > deontologie_count:
+            profil = "Tu es plutôt **utilitariste** – tu cherches à maximiser le bien global, quitte à salir tes mains. 🤔"
+        elif deontologie_count > utilitarisme_count:
+            profil = "Tu es plutôt **déontologique** – tu respectes les principes moraux, même face au chaos. 🧘"
+        else:
+            profil = "Ton équilibre moral est parfait : un tram entre la raison et la règle. 🚋⚖️"
+
+        embed_result.add_field(name="🧭 Profil moral", value=profil, inline=False)
 
         if folie < 20:
             phrase = "Tu es moralement stable... pour l’instant 😇"
@@ -157,6 +182,3 @@ async def setup(bot: commands.Bot):
         if not hasattr(command, "category"):
             command.category = "Jeux"
     await bot.add_cog(cog)
-
-
-
