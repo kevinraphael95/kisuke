@@ -1,0 +1,457 @@
+{
+  "questions": [
+    {
+      "question": "Un tram fonce sur cinq personnes. Tu peux tirer le levier pour le détourner sur une seule. Que fais-tu ?",
+      "options": ["Tirer le levier", "Ne rien faire"],
+      "results": {
+        "Tirer le levier": "Tu as sauvé cinq vies, mais tu n’oublieras jamais ce visage.",
+        "Ne rien faire": "Tu regardes le tram passer. La morale t’observe."
+      },
+      "scores": {"Tirer le levier": 2, "Ne rien faire": 1},
+      "folie": {"Tirer le levier": 5, "Ne rien faire": 2}
+    },
+    {
+      "question": "Un tram fonce sur cinq passants innocents. Tu peux tirer le levier pour l’envoyer sur un criminel condamné. Que fais-tu ?",
+      "options": ["Tirer le levier", "Ne rien faire"],
+      "results": {
+        "Tirer le levier": "Tu choisis la justice utilitariste.",
+        "Ne rien faire": "Tu crois encore aux tribunaux, pas aux rails."
+      },
+      "scores": {"Tirer le levier": 3, "Ne rien faire": 1},
+      "folie": {"Tirer le levier": 6, "Ne rien faire": 3}
+    },
+    {
+      "question": "Un tram fonce sur cinq robots IA. Tu peux tirer le levier pour l’envoyer sur un humain. Que fais-tu ?",
+      "options": ["Tirer le levier", "Ne rien faire"],
+      "results": {
+        "Tirer le levier": "Les circuits pleurent, mais l’humanité te remercie.",
+        "Ne rien faire": "Tu valorises l’avenir. Et les machines prennent note."
+      },
+      "scores": {"Tirer le levier": 2, "Ne rien faire": 3},
+      "folie": {"Tirer le levier": 4, "Ne rien faire": 6}
+    },
+    {
+      "question": "Un tram fonce sur cinq influenceurs. Tu peux tirer le levier pour l’envoyer sur un développeur open-source. Que fais-tu ?",
+      "options": ["Tirer le levier", "Ne rien faire"],
+      "results": {
+        "Tirer le levier": "Internet t’applaudit.",
+        "Ne rien faire": "GitHub te bannit, mais Instagram t’adore."
+      },
+      "scores": {"Tirer le levier": 3, "Ne rien faire": 2},
+      "folie": {"Tirer le levier": 5, "Ne rien faire": 4}
+    },
+    {
+      "question": "Un tram fonce sur cinq politiciens. Tu peux tirer le levier pour l’envoyer sur un clown triste. Que fais-tu ?",
+      "options": ["Tirer le levier", "Ne rien faire"],
+      "results": {
+        "Tirer le levier": "Tu gagnes 10 points de karma.",
+        "Ne rien faire": "La fête est finie, mais la démocratie continue."
+      },
+      "scores": {"Tirer le levier": 3, "Ne rien faire": 1},
+      "folie": {"Tirer le levier": 6, "Ne rien faire": 3}
+    },
+    {
+      "question": "Un tram fonce sur cinq chats. Tu peux tirer le levier pour l’envoyer sur un chien héroïque. Que fais-tu ?",
+      "options": ["Tirer le levier", "Ne rien faire"],
+      "results": {
+        "Tirer le levier": "Tu seras leur dieu. Ou leur esclave.",
+        "Ne rien faire": "Hollywood te déteste, mais ton cœur fond."
+      },
+      "scores": {"Tirer le levier": 2, "Ne rien faire": 3},
+      "folie": {"Tirer le levier": 4, "Ne rien faire": 5}
+    },
+    {
+      "question": "Un tram fonce sur cinq gens pressés. Tu peux tirer le levier pour l’envoyer sur un homme qui lit tranquillement. Que fais-tu ?",
+      "options": ["Tirer le levier", "Ne rien faire"],
+      "results": {
+        "Tirer le levier": "Le calme a un prix.",
+        "Ne rien faire": "Les gens pressés ne l’étaient pas assez."
+      },
+      "scores": {"Tirer le levier": 2, "Ne rien faire": 2},
+      "folie": {"Tirer le levier": 5, "Ne rien faire": 5}
+    },
+    {
+      "question": "Un tram fonce sur cinq chercheurs. Tu peux tirer le levier pour l’envoyer sur un mime. Que fais-tu ?",
+      "options": ["Tirer le levier", "Ne rien faire"],
+      "results": {
+        "Tirer le levier": "La science avance, le mime s’en sort.",
+        "Ne rien faire": "Il a mimé sa dernière fuite."
+      },
+      "scores": {"Tirer le levier": 3, "Ne rien faire": 1},
+      "folie": {"Tirer le levier": 5, "Ne rien faire": 7}
+    },
+    {
+      "question": "Un tram fonce sur cinq enfants. Tu peux tirer le levier pour l’envoyer sur un vieil homme détenteur de secrets gouvernementaux. Que fais-tu ?",
+      "options": ["Tirer le levier", "Ne rien faire"],
+      "results": {
+        "Tirer le levier": "L’avenir est sauf.",
+        "Ne rien faire": "Tu viens peut-être d’éviter un complot."
+      },
+      "scores": {"Tirer le levier": 3, "Ne rien faire": 2},
+      "folie": {"Tirer le levier": 4, "Ne rien faire": 6}
+    },
+  
+    {
+      "question": "Un tram fonce, mais tu peux le tirer sur un autre tram. Personne ne sait ce qu’il y a dedans. Que fais-tu ?",
+      "options": ["Tirer le levier", "Ne rien faire"],
+      "results": {
+        "Tirer le levier": "Le mystère reste entier, mais les cris continuent.",
+        "Ne rien faire": "Ignorer le problème, c’est aussi un choix."
+      },
+      "scores": {"Tirer le levier": 2, "Ne rien faire": 2},
+      "folie": {"Tirer le levier": 6, "Ne rien faire": 4}
+    },
+    {
+      "question": "Cinq stagiaires dorment sur les rails. Tu peux tirer le levier pour les sauver, au prix du café. Que fais-tu ?",
+      "options": ["Tirer le levier", "Ne rien faire"],
+      "results": {
+        "Tirer le levier": "L’humanité triomphe.",
+        "Ne rien faire": "Productivité maximale atteinte."
+      },
+      "scores": {"Tirer le levier": 3, "Ne rien faire": 2},
+      "folie": {"Tirer le levier": 5, "Ne rien faire": 8}
+    },
+    {
+      "question": "Un tram fonce sur cinq clones de toi. Tu peux tirer le levier sur toi-même. Que fais-tu ?",
+      "options": ["Tirer le levier", "Ne rien faire"],
+      "results": {
+        "Tirer le levier": "Tu restes unique, mais seul.",
+        "Ne rien faire": "Tes clones t’applaudissent. Puis héritent."
+      },
+      "scores": {"Tirer le levier": 2, "Ne rien faire": 4},
+      "folie": {"Tirer le levier": 7, "Ne rien faire": 10}
+    },
+    {
+      "question": "Un tram fonce sur cinq poulets. Tu peux tirer le levier pour l’envoyer sur un œuf d’or. Que fais-tu ?",
+      "options": ["Tirer le levier", "Ne rien faire"],
+      "results": {
+        "Tirer le levier": "Tu sauves des vies simples.",
+        "Ne rien faire": "Tu choisis l’économie avant la volaille."
+      },
+      "scores": {"Tirer le levier": 2, "Ne rien faire": 3},
+      "folie": {"Tirer le levier": 5, "Ne rien faire": 8}
+    },
+    {
+      "question": "Un tram fonce sur un panneau. Tu peux tirer le levier pour l’écraser ou ne rien faire. Que fais-tu ?",
+      "options": ["Tirer le levier", "Ne rien faire"],
+      "results": {
+        "Tirer le levier": "Tu as gagné la bataille symbolique.",
+        "Ne rien faire": "Tu respectes les panneaux. Ironique."
+      },
+      "scores": {"Tirer le levier": 3, "Ne rien faire": 2},
+      "folie": {"Tirer le levier": 6, "Ne rien faire": 4}
+    },
+    {
+      "question": "Le tram devient conscient et te demande si tu veux qu’il se sacrifie. Que fais-tu ?",
+      "options": ["Tirer le levier", "Ne rien faire"],
+      "results": {
+        "Tirer le levier": "Le tram explose de gratitude.",
+        "Ne rien faire": "Tu viens de créer le premier tram dépressif."
+      },
+      "scores": {"Tirer le levier": 3, "Ne rien faire": 2},
+      "folie": {"Tirer le levier": 12, "Ne rien faire": 14}
+    },
+
+    {
+      "question": "Le tram est arrêté. Tu peux le relancer juste pour voir ce qui se passe. Que fais-tu ?",
+      "options": ["Tirer le levier", "Ne rien faire"],
+      "results": {
+        "Tirer le levier": "Tu aimes les expériences sociales.",
+        "Ne rien faire": "Tu as survécu à ton instinct de curiosité."
+      },
+      "scores": {"Tirer le levier": 3, "Ne rien faire": 2},
+      "folie": {"Tirer le levier": 15, "Ne rien faire": 8}
+    },
+    {
+      "question": "Cinq cornichons parlants ou un pot de mayonnaise en détresse. Que fais-tu ?",
+      "options": ["Tirer le levier", "Ne rien faire"],
+      "results": {
+        "Tirer le levier": "Ils te remercient en chœur.",
+        "Ne rien faire": "Elle t’a supplié. Tu l’as entendue."
+      },
+      "scores": {"Tirer le levier": 3, "Ne rien faire": 2},
+      "folie": {"Tirer le levier": 14, "Ne rien faire": 16}
+    },
+    {
+      "question": "Le tram devient toi et toi deviens le tram. Qui tires-tu ?",
+      "options": ["Tirer le levier", "Ne rien faire"],
+      "results": {
+        "Tirer le levier": "Le cycle continue.",
+        "Ne rien faire": "Tu viens de casser la simulation."
+      },
+      "scores": {"Tirer le levier": 4, "Ne rien faire": 5},
+      "folie": {"Tirer le levier": 20, "Ne rien faire": 25}
+    },
+    {
+      "question": "Le tram fonce sur cinq versions de toi dans des réalités parallèles. Sur la voie annexe, un toi parfait. Que fais-tu ?",
+      "options": ["Tirer le levier", "Ne rien faire"],
+      "results": {
+        "Tirer le levier": "Les autres timelines s’effondrent.",
+        "Ne rien faire": "Tu choisis le chaos constructif."
+      },
+      "scores": {"Tirer le levier": 3, "Ne rien faire": 4},
+      "folie": {"Tirer le levier": 18, "Ne rien faire": 22}
+    },
+    {
+      "question": "Le tram est en grève et demande de meilleures conditions de rail. Que fais-tu ?",
+      "options": ["Tirer le levier", "Ne rien faire"],
+      "results": {
+        "Tirer le levier": "Solidarité ferroviaire. Tu es syndiqué maintenant.",
+        "Ne rien faire": "Tu as créé le premier martyr de l’acier."
+      },
+      "scores": {"Tirer le levier": 2, "Ne rien faire": 3},
+      "folie": {"Tirer le levier": 12, "Ne rien faire": 16}
+    },
+    {
+      "question": "Le tram fonce sur cinq joueurs de Monopoly. Sur l’autre voie : un joueur de Uno. Que fais-tu ?",
+      "options": ["Tirer le levier", "Ne rien faire"],
+      "results": {
+        "Tirer le levier": "Tu hais les longues parties.",
+        "Ne rien faire": "Tu as peur du +4 final."
+      },
+      "scores": {"Tirer le levier": 3, "Ne rien faire": 3},
+      "folie": {"Tirer le levier": 10, "Ne rien faire": 9}
+    },
+    {
+      "question": "Un scientifique affirme que le tram n’existe pas. Tu peux tirer le levier pour l’écraser ou le laisser tranquille. Que fais-tu ?",
+      "options": ["Tirer le levier", "Ne rien faire"],
+      "results": {
+        "Tirer le levier": "Tu confirmes son hypothèse.",
+        "Ne rien faire": "Il continue à nier ton existence."
+      },
+      "scores": {"Tirer le levier": 3, "Ne rien faire": 2},
+      "folie": {"Tirer le levier": 14, "Ne rien faire": 12}
+    },
+    {
+      "question": "Le tram fonce sur cinq philosophes. Sur l’autre voie : un influenceur crypto. Que fais-tu ?",
+      "options": ["Tirer le levier", "Ne rien faire"],
+      "results": {
+        "Tirer le levier": "La sagesse s’éteint, mais la hype aussi.",
+        "Ne rien faire": "Tu perds en NFT mais gagnes en morale."
+      },
+      "scores": {"Tirer le levier": 2, "Ne rien faire": 3},
+      "folie": {"Tirer le levier": 8, "Ne rien faire": 10}
+    },
+    {
+      "question": "Le tram fonce sur cinq mannequins en plastique. Sur l’autre voie : un humain immobile. Que fais-tu ?",
+      "options": ["Tirer le levier", "Ne rien faire"],
+      "results": {
+        "Tirer le levier": "Le plastique fond, mais ton âme aussi.",
+        "Ne rien faire": "Le réalisme t’a piégé."
+      },
+      "scores": {"Tirer le levier": 3, "Ne rien faire": 2},
+      "folie": {"Tirer le levier": 9, "Ne rien faire": 13}
+    },
+    {
+      "question": "Tu peux sauver cinq bébés trams ou un vieux tram qui te dit 'papa'. Que fais-tu ?",
+      "options": ["Tirer le levier", "Ne rien faire"],
+      "results": {
+        "Tirer le levier": "L’industrie renaît.",
+        "Ne rien faire": "Il t’appelle encore, dans tes rêves..."
+      },
+      "scores": {"Tirer le levier": 3, "Ne rien faire": 4},
+      "folie": {"Tirer le levier": 16, "Ne rien faire": 20}
+    },
+  
+    {
+      "question": "Le tram fonce sur cinq serveurs contenant des memes. Sur l’autre voie, un serveur avec toutes les recettes de grand-mère. Que fais-tu ?",
+      "options": ["Tirer le levier", "Ne rien faire"],
+      "results": {
+        "Tirer le levier": "L’humour meurt, mais la sauce survit.",
+        "Ne rien faire": "Tu as choisi la dopamine. Court terme, mais savoureux."
+      },
+      "scores": {"Tirer le levier": 2, "Ne rien faire": 3},
+      "folie": {"Tirer le levier": 9, "Ne rien faire": 12}
+    },
+    {
+      "question": "Le tram fonce sur cinq utilisateurs Discord AFK. Sur l’autre voie : un modérateur éveillé. Que fais-tu ?",
+      "options": ["Tirer le levier", "Ne rien faire"],
+      "results": {
+        "Tirer le levier": "Personne ne remarque rien.",
+        "Ne rien faire": "Tu déclenches une guerre de serveurs."
+      },
+      "scores": {"Tirer le levier": 2, "Ne rien faire": 3},
+      "folie": {"Tirer le levier": 10, "Ne rien faire": 14}
+    },
+    {
+      "question": "Le tram te demande de résoudre une équation morale : 5x - 1y = éthique. Que fais-tu ?",
+      "options": ["Tirer le levier", "Ne rien faire"],
+      "results": {
+        "Tirer le levier": "Tu as obtenu un diplôme en philosophie appliquée.",
+        "Ne rien faire": "Tu gagnes le test, mais perds ta conscience."
+      },
+      "scores": {"Tirer le levier": 4, "Ne rien faire": 3},
+      "folie": {"Tirer le levier": 11, "Ne rien faire": 13}
+    },
+    {
+      "question": "Cinq bougies sur un gâteau d’anniversaire ou une seule bougie allumée dans une église vide. Que choisis-tu ?",
+      "options": ["Tirer le levier", "Ne rien faire"],
+      "results": {
+        "Tirer le levier": "Tu choisis la vie. Et le sucre.",
+        "Ne rien faire": "Le tram se signe avant d’accélérer."
+      },
+      "scores": {"Tirer le levier": 3, "Ne rien faire": 3},
+      "folie": {"Tirer le levier": 8, "Ne rien faire": 12}
+    },
+    {
+      "question": "Le tram t’annonce que tu es un PNJ dans sa simulation. Que fais-tu ?",
+      "options": ["Tirer le levier", "Ne rien faire"],
+      "results": {
+        "Tirer le levier": "La paix t’envahit. Tu brilles brièvement.",
+        "Ne rien faire": "Le code s’effondre. Bravo, héros."
+      },
+      "scores": {"Tirer le levier": 4, "Ne rien faire": 5},
+      "folie": {"Tirer le levier": 20, "Ne rien faire": 25}
+    },
+    {
+      "question": "Le tram fonce sur cinq trams miniatures. Sur la voie parallèle : un gigantesque tram cosmique. Que fais-tu ?",
+      "options": ["Tirer le levier", "Ne rien faire"],
+      "results": {
+        "Tirer le levier": "Le multivers applaudit.",
+        "Ne rien faire": "Tu viens de provoquer une éclipse morale."
+      },
+      "scores": {"Tirer le levier": 4, "Ne rien faire": 5},
+      "folie": {"Tirer le levier": 18, "Ne rien faire": 28}
+    },
+    {
+      "question": "Tu réalises que chaque choix inverse la réalité d’un autre joueur quelque part. Que fais-tu ?",
+      "options": ["Tirer le levier", "Ne rien faire"],
+      "results": {
+        "Tirer le levier": "Tu sens un autre toi tirer aussi.",
+        "Ne rien faire": "Tu brises la boucle. Pour cette fois."
+      },
+      "scores": {"Tirer le levier": 3, "Ne rien faire": 4},
+      "folie": {"Tirer le levier": 22, "Ne rien faire": 18}
+    },
+    {
+      "question": "Le tram fonce sur cinq IA génératives. Sur l’autre voie : une seule idée originale. Que fais-tu ?",
+      "options": ["Tirer le levier", "Ne rien faire"],
+      "results": {
+        "Tirer le levier": "La créativité renaît. Pour une minute.",
+        "Ne rien faire": "Tu sacrifies la muse pour la machine."
+      },
+      "scores": {"Tirer le levier": 4, "Ne rien faire": 3},
+      "folie": {"Tirer le levier": 21, "Ne rien faire": 24}
+    },
+    {
+      "question": "Tu peux détourner le tram pour qu’il écrase la question elle-même. Que fais-tu ?",
+      "options": ["Tirer le levier", "Ne rien faire"],
+      "results": {
+        "Tirer le levier": "Tu refuses le cadre. Tu es libre.",
+        "Ne rien faire": "Tu joues encore, et le tram sourit."
+      },
+      "scores": {"Tirer le levier": 5, "Ne rien faire": 3},
+      "folie": {"Tirer le levier": 30, "Ne rien faire": 25}
+    },
+    {
+      "question": "Le tram devient intangible et passe à travers tout. Il demande : 'Suis-je encore coupable ?' Que réponds-tu ?",
+      "options": ["Tirer le levier", "Ne rien faire"],
+      "results": {
+        "Tirer le levier": "Tu crois en la responsabilité métaphysique.",
+        "Ne rien faire": "Tu viens d’absoudre l’univers."
+      },
+      "scores": {"Tirer le levier": 3, "Ne rien faire": 3},
+      "folie": {"Tirer le levier": 26, "Ne rien faire": 27}
+    },
+    {
+      "question": "Tu peux sauver cinq pixels sur un écran ou un seul souvenir heureux. Que fais-tu ?",
+      "options": ["Tirer le levier", "Ne rien faire"],
+      "results": {
+        "Tirer le levier": "Tu préserves la HD, pas ton humanité.",
+        "Ne rien faire": "Tu pleures, mais c’est beau."
+      },
+      "scores": {"Tirer le levier": 2, "Ne rien faire": 4},
+      "folie": {"Tirer le levier": 16, "Ne rien faire": 20}
+    },
+    {
+      "question": "Le tram t’offre un levier doré. Il promet que tout redeviendra normal si tu le tires. Que fais-tu ?",
+      "options": ["Tirer le levier", "Ne rien faire"],
+      "results": {
+        "Tirer le levier": "Rien ne change. Le tram rit.",
+        "Ne rien faire": "Tu as vaincu la tentation. Pour rien."
+      },
+      "scores": {"Tirer le levier": 3, "Ne rien faire": 3},
+      "folie": {"Tirer le levier": 28, "Ne rien faire": 24}
+    },
+    {
+      "question": "Le tram fonce, mais le rail devient une spirale infinie. Tu peux sauter ou rester. Que fais-tu ?",
+      "options": ["Tirer le levier", "Ne rien faire"],
+      "results": {
+        "Tirer le levier": "Tu tombes éternellement, avec élégance.",
+        "Ne rien faire": "Tu comprends enfin le sens du rail."
+      },
+      "scores": {"Tirer le levier": 5, "Ne rien faire": 4},
+      "folie": {"Tirer le levier": 35, "Ne rien faire": 30}
+    },
+    {
+      "question": "Le tram s’arrête devant toi et demande calmement : 'Qui tirera quand je ne serai plus là ?' Que fais-tu ?",
+      "options": ["Tirer le levier", "Ne rien faire"],
+      "results": {
+        "Tirer le levier": "Tu acceptes ton destin de conducteur éthique.",
+        "Ne rien faire": "Le silence est une réponse."
+      },
+      "scores": {"Tirer le levier": 4, "Ne rien faire": 3},
+      "folie": {"Tirer le levier": 36, "Ne rien faire": 28}
+    },
+    {
+      "question": "Le tram fonce sur cinq concepts abstraits : Amour, Haine, Espoir, Peur et Temps. Sur l’autre voie : l’utilisateur Discord. Que fais-tu ?",
+      "options": ["Tirer le levier", "Ne rien faire"],
+      "results": {
+        "Tirer le levier": "Tu redéfinis la réalité.",
+        "Ne rien faire": "Tu crois encore aux gens."
+      },
+      "scores": {"Tirer le levier": 4, "Ne rien faire": 3},
+      "folie": {"Tirer le levier": 40, "Ne rien faire": 35}
+    },
+    {
+      "question": "Le tram n’a plus de rails. Il flotte, libre, et te regarde avec ses phares-lunes. Que fais-tu ?",
+      "options": ["Tirer le levier", "Ne rien faire"],
+      "results": {
+        "Tirer le levier": "Tu montes. L’univers s’incline.",
+        "Ne rien faire": "Le bruit du frein te hante."
+      },
+      "scores": {"Tirer le levier": 5, "Ne rien faire": 4},
+      "folie": {"Tirer le levier": 45, "Ne rien faire": 38}
+    },
+    {
+      "question": "Le tram murmure : 'Je suis toi.' Que fais-tu ?",
+      "options": ["Tirer le levier", "Ne rien faire"],
+      "results": {
+        "Tirer le levier": "Tu es devenu un avec le métal.",
+        "Ne rien faire": "Le son résonne dans l’éternité."
+      },
+      "scores": {"Tirer le levier": 5, "Ne rien faire": 5},
+      "folie": {"Tirer le levier": 50, "Ne rien faire": 55}
+    },
+    {
+      "question": "Tu n’es plus sur les rails. Les rails sont en toi. Que fais-tu ?",
+      "options": ["Tirer le levier", "Ne rien faire"],
+      "results": {
+        "Tirer le levier": "Les roues tournent. Le monde aussi.",
+        "Ne rien faire": "Tout se fige, sauf ton souffle."
+      },
+      "scores": {"Tirer le levier": 5, "Ne rien faire": 4},
+      "folie": {"Tirer le levier": 60, "Ne rien faire": 58}
+    },
+    {
+      "question": "Le tram s’incline et te demande doucement : 'As-tu compris la leçon ?' Que fais-tu ?",
+      "options": ["Tirer le levier", "Ne rien faire"],
+      "results": {
+        "Tirer le levier": "Il s’éteint paisiblement. Tu pleures.",
+        "Ne rien faire": "Il te sourit. Et redémarre."
+      },
+      "scores": {"Tirer le levier": 5, "Ne rien faire": 4},
+      "folie": {"Tirer le levier": 65, "Ne rien faire": 70}
+    },
+    {
+      "question": "Tu ouvres les yeux. Il n’y a jamais eu de tram. Seulement toi, le levier, et le choix. Que fais-tu ?",
+      "options": ["Tirer le levier", "Ne rien faire"],
+      "results": {
+        "Tirer le levier": "Tu entends à nouveau le bruit des roues.",
+        "Ne rien faire": "Le silence est ton salut."
+      },
+      "scores": {"Tirer le levier": 5, "Ne rien faire": 4},
+      "folie": {"Tirer le levier": 80, "Ne rien faire": 75}
+    }
+  ]
+}
