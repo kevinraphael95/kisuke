@@ -94,7 +94,7 @@
         {"text": "Tirer le levier", "ethics": "utilitarisme", "result": "Tu troques la morale contre l’éternité.",
         "saved": {"humain":0, "enfant":0, "pa": 0, "animal":0 ,"robot":0}, "killed": {"humain":1000000000, "enfant":0, "pa": 0, "animal":0, "robot":0}},
         {"text": "Ne rien faire", "ethics": "déontologie", "result": "Tu préfères mourir libre que vivre coupable.",
-        "saved": {"humain":0, "enfant":0, "pa": 0, "animal":0 ,"robot":0}, "killed": {"humain":100000, "enfant":0, "pa": 0, "animal":0, "robot":0}},
+        "saved": {"humain":0, "enfant":0, "pa": 0, "animal":0 ,"robot":0}, "killed": {"humain":100000, "enfant":0, "pa": 0, "animal":0, "robot":0}}
       ]
     },
     
