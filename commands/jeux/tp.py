@@ -1,6 +1,6 @@
 # ────────────────────────────────────────────────────────────────────────────────
 # 📌 tram_probleme.py — Commande /tram_probleme et !tram_probleme
-# Objectif : Quiz interactif du dilemme du tramway avec compteur de folie + mode story
+# Objectif : Quiz interactif du dilemme du tramway avec mode story et profil moral
 # Catégorie : Fun
 # Accès : Tous
 # Cooldown : 1 utilisation / 5 secondes / utilisateur
@@ -64,7 +64,7 @@ class TramProbleme(commands.Cog):
         await self.run_tram_quiz(ctx, story)
 
     # ────────────────────────────────────────────────────────────────────────────
-    # 🎮 Fonction principale du quiz (améliorée)
+    # 🎮 Fonction principale du quiz (profil moral)
     # ────────────────────────────────────────────────────────────────────────────
     async def run_tram_quiz(self, ctx_or_inter, story: bool = False):
         is_interaction = isinstance(ctx_or_inter, discord.Interaction)
@@ -78,8 +78,6 @@ class TramProbleme(commands.Cog):
         if not story:
             random.shuffle(questions)
 
-        score = 0
-        folie = 0
         utilitarisme_count = 0
         deontologie_count = 0
 
@@ -107,12 +105,10 @@ class TramProbleme(commands.Cog):
                 button = discord.ui.Button(label=option["text"], style=discord.ButtonStyle.primary)
 
                 async def button_callback(interaction, choice=option):
-                    nonlocal score, folie, utilitarisme_count, deontologie_count, answered
+                    nonlocal utilitarisme_count, deontologie_count, answered
                     answered = True
-                    result = choice.get("result", "🤔 Choix étrange...")
-                    score += choice.get("score", 0)
-                    folie += choice.get("folie", 0)
 
+                    result = choice.get("result", "🤔 Choix étrange...")
                     ethics_type = choice.get("ethics")
                     if ethics_type == "utilitarisme":
                         utilitarisme_count += 1
@@ -145,8 +141,6 @@ class TramProbleme(commands.Cog):
             title="🎉 Résultats du Dilemme du Tramway",
             color=discord.Color.green()
         )
-        embed_result.add_field(name="🧾 Score moral", value=f"{score} points", inline=False)
-        embed_result.add_field(name="🤪 Niveau de folie", value=f"{folie}/100", inline=False)
         embed_result.add_field(
             name="⚖️ Équilibre éthique",
             value=f"Utilitarisme : {utilitarisme_count}\nDéontologie : {deontologie_count}",
@@ -161,15 +155,7 @@ class TramProbleme(commands.Cog):
             profil = "Ton équilibre moral est parfait : un tram entre la raison et la règle. 🚋⚖️"
 
         embed_result.add_field(name="🧭 Profil moral", value=profil, inline=False)
-
-        if folie < 20:
-            phrase = "Tu es moralement stable... pour l’instant 😇"
-        elif folie < 60:
-            phrase = "Tu sembles apprécier les dilemmes étranges 😈"
-        else:
-            phrase = "Le tramway n’est plus ton ami... tu **es** devenu le tramway. 🚋💀"
-
-        embed_result.set_footer(text=phrase)
+        embed_result.set_footer(text="Fin du quiz du tramway 🛤️")
         await send(ctx_or_inter, embed=embed_result)
 
 
