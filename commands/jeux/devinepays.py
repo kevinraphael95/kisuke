@@ -5,13 +5,10 @@
 # Cooldown : 1 utilisation / 5 secondes / utilisateur
 # ────────────────────────────────────────────────────────────────────────────────
 
-# ────────────────────────────────────────────────────────────────────────────────
-# 📦 Imports nécessaires
-# ────────────────────────────────────────────────────────────────────────────────
 import discord
 from discord import app_commands
 from discord.ext import commands
-import aiohttp, random, math, unicodedata, asyncio, time
+import aiohttp, random, math, unicodedata, asyncio
 from utils.discord_utils import safe_send, safe_respond
 
 # ────────────────────────────────────────────────────────────────────────────────
@@ -57,9 +54,8 @@ class DevinePays(commands.Cog):
         self.bot = bot
         self.countries = []
         self.games = {}
-
-    async def cog_load(self):
-        await self._load_countries()
+        # Chargement asynchrone automatique des pays
+        asyncio.create_task(self._load_countries())
 
     async def _load_countries(self):
         """Charge la liste des pays via l’API restcountries."""
@@ -113,6 +109,11 @@ class DevinePays(commands.Cog):
         else:
             user = source.author
             channel = source.channel
+
+        # 🔹 Vérifie si les pays sont chargés
+        if not self.countries:
+            await safe_respond(source, "❌ Liste des pays en cours de chargement, réessaie dans quelques secondes...", ephemeral=True)
+            return
 
         # 🔹 Si pas encore de partie, en lancer une
         if user.id not in self.games:
