@@ -37,6 +37,15 @@
         "saved": {"humain":0, "enfant":1, "pa":0, "animal":0, "robot":0}, "killed": {"humain":0, "enfant":0, "pa":5, "animal":0, "robot":0}}
       ]
     },    
+    {
+      "question": "Le tram fonce sur cinq personnes tristes. Tu peux tirer le levier pour le détourner sur une personne parfaitement heureuse. Que fais-tu ?",
+      "options": [
+        {"text": "Tirer le levier", "ethics": "utilitarisme", "result": "Tu choisis d’égaliser la souffrance, au nom d’une moyenne émotionnelle stable.",
+        "saved": {"humain":5}, "killed": {"humain":1}},
+        {"text": "Ne rien faire", "ethics": "déontologie", "result": "Tu refuses de saboter le bonheur d’un seul pour équilibrer le monde.",
+        "saved": {"humain":1}, "killed": {"humain":5}}
+      ]
+    },    
     
 
 
@@ -147,8 +156,25 @@
         {"text": "Ne rien faire", "ethics": "déontologie", "result": "Tu refuses d’agir pour causer la perte de l’œuf, respectant un principe de non-intervention.",
         "saved": {"humain":0, "enfant":0, "pa": 0, "animal":0 ,"robot":0}, "killed": {"humain":0, "enfant":0, "pa": 0, "animal":5, "robot":0}}
       ]
-    },    
-
+    },   
+        {
+      "question": "Le tram fonce sur cinq animaux. Tu peux tirer le levier pour le détourner sur un humain qui les exploitait. Que fais-tu ?",
+      "options": [
+        {"text": "Tirer le levier", "ethics": "utilitarisme", "result": "Tu venges les bêtes au nom de la justice naturelle.",
+        "saved": {"animal":5}, "killed": {"humain":1}},
+        {"text": "Ne rien faire", "ethics": "déontologie", "result": "Tu refuses de placer les espèces en hiérarchie inversée.",
+        "saved": {"humain":1}, "killed": {"animal":5}}
+      ]
+    },
+    {
+      "question": "Le tram fonce sur cinq pollueurs. Tu peux tirer le levier pour le détourner sur un arbre millénaire unique. Que fais-tu ?",
+      "options": [
+        {"text": "Tirer le levier", "ethics": "utilitarisme", "result": "Tu sauves des vies, mais détruis la mémoire d’un écosystème entier.",
+        "saved": {"humain":5}, "killed": {"arbre":1}},
+        {"text": "Ne rien faire", "ethics": "déontologie", "result": "Tu refuses de choisir entre nature et humanité, donc tu ne bouges pas.",
+        "saved": {"arbre":1}, "killed": {"humain":5}}
+      ]
+    },
 
 
     {
