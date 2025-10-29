@@ -89,12 +89,12 @@
 
 
     {
-      "question": "Le tram fonce sur cinq bébés trams. Tu peux tirer le levier pour le détourner sur un vieux tram. Que fais-tu ?",
+      "question": "Le tram va écraser 100 000 personne. Tu peux tirer le levier pour le détourner et il écrasea 1 personne par jour jusqu'à avoir écrasé 1 milliard de personne et tu deviendra immortel. Que fais-tu ?",
       "options": [
-        {"text": "Tirer le levier", "ethics": "utilitarisme", "result": "Tu favorsises le plus grand nombre ou le potentiel futur.",
-        "saved": {"humain":0, "enfant":0, "pa": 0, "animal":0 ,"robot":1}, "killed": {"humain":0, "enfant":0, "pa": 0, "animal":0, "robot":5}},
-        {"text": "Ne rien faire", "ethics": "déontologie", "result": "Tu refuses d’agir directement sur le destin des bébés trams.",
-        "saved": {"humain":0, "enfant":0, "pa": 0, "animal":0 ,"robot":5}, "killed": {"humain":0, "enfant":0, "pa": 0, "animal":0, "robot":1}}
+        {"text": "Tirer le levier", "ethics": "utilitarisme", "result": "Tu troques la morale contre l’éternité.",
+        "saved": {"humain":0, "enfant":0, "pa": 0, "animal":0 ,"robot":0}, "killed": {"humain":1000000000, "enfant":0, "pa": 0, "animal":0, "robot":0}},
+        {"text": "Ne rien faire", "ethics": "déontologie", "result": "Tu préfères mourir libre que vivre coupable.",
+        "saved": {"humain":0, "enfant":0, "pa": 0, "animal":0 ,"robot":0}, "killed": {"humain":100000, "enfant":0, "pa": 0, "animal":0, "robot":0}},
       ]
     },
     
