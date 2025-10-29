@@ -82,7 +82,7 @@
       ]
     },
     {
-      "question": "Tu découvres que tu es un clone. Le tram fonce sur cinq autre clones de "toi". Tu peux tirer le levier pour le détourner sur ton toi original. Que fais-tu ?",
+      "question": "Tu découvres que tu es un clone. Le tram fonce sur cinq autre clones. Tu peux tirer le levier pour le détourner sur ton toi original. Que fais-tu ?",
       "options": [
         {"text": "Tirer le levier", "ethics": "utilitarisme", "result": "Tu sacrifie ton original pour en sauver cinq, optimisant le nombre de 'toi'."},
         "saved": {"humain":1, "enfant":0, "pa": "0", "animal":0 ,"robot":0}, "killed": {"humain":5, "enfant":0, "pa": "0", "animal":0, "robot":0},
