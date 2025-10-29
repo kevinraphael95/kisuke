@@ -118,24 +118,6 @@
       ]
     },
     {
-      "question": "Le tram est arrêté. Tu peux tirer le levier pour le relancer. Que fais-tu ?",
-      "options": [
-        {"text": "Tirer le levier", "ethics": "utilitarisme", "result": "Tu choisis l’action qui crée une expérience ou interaction intéressante.",
-        "saved": {"humain":0, "enfant":0, "pa": 0, "animal":0 ,"robot":0}, "killed": {"humain":0, "enfant":0, "pa": 0, "animal":0, "robot":0}},
-        {"text": "Ne rien faire", "ethics": "déontologie", "result": "Tu respectes l’état actuel, suivant un principe de non-interférence.",
-        "saved": {"humain":0, "enfant":0, "pa": 0, "animal":0 ,"robot":0}, "killed": {"humain":0, "enfant":0, "pa": 0, "animal":0, "robot":0}}
-      ]
-    },
-    {
-      "question": "Le tram fonce sur cinq cornichons parlants. Tu peux tirer le levier pour le détourner sur un pot de mayonnaise. Que fais-tu ?",
-      "options": [
-        {"text": "Tirer le levier", "ethics": "utilitarisme", "result": "Tu sauves les cornichons, priorisant le plus grand nombre.",
-        "saved": {"humain":0, "enfant":0, "pa": 0, "animal":0 ,"robot":0}, "killed": {"humain":0, "enfant":0, "pa": 0, "animal":0, "robot":0}},
-        {"text": "Ne rien faire", "ethics": "déontologie", "result": "Tu ne veux pas interférer directement, respectant un principe moral.",
-        "saved": {"humain":0, "enfant":0, "pa": 0, "animal":0 ,"robot":0}, "killed": {"humain":0, "enfant":0, "pa": 0, "animal":0, "robot":0}}
-      ]
-    },
-    {
       "question": "Le tram fonce sur cinq versions de toi dans des réalités parallèles. Tu peux tirer le levier pour le détourner sur une version parfaite de toi. Que fais-tu ?",
       "options": [
         {"text": "Tirer le levier", "ethics": "utilitarisme", "result": "Tu favorises ton meilleur moi, maximisant un résultat optimal.",
@@ -209,7 +191,59 @@
       ]
     },
     {
-      "question": "Le tram t’annonce que tu es un PNJ dans une simulation. Tu peux l'accepter et vivre dans la simulation ou refuser. Que fais-tu ?",
+      "question": "Tu es dans un hôpital. Le tram fonce sur cinq patients gravement malades. Tu peux le détourner sur un homme en parfaite santé dont les organes pourraient sauver les cinq autres. Que fais-tu ?",
+      "options": [
+        {"text": "Tirer le levier", "ethics": "utilitarisme", "result": "Tu choisis le sacrifice d’un pour sauver cinq vies, une logique glaciale mais efficace.",
+        "saved": {"humain":5, "enfant":0, "pa":0, "animal":0, "robot":0}, "killed": {"humain":1, "enfant":0, "pa":0, "animal":0, "robot":0}},
+        {"text": "Ne rien faire", "ethics": "déontologie", "result": "Tu refuses de tuer activement, même pour sauver plusieurs vies.",
+        "saved": {"humain":1, "enfant":0, "pa":0, "animal":0, "robot":0}, "killed": {"humain":5, "enfant":0, "pa":0, "animal":0, "robot":0}}
+      ]
+    },
+    {
+      "question": "Le tram fonce sur cinq humains. Tu peux tirer le levier pour le détourner sur un androïde qui ressent la douleur comme un humain. Que fais-tu ?",
+      "options": [
+        {"text": "Tirer le levier", "ethics": "utilitarisme", "result": "Tu considères que la souffrance artificielle compte autant que la biologique.",
+        "saved": {"humain":5, "enfant":0, "pa":0, "animal":0, "robot":0}, "killed": {"humain":0, "enfant":0, "pa":0, "animal":0, "robot":1}},
+        {"text": "Ne rien faire", "ethics": "déontologie", "result": "Tu refuses d’assimiler machine et humain, protégeant ton espèce.",
+        "saved": {"humain":0, "enfant":0, "pa":0, "animal":0, "robot":1}, "killed": {"humain":5, "enfant":0, "pa":0, "animal":0, "robot":0}}
+      ]
+    },
+    {
+      "question": "Tu es dans un jeu vidéo. Le tram fonce sur cinq PNJ dotés d’une IA avancée. Tu peux tirer le levier pour le détourner sur un joueur réel. Que fais-tu ?",
+      "options": [
+        {"text": "Tirer le levier", "ethics": "utilitarisme", "result": "Tu protèges la complexité numérique au détriment de la chair et du sang.",
+        "saved": {"humain":0, "enfant":0, "pa":0, "animal":0, "robot":5}, "killed": {"humain":1, "enfant":0, "pa":0, "animal":0, "robot":0}},
+        {"text": "Ne rien faire", "ethics": "déontologie", "result": "Tu refuses de tuer un vrai joueur, peu importe le nombre de lignes de code.",
+        "saved": {"humain":1, "enfant":0, "pa":0, "animal":0, "robot":0}, "killed": {"humain":0, "enfant":0, "pa":0, "animal":0, "robot":5}}
+      ]
+    },
+    {
+      "question": "Le tram fonce sur cinq personnes âgées. Tu peux tirer le levier pour le détourner sur un enfant surdoué qui pourrait changer le monde. Que fais-tu ?",
+      "options": [
+        {"text": "Tirer le levier", "ethics": "utilitarisme", "result": "Tu choisis la quantité de vie restante plutôt que la qualité potentielle.",
+        "saved": {"humain":0, "enfant":0, "pa":5, "animal":0, "robot":0}, "killed": {"humain":0, "enfant":1, "pa":0, "animal":0, "robot":0}},
+        {"text": "Ne rien faire", "ethics": "déontologie", "result": "Tu refuses d’évaluer la valeur d’une vie sur des critères de potentiel.",
+        "saved": {"humain":0, "enfant":1, "pa":0, "animal":0, "robot":0}, "killed": {"humain":0, "enfant":0, "pa":5, "animal":0, "robot":0}}
+      ]
+    },
+    {
+      "question": "Le tram fonce sur cinq criminels repentis. Tu peux tirer le levier pour le détourner sur un juge corrompu. Que fais-tu ?",
+      "options": [
+        {"text": "Tirer le levier", "ethics": "utilitarisme", "result": "Tu rends une justice expéditive au nom du bien collectif.",
+        "saved": {"humain":5, "enfant":0, "pa":0, "animal":0, "robot":0}, "killed": {"humain":1, "enfant":0, "pa":0, "animal":0, "robot":0}},
+        {"text": "Ne rien faire", "ethics": "déontologie", "result": "Tu refuses de prendre la place de la justice, même si elle est imparfaite.",
+        "saved": {"humain":1, "enfant":0, "pa":0, "animal":0, "robot":0}, "killed": {"humain":5, "enfant":0, "pa":0, "animal":0, "robot":0}}
+      ]
+    },
+
+
+      
+
+
+
+    
+    {
+      "question": "Le tram t’annonce que tu es unPNJ dans une simulation. Tu peux l'accepter et vivre dans la simulation ou refuser. Que fais-tu ?",
       "options": [
         {"text": "Accepter", "ethics": "déontologie", "result": "Tu acceptes ton rôle sans manipuler la réalité, suivant une forme d’humilité morale.",
         "saved": {"humain":0, "enfant":0, "pa": 0, "animal":0 ,"robot":0}, "killed": {"humain":0, "enfant":0, "pa": 0, "animal":0, "robot":0}},
