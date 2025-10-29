@@ -67,9 +67,9 @@
       "question": "Le tram fonce sur cinq enfants. Tu peux tirer le levier pour le détourner sur un vieil homme connaissant tous les secrets du gouvernement. Que fais-tu ?",
       "options": [
         {"text": "Tirer le levier", "ethics": "utilitarisme", "result": "Tu sacrifie un vieil homme pour sauver cinq enfants."},
-        "saved": {"humain":0, "enfant":5, "pa": 0, "animal":0 ,"robot":0}, "killed": {"humain":0, "enfant":0, "pa": "1", "animal":0, "robot":0},
+        "saved": {"humain":0, "enfant":5, "pa": 0, "animal":0 ,"robot":0}, "killed": {"humain":0, "enfant":0, "pa": 1, "animal":0, "robot":0},
         {"text": "Ne rien faire", "ethics": "déontologie", "result": "Tu refuses de tuer un homme, malgré le gain pour les enfants."},
-        "saved": {"humain":0, "enfant":0, "pa": "1", "animal":0 ,"robot":0}, "killed": {"humain":0, "enfant":5, "pa": 0, "animal":0, "robot":0}
+        "saved": {"humain":0, "enfant":0, "pa": 1, "animal":0 ,"robot":0}, "killed": {"humain":0, "enfant":5, "pa": 0, "animal":0, "robot":0}
       ]
     },
     {
