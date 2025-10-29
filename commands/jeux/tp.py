@@ -81,6 +81,10 @@ class TramProbleme(commands.Cog):
         utilitarisme_count = 0
         deontologie_count = 0
 
+        # 🧮 Compteurs de vies sauvées/tuées
+        total_saved = {"humain": 0, "enfant": 0, "pa": 0, "animal": 0, "robot": 0}
+        total_killed = {"humain": 0, "enfant": 0, "pa": 0, "animal": 0, "robot": 0}
+
         await send(
             ctx_or_inter,
             "🚋 **Bienvenue dans le Dilemme du Tramway !**\n"
@@ -110,10 +114,17 @@ class TramProbleme(commands.Cog):
 
                     result = choice.get("result", "🤔 Choix étrange...")
                     ethics_type = choice.get("ethics")
+
+                    # Comptage du type de morale
                     if ethics_type == "utilitarisme":
                         utilitarisme_count += 1
                     elif ethics_type == "déontologie":
                         deontologie_count += 1
+
+                    # Comptabilise les vies sauvées et perdues
+                    for key in total_saved:
+                        total_saved[key] += choice.get("saved", {}).get(key, 0)
+                        total_killed[key] += choice.get("killed", {}).get(key, 0)
 
                     await interaction.response.send_message(
                         f"🧠 Tu as choisi : **{choice['text']}**\n{result}",
@@ -135,7 +146,7 @@ class TramProbleme(commands.Cog):
                 await send(ctx_or_inter, "🚋 Le tramway continue sa route...\n")
 
         # ───────────────────────────────────────────────
-        # Résultats finaux avec profil moral
+        # Résultats finaux avec profil moral + bilan
         # ───────────────────────────────────────────────
         embed_result = discord.Embed(
             title="🎉 Résultats du Dilemme du Tramway",
@@ -155,6 +166,22 @@ class TramProbleme(commands.Cog):
             profil = "Ton équilibre moral est parfait : un tram entre la raison et la règle. 🚋⚖️"
 
         embed_result.add_field(name="🧭 Profil moral", value=profil, inline=False)
+
+        # Ajout du bilan moral
+        saved_summary = (
+            f"🕊️ **Tu as sauvé :** {total_saved['humain']} humains "
+            f"(dont {total_saved['enfant']} enfants et {total_saved['pa']} personnes âgées), "
+            f"{total_saved['animal']} animaux et {total_saved['robot']} robots."
+        )
+
+        killed_summary = (
+            f"💀 **Tu as tué :** {total_killed['humain']} humains "
+            f"(dont {total_killed['enfant']} enfants et {total_killed['pa']} personnes âgées), "
+            f"{total_killed['animal']} animaux et {total_killed['robot']} robots."
+        )
+
+        embed_result.add_field(name="📊 Bilan moral", value=f"{saved_summary}\n{killed_summary}", inline=False)
+
         embed_result.set_footer(text="Fin du quiz du tramway 🛤️")
         await send(ctx_or_inter, embed=embed_result)
 
