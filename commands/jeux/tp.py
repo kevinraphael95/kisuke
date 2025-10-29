@@ -169,14 +169,14 @@ class TramProbleme(commands.Cog):
 
         # Ajout du bilan moral
         saved_summary = (
-            f"🕊️ **Tu as sauvé :** {total_saved['humain']} humains "
-            f"(dont {total_saved['enfant']} enfants et {total_saved['pa']} personnes âgées), "
+            f"🕊️ **Tu as sauvé :** {total_saved['humain']} adultes, "
+            f"{total_saved['enfant']} enfants, {total_saved['pa']} personnes âgées, "
             f"{total_saved['animal']} animaux et {total_saved['robot']} robots."
         )
 
         killed_summary = (
-            f"💀 **Tu as tué :** {total_killed['humain']} humains "
-            f"(dont {total_killed['enfant']} enfants et {total_killed['pa']} personnes âgées), "
+            f"💀 **Tu as tué :** {total_killed['humain']} adultes, "
+            f" {total_killed['enfant']} enfants, {total_killed['pa']} personnes âgées, "
             f"{total_killed['animal']} animaux et {total_killed['robot']} robots."
         )
 
