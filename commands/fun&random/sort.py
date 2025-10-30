@@ -25,7 +25,7 @@ async def bubble_sort(data):
         for j in range(0, n - i - 1):
             if data[j] > data[j + 1]:
                 data[j], data[j + 1] = data[j + 1], data[j]
-            yield data, list(range(n - i, n))  # barres triées
+            yield data, list(range(n - i, n))
 
 async def insertion_sort(data):
     for i in range(1, len(data)):
@@ -88,6 +88,82 @@ async def merge_sort(data, start=0, end=None):
                 j += 1
             yield data, list(range(start, k + 1))
 
+async def heap_sort(data):
+    n = len(data)
+    def heapify(n, i):
+        largest = i
+        l, r = 2*i + 1, 2*i + 2
+        if l < n and data[l] > data[largest]:
+            largest = l
+        if r < n and data[r] > data[largest]:
+            largest = r
+        if largest != i:
+            data[i], data[largest] = data[largest], data[i]
+            heapify(n, largest)
+    for i in range(n//2 - 1, -1, -1):
+        heapify(n, i)
+        yield data, []
+    for i in range(n - 1, 0, -1):
+        data[i], data[0] = data[0], data[i]
+        heapify(i, 0)
+        yield data, list(range(i, n))
+
+async def shell_sort(data):
+    n = len(data)
+    gap = n // 2
+    while gap > 0:
+        for i in range(gap, n):
+            temp = data[i]
+            j = i
+            while j >= gap and data[j - gap] > temp:
+                data[j] = data[j - gap]
+                j -= gap
+                yield data, list(range(i + 1))
+            data[j] = temp
+            yield data, list(range(i + 1))
+        gap //= 2
+
+async def cocktail_sort(data):
+    n = len(data)
+    swapped = True
+    start = 0
+    end = n - 1
+    while swapped:
+        swapped = False
+        for i in range(start, end):
+            if data[i] > data[i + 1]:
+                data[i], data[i + 1] = data[i + 1], data[i]
+                swapped = True
+            yield data, list(range(i + 1))
+        if not swapped:
+            break
+        swapped = False
+        end -= 1
+        for i in range(end - 1, start - 1, -1):
+            if data[i] > data[i + 1]:
+                data[i], data[i + 1] = data[i + 1], data[i]
+                swapped = True
+            yield data, list(range(i + 1))
+        start += 1
+
+async def comb_sort(data):
+    n = len(data)
+    gap = n
+    shrink = 1.3
+    sorted_ = False
+    while not sorted_:
+        gap = int(gap / shrink)
+        if gap <= 1:
+            gap = 1
+            sorted_ = True
+        i = 0
+        while i + gap < n:
+            if data[i] > data[i + gap]:
+                data[i], data[i + gap] = data[i + gap], data[i]
+                sorted_ = False
+            yield data, list(range(i + 1))
+            i += 1
+
 # ────────────────────────────────────────────────────────────────────────────────
 # 🎨 Visualisation des barres
 # ────────────────────────────────────────────────────────────────────────────────
@@ -116,14 +192,19 @@ class Sorting(commands.Cog):
         self.bot = bot
         self.algorithms = {
             "Bubble Sort": bubble_sort,
+            "Cocktail Sort": cocktail_sort,
+            "Comb Sort": comb_sort,
+            "Heap Sort": heap_sort,
             "Insertion Sort": insertion_sort,
             "Merge Sort": merge_sort,
             "Quick Sort": quick_sort,
             "Selection Sort": selection_sort,
+            "Shell Sort": shell_sort,
         }
 
     async def visualize_sorting(self, channel_or_interaction, algorithm_name: str):
-        data = [random.randint(1, 12) for _ in range(12)]
+        data = list(range(1, 13))
+        random.shuffle(data)
         algo = self.algorithms[algorithm_name]
         delay = 0.25
         initial_bars = render_bars(data)
@@ -175,7 +256,6 @@ class Sorting(commands.Cog):
         algos_list = sorted(self.algorithms.keys())
         algo_dict = {str(i + 1): name for i, name in enumerate(algos_list)}
 
-        # Si pas d'argument → embed de présentation
         if not algorithme:
             embed = discord.Embed(
                 title="🎨 Visualisation d'algorithmes de tri",
@@ -196,13 +276,10 @@ class Sorting(commands.Cog):
 
         algorithme = algorithme.strip().lower()
 
-        # Si 'random'
         if algorithme == "random":
             algo_name = random.choice(algos_list)
-        # Si numéro valide
         elif algorithme.isdigit() and algorithme in algo_dict:
             algo_name = algo_dict[algorithme]
-        # Si nom exact (insensible à la casse)
         else:
             matched = next((name for name in algos_list if name.lower() == algorithme), None)
             if not matched:
@@ -230,6 +307,5 @@ async def setup(bot: commands.Bot):
         if not hasattr(command, "category"):
             command.category = "Fun&Random"
     await bot.add_cog(cog)
-
 
 
