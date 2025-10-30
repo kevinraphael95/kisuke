@@ -14,7 +14,7 @@ from discord import app_commands
 from discord.ext import commands
 from discord.ui import View, Modal, TextInput, Button
 from pathlib import Path
-from utils.discord_utils import safe_send, safe_respond, safe_edit
+from utils.discord_utils import safe_send
 from utils.supabase_client import supabase
 
 # ────────────────────────────────────────────────────────────────────────────────
@@ -50,7 +50,7 @@ class ReponseModal(Modal):
         self.add_item(self.answer_input)
 
     async def on_submit(self, interaction: discord.Interaction):
-        await self.parent_view.check_answer(interaction, self.answer_input.value.strip())
+        await self.parent_view.check_answer(interaction, self.answer_input.value)
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🎮 Vue principale du jeu
@@ -73,7 +73,9 @@ class PortesView(View):
 
     async def check_answer(self, interaction: discord.Interaction, answer: str):
         if interaction.user.id != self.user_id:
-            return await interaction.response.send_message("⛔ Ce n’est pas ton tour.", ephemeral=True)
+            return await interaction.response.send_message(
+                "⛔ Ce n’est pas ton tour.", ephemeral=True
+            )
 
         normalized = normalize(answer)
         valid_answers = self.enigme["reponse"]
@@ -82,9 +84,11 @@ class PortesView(View):
         valid_answers = [normalize(r) for r in valid_answers]
 
         if normalized in valid_answers:
+            # Récupération des données Supabase
             data = supabase.table("reiatsu_portes").select("*").eq("user_id", interaction.user.id).execute()
-            current_door = data.data[0]["current_door"] if data.data else 1
-            points = data.data[0]["points"] if data.data else 0
+            user_data = data.data[0] if data.data else None
+            current_door = user_data["current_door"] if user_data else 1
+            points = user_data["points"] if user_data else 0
 
             next_door = current_door + 1
             reward_message = ""
@@ -93,7 +97,8 @@ class PortesView(View):
                 points += 500
                 reward_message = "🎉 Félicitations ! Tu as terminé toutes les portes et gagné **500 Reiatsu** !"
 
-            if data.data:
+            # Mise à jour ou insertion Supabase
+            if user_data:
                 supabase.table("reiatsu_portes").update({
                     "current_door": next_door,
                     "points": points
@@ -110,10 +115,12 @@ class PortesView(View):
                 f"✅ Bonne réponse ! Tu passes à la porte {next_door} 🚪\n{reward_message}", ephemeral=True
             )
 
+            # Envoi de la nouvelle énigme si disponible
             next_enigme = next((e for e in ENIGMES if e["id"] == next_door), None)
             if next_enigme and next_door <= 100:
                 new_view = PortesView(next_enigme, interaction.user.id)
                 await safe_send(interaction.channel, embed=new_view.build_embed(), view=new_view)
+
         else:
             await interaction.response.send_message("❌ Mauvaise réponse... Essaie encore !", ephemeral=True)
 
@@ -127,14 +134,16 @@ class RepondreButton(Button):
 
     async def callback(self, interaction: discord.Interaction):
         if interaction.user.id != self.parent_view.user_id:
-            return await interaction.response.send_message("⛔ Ce n’est pas ton tour.", ephemeral=True)
+            return await interaction.response.send_message(
+                "⛔ Ce n’est pas ton tour.", ephemeral=True
+            )
         await interaction.response.send_modal(ReponseModal(self.parent_view))
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🧩 Cog principal
 # ────────────────────────────────────────────────────────────────────────────────
 class Portes(commands.Cog):
-    """Jeu des Portes — version identique à mot_contraint"""
+    """Jeu des Portes — version interactive"""
 
     def __init__(self, bot: commands.Bot):
         self.bot = bot
@@ -163,7 +172,6 @@ class Portes(commands.Cog):
     async def slash_portes(self, interaction: discord.Interaction):
         await interaction.response.defer()
         await self._start_portes(interaction.channel, interaction.user)
-        await interaction.delete_original_response()
 
     # ────────────────────────────────────────────────────────────
     # 🔹 Commande PREFIX
@@ -172,6 +180,9 @@ class Portes(commands.Cog):
     @commands.cooldown(1, 5.0, commands.BucketType.user)
     async def prefix_portes(self, ctx: commands.Context):
         await self._start_portes(ctx.channel, ctx.author)
+
+
+
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🔌 Setup du Cog
