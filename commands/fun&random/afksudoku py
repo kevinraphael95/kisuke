@@ -1,0 +1,123 @@
+# ────────────────────────────────────────────────────────────────────────────────
+# 📌 afksudoku.py — Le bot joue un Sudoku tout seul
+# Objectif : Affiche une grille de Sudoku avec emojis et la remplit pas à pas
+# Catégorie : Fun
+# Accès : Tous
+# Cooldown : 1 utilisation / 10 secondes / utilisateur
+# ────────────────────────────────────────────────────────────────────────────────
+
+# ────────────────────────────────────────────────────────────────────────────────
+# 📦 Imports nécessaires
+# ────────────────────────────────────────────────────────────────────────────────
+import discord
+import asyncio
+import random
+from discord import app_commands
+from discord.ext import commands
+from utils.discord_utils import safe_send, safe_respond
+
+# ────────────────────────────────────────────────────────────────────────────────
+# 🎨 Fonctions utilitaires
+# ────────────────────────────────────────────────────────────────────────────────
+def generate_sudoku():
+    """Crée une grille Sudoku très simple (9x9) avec quelques chiffres pré-remplis."""
+    grid = [[0 for _ in range(9)] for _ in range(9)]
+
+    # Grille complète aléatoire basique (pas forcément un vrai Sudoku)
+    nums = list(range(1, 10))
+    for i in range(9):
+        random.shuffle(nums)
+        grid[i] = nums.copy()
+
+    # Supprime des cases pour donner un effet "à remplir"
+    for _ in range(45):  # Environ la moitié vide
+        r, c = random.randint(0, 8), random.randint(0, 8)
+        grid[r][c] = 0
+
+    return grid
+
+def render_grid(grid, highlight=None):
+    """Affiche la grille avec des emojis."""
+    emojis = ["⬜", "1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣", "6️⃣", "7️⃣", "8️⃣", "9️⃣"]
+    lines = []
+    for r in range(9):
+        row = ""
+        for c in range(9):
+            val = grid[r][c]
+            cell = emojis[val] if val != 0 else "⬛"
+            if highlight and (r, c) == highlight:
+                cell = f"🟩{cell}🟩"
+            row += cell
+        lines.append(row)
+    return "\n".join(lines)
+
+async def fill_sudoku(grid, send_func):
+    """Simule le remplissage du Sudoku par le bot."""
+    # Liste des cases vides
+    empty_cells = [(r, c) for r in range(9) for c in range(9) if grid[r][c] == 0]
+    random.shuffle(empty_cells)
+
+    for (r, c) in empty_cells:
+        await asyncio.sleep(random.uniform(0.3, 0.7))  # délai réaliste
+        grid[r][c] = random.randint(1, 9)
+        await send_func(f"🧩 **AFK Sudoku en cours...**\n{render_grid(grid, highlight=(r, c))}")
+
+    await send_func(f"✅ **AFK Sudoku terminé !**\n{render_grid(grid)}")
+
+# ────────────────────────────────────────────────────────────────────────────────
+# 🧠 Cog principal
+# ────────────────────────────────────────────────────────────────────────────────
+class AfkSudoku(commands.Cog):
+    """Commande /afksudoku et !afksudoku — Le bot joue un Sudoku tout seul"""
+
+    def __init__(self, bot: commands.Bot):
+        self.bot = bot
+
+    async def visualize_sudoku(self, channel_or_interaction):
+        grid = generate_sudoku()
+        msg = None
+
+        async def send(content):
+            nonlocal msg
+            if isinstance(channel_or_interaction, discord.Interaction):
+                if msg:
+                    await msg.edit(content=content)
+                else:
+                    msg = await safe_respond(channel_or_interaction, content)
+            else:
+                if msg:
+                    await msg.edit(content=content)
+                else:
+                    msg = await safe_send(channel_or_interaction, content)
+
+        await send(f"🧩 **AFK Sudoku** — le bot commence à jouer...\n{render_grid(grid)}")
+        await fill_sudoku(grid, send)
+
+    # ────────────────────────────────────────────────────────────────────────────
+    # 🔹 Commande SLASH
+    # ────────────────────────────────────────────────────────────────────────────
+    @app_commands.command(
+        name="afksudoku",
+        description="Le bot remplit un Sudoku tout seul, case par case."
+    )
+    @app_commands.checks.cooldown(1, 10.0, key=lambda i: i.user.id)
+    async def slash_afksudoku(self, interaction: discord.Interaction):
+        await self.visualize_sudoku(interaction)
+
+    # ────────────────────────────────────────────────────────────────────────────
+    # 🔹 Commande PREFIX
+    # ────────────────────────────────────────────────────────────────────────────
+    @commands.command(name="afksudoku")
+    @commands.cooldown(1, 10.0, commands.BucketType.user)
+    async def prefix_afksudoku(self, ctx: commands.Context):
+        await self.visualize_sudoku(ctx.channel)
+
+# ────────────────────────────────────────────────────────────────────────────────
+# 🔌 Setup du Cog
+# ────────────────────────────────────────────────────────────────────────────────
+async def setup(bot: commands.Bot):
+    cog = AfkSudoku(bot)
+    for command in cog.get_commands():
+        if not hasattr(command, "category"):
+            command.category = "Fun&Random"
+    await bot.add_cog(cog)
