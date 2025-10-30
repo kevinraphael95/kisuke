@@ -189,6 +189,7 @@ async def pair_sum_sort(data):
                 swapped = True
             yield data, list(range(len(data)))
 
+
 # ────────────────────────────────────────────────────────────────────────────────
 # Algos expérimentaux
 # ────────────────────────────────────────────────────────────────────────────────
@@ -240,10 +241,10 @@ async def centrifugal_sort(data):
 # ────────────────────────────────────────────────────────────────────────────────
 def get_sorting_algorithms():
     """Récupère automatiquement toutes les fonctions async *_sort de ce module."""
-    import inspect
     algos = {}
-    for name, func in globals().items():
-        if inspect.iscoroutinefunction(func) and name.endswith("_sort"):
+    module = sys.modules[__name__]
+    for name, func in inspect.getmembers(module, inspect.iscoroutinefunction):
+        if name.endswith("_sort"):
             display_name = name.replace("_", " ").title()
             algos[display_name] = {
                 "func": func,
@@ -253,4 +254,3 @@ def get_sorting_algorithms():
             }
     print(f"[SortingUtils] {len(algos)} algorithmes détectés : {', '.join(algos.keys())}")
     return algos
-
