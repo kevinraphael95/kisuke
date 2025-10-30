@@ -136,7 +136,15 @@
         "saved": {"humain":1, "enfant":0, "pa":0, "animal":0, "robot":0}, "killed": {"humain":5, "enfant":0, "pa":0, "animal":0, "robot":0}}
       ]
     },    
-    
+    {
+      "question": "Le tram fonce sur cinq patients atteints d’un cancer incurable qui ont été guéris. Tu peux tirer le levier pour le détourner sur le docteur qui les a guéris grace à un remède que seul lui saurait refaire. Que fais-tu ?",
+      "options": [
+        {"text": "Tirer le levier", "ethics": "utilitarisme", "result": "ce serait trop méchant de les ter alors qu'ils viennent d'échapper miraculeusement à la mort.",
+        "saved": {"futur":1000000}, "killed": {"humain":5}},
+        {"text": "Ne rien faire", "ethics": "déontologie", "result": "Leurs sacrifice ne sera pas oublié.",
+        "saved": {"humain":5}, "killed": {"futur":1000000}}
+      ]
+    },    
 
 
     {
