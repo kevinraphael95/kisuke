@@ -1,5 +1,5 @@
 # ────────────────────────────────────────────────────────────────────────────────
-# 📌 sorting.py — Visualisation d'algorithmes de tri /sorting et !sorting
+# sorting.py — Visualisation d'algorithmes de tri /sorting et !sorting
 # Objectif : Visualiser différents algorithmes de tri en temps réel dans Discord
 # Catégorie : Fun
 # Accès : Tous
@@ -7,7 +7,7 @@
 # ────────────────────────────────────────────────────────────────────────────────
 
 # ────────────────────────────────────────────────────────────────────────────────
-# 📦 Imports nécessaires
+# Imports nécessaires
 # ────────────────────────────────────────────────────────────────────────────────
 import discord
 import random
@@ -17,7 +17,7 @@ from discord.ext import commands
 from utils.discord_utils import safe_send, safe_respond
 
 # ────────────────────────────────────────────────────────────────────────────────
-# ⚙️ Fonctions de tri (avec yield pour animation)
+# Fonctions de tri (avec yield pour animation)
 # ────────────────────────────────────────────────────────────────────────────────
 async def bubble_sort(data):
     n = len(data)
@@ -25,7 +25,7 @@ async def bubble_sort(data):
         for j in range(0, n - i - 1):
             if data[j] > data[j + 1]:
                 data[j], data[j + 1] = data[j + 1], data[j]
-            yield data
+            yield data, list(range(n - i, n))
 
 async def insertion_sort(data):
     for i in range(1, len(data)):
@@ -34,9 +34,9 @@ async def insertion_sort(data):
         while j >= 0 and data[j] > key:
             data[j + 1] = data[j]
             j -= 1
-            yield data
+            yield data, list(range(i + 1))
         data[j + 1] = key
-        yield data
+        yield data, list(range(i + 1))
 
 async def selection_sort(data):
     n = len(data)
@@ -46,7 +46,7 @@ async def selection_sort(data):
             if data[j] < data[min_idx]:
                 min_idx = j
         data[i], data[min_idx] = data[min_idx], data[i]
-        yield data
+        yield data, list(range(i + 1))
 
 async def quick_sort(data, low=0, high=None):
     if high is None:
@@ -60,23 +60,23 @@ async def quick_sort(data, low=0, high=None):
                 right -= 1
             if left < right:
                 data[left], data[right] = data[right], data[left]
-            yield data
+            yield data, list(range(low))
         data[left], data[high] = data[high], data[left]
-        yield data
-        async for step in quick_sort(data, low, left - 1):
-            yield step
-        async for step in quick_sort(data, left + 1, high):
-            yield step
+        yield data, list(range(low, left + 1))
+        async for step, sorted_idx in quick_sort(data, low, left - 1):
+            yield step, sorted_idx
+        async for step, sorted_idx in quick_sort(data, left + 1, high):
+            yield step, sorted_idx
 
 async def merge_sort(data, start=0, end=None):
     if end is None:
         end = len(data)
     if end - start > 1:
         mid = (start + end) // 2
-        async for step in merge_sort(data, start, mid):
-            yield step
-        async for step in merge_sort(data, mid, end):
-            yield step
+        async for step, sorted_idx in merge_sort(data, start, mid):
+            yield step, sorted_idx
+        async for step, sorted_idx in merge_sort(data, mid, end):
+            yield step, sorted_idx
         left, right = data[start:mid], data[mid:end]
         i = j = 0
         for k in range(start, end):
@@ -86,7 +86,7 @@ async def merge_sort(data, start=0, end=None):
             else:
                 data[k] = right[j]
                 j += 1
-            yield data
+            yield data, list(range(start, k + 1))
 
 async def heap_sort(data):
     n = len(data)
@@ -102,11 +102,11 @@ async def heap_sort(data):
             heapify(n, largest)
     for i in range(n//2 - 1, -1, -1):
         heapify(n, i)
-        yield data
+        yield data, []
     for i in range(n - 1, 0, -1):
         data[i], data[0] = data[0], data[i]
         heapify(i, 0)
-        yield data
+        yield data, list(range(i, n))
 
 async def shell_sort(data):
     n = len(data)
@@ -118,9 +118,9 @@ async def shell_sort(data):
             while j >= gap and data[j - gap] > temp:
                 data[j] = data[j - gap]
                 j -= gap
-                yield data
+                yield data, list(range(i + 1))
             data[j] = temp
-            yield data
+            yield data, list(range(i + 1))
         gap //= 2
 
 async def cocktail_sort(data):
@@ -134,7 +134,7 @@ async def cocktail_sort(data):
             if data[i] > data[i + 1]:
                 data[i], data[i + 1] = data[i + 1], data[i]
                 swapped = True
-            yield data
+            yield data, list(range(i + 1))
         if not swapped:
             break
         swapped = False
@@ -143,7 +143,7 @@ async def cocktail_sort(data):
             if data[i] > data[i + 1]:
                 data[i], data[i + 1] = data[i + 1], data[i]
                 swapped = True
-            yield data
+            yield data, list(range(i + 1))
         start += 1
 
 async def comb_sort(data):
@@ -159,29 +159,32 @@ async def comb_sort(data):
         i = 0
         while i + gap < n:
             if data[i] > data[i + gap]:
-                data[i], data[i +_gap] = data[i + gap], data[i]
+                data[i], data[i + gap] = data[i + gap], data[i]
                 sorted_ = False
-            yield data
+            yield data, list(range(i + 1))
             i += 1
 
 # ────────────────────────────────────────────────────────────────────────────────
-# 🎨 Visualisation des barres
+# Visualisation des barres
 # ────────────────────────────────────────────────────────────────────────────────
-def render_bars(data, max_length=12):
+def render_bars(data, sorted_indices=None, max_length=12):
+    if sorted_indices is None:
+        sorted_indices = []
     max_val = max(data)
     lines = []
-    for n in data:
+    for i, n in enumerate(data):
         height = int((n / max_val) * max_length)
-        lines.append("▇" * height)
+        bar = "▇" * height
+        if i in sorted_indices:
+            bar = f"{bar} ✅"
+        lines.append(bar)
     return "\n".join(lines)
 
 # ────────────────────────────────────────────────────────────────────────────────
-# 🧠 Cog principal
+# Cog principal
 # ────────────────────────────────────────────────────────────────────────────────
 class Sorting(commands.Cog):
-    """
-    Commande /sorting et !sorting — Visualise un algorithme de tri en temps réel
-    """
+    """Commande /sorting et !sorting — Visualise un algorithme de tri en temps réel"""
 
     def __init__(self, bot: commands.Bot):
         self.bot = bot
@@ -202,44 +205,50 @@ class Sorting(commands.Cog):
         random.shuffle(data)
         algo = self.algorithms[algorithm_name]
         delay = 0.25
-        iterations = 0
-
-        embed = discord.Embed(
-            title=f"🔄 {algorithm_name}",
-            description=render_bars(data),
-            color=discord.Color.blurple()
-        )
         msg = None
+        iteration = 0
 
-        async def send(embed_content):
+        async def send(embed):
             nonlocal msg
             if isinstance(channel_or_interaction, discord.Interaction):
                 if msg:
-                    await msg.edit(embed=embed_content)
+                    await msg.edit(embed=embed)
                 else:
-                    msg = await safe_respond(channel_or_interaction, embed=embed_content)
+                    msg = await safe_respond(channel_or_interaction, embed=embed)
             else:
                 if msg:
-                    await msg.edit(embed=embed_content)
+                    await msg.edit(embed=embed)
                 else:
-                    msg = await safe_send(channel_or_interaction, embed=embed_content)
+                    msg = await safe_send(channel_or_interaction, embed=embed)
 
+        embed = discord.Embed(
+            title=f"🔄 {algorithm_name} — En cours...",
+            description=f"```\n{render_bars(data)}\n```",
+            color=discord.Color.blurple()
+        )
         await send(embed)
 
-        async for step in algo(data.copy()):
-            iterations += 1
+        async for step, sorted_idx in algo(data.copy()):
+            iteration += 1
             await asyncio.sleep(delay)
-            embed.description = render_bars(step)
-            embed.set_footer(text=f"Itérations : {iterations}")
+            embed = discord.Embed(
+                title=f"🔄 {algorithm_name} — Étape {iteration}",
+                description=f"```\n{render_bars(step, sorted_idx)}\n```",
+                color=discord.Color.orange()
+            )
             await send(embed)
 
-        embed.title = f"✅ {algorithm_name} terminé !"
-        embed.description = render_bars(sorted(data))
-        embed.set_footer(text=f"Tri effectué en {iterations} itérations.")
+        sorted_data = sorted(data)
+        embed = discord.Embed(
+            title=f"✅ {algorithm_name} terminé !",
+            description=f"```\n{render_bars(sorted_data, list(range(len(sorted_data))))}\n```",
+            color=discord.Color.green()
+        )
+        embed.add_field(name="🧮 Itérations totales", value=f"{iteration}", inline=False)
         await send(embed)
 
     # ────────────────────────────────────────────────────────────────────────────
-    # 🔹 Commande SLASH
+    # Commande SLASH
     # ────────────────────────────────────────────────────────────────────────────
     @app_commands.command(
         name="sorting",
@@ -251,7 +260,7 @@ class Sorting(commands.Cog):
         await self.handle_sorting(interaction, algorithme)
 
     # ────────────────────────────────────────────────────────────────────────────
-    # 🔹 Commande PREFIX
+    # Commande PREFIX
     # ────────────────────────────────────────────────────────────────────────────
     @commands.command(name="sorting")
     @commands.cooldown(1, 10.0, commands.BucketType.user)
@@ -259,7 +268,7 @@ class Sorting(commands.Cog):
         await self.handle_sorting(ctx.channel, algorithme)
 
     # ────────────────────────────────────────────────────────────────────────────
-    # ⚙️ Gestion logique commune
+    # Gestion logique commune
     # ────────────────────────────────────────────────────────────────────────────
     async def handle_sorting(self, channel_or_interaction, algorithme: str = None):
         algos_list = sorted(self.algorithms.keys())
@@ -307,7 +316,7 @@ class Sorting(commands.Cog):
         await self.visualize_sorting(channel_or_interaction, algo_name)
 
 # ────────────────────────────────────────────────────────────────────────────────
-# 🔌 Setup du Cog
+# Setup du Cog
 # ────────────────────────────────────────────────────────────────────────────────
 async def setup(bot: commands.Bot):
     cog = Sorting(bot)
@@ -315,5 +324,4 @@ async def setup(bot: commands.Bot):
         if not hasattr(command, "category"):
             command.category = "Fun&Random"
     await bot.add_cog(cog)
-
 
