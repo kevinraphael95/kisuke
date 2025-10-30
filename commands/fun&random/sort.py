@@ -26,8 +26,7 @@ async def bubble_sort(data):
         for j in range(0, n - i - 1):
             if data[j] > data[j + 1]:
                 data[j], data[j + 1] = data[j + 1], data[j]
-            yield data
-
+            yield data, list(range(n - i, n))  # barres triées
 async def insertion_sort(data):
     for i in range(1, len(data)):
         key = data[i]
@@ -35,10 +34,9 @@ async def insertion_sort(data):
         while j >= 0 and data[j] > key:
             data[j + 1] = data[j]
             j -= 1
-            yield data
+            yield data, list(range(i + 1))
         data[j + 1] = key
-        yield data
-
+        yield data, list(range(i + 1))
 async def selection_sort(data):
     n = len(data)
     for i in range(n):
@@ -47,8 +45,7 @@ async def selection_sort(data):
             if data[j] < data[min_idx]:
                 min_idx = j
         data[i], data[min_idx] = data[min_idx], data[i]
-        yield data
-
+        yield data, list(range(i + 1))
 async def quick_sort(data, low=0, high=None):
     if high is None:
         high = len(data) - 1
@@ -61,23 +58,22 @@ async def quick_sort(data, low=0, high=None):
                 right -= 1
             if left < right:
                 data[left], data[right] = data[right], data[left]
-            yield data
+            yield data, list(range(low))
         data[left], data[high] = data[high], data[left]
-        yield data
-        async for _ in quick_sort(data, low, left - 1):
-            yield data
-        async for _ in quick_sort(data, left + 1, high):
-            yield data
-
+        yield data, list(range(low, left + 1))
+        async for step, sorted_idx in quick_sort(data, low, left - 1):
+            yield step, sorted_idx
+        async for step, sorted_idx in quick_sort(data, left + 1, high):
+            yield step, sorted_idx
 async def merge_sort(data, start=0, end=None):
     if end is None:
         end = len(data)
     if end - start > 1:
         mid = (start + end) // 2
-        async for _ in merge_sort(data, start, mid):
-            yield data
-        async for _ in merge_sort(data, mid, end):
-            yield data
+        async for step, sorted_idx in merge_sort(data, start, mid):
+            yield step, sorted_idx
+        async for step, sorted_idx in merge_sort(data, mid, end):
+            yield step, sorted_idx
         left, right = data[start:mid], data[mid:end]
         i = j = 0
         for k in range(start, end):
@@ -87,18 +83,23 @@ async def merge_sort(data, start=0, end=None):
             else:
                 data[k] = right[j]
                 j += 1
-            yield data
+            yield data, list(range(start, k + 1))
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🎨 Visualisation des barres
 # ────────────────────────────────────────────────────────────────────────────────
-def render_bars(data, max_length=20):
+def render_bars(data, sorted_indices=None, max_length=20):
+    if sorted_indices is None:
+        sorted_indices = []
     max_val = max(data)
-    bars = []
-    for n in data:
+    lines = []
+    for i, n in enumerate(data):
         height = int((n / max_val) * max_length)
-        bars.append("▇" * height)
-    return " ".join(bars)
+        bar = "▇" * height
+        if i in sorted_indices:
+            bar = f"✅{bar}"
+        lines.append(bar)
+    return "\n".join(lines)
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🧠 Cog principal
@@ -117,13 +118,10 @@ class Sorting(commands.Cog):
             "Merge Sort": merge_sort,
         }
 
-    # ────────────────────────────────────────────────────────────────────────────
-    # 🔹 Fonction principale
-    # ────────────────────────────────────────────────────────────────────────────
     async def visualize_sorting(self, channel_or_interaction, algorithm_name: str):
         data = [random.randint(1, 20) for _ in range(12)]
         algo = self.algorithms[algorithm_name]
-        delay = 0.5  # 2 itérations par seconde
+        delay = 0.25  # plus rapide
 
         initial_bars = render_bars(data)
         msg = None
@@ -143,11 +141,11 @@ class Sorting(commands.Cog):
 
         await send(f"🔄 **{algorithm_name}** en cours...\n{initial_bars}")
 
-        async for step in algo(data.copy()):
+        async for step, sorted_idx in algo(data.copy()):
             await asyncio.sleep(delay)
-            await send(f"🔄 **{algorithm_name}**\n{render_bars(step)}")
+            await send(f"🔄 **{algorithm_name}**\n{render_bars(step, sorted_idx)}")
 
-        await send(f"✅ **{algorithm_name} terminé !**\n{render_bars(sorted(data))}")
+        await send(f"✅ **{algorithm_name} terminé !**\n{render_bars(sorted(data), list(range(len(data))))}")
 
     # ────────────────────────────────────────────────────────────────────────────
     # 🔹 Commande SLASH
