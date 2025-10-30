@@ -25,7 +25,7 @@ async def bubble_sort(data):
         for j in range(0, n - i - 1):
             if data[j] > data[j + 1]:
                 data[j], data[j + 1] = data[j + 1], data[j]
-            yield data, list(range(n - i, n))
+            yield data
 
 async def insertion_sort(data):
     for i in range(1, len(data)):
@@ -34,9 +34,9 @@ async def insertion_sort(data):
         while j >= 0 and data[j] > key:
             data[j + 1] = data[j]
             j -= 1
-            yield data, list(range(i + 1))
+            yield data
         data[j + 1] = key
-        yield data, list(range(i + 1))
+        yield data
 
 async def selection_sort(data):
     n = len(data)
@@ -46,7 +46,7 @@ async def selection_sort(data):
             if data[j] < data[min_idx]:
                 min_idx = j
         data[i], data[min_idx] = data[min_idx], data[i]
-        yield data, list(range(i + 1))
+        yield data
 
 async def quick_sort(data, low=0, high=None):
     if high is None:
@@ -60,23 +60,23 @@ async def quick_sort(data, low=0, high=None):
                 right -= 1
             if left < right:
                 data[left], data[right] = data[right], data[left]
-            yield data, list(range(low))
+            yield data
         data[left], data[high] = data[high], data[left]
-        yield data, list(range(low, left + 1))
-        async for step, sorted_idx in quick_sort(data, low, left - 1):
-            yield step, sorted_idx
-        async for step, sorted_idx in quick_sort(data, left + 1, high):
-            yield step, sorted_idx
+        yield data
+        async for step in quick_sort(data, low, left - 1):
+            yield step
+        async for step in quick_sort(data, left + 1, high):
+            yield step
 
 async def merge_sort(data, start=0, end=None):
     if end is None:
         end = len(data)
     if end - start > 1:
         mid = (start + end) // 2
-        async for step, sorted_idx in merge_sort(data, start, mid):
-            yield step, sorted_idx
-        async for step, sorted_idx in merge_sort(data, mid, end):
-            yield step, sorted_idx
+        async for step in merge_sort(data, start, mid):
+            yield step
+        async for step in merge_sort(data, mid, end):
+            yield step
         left, right = data[start:mid], data[mid:end]
         i = j = 0
         for k in range(start, end):
@@ -86,7 +86,7 @@ async def merge_sort(data, start=0, end=None):
             else:
                 data[k] = right[j]
                 j += 1
-            yield data, list(range(start, k + 1))
+            yield data
 
 async def heap_sort(data):
     n = len(data)
@@ -102,11 +102,11 @@ async def heap_sort(data):
             heapify(n, largest)
     for i in range(n//2 - 1, -1, -1):
         heapify(n, i)
-        yield data, []
+        yield data
     for i in range(n - 1, 0, -1):
         data[i], data[0] = data[0], data[i]
         heapify(i, 0)
-        yield data, list(range(i, n))
+        yield data
 
 async def shell_sort(data):
     n = len(data)
@@ -118,9 +118,9 @@ async def shell_sort(data):
             while j >= gap and data[j - gap] > temp:
                 data[j] = data[j - gap]
                 j -= gap
-                yield data, list(range(i + 1))
+                yield data
             data[j] = temp
-            yield data, list(range(i + 1))
+            yield data
         gap //= 2
 
 async def cocktail_sort(data):
@@ -134,7 +134,7 @@ async def cocktail_sort(data):
             if data[i] > data[i + 1]:
                 data[i], data[i + 1] = data[i + 1], data[i]
                 swapped = True
-            yield data, list(range(i + 1))
+            yield data
         if not swapped:
             break
         swapped = False
@@ -143,7 +143,7 @@ async def cocktail_sort(data):
             if data[i] > data[i + 1]:
                 data[i], data[i + 1] = data[i + 1], data[i]
                 swapped = True
-            yield data, list(range(i + 1))
+            yield data
         start += 1
 
 async def comb_sort(data):
@@ -159,25 +159,20 @@ async def comb_sort(data):
         i = 0
         while i + gap < n:
             if data[i] > data[i + gap]:
-                data[i], data[i + gap] = data[i + gap], data[i]
+                data[i], data[i +_gap] = data[i + gap], data[i]
                 sorted_ = False
-            yield data, list(range(i + 1))
+            yield data
             i += 1
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🎨 Visualisation des barres
 # ────────────────────────────────────────────────────────────────────────────────
-def render_bars(data, sorted_indices=None, max_length=12): #20?
-    if sorted_indices is None:
-        sorted_indices = []
+def render_bars(data, max_length=12):
     max_val = max(data)
     lines = []
-    for i, n in enumerate(data):
+    for n in data:
         height = int((n / max_val) * max_length)
-        bar = "▇" * height
-        if i in sorted_indices:
-            bar = f"✅{bar}"
-        lines.append(bar)
+        lines.append("▇" * height)
     return "\n".join(lines)
 
 # ────────────────────────────────────────────────────────────────────────────────
@@ -207,27 +202,41 @@ class Sorting(commands.Cog):
         random.shuffle(data)
         algo = self.algorithms[algorithm_name]
         delay = 0.25
-        initial_bars = render_bars(data)
+        iterations = 0
+
+        embed = discord.Embed(
+            title=f"🔄 {algorithm_name}",
+            description=render_bars(data),
+            color=discord.Color.blurple()
+        )
         msg = None
 
-        async def send(content):
+        async def send(embed_content):
             nonlocal msg
             if isinstance(channel_or_interaction, discord.Interaction):
                 if msg:
-                    await msg.edit(content=content)
+                    await msg.edit(embed=embed_content)
                 else:
-                    msg = await safe_respond(channel_or_interaction, content)
+                    msg = await safe_respond(channel_or_interaction, embed=embed_content)
             else:
                 if msg:
-                    await msg.edit(content=content)
+                    await msg.edit(embed=embed_content)
                 else:
-                    msg = await safe_send(channel_or_interaction, content)
+                    msg = await safe_send(channel_or_interaction, embed=embed_content)
 
-        await send(f"🔄 **{algorithm_name}** en cours...\n{initial_bars}")
-        async for step, sorted_idx in algo(data.copy()):
+        await send(embed)
+
+        async for step in algo(data.copy()):
+            iterations += 1
             await asyncio.sleep(delay)
-            await send(f"🔄 **{algorithm_name}**\n{render_bars(step, sorted_idx)}")
-        await send(f"✅ **{algorithm_name} terminé !**\n{render_bars(sorted(data), list(range(len(data))))}")
+            embed.description = render_bars(step)
+            embed.set_footer(text=f"Itérations : {iterations}")
+            await send(embed)
+
+        embed.title = f"✅ {algorithm_name} terminé !"
+        embed.description = render_bars(sorted(data))
+        embed.set_footer(text=f"Tri effectué en {iterations} itérations.")
+        await send(embed)
 
     # ────────────────────────────────────────────────────────────────────────────
     # 🔹 Commande SLASH
@@ -275,7 +284,6 @@ class Sorting(commands.Cog):
             return
 
         algorithme = algorithme.strip().lower()
-
         if algorithme == "random":
             algo_name = random.choice(algos_list)
         elif algorithme.isdigit() and algorithme in algo_dict:
