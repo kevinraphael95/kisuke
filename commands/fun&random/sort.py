@@ -201,6 +201,53 @@ async def pair_sum_sort(data):
             yield data, list(range(len(data)))
 
 # ────────────────────────────────────────────────────────────────────────────────
+# Algos expérimentaux
+# ────────────────────────────────────────────────────────────────────────────────
+async def pair_shift_sort(data):
+    """Tri expérimental basé sur le déplacement du plus grand élément d'une paire vers la droite."""
+    n = len(data)
+    while True:
+        changed = False
+        i = 0
+        while i < n - 1:
+            a, b = data[i], data[i + 1]
+            if a != b:
+                gap = abs(a - b)
+                if a > b:
+                    new_pos = min(i + gap, n - 1)
+                    data.insert(new_pos, data.pop(i))
+                    changed = True
+            i += 1
+            yield data, [i]
+        if not changed:
+            break
+
+async def centrifugal_sort(data):
+    """Tri par triplets consécutifs : le nombre du milieu est replacé entre les deux autres."""
+    n = len(data)
+    changed = True
+    while changed:
+        changed = False
+        # Triplets consécutifs (0,1,2), (3,4,5), ...
+        for i in range(0, n - 2, 3):
+            triplet = data[i:i + 3]
+            sorted_triplet = sorted(triplet)
+            if triplet != sorted_triplet:
+                data[i:i + 3] = sorted_triplet
+                changed = True
+            yield data, list(range(i, i + 3))
+        # Décalage d’un pour triplets (1,2,3), (4,5,6), ...
+        for i in range(1, n - 2, 3):
+            triplet = data[i:i + 3]
+            sorted_triplet = sorted(triplet)
+            if triplet != sorted_triplet:
+                data[i:i + 3] = sorted_triplet
+                changed = True
+            yield data, list(range(i, i + 3))
+
+
+
+# ────────────────────────────────────────────────────────────────────────────────
 # Visualisation des barres
 # ────────────────────────────────────────────────────────────────────────────────
 def render_bars(data, sorted_indices=None, max_length=12):
