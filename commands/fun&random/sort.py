@@ -165,6 +165,42 @@ async def comb_sort(data):
             i += 1
 
 # ────────────────────────────────────────────────────────────────────────────────
+# Nouveau tri : Pair Sum Sort
+# ────────────────────────────────────────────────────────────────────────────────
+async def pair_sum_sort(data):
+    """Tri par paires basé sur la somme et décalage."""
+    n = len(data)
+    swapped = True
+    while swapped:
+        swapped = False
+        # Paires consécutives (0,1), (2,3), ...
+        pairs = [(i, i+1) for i in range(0, n-1, 2)]
+        sums = [data[i]+data[j] for i,j in pairs]
+        sorted_pairs = [pairs[i] for i in sorted(range(len(pairs)), key=lambda x: sums[x])]
+        new_data = []
+        for i,j in sorted_pairs:
+            new_data.extend([data[i], data[j]])
+        for k in range(len(new_data)):
+            if data[k] != new_data[k]:
+                data[k] = new_data[k]
+                swapped = True
+            yield data, list(range(len(data)))
+        # Paires décalées (1,2), (3,4), ...
+        pairs = [(i, i+1) for i in range(1, n-1, 2)]
+        sums = [data[i]+data[j] for i,j in pairs]
+        sorted_pairs = [pairs[i] for i in sorted(range(len(pairs)), key=lambda x: sums[x])]
+        new_data = data[:1]  # premier élément si impair
+        for i,j in sorted_pairs:
+            new_data.extend([data[i], data[j]])
+        if len(new_data) < n:
+            new_data.append(data[-1])
+        for k in range(len(new_data)):
+            if data[k] != new_data[k]:
+                data[k] = new_data[k]
+                swapped = True
+            yield data, list(range(len(data)))
+
+# ────────────────────────────────────────────────────────────────────────────────
 # Visualisation des barres
 # ────────────────────────────────────────────────────────────────────────────────
 def render_bars(data, sorted_indices=None, max_length=12):
@@ -185,25 +221,26 @@ def render_bars(data, sorted_indices=None, max_length=12):
 # ────────────────────────────────────────────────────────────────────────────────
 class Sorting(commands.Cog):
     """Commande /sorting et !sorting — Visualise un algorithme de tri en temps réel"""
-
     def __init__(self, bot: commands.Bot):
         self.bot = bot
         self.algorithms = {
-            "Bubble Sort": bubble_sort,
-            "Cocktail Sort": cocktail_sort,
-            "Comb Sort": comb_sort,
-            "Heap Sort": heap_sort,
-            "Insertion Sort": insertion_sort,
-            "Merge Sort": merge_sort,
-            "Quick Sort": quick_sort,
-            "Selection Sort": selection_sort,
-            "Shell Sort": shell_sort,
+            "Bubble Sort": {"func": bubble_sort, "desc": "Compare chaque élément avec le suivant, fait remonter les plus grands.", "max_iter": 66, "avg_iter": 40},
+            "Cocktail Sort": {"func": cocktail_sort, "desc": "Version bidirectionnelle de Bubble Sort.", "max_iter": 66, "avg_iter": 35},
+            "Comb Sort": {"func": comb_sort, "desc": "Amélioration de Bubble Sort avec gap.", "max_iter": 50, "avg_iter": 30},
+            "Heap Sort": {"func": heap_sort, "desc": "Tri utilisant un tas binaire.", "max_iter": 30, "avg_iter": 20},
+            "Insertion Sort": {"func": insertion_sort, "desc": "Insère chaque élément dans la partie triée.", "max_iter": 66, "avg_iter": 40},
+            "Merge Sort": {"func": merge_sort, "desc": "Divise et fusionne les sous-listes.", "max_iter": 36, "avg_iter": 25},
+            "Quick Sort": {"func": quick_sort, "desc": "Choisit un pivot et partitionne récursivement.", "max_iter": 36, "avg_iter": 20},
+            "Selection Sort": {"func": selection_sort, "desc": "Sélectionne le plus petit élément restant.", "max_iter": 66, "avg_iter": 40},
+            "Shell Sort": {"func": shell_sort, "desc": "Amélioration d’Insertion Sort avec gaps.", "max_iter": 40, "avg_iter": 25},
+            "Pair Sum Sort": {"func": pair_sum_sort, "desc": "Tri par paires basé sur la somme, avec décalage des paires.", "max_iter": 24, "avg_iter": 12},
         }
 
     async def visualize_sorting(self, channel_or_interaction, algorithm_name: str):
+        algo_info = self.algorithms[algorithm_name]
         data = list(range(1, 13))
         random.shuffle(data)
-        algo = self.algorithms[algorithm_name]
+        algo = algo_info["func"]
         delay = 0.25
         msg = None
         iteration = 0
@@ -223,7 +260,7 @@ class Sorting(commands.Cog):
 
         embed = discord.Embed(
             title=f"🔄 {algorithm_name} — En cours...",
-            description=f"```\n{render_bars(data)}\n```",
+            description=f"{algo_info['desc']}\n```\n{render_bars(data)}\n```",
             color=discord.Color.blurple()
         )
         await send(embed)
@@ -233,7 +270,7 @@ class Sorting(commands.Cog):
             await asyncio.sleep(delay)
             embed = discord.Embed(
                 title=f"🔄 {algorithm_name} — Étape {iteration}",
-                description=f"```\n{render_bars(step, sorted_idx)}\n```",
+                description=f"{algo_info['desc']}\n```\n{render_bars(step, sorted_idx)}\n```",
                 color=discord.Color.orange()
             )
             await send(embed)
@@ -241,10 +278,11 @@ class Sorting(commands.Cog):
         sorted_data = sorted(data)
         embed = discord.Embed(
             title=f"✅ {algorithm_name} terminé !",
-            description=f"```\n{render_bars(sorted_data, list(range(len(sorted_data))))}\n```",
+            description=f"{algo_info['desc']}\n```\n{render_bars(sorted_data, list(range(len(sorted_data))))}\n```",
             color=discord.Color.green()
         )
         embed.add_field(name="🧮 Itérations totales", value=f"{iteration}", inline=False)
+        embed.add_field(name="📊 Stats (max/moyen)", value=f"{algo_info['max_iter']} / {algo_info['avg_iter']}", inline=False)
         await send(embed)
 
     # ────────────────────────────────────────────────────────────────────────────
@@ -324,4 +362,5 @@ async def setup(bot: commands.Bot):
         if not hasattr(command, "category"):
             command.category = "Fun&Random"
     await bot.add_cog(cog)
+
 
