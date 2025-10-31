@@ -7,8 +7,6 @@
 # Imports nécessaires
 # ────────────────────────────────────────────────────────────────────────────────
 import asyncio
-import inspect
-import sys
 
 # ────────────────────────────────────────────────────────────────────────────────
 # Fonctions de tri asynchrones avec yield (pour animation)
@@ -237,14 +235,15 @@ async def centrifugal_sort(data):
 
 
 # ────────────────────────────────────────────────────────────────────────────────
-# Chargement automatique de tous les algorithmes async définis dans ce fichier
+# Fonction pour récupérer automatiquement tous les algos
 # ────────────────────────────────────────────────────────────────────────────────
+import inspect
+
 def get_sorting_algorithms():
-    """Récupère automatiquement toutes les fonctions async *_sort de ce module."""
+    """Récupère toutes les fonctions async *_sort de ce module."""
     algos = {}
-    module = sys.modules[__name__]
-    for name, func in inspect.getmembers(module, inspect.iscoroutinefunction):
-        if name.endswith("_sort"):
+    for name, func in globals().items():
+        if inspect.iscoroutinefunction(func) and name.endswith("_sort"):
             display_name = name.replace("_", " ").title()
             algos[display_name] = {
                 "func": func,
@@ -252,5 +251,4 @@ def get_sorting_algorithms():
                 "max_iter": 50,
                 "avg_iter": 25,
             }
-    print(f"[SortingUtils] {len(algos)} algorithmes détectés : {', '.join(algos.keys())}")
     return algos
