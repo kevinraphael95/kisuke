@@ -1,1 +1,1 @@
-bot discord python inspiré de bleach
+i have no idea what i'm doing - experiencing for fun
