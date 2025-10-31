@@ -13,6 +13,7 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 from utils.discord_utils import safe_send
+import random
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🧠 Cog principal
@@ -41,7 +42,7 @@ class ReactCommand(commands.Cog):
         Ajoute plusieurs réactions à un message.
         - Si reference_message_id est fourni, réagit à ce message.
         - Sinon, prend le dernier message du salon (avant before_time si fourni).
-        - Supporte les emojis custom du serveur et les emojis Unicode standard.
+        - Supporte les emojis custom du serveur, des autres serveurs et les emojis Unicode standard.
         """
         target_message = None
         try:
@@ -61,20 +62,25 @@ class ReactCommand(commands.Cog):
             # 🔹 Boucle sur tous les emojis à ajouter
             for emoji_name in emoji_names:
                 emoji_name_cleaned = emoji_name.strip()
-
-                # 🎭 Vérifie si c'est un emoji custom du serveur
                 emoji_lookup = emoji_name_cleaned.strip(":").lower()
-                emoji = next(
-                    (e for e in guild.emojis if e.name.lower() == emoji_lookup),
-                    None
-                )
+
+                # 🎭 Cherche emoji custom sur le serveur actuel
+                emoji = next((e for e in guild.emojis if e.name.lower() == emoji_lookup), None)
+
+                # 🔹 Cherche emoji dans les autres serveurs si non trouvé
+                if not emoji:
+                    other_guilds = [g for g in self.bot.guilds if g.id != guild.id]
+                    for g in random.sample(other_guilds, len(other_guilds)):
+                        emoji = next((e for e in g.emojis if e.name.lower() == emoji_lookup and e.available), None)
+                        if emoji:
+                            break
 
                 try:
                     # ✅ Ajout de la réaction
-                    if emoji:  # Emoji custom
+                    if emoji:  # Emoji custom trouvé
                         await target_message.add_reaction(emoji)
                         print(f"✅ Réaction {emoji} ajoutée à {target_message.id}")
-                    else:      # Emoji standard Unicode
+                    else:      # Emoji Unicode standard
                         await target_message.add_reaction(emoji_name_cleaned)
                         print(f"✅ Réaction {emoji_name_cleaned} ajoutée à {target_message.id}")
                 except discord.HTTPException:
@@ -82,10 +88,8 @@ class ReactCommand(commands.Cog):
                     await safe_send(channel, f"❌ Impossible d’ajouter `{emoji_name_cleaned}`.", delete_after=5)
 
         except discord.NotFound:
-            # ⚠️ Message référencé introuvable
             await safe_send(channel, "❌ Message référencé introuvable.", delete_after=5)
         except Exception as e:
-            # ⚠️ Erreur générale
             print(f"⚠️ Erreur lors de la réaction : {e}")
 
     # ────────────────────────────────────────────────────────────────────────────
@@ -96,14 +100,8 @@ class ReactCommand(commands.Cog):
         description="Réagit avec un ou plusieurs emojis à un message (réponse ou dernier du salon)."
     )
     @app_commands.describe(emojis="Liste d’emojis séparés par des espaces (custom ou standards)")
-    @app_commands.checks.cooldown(1, 3.0, key=lambda i: i.user.id)  # Cooldown 3s par utilisateur
+    @app_commands.checks.cooldown(1, 3.0, key=lambda i: i.user.id)
     async def slash_react(self, interaction: discord.Interaction, emojis: str):
-        """
-        Commande slash /react.
-        - Ajoute les emojis donnés au message ciblé.
-        - Si aucun message ciblé, prend le dernier message non-bot du salon.
-        """
-        # 🔹 Message de confirmation temporaire
         await interaction.response.send_message("✅ Réaction en cours...", ephemeral=True)
 
         try:
@@ -115,7 +113,6 @@ class ReactCommand(commands.Cog):
                 except discord.NotFound:
                     message = None
 
-            # 🔹 Si pas de message référencé, récupère le dernier message du salon
             if not message:
                 async for msg in interaction.channel.history(limit=5):
                     if msg.author != self.bot.user:
@@ -126,10 +123,8 @@ class ReactCommand(commands.Cog):
                 await interaction.edit_original_response(content="❌ Aucun message trouvé.")
                 return
 
-            # 🔹 Liste des emojis à ajouter
             emoji_list = emojis.split()
 
-            # 🔹 Ajout des réactions
             await self._react_to_message(
                 channel=message.channel,
                 guild=interaction.guild,
@@ -151,20 +146,13 @@ class ReactCommand(commands.Cog):
         aliases=["r"],
         help="Réagit à un message avec un ou plusieurs emojis."
     )
-    @commands.cooldown(rate=1, per=3, type=commands.BucketType.user)  # Cooldown par utilisateur
+    @commands.cooldown(rate=1, per=3, type=commands.BucketType.user)
     async def prefix_react(self, ctx: commands.Context, *emoji_names: str):
-        """
-        Commande préfixe !react ou !r.
-        - Supprime le message de commande.
-        - Réagit au message référencé ou dernier message du salon.
-        """
-        # 🔹 Suppression du message de commande pour éviter le spam
         try:
             await ctx.message.delete()
         except (discord.Forbidden, discord.HTTPException):
             pass
 
-        # 🔹 Appel à la fonction interne pour ajouter les réactions
         await self._react_to_message(
             channel=ctx.channel,
             guild=ctx.guild,
@@ -178,7 +166,6 @@ class ReactCommand(commands.Cog):
 # ────────────────────────────────────────────────────────────────────────────────
 async def setup(bot: commands.Bot):
     cog = ReactCommand(bot)
-    # 🔹 Assure que chaque commande du cog a une catégorie
     for command in cog.get_commands():
         if not hasattr(command, "category"):
             command.category = "Général"
