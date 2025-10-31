@@ -22,7 +22,6 @@ Usage: !say_as <mention|id|pseudo> <message>
 - **ship :** 💘 Teste la compatibilité entre deux personnages de Bleach.
 
 ### 📂 Fun&Random
-- **cafe :** Pas de description.
 - **calc :** Pas de description.
 - **couleur :** 🎨 Affiche une couleur aléatoire avec ses codes HEX et RGB.
 - **gay :** 🌈 Calcule ton taux de gaytitude.
@@ -40,7 +39,6 @@ Usage: !say_as <mention|id|pseudo> <message>
 
 ### 📂 Jeux
 - **anagramme :** Lance une partie d'Anagramme. anagramme multi ou m pour jouer en multi.
-- **buckshot :** Pas de description.
 - **capitales :** Pas de description.
 - **compte_est_bon :** Pas de description.
 - **course_animal :** Pas de description.
