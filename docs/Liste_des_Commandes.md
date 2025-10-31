@@ -29,6 +29,7 @@ Usage: !say_as <mention|id|pseudo> <message>
 - **gpt :** ChatGPT mais en nul et qui ne fonctionne presque pas.
 - **pizza :** Génère une pizza aléatoire.
 - **sorting :** Pas de description.
+- **tortues :** Participe à une course de tortues avec tes amis ! 🐢
 
 ### 📂 Général
 - **code :** Affiche un lien vers le code source du bot.
@@ -68,9 +69,6 @@ Usage: !say_as <mention|id|pseudo> <message>
 - **reiatsuvol :** 💠 Tente de voler 10% du Reiatsu d’un autre membre. 25% de réussite. Cooldown : 24h.
 - **skill :** Active la compétence de ta classe Reiatsu.
 - **tutoreiatsu :** Affiche le tutoriel complet pour les nouveaux joueurs.
-
-### 📂 Test
-- **rpg :** Pas de description.
 
 ### 📂 Voiture
 - **choisir_voiture :** Pas de description.
