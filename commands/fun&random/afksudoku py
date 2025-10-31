@@ -1,24 +1,21 @@
 # ────────────────────────────────────────────────────────────────────────────────
 # 📌 afksudoku.py — Le bot joue un Sudoku tout seul
-# Objectif : Affiche une grille de Sudoku avec emojis et la remplit pas à pas
 # Catégorie : Fun&Random
 # Accès : Tous
 # Cooldown : 1 utilisation / 10 secondes / utilisateur
 # ────────────────────────────────────────────────────────────────────────────────
 
-# ────────────────────────────────────────────────────────────────────────────────
-# 📦 Imports nécessaires
-# ────────────────────────────────────────────────────────────────────────────────
 import discord
 import asyncio
 import random
 from discord import app_commands
 from discord.ext import commands
-from utils.discord_utils import safe_send, safe_respond
+from utils.discord_utils import safe_send
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🎨 Fonctions utilitaires
 # ────────────────────────────────────────────────────────────────────────────────
+
 def generate_sudoku():
     """Crée une grille Sudoku 9x9 avec quelques cases vides."""
     grid = [[0 for _ in range(9)] for _ in range(9)]
@@ -30,6 +27,7 @@ def generate_sudoku():
         r, c = random.randint(0, 8), random.randint(0, 8)
         grid[r][c] = 0
     return grid
+
 
 def render_grid(grid, highlight=None):
     """Affiche la grille avec des emojis."""
@@ -46,40 +44,59 @@ def render_grid(grid, highlight=None):
         lines.append(row)
     return "\n".join(lines)
 
+
 async def fill_sudoku(grid, send_func):
     """Remplit la grille étape par étape."""
     empty_cells = [(r, c) for r in range(9) for c in range(9) if grid[r][c] == 0]
     random.shuffle(empty_cells)
+
+    # Pour limiter le spam d’édition, on met à jour toutes les 3 cases
+    buffer = []
     for (r, c) in empty_cells:
-        await asyncio.sleep(0.3)  # délai réaliste mais rapide
         grid[r][c] = random.randint(1, 9)
-        await send_func(f"🧩 **AFK Sudoku en cours...**\n{render_grid(grid, highlight=(r, c))}")
+        buffer.append((r, c))
+
+        if len(buffer) >= 3:
+            await asyncio.sleep(0.5)
+            await send_func(f"🧩 **AFK Sudoku en cours...**\n{render_grid(grid, highlight=buffer[-1])}")
+            buffer = []
+
     await send_func(f"✅ **AFK Sudoku terminé !**\n{render_grid(grid)}")
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🧠 Cog principal
 # ────────────────────────────────────────────────────────────────────────────────
+
 class AfkSudoku(commands.Cog):
     """Commande /afksudoku et !afksudoku — Le bot joue un Sudoku tout seul"""
+
     def __init__(self, bot: commands.Bot):
         self.bot = bot
 
     async def visualize_sudoku(self, target):
+        """Affiche et remplit le Sudoku, peu importe le type de commande."""
         grid = generate_sudoku()
         msg = None
 
         async def send(content):
             nonlocal msg
-            if isinstance(target, discord.Interaction):
-                if msg:
-                    await msg.edit(content=content)
+            try:
+                if isinstance(target, discord.Interaction):
+                    # Envoie via followup
+                    if msg:
+                        await msg.edit(content=content)
+                    else:
+                        msg = await target.followup.send(content=content, wait=True)
                 else:
-                    msg = await target.followup.send(content=content)
-            else:
-                if msg:
-                    await msg.edit(content=content)
-                else:
-                    msg = await safe_send(target, content)
+                    # Envoie dans un salon texte
+                    if msg:
+                        await msg.edit(content=content)
+                    else:
+                        msg = await safe_send(target, content)
+            except discord.Forbidden:
+                pass  # pas la permission d’envoyer
+            except discord.HTTPException:
+                pass  # rate limit ou erreur Discord
 
         await send(f"🧩 **AFK Sudoku** — le bot commence à jouer...\n{render_grid(grid)}")
         await fill_sudoku(grid, send)
@@ -93,8 +110,7 @@ class AfkSudoku(commands.Cog):
     )
     @app_commands.checks.cooldown(1, 10.0, key=lambda i: i.user.id)
     async def slash_afksudoku(self, interaction: discord.Interaction):
-        """Commande slash"""
-        await interaction.response.defer()
+        await interaction.response.defer(thinking=True)
         await self.visualize_sudoku(interaction)
 
     # ────────────────────────────────────────────────────────────────────────────
@@ -103,12 +119,13 @@ class AfkSudoku(commands.Cog):
     @commands.command(name="afksudoku")
     @commands.cooldown(1, 10.0, commands.BucketType.user)
     async def prefix_afksudoku(self, ctx: commands.Context):
-        """Commande préfixe"""
         await self.visualize_sudoku(ctx.channel)
+
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🔌 Setup du Cog
 # ────────────────────────────────────────────────────────────────────────────────
+
 async def setup(bot: commands.Bot):
     cog = AfkSudoku(bot)
     for command in cog.get_commands():
