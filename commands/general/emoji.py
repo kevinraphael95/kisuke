@@ -21,7 +21,7 @@ from utils.discord_utils import safe_send, safe_respond
 # 🎮 View pour la pagination
 # ────────────────────────────────────────────────────────────────────────────────
 class EmojiPaginator(View):
-    """View interactive pour naviguer entre plusieurs pages d'emojis animés."""
+    """View interactive pour naviguer entre plusieurs pages d'emojis."""
 
     def __init__(self, pages: list[discord.Embed], timeout: int = 90):
         super().__init__(timeout=timeout)
@@ -90,33 +90,39 @@ class EmojiCommand(commands.Cog):
 
     def _build_pages(self, guilds: list[discord.Guild]) -> list[discord.Embed]:
         """
-        Construit les pages d'emojis animés :
-        - 40 emojis par page
-        - Une page par serveur, ou plusieurs si nécessaire
+        Construit les pages d'emojis par serveur :
+        - Chaque serveur : animés d'abord, puis non animés
+        - 40 emojis max par page
         """
         pages = []
+
         for g in guilds:
             animated = [str(e) for e in g.emojis if e.animated and e.available]
-            if not animated:
-                continue
+            static = [str(e) for e in g.emojis if not e.animated and e.available]
 
-            # Découpe en chunks de 40 emojis max
-            chunks = [animated[i:i+40] for i in range(0, len(animated), 40)]
-            for i, chunk in enumerate(chunks, start=1):
-                embed = discord.Embed(
-                    title=f"🎭 Emojis animés — {g.name}",
-                    description=" ".join(chunk),
-                    color=discord.Color.orange()
-                )
-                if len(chunks) > 1:
-                    embed.set_footer(text=f"Page {i}/{len(chunks)} pour {g.name}")
-                pages.append(embed)
+            def create_pages(emojis_list, title_suffix, color):
+                chunks = [emojis_list[i:i+40] for i in range(0, len(emojis_list), 40)]
+                for i, chunk in enumerate(chunks, start=1):
+                    embed = discord.Embed(
+                        title=f"🎭 Emojis {title_suffix} — {g.name}",
+                        description=" ".join(chunk),
+                        color=color
+                    )
+                    if len(chunks) > 1:
+                        embed.set_footer(text=f"Page {i}/{len(chunks)} pour {g.name}")
+                    pages.append(embed)
+
+            if animated:
+                create_pages(animated, "animés", discord.Color.orange())
+            if static:
+                create_pages(static, "non animés", discord.Color.blue())
+
         return pages
 
     async def _send_emojis_safe(self, channel, guild, emoji_names: tuple[str]):
         """
         Fonction interne centralisée :
-        - Envoie les emojis demandés ou tous les animés paginés
+        - Envoie les emojis demandés ou tous les emojis paginés par serveur
         - Gère les erreurs
         """
         try:
@@ -131,7 +137,7 @@ class EmojiCommand(commands.Cog):
                 guilds = [guild] + [g for g in self.bot.guilds if g.id != guild.id]
                 pages = self._build_pages(guilds)
                 if not pages:
-                    await safe_send(channel, "❌ Aucun emoji animé trouvé sur les serveurs.")
+                    await safe_send(channel, "❌ Aucun emoji trouvé sur les serveurs.")
                     return
                 view = EmojiPaginator(pages)
                 await safe_send(channel, embed=pages[0], view=view)
@@ -146,7 +152,7 @@ class EmojiCommand(commands.Cog):
         name="emoji",
         aliases=["e"],
         help="😄 Affiche un ou plusieurs emojis du serveur.",
-        description="Affiche les emojis demandés ou tous les emojis animés de tous les serveurs si aucun argument."
+        description="Affiche les emojis demandés ou tous les emojis du serveur (animés puis non animés) si aucun argument."
     )
     @commands.cooldown(rate=1, per=3, type=commands.BucketType.user)
     async def prefix_emoji(self, ctx: commands.Context, *emoji_names):
@@ -163,7 +169,7 @@ class EmojiCommand(commands.Cog):
     # ────────────────────────────────────────────────────────────────────────────
     @app_commands.command(
         name="emoji",
-        description="Affiche un ou plusieurs emojis du serveur ou tous les animés des serveurs."
+        description="Affiche un ou plusieurs emojis du serveur ou tous les emojis (animés puis non animés)."
     )
     @app_commands.describe(emojis="Noms des emojis à afficher, séparés par des espaces ou répétés (ex: :woah::woah:)")
     @app_commands.checks.cooldown(1, 3.0, key=lambda i: i.user.id)
