@@ -9,9 +9,8 @@
 import asyncio
 
 # ────────────────────────────────────────────────────────────────────────────────
-# Fonctions de tri asynchrones avec yield (pour animation)
+# Fonctions de tri (avec yield pour animation)
 # ────────────────────────────────────────────────────────────────────────────────
-
 async def bubble_sort(data):
     n = len(data)
     for i in range(n):
@@ -19,7 +18,6 @@ async def bubble_sort(data):
             if data[j] > data[j + 1]:
                 data[j], data[j + 1] = data[j + 1], data[j]
             yield data, list(range(n - i, n))
-
 
 async def insertion_sort(data):
     for i in range(1, len(data)):
@@ -32,7 +30,6 @@ async def insertion_sort(data):
         data[j + 1] = key
         yield data, list(range(i + 1))
 
-
 async def selection_sort(data):
     n = len(data)
     for i in range(n):
@@ -42,7 +39,6 @@ async def selection_sort(data):
                 min_idx = j
         data[i], data[min_idx] = data[min_idx], data[i]
         yield data, list(range(i + 1))
-
 
 async def quick_sort(data, low=0, high=None):
     if high is None:
@@ -64,7 +60,6 @@ async def quick_sort(data, low=0, high=None):
         async for step, sorted_idx in quick_sort(data, left + 1, high):
             yield step, sorted_idx
 
-
 async def merge_sort(data, start=0, end=None):
     if end is None:
         end = len(data)
@@ -85,13 +80,11 @@ async def merge_sort(data, start=0, end=None):
                 j += 1
             yield data, list(range(start, k + 1))
 
-
 async def heap_sort(data):
     n = len(data)
-
     def heapify(n, i):
         largest = i
-        l, r = 2 * i + 1, 2 * i + 2
+        l, r = 2*i + 1, 2*i + 2
         if l < n and data[l] > data[largest]:
             largest = l
         if r < n and data[r] > data[largest]:
@@ -99,16 +92,13 @@ async def heap_sort(data):
         if largest != i:
             data[i], data[largest] = data[largest], data[i]
             heapify(n, largest)
-
-    for i in range(n // 2 - 1, -1, -1):
+    for i in range(n//2 - 1, -1, -1):
         heapify(n, i)
         yield data, []
-
     for i in range(n - 1, 0, -1):
         data[i], data[0] = data[0], data[i]
         heapify(i, 0)
         yield data, list(range(i, n))
-
 
 async def shell_sort(data):
     n = len(data)
@@ -124,7 +114,6 @@ async def shell_sort(data):
             data[j] = temp
             yield data, list(range(i + 1))
         gap //= 2
-
 
 async def cocktail_sort(data):
     n = len(data)
@@ -149,7 +138,6 @@ async def cocktail_sort(data):
             yield data, list(range(i + 1))
         start += 1
 
-
 async def comb_sort(data):
     n = len(data)
     gap = n
@@ -168,31 +156,37 @@ async def comb_sort(data):
             yield data, list(range(i + 1))
             i += 1
 
-
 async def pair_sum_sort(data):
-    """Tri par paires basé sur la somme et décalage."""
     n = len(data)
     swapped = True
     while swapped:
         swapped = False
-        pairs = [(i, i + 1) for i in range(0, n - 1, 2)]
-        sums = [data[i] + data[j] for i, j in pairs]
+        pairs = [(i, i+1) for i in range(0, n-1, 2)]
+        sums = [data[i]+data[j] for i,j in pairs]
         sorted_pairs = [pairs[i] for i in sorted(range(len(pairs)), key=lambda x: sums[x])]
         new_data = []
-        for i, j in sorted_pairs:
+        for i,j in sorted_pairs:
             new_data.extend([data[i], data[j]])
         for k in range(len(new_data)):
             if data[k] != new_data[k]:
                 data[k] = new_data[k]
                 swapped = True
             yield data, list(range(len(data)))
+        pairs = [(i, i+1) for i in range(1, n-1, 2)]
+        sums = [data[i]+data[j] for i,j in pairs]
+        sorted_pairs = [pairs[i] for i in sorted(range(len(pairs)), key=lambda x: sums[x])]
+        new_data = data[:1]
+        for i,j in sorted_pairs:
+            new_data.extend([data[i], data[j]])
+        if len(new_data) < n:
+            new_data.append(data[-1])
+        for k in range(len(new_data)):
+            if data[k] != new_data[k]:
+                data[k] = new_data[k]
+                swapped = True
+            yield data, list(range(len(data)))
 
-
-# ────────────────────────────────────────────────────────────────────────────────
-# Algos expérimentaux
-# ────────────────────────────────────────────────────────────────────────────────
 async def pair_shift_sort(data):
-    """Tri expérimental basé sur le déplacement du plus grand élément d'une paire vers la droite."""
     n = len(data)
     while True:
         changed = False
@@ -211,12 +205,10 @@ async def pair_shift_sort(data):
             break
 
 async def centrifugal_sort(data):
-    """Tri par triplets consécutifs : le nombre du milieu est replacé entre les deux autres."""
     n = len(data)
     changed = True
     while changed:
         changed = False
-        # Triplets consécutifs (0,1,2), (3,4,5), ...
         for i in range(0, n - 2, 3):
             triplet = data[i:i + 3]
             sorted_triplet = sorted(triplet)
@@ -224,7 +216,6 @@ async def centrifugal_sort(data):
                 data[i:i + 3] = sorted_triplet
                 changed = True
             yield data, list(range(i, i + 3))
-        # Décalage d’un pour triplets (1,2,3), (4,5,6), ...
         for i in range(1, n - 2, 3):
             triplet = data[i:i + 3]
             sorted_triplet = sorted(triplet)
@@ -232,23 +223,3 @@ async def centrifugal_sort(data):
                 data[i:i + 3] = sorted_triplet
                 changed = True
             yield data, list(range(i, i + 3))
-
-
-# ────────────────────────────────────────────────────────────────────────────────
-# Fonction pour récupérer automatiquement tous les algos
-# ────────────────────────────────────────────────────────────────────────────────
-import inspect
-
-def get_sorting_algorithms():
-    """Récupère toutes les fonctions async *_sort de ce module."""
-    algos = {}
-    for name, func in globals().items():
-        if inspect.iscoroutinefunction(func) and name.endswith("_sort"):
-            display_name = name.replace("_", " ").title()
-            algos[display_name] = {
-                "func": func,
-                "desc": f"Algorithme : {display_name}",
-                "max_iter": 50,
-                "avg_iter": 25,
-            }
-    return algos
