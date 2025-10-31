@@ -12,10 +12,18 @@
 import discord
 import random
 import asyncio
+import inspect
 from discord import app_commands
 from discord.ext import commands
 from utils.discord_utils import safe_send, safe_respond
-from utils.sorting_utils import get_sorting_algorithms
+from utils import sorting_utils  # Import du module complet
+
+# ────────────────────────────────────────────────────────────────────────────────
+# Récupération automatique de tous les algos async dans sorting_utils
+# ────────────────────────────────────────────────────────────────────────────────
+algorithms_funcs = {
+    name: func for name, func in inspect.getmembers(sorting_utils, inspect.iscoroutinefunction)
+}
 
 # ────────────────────────────────────────────────────────────────────────────────
 # Visualisation des barres
@@ -40,9 +48,20 @@ class Sorting(commands.Cog):
     """Commande /sorting et !sorting — Visualise un algorithme de tri en temps réel"""
     def __init__(self, bot: commands.Bot):
         self.bot = bot
-        self.algorithms = get_sorting_algorithms()
+        self.algorithms = {}
+        for name, func in algorithms_funcs.items():
+            # Création automatique du nom lisible
+            display_name = " ".join([word.capitalize() for word in name.split("_")])
+            self.algorithms[display_name] = {
+                "func": func,
+                "desc": f"Visualisation de l'algorithme {display_name}.",
+                "max_iter": 50,
+                "avg_iter": 25
+            }
 
-
+    # ────────────────────────────────────────────────────────────────────────────
+    # Logique de visualisation
+    # ────────────────────────────────────────────────────────────────────────────
     async def visualize_sorting(self, channel_or_interaction, algorithm_name: str):
         algo_info = self.algorithms[algorithm_name]
         data = list(range(1, 13))
@@ -169,4 +188,3 @@ async def setup(bot: commands.Bot):
         if not hasattr(command, "category"):
             command.category = "Fun&Random"
     await bot.add_cog(cog)
-
