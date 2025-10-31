@@ -28,13 +28,7 @@ class Say(commands.Cog):
     # 🔧 Parsing des options
     # ──────────────────────────────────────────────────────────────
     def parse_options(self, raw_message: str):
-        """
-        Analyse les options au début du message (*embed, *as_me, etc.) et retourne
-        le message restant **tel quel**, sans modifier les retours à la ligne ni les espaces.
-        """
         options = {"embed": False, "as_user": False}
-
-        # Détecte les options au début
         opts_pattern = r"^(?:\*(embed|e|as_me|am|me)\s*)+"
         match = re.match(opts_pattern, raw_message, re.IGNORECASE)
         if match:
@@ -43,8 +37,7 @@ class Say(commands.Cog):
                 options["embed"] = True
             if re.search(r"\*(as_me|am|me)\b", opts_part, re.IGNORECASE):
                 options["as_user"] = True
-            raw_message = raw_message[len(opts_part):]  # garde le texte exact après les options
-
+            raw_message = raw_message[len(opts_part):]
         return options, raw_message
 
     # ──────────────────────────────────────────────────────────────
@@ -82,18 +75,23 @@ class Say(commands.Cog):
             await webhook.delete()
 
     # ──────────────────────────────────────────────────────────────
-    # 🔹 Remplacement emojis custom
+    # 🔹 Remplacement emojis custom (tous les serveurs du bot)
     # ──────────────────────────────────────────────────────────────
     def _replace_custom_emojis(self, channel, message: str) -> str:
+        all_emojis = {}
         if hasattr(channel, "guild"):
-            guild_emojis = {e.name.lower(): str(e) for e in channel.guild.emojis}
-            return re.sub(
-                r":([a-zA-Z0-9_]+):",
-                lambda m: guild_emojis.get(m.group(1).lower(), m.group(0)),
-                message,
-                flags=re.IGNORECASE
-            )
-        return message
+            # Emojis du serveur actuel
+            all_emojis.update({e.name.lower(): str(e) for e in channel.guild.emojis})
+            # Emojis des autres serveurs du bot
+            for g in self.bot.guilds:
+                if g.id != channel.guild.id:
+                    all_emojis.update({e.name.lower(): str(e) for e in g.emojis})
+        return re.sub(
+            r":([a-zA-Z0-9_]+):",
+            lambda m: all_emojis.get(m.group(1).lower(), m.group(0)),
+            message,
+            flags=re.IGNORECASE
+        )
 
     # ──────────────────────────────────────────────────────────────
     # 🔹 Commande SLASH
@@ -150,5 +148,3 @@ async def setup(bot: commands.Bot):
         if not hasattr(command, "category"):
             command.category = "Général"
     await bot.add_cog(cog)
-
-
