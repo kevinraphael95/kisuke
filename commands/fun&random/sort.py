@@ -281,6 +281,8 @@ class Sorting(commands.Cog):
             "Selection Sort": {"func": selection_sort, "desc": "Sélectionne le plus petit élément restant.", "max_iter": 66, "avg_iter": 40},
             "Shell Sort": {"func": shell_sort, "desc": "Amélioration d’Insertion Sort avec gaps.", "max_iter": 40, "avg_iter": 25},
             "Pair Sum Sort": {"func": pair_sum_sort, "desc": "Tri par paires basé sur la somme, avec décalage des paires.", "max_iter": 24, "avg_iter": 12},
+            "Pair Shift Sort": {"func": pair_shift_sort, "desc": "Déplace le plus grand élément d'une paire vers la droite.", "max_iter": 30, "avg_iter": 15},
+            "Centrifugal Sort": {"func": centrifugal_sort, "desc": "Tri par triplets, le nombre du milieu est replacé entre les deux autres.", "max_iter": 30, "avg_iter": 15},
         }
 
     async def visualize_sorting(self, channel_or_interaction, algorithm_name: str):
