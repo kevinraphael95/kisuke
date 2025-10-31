@@ -1,16 +1,12 @@
 # ────────────────────────────────────────────────────────────────────────────────
-# sorting_utils.py — Fonctions de tri (async) pour visualisation
-# Objectif : Contient tous les algorithmes de tri utilisables dans sorting.py
-# ────────────────────────────────────────────────────────────────────────────────
-
-# ────────────────────────────────────────────────────────────────────────────────
-# Imports nécessaires
+# algorithms.py — Tous les algorithmes de tri pour visualisation
 # ────────────────────────────────────────────────────────────────────────────────
 import asyncio
 
 # ────────────────────────────────────────────────────────────────────────────────
-# Fonctions de tri (avec yield pour animation)
+# Algorithmes classiques
 # ────────────────────────────────────────────────────────────────────────────────
+
 async def bubble_sort(data):
     n = len(data)
     for i in range(n):
@@ -156,6 +152,10 @@ async def comb_sort(data):
             yield data, list(range(i + 1))
             i += 1
 
+# ────────────────────────────────────────────────────────────────────────────────
+# Algorithmes expérimentaux
+# ────────────────────────────────────────────────────────────────────────────────
+
 async def pair_sum_sort(data):
     n = len(data)
     swapped = True
@@ -223,3 +223,21 @@ async def centrifugal_sort(data):
                 data[i:i + 3] = sorted_triplet
                 changed = True
             yield data, list(range(i, i + 3))
+
+# ────────────────────────────────────────────────────────────────────────────────
+# Liste globale de tous les algorithmes
+# ────────────────────────────────────────────────────────────────────────────────
+ALL_ALGORITHMS = {
+    "Bubble Sort": bubble_sort,
+    "Insertion Sort": insertion_sort,
+    "Selection Sort": selection_sort,
+    "Quick Sort": quick_sort,
+    "Merge Sort": merge_sort,
+    "Heap Sort": heap_sort,
+    "Shell Sort": shell_sort,
+    "Cocktail Sort": cocktail_sort,
+    "Comb Sort": comb_sort,
+    "Pair Sum Sort": pair_sum_sort,
+    "Pair Shift Sort": pair_shift_sort,
+    "Centrifugal Sort": centrifugal_sort,
+}
