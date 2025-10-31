@@ -22,11 +22,13 @@ Usage: !say_as <mention|id|pseudo> <message>
 - **ship :** 💘 Teste la compatibilité entre deux personnages de Bleach.
 
 ### 📂 Fun&Random
+- **cafe :** Pas de description.
 - **calc :** Pas de description.
 - **couleur :** 🎨 Affiche une couleur aléatoire avec ses codes HEX et RGB.
 - **gay :** 🌈 Calcule ton taux de gaytitude.
 - **gpt :** ChatGPT mais en nul et qui ne fonctionne presque pas.
 - **pizza :** Génère une pizza aléatoire.
+- **sorting :** Pas de description.
 
 ### 📂 Général
 - **code :** Affiche un lien vers le code source du bot.
@@ -40,9 +42,9 @@ Usage: !say_as <mention|id|pseudo> <message>
 - **buckshot :** Pas de description.
 - **capitales :** Pas de description.
 - **compte_est_bon :** Pas de description.
-- **cook :** Commande préfixe : !cook <recette>
 - **course_animal :** Pas de description.
 - **devinelenombre :** Devine un nombre entre 0 et 100 (multi = plusieurs joueurs)
+- **devinepays :** Pas de description.
 - **drapeaux :** Pas de description.
 - **entrainementcerebral :** Entraînement cérébral composé de 5 mini-jeux.
 - **jardin :** Affiche ton jardin ou celui d'un autre utilisateur 🌱
@@ -54,7 +56,8 @@ Usage: !say_as <mention|id|pseudo> <message>
 - **motus :** Lance une partie de Motus. motus multi ou m pour jouer en multi.
 - **paires :** Pas de description.
 - **pendu :** Démarre une partie du jeu du pendu.
-- **portes :** Pas de description.
+- **portes :** Joue au Jeu des Portes et résous les énigmes.
+- **tram_probleme :** Commande préfixe interactive
 
 ### 📂 Reiatsu
 - **classe :** Choisir sa classe Reiatsu
@@ -67,7 +70,6 @@ Usage: !say_as <mention|id|pseudo> <message>
 - **tutoreiatsu :** Affiche le tutoriel complet pour les nouveaux joueurs.
 
 ### 📂 Test
-- **bleach_attorney :** Pas de description.
 - **rpg :** Pas de description.
 
 ### 📂 Voiture
