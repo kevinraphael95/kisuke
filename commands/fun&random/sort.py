@@ -12,18 +12,10 @@
 import discord
 import random
 import asyncio
-import inspect
 from discord import app_commands
 from discord.ext import commands
 from utils.discord_utils import safe_send, safe_respond
-from utils import sorting_utils  # Import du module complet
-
-# ────────────────────────────────────────────────────────────────────────────────
-# Récupération automatique de tous les algos async dans sorting_utils
-# ────────────────────────────────────────────────────────────────────────────────
-algorithms_funcs = {
-    name: func for name, func in inspect.getmembers(sorting_utils, inspect.iscoroutinefunction)
-}
+from algorithms import ALL_ALGORITHMS  # <--- Tous les algos importés
 
 # ────────────────────────────────────────────────────────────────────────────────
 # Visualisation des barres
@@ -45,23 +37,17 @@ def render_bars(data, sorted_indices=None, max_length=12):
 # Cog principal
 # ────────────────────────────────────────────────────────────────────────────────
 class Sorting(commands.Cog):
-    """Commande /sorting et !sorting — Visualise un algorithme de tri en temps réel"""
     def __init__(self, bot: commands.Bot):
         self.bot = bot
         self.algorithms = {}
-        for name, func in algorithms_funcs.items():
-            # Création automatique du nom lisible
-            display_name = " ".join([word.capitalize() for word in name.split("_")])
-            self.algorithms[display_name] = {
+        for name, func in ALL_ALGORITHMS.items():
+            self.algorithms[name] = {
                 "func": func,
-                "desc": f"Visualisation de l'algorithme {display_name}.",
+                "desc": "Description à remplir",
                 "max_iter": 50,
                 "avg_iter": 25
             }
 
-    # ────────────────────────────────────────────────────────────────────────────
-    # Logique de visualisation
-    # ────────────────────────────────────────────────────────────────────────────
     async def visualize_sorting(self, channel_or_interaction, algorithm_name: str):
         algo_info = self.algorithms[algorithm_name]
         data = list(range(1, 13))
@@ -111,29 +97,17 @@ class Sorting(commands.Cog):
         embed.add_field(name="📊 Stats (max/moyen)", value=f"{algo_info['max_iter']} / {algo_info['avg_iter']}", inline=False)
         await send(embed)
 
-    # ────────────────────────────────────────────────────────────────────────────
-    # Commande SLASH
-    # ────────────────────────────────────────────────────────────────────────────
-    @app_commands.command(
-        name="sorting",
-        description="Visualise un algorithme de tri en temps réel."
-    )
-    @app_commands.describe(algorithme="Nom, numéro ou 'random' pour un tri aléatoire")
+    @app_commands.command(name="sorting", description="Visualise un algorithme de tri en temps réel.")
+    @app_commands.describe(algorithme="Nom, numéro ou 'random'")
     @app_commands.checks.cooldown(1, 10.0, key=lambda i: i.user.id)
     async def slash_sorting(self, interaction: discord.Interaction, algorithme: str = None):
         await self.handle_sorting(interaction, algorithme)
 
-    # ────────────────────────────────────────────────────────────────────────────
-    # Commande PREFIX
-    # ────────────────────────────────────────────────────────────────────────────
     @commands.command(name="sorting")
     @commands.cooldown(1, 10.0, commands.BucketType.user)
     async def prefix_sorting(self, ctx: commands.Context, *, algorithme: str = None):
         await self.handle_sorting(ctx.channel, algorithme)
 
-    # ────────────────────────────────────────────────────────────────────────────
-    # Gestion logique commune
-    # ────────────────────────────────────────────────────────────────────────────
     async def handle_sorting(self, channel_or_interaction, algorithme: str = None):
         algos_list = sorted(self.algorithms.keys())
         algo_dict = {str(i + 1): name for i, name in enumerate(algos_list)}
