@@ -6,12 +6,16 @@
 # Cooldown : 1 utilisation / 10 secondes / utilisateur
 # ────────────────────────────────────────────────────────────────────────────────
 
+# ────────────────────────────────────────────────────────────────────────────────
+# 📦 Imports nécessaires
+# ────────────────────────────────────────────────────────────────────────────────
 import discord
 from discord import app_commands
 from discord.ext import commands
 import psutil
 import platform
 import datetime
+from utils.discord_utils import safe_send, safe_respond  # ✅ Sécurisé
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🧠 Cog principal
@@ -22,7 +26,6 @@ class Stats(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
         self.process = psutil.Process()
-        # 🕒 On définit le moment où ce Cog est chargé (démarrage bot inclus)
         self.launch_time = datetime.datetime.utcnow()
 
     # ────────────────────────────────────────────────────────────────────────────
@@ -31,7 +34,7 @@ class Stats(commands.Cog):
     def build_embed(self) -> discord.Embed:
         uptime_delta = datetime.datetime.utcnow() - self.launch_time
         memory = self.process.memory_full_info().rss / 1024**2
-        cpu = psutil.cpu_percent()
+        cpu = psutil.cpu_percent(interval=1)
 
         embed = discord.Embed(
             title="📊 Statistiques du Bot",
@@ -79,10 +82,10 @@ class Stats(commands.Cog):
     @app_commands.checks.cooldown(1, 10.0, key=lambda i: i.user.id)
     async def slash_stats(self, interaction: discord.Interaction):
         if not interaction.user.guild_permissions.administrator:
-            return await interaction.response.send_message("❌ Accès refusé (admin uniquement).", ephemeral=True)
+            return await safe_respond(interaction, "❌ Accès refusé (admin uniquement).", ephemeral=True)
 
         embed = self.build_embed()
-        await interaction.response.send_message(embed=embed)
+        await safe_respond(interaction, embed=embed)
 
     # ────────────────────────────────────────────────────────────────────────────
     # 🔹 Commande PREFIX
@@ -91,10 +94,10 @@ class Stats(commands.Cog):
     @commands.cooldown(1, 10.0, commands.BucketType.user)
     async def prefix_stats(self, ctx: commands.Context):
         if not ctx.author.guild_permissions.administrator:
-            return await ctx.send("❌ Accès refusé (admin uniquement).")
+            return await safe_send(ctx.channel, "❌ Accès refusé (admin uniquement).")
 
         embed = self.build_embed()
-        await ctx.send(embed=embed)
+        await safe_send(ctx.channel, embed=embed)
 
 
 # ────────────────────────────────────────────────────────────────────────────────
