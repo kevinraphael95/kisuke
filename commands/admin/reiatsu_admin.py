@@ -18,7 +18,7 @@ from discord import ui
 import json
 import os
 from utils.supabase_client import supabase
-from utils.discord_utils import safe_send, safe_reply, safe_edit, safe_delete
+from utils.discord_utils import safe_send, safe_reply, safe_edit, safe_delete, safe_interact
 
 # ──────────────────────────────────────────────────────────────
 # 📂 Chargement du JSON global
@@ -230,7 +230,7 @@ class ReiatsuAdmin(commands.Cog):
 
             async def callback(self, interaction: discord.Interaction):
                 if interaction.user != ctx.author:
-                    await interaction.response.send_message("❌ Ce bouton n'est pas pour vous.", ephemeral=True)
+                    await safe_interact(interaction, "❌ Ce bouton n'est pas pour vous.", ephemeral=True)
                     return
                 try:
                     new_speed_name = self.custom_id.split("_", 1)[1]
@@ -241,18 +241,20 @@ class ReiatsuAdmin(commands.Cog):
                         "spawn_speed": new_speed_name
                     }).eq("guild_id", guild_id).execute()
 
-                    await interaction.response.edit_message(
+                    await safe_interact(
+                        interaction,
                         embed=discord.Embed(
                             title="✅ Vitesse du spawn modifiée",
                             description=f"Nouvelle vitesse : **{new_speed_name}** ({new_delay} s)",
                             color=discord.Color.green()
                         ),
-                        view=None
+                        view=None,
+                        edit=True
                     )
                 except Exception as e:
                     print(f"[ERREUR BUTTON SPEED] {e}")
                     if not interaction.response.is_done():
-                        await interaction.response.send_message("❌ Une erreur est survenue.", ephemeral=True)
+                        await safe_interact(interaction, "❌ Une erreur est survenue.", ephemeral=True)
 
         class SpeedView(ui.View):
             def __init__(self):
@@ -265,7 +267,7 @@ class ReiatsuAdmin(commands.Cog):
                 for item in self.children:
                     item.disabled = True
                 try:
-                    await message.edit(view=self)
+                    await safe_edit(message, view=self)
                 except Exception:
                     pass
 
