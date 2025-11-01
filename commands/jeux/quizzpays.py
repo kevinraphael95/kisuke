@@ -27,22 +27,21 @@ async def get_random_countries(n=4):
                 raise RuntimeError(f"Erreur API : {r.status}")
             data = await r.json()
 
-    # filtrer les pays valides
     valid = [c for c in data if c.get("flags") and c.get("capital") and c.get("cca2")]
     if len(valid) < n:
         raise RuntimeError("Pas assez de pays valides récupérés.")
     return random.sample(valid, n)
 
 def country_code_to_emoji(code: str) -> str:
-    """Convertit un code pays (ISO 3166-1 alpha-2) en emoji drapeau."""
+    """Convertit un code pays ISO2 en emoji drapeau."""
     return "".join(chr(ord(c) + 127397) for c in code.upper())
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 🎮 UI — Boutons du quizz
 # ────────────────────────────────────────────────────────────────────────────────
 class QuizButton(Button):
-    def __init__(self, label, correct, parent_view):
-        super().__init__(label=label, style=discord.ButtonStyle.secondary)
+    def __init__(self, label=None, emoji=None, correct=False, parent_view=None):
+        super().__init__(label=label, emoji=emoji, style=discord.ButtonStyle.secondary)
         self.correct = correct
         self.parent_view = parent_view
 
@@ -69,66 +68,77 @@ class QuizButton(Button):
 # 🎛️ Vue principale
 # ────────────────────────────────────────────────────────────────────────────────
 class QuizzPaysView(View):
-    def __init__(self, player, countries, channel, max_questions=10):
+    def __init__(self, player, countries, channel):
         super().__init__(timeout=90)
         self.player = player
         self.countries = countries
         self.channel = channel
-        self.max_questions = max_questions
-        self.current = 0
         self.score = 0
-        self.correct_country = None
-        self.question_type = None
+        self.current_question = 0
+        self.max_questions = 4  # 4 types de questions
+        self.correct_country = random.choice(countries)
+        self.question_order = ["flag", "capital", "continent", "currency"]
 
     async def start(self):
         await self.next_question()
 
     async def next_question(self, interaction=None):
-        # Vérifier la fin du quizz
-        if self.current >= self.max_questions:
+        if self.current_question >= self.max_questions:
             await self.end_quiz(interaction)
             return
 
-        self.current += 1
-        self.question_type = random.choice(["flag", "capital", "continent", "currency"])
-        self.correct_country = random.choice(self.countries)
+        qtype = self.question_order[self.current_question]
+        self.current_question += 1
 
         for child in list(self.children):
             self.remove_item(child)
 
-        if self.question_type == "flag":
-            question = f"🌍 **({self.current}/{self.max_questions}) Quel est le drapeau de {self.correct_country['name']['common']} ?**"
+        # Préparer les réponses possibles
+        options = []
+        if qtype == "flag":
+            question = f"🌍 **Quel est le drapeau de {self.correct_country['name']['common']} ?**"
             for c in self.countries:
-                emoji = country_code_to_emoji(c['cca2'])
-                btn = QuizButton(emoji, c["name"]["common"] == self.correct_country["name"]["common"], self)
-                self.add_item(btn)
-
+                options.append(QuizButton(emoji=country_code_to_emoji(c['cca2']),
+                                          correct=c == self.correct_country,
+                                          parent_view=self))
             embed = discord.Embed(title=question, color=discord.Color.blurple())
             embed.description = "Clique sur le bon emoji du drapeau."
 
-        elif self.question_type == "capital":
-            question = f"🏙️ **({self.current}/{self.max_questions}) Quelle est la capitale de {self.correct_country['name']['common']} ?**"
+        elif qtype == "capital":
+            question = f"🏙️ **Quelle est la capitale de {self.correct_country['name']['common']} ?**"
             capitals = [c["capital"][0] for c in self.countries]
             random.shuffle(capitals)
             for cap in capitals:
-                self.add_item(QuizButton(cap, cap == self.correct_country["capital"][0], self))
+                options.append(QuizButton(label=cap,
+                                          correct=cap == self.correct_country["capital"][0],
+                                          parent_view=self))
             embed = discord.Embed(title=question, color=discord.Color.orange())
 
-        elif self.question_type == "continent":
-            question = f"🌐 **({self.current}/{self.max_questions}) Quel est le continent de {self.correct_country['name']['common']} ?**"
+        elif qtype == "continent":
+            question = f"🌐 **Quel est le continent de {self.correct_country['name']['common']} ?**"
             continents = [c.get("region", "Inconnu") for c in self.countries]
             random.shuffle(continents)
             for cont in continents:
-                self.add_item(QuizButton(cont, cont == self.correct_country.get("region", "Inconnu"), self))
+                options.append(QuizButton(label=cont,
+                                          correct=cont == self.correct_country.get("region", "Inconnu"),
+                                          parent_view=self))
             embed = discord.Embed(title=question, color=discord.Color.purple())
 
-        elif self.question_type == "currency":
-            question = f"💰 **({self.current}/{self.max_questions}) Quelle est la monnaie de {self.correct_country['name']['common']} ?**"
+        elif qtype == "currency":
+            question = f"💰 **Quelle est la monnaie de {self.correct_country['name']['common']} ?**"
             currencies = [list(c.get("currencies", {"?"}).keys())[0] for c in self.countries]
             random.shuffle(currencies)
+            correct_currency = list(self.correct_country.get("currencies", {"?"}).keys())[0]
             for cur in currencies:
-                self.add_item(QuizButton(cur, cur == list(self.correct_country.get("currencies", {"?"}).keys())[0], self))
+                options.append(QuizButton(label=cur,
+                                          correct=cur == correct_currency,
+                                          parent_view=self))
             embed = discord.Embed(title=question, color=discord.Color.gold())
+
+        # Mélanger les boutons pour chaque question
+        random.shuffle(options)
+        for btn in options:
+            self.add_item(btn)
 
         if interaction:
             await safe_edit(interaction.message, embed=embed, view=self)
@@ -143,7 +153,6 @@ class QuizzPaysView(View):
         )
         for child in list(self.children):
             self.remove_item(child)
-
         if interaction:
             await safe_edit(interaction.message, content=None, embed=embed, view=None)
         else:
@@ -153,27 +162,21 @@ class QuizzPaysView(View):
 # 🧠 Cog principal
 # ────────────────────────────────────────────────────────────────────────────────
 class QuizzPays(commands.Cog):
-    """
-    Commande /quizzpays et !quizzpays — Trouve le drapeau ou la capitale d’un pays.
-    """
     def __init__(self, bot: commands.Bot):
         self.bot = bot
 
     async def _start_quizz(self, channel, user):
         try:
             countries = await get_random_countries(4)
-            view = QuizzPaysView(user, countries, channel, max_questions=10)
+            view = QuizzPaysView(user, countries, channel)
             await view.start()
         except Exception as e:
             print(f"[ERREUR quizzpays] {e}")
             await safe_send(channel, "❌ Impossible de lancer le quizz. Réessaie plus tard.")
 
-    # ──────────────────────────────────────────────────────────────
-    # 🔹 Commande SLASH
-    # ──────────────────────────────────────────────────────────────
     @app_commands.command(
         name="quizzpays",
-        description="Teste tes connaissances sur les drapeaux, capitales, continents et monnaies des pays !"
+        description="Teste tes connaissances sur les drapeaux, capitales, continents et monnaies d’un pays !"
     )
     @app_commands.checks.cooldown(1, 5.0, key=lambda i: i.user.id)
     async def slash_quizzpays(self, interaction: discord.Interaction):
@@ -181,9 +184,6 @@ class QuizzPays(commands.Cog):
         await self._start_quizz(interaction.channel, interaction.user)
         await interaction.delete_original_response()
 
-    # ──────────────────────────────────────────────────────────────
-    # 🔹 Commande PREFIX
-    # ──────────────────────────────────────────────────────────────
     @commands.command(name="quizzpays", aliases=["qp"])
     @commands.cooldown(1, 5.0, commands.BucketType.user)
     async def prefix_quizzpays(self, ctx: commands.Context):
