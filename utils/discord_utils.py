@@ -55,6 +55,29 @@ async def safe_respond(interaction: discord.Interaction, content=None, **kwargs)
 async def safe_followup(interaction: discord.Interaction, content=None, **kwargs):
     return await _discord_action(interaction.followup.send, content=content, **kwargs)
 
+async def safe_interact(interaction: discord.Interaction, content=None, edit=False, **kwargs):
+    """
+    Envoie ou édite une réponse d'interaction en toute sécurité.
+    - Si edit=True → édite le message de l'interaction.
+    - Sinon → envoie une nouvelle réponse (ephemeral possible).
+    """
+    try:
+        if edit:
+            if not interaction.response.is_done():
+                # Édition directe avant réponse
+                return await _discord_action(interaction.response.edit_message, content=content, **kwargs)
+            else:
+                # Édition après réponse initiale
+                return await _discord_action(interaction.edit_original_response, content=content, **kwargs)
+        else:
+            if not interaction.response.is_done():
+                return await _discord_action(interaction.response.send_message, content=content, **kwargs)
+            else:
+                return await _discord_action(interaction.followup.send, content=content, **kwargs)
+    except Exception as e:
+        print(f"[Erreur] safe_interact → {e}")
+        return None
+
 async def safe_reply(ctx_or_message, content=None, **kwargs):
     return await _discord_action(ctx_or_message.reply, content=content, **kwargs)
 
